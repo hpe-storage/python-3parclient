@@ -29,7 +29,7 @@ def test_login():
     try: 
        cl.login("username", "hp")
        pprint.pprint("Login worked")
-    except exceptions.Unauthorized as ex:
+    except exceptions.HTTPUnauthorized as ex:
        pprint.pprint("Login Failed")
 
 def test_logout():
