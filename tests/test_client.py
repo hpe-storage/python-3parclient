@@ -38,13 +38,13 @@ def test_logout():
     try: 
        cl.login("user", "hp")
        pprint.pprint("Login worked")
-    except exceptions.Unauthorized as ex:
+    except exceptions.HTTPUnauthorized as ex:
        pprint.pprint("Login Failed")
 
     try: 
        cl.logout()
        pprint.pprint("Logout worked")
-    except exceptions.Unauthorized as ex:
+    except exceptions.HTTPUnauthorized as ex:
        pprint.pprint("Logout Failed")
 
 def test_get_volumes():
@@ -53,7 +53,7 @@ def test_get_volumes():
        cl.login("user", "hp")
        volumes = cl.getVolumes()
        pprint.pprint(volumes)
-    except exceptions.Unauthorized as ex:
+    except exceptions.HTTPUnauthorized as ex:
        pprint.pprint("You must login first")
     except Exception as ex:
        print ex
@@ -67,7 +67,7 @@ def test_create_volume():
        cl.createVolume("Volume2", "anotherCPG", 1024, 
                                 {'comment': 'something', 'snapCPG':'somesnapcpg'})
 
-    except exceptions.Unauthorized as ex:
+    except exceptions.HTTPUnauthorized as ex:
        pprint.pprint("You must login first")
     except Exception as ex:
        print ex
@@ -79,25 +79,25 @@ def test_create_volume():
 
     try:
 	volume = cl.createVolume("VolumeBad", "testCPG", 2048, {'bogus':'break'})
-    except exceptions.BadRequest as ex:
+    except exceptions.HTTPBadRequest as ex:
 	print "Got Expected Exception %s" % ex
         pass
 
     try:
 	volume = cl.createVolume("VolumeExists", "testCPG", 2048)
-    except exceptions.Conflict as ex:
+    except exceptions.HTTPConflict as ex:
 	print "Got Expected Exception %s" % ex
         pass
 
     try:
 	volume = cl.createVolume("VolumeTooLarge", "testCPG", 10241024)
-    except exceptions.BadRequest as ex:
+    except exceptions.HTTPBadRequest as ex:
 	print "Got Expected Exception %s" % ex
         pass
 
     try:
 	volume = cl.createVolume("VolumeNotEnoughSpace", "testCPG", 9999)
-    except exceptions.BadRequest as ex:
+    except exceptions.HTTPBadRequest as ex:
 	print "Got Expected Exception %s" % ex
         pass
 
@@ -108,31 +108,31 @@ def test_delete_volume():
 
     try:
 	cl.deleteVolume("foo")
-    except exceptions.NotFound as ex:
+    except exceptions.HTTPNotFound as ex:
 	print "Got Expected Exception %s" % ex
         pass
 
     try:
 	cl.deleteVolume("forbidden")
-    except exceptions.Forbidden as ex:
+    except exceptions.HTTPForbidden as ex:
 	print "Got Expected Exception %s" % ex
         pass
 
     try:
 	cl.deleteVolume("retained")
-    except exceptions.Forbidden as ex:
+    except exceptions.HTTPForbidden as ex:
 	print "Got Expected Exception %s" % ex
         pass
 
     try:
 	cl.deleteVolume("readonlychild")
-    except exceptions.Forbidden as ex:
+    except exceptions.HTTPForbidden as ex:
 	print "Got Expected Exception %s" % ex
         pass
 
     try:
 	cl.deleteVolume("works")
-    except exceptions.NotFound as ex:
+    except exceptions.HTTPNotFound as ex:
 	print "Got Expected Exception %s" % ex
         pass
 
