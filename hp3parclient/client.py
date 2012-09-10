@@ -15,20 +15,22 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 """
-3Par REST Client
+HP3Par REST Client
 """
 
 import logging
 import os
 import urlparse
 import httplib2
+import time
+import pprint
 
 try:
     import json
 except ImportError:
     import simplejson as json
 
-
+from hp3parclient import exceptions
 
 class HP3ParRESTClient(httplib2.Http):
 
@@ -36,7 +38,8 @@ class HP3ParRESTClient(httplib2.Http):
 
     def __init__(self, user, password, api_url=None,
                  insecure=False, timeout=None, 
-                 timings=False, no_cache=False, http_log_debug=False):
+                 timings=False, no_cache=False, 
+                 http_log_debug=False):
         super(HP3ParRESTClient, self).__init__(timeout=timeout)
         self.user = user
         self.password = password
@@ -62,13 +65,16 @@ class HP3ParRESTClient(httplib2.Http):
     def authenticate(self):
 	#make sure we have a user and password
 	auth_json = json.dumps({'user':self.user, 'password':self.password})
-        self.get(self.api_url+'/credentials', auth_json)
+	#pprint.pprint(auth_json)
+	self.try_auth = 1
+        self.get('/credentials', body=auth_json)
+	self.try_auth = 0
         
 
     def unauthenticate(self):
         """Forget all of our authentication information."""
 	#delete the session on the 3Par
-        self.delete(self.api_url+'/credentials/%s' % self.session_key)
+        self.delete('/credentials/%s' % self.session_key)
         self.session_key = None
 
     def get_timings(self):
@@ -99,7 +105,8 @@ class HP3ParRESTClient(httplib2.Http):
     def http_log_resp(self, resp, body):
         if not self.http_log_debug:
             return
-        self._logger.debug("RESP:%s %s\n", resp, body)
+        self._logger.debug("RESP:%s\n", resp)
+        self._logger.debug("RESP BODY:%s\n", body)
 
     def request(self, *args, **kwargs):
         kwargs.setdefault('headers', kwargs.get('headers', {}))
@@ -110,7 +117,7 @@ class HP3ParRESTClient(httplib2.Http):
             kwargs['body'] = json.dumps(kwargs['body'])
 
         self.http_log_req(args, kwargs)
-        resp, body = super(HTTPClient, self).request(*args, **kwargs)
+        resp, body = super(HP3ParRESTClient, self).request(*args, **kwargs)
         self.http_log_resp(resp, body)
 
         if body:
@@ -122,6 +129,8 @@ class HP3ParRESTClient(httplib2.Http):
             body = None
 
         if resp.status >= 400:
+            pprint.pprint(resp)
+            pprint.pprint(body)
             raise exceptions.from_response(resp, body)
 
         return resp, body
@@ -135,16 +144,17 @@ class HP3ParRESTClient(httplib2.Http):
 
 
     def _cs_request(self, url, method, **kwargs):
-        if not self.management_url:
+        if not self.session_key and not self.try_auth == 1:
             self.authenticate()
 
         # Perform the request once. If we get a 401 back then it
         # might be because the auth token expired, so try to
         # re-authenticate and try again. If it still fails, bail.
         try:
-            kwargs.setdefault('headers', {})['X-InFormAPI-SessionKey'] = self.session_key
+            if self.session_key:
+                kwargs.setdefault('headers', {})['X-InFormAPI-SessionKey'] = self.session_key
 
-            resp, body = self._time_request(self.management_url + url, method,
+            resp, body = self._time_request(self.api_url + url, method,
                                             **kwargs)
             return resp, body
         except exceptions.Unauthorized, ex:
