@@ -2,3 +2,10 @@ This directory contains unit tests
 
 flask_server.py -- is a sample server that acts like a 3Par API server.   
   This requires python-flask
+
+How to run the tests
+* First run the api server
+  python flask_server.py
+
+* Now run the test client.
+  python test_client.py
