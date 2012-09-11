@@ -64,10 +64,9 @@ class HP3ParRESTClient(httplib2.Http):
 
     def authenticate(self):
 	#make sure we have a user and password
-	auth_json = json.dumps({'user':self.user, 'password':self.password})
-	#pprint.pprint(auth_json)
+        info = {'user':self.user, 'password':self.password}
 	self.try_auth = 1
-        self.get('/credentials', body=auth_json)
+        self.get('/credentials', body=info)
 	self.try_auth = 0
         
 
@@ -124,6 +123,7 @@ class HP3ParRESTClient(httplib2.Http):
             try:
                 body = json.loads(body)
             except ValueError:
+                pprint.pprint("failed to decode json\n")
                 pass
         else:
             body = None
