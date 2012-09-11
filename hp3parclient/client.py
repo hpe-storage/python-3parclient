@@ -30,14 +30,14 @@ from hp3parclient import http
 
 class HP3ParClient:
 
-    def __init__(self, username, password, api_url):
-	self.http = http.HTTPClient(api_url)
-	self.user = username
-	self.password = password
+    def __init__(self, api_url):
+	self.http = http.HTTPRESTClient(api_url)
 
+    def debug_rest(self,flag):
+	self.http.set_debug_flag(flag)
 
-    def login():
-	self.http.authenticate(self.user, self.password)
+    def login(self, username, password):
+	self.http.authenticate(username, password)
 
-    def logout():
+    def logout(self):
         self.http.unauthenticate()		

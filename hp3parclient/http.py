@@ -32,15 +32,15 @@ except ImportError:
 
 from hp3parclient import exceptions
 
-class HTTPClient(httplib2.Http):
+class HTTPRESTClient(httplib2.Http):
 
     USER_AGENT = 'python-3parclient'
 
-    def __init__(api_url=None,
+    def __init__(self, api_url=None,
                  insecure=False, timeout=None, 
                  timings=False, no_cache=False, 
                  http_log_debug=False):
-        super(HTTPClient, self).__init__(timeout=timeout)
+        super(HTTPRESTClient, self).__init__(timeout=timeout)
 
         self.session_key = None
 
@@ -56,7 +56,7 @@ class HTTPClient(httplib2.Http):
 
         self._logger = logging.getLogger(__name__)
 
-    def set_debug_flag(flag):
+    def set_debug_flag(self, flag):
 	self.http_log_debug = flag
         if self.http_log_debug:
             ch = logging.StreamHandler()
@@ -66,7 +66,14 @@ class HTTPClient(httplib2.Http):
     def authenticate(self, user, password):
 	#make sure we have a user and password
         info = {'user':user, 'password':password}
-        self.get('/credentials', body=info)
+	self.auth_try = 1
+        self.post('/credentials', body=info)
+	self.auth_try = 0
+        self.user = user
+	self.password = password
+
+    def _reauth(self):
+	self.authenticate(self.user, self.password)
         
 
     def unauthenticate(self):
@@ -115,14 +122,14 @@ class HTTPClient(httplib2.Http):
             kwargs['body'] = json.dumps(kwargs['body'])
 
         self.http_log_req(args, kwargs)
-        resp, body = super(HTTPClient, self).request(*args, **kwargs)
+        resp, body = super(HTTPRESTClient, self).request(*args, **kwargs)
         self.http_log_resp(resp, body)
 
         if body:
             try:
                 body = json.loads(body)
             except ValueError:
-                pprint.pprint("failed to decode json\n")
+                #pprint.pprint("failed to decode json\n")
                 pass
         else:
             body = None
@@ -155,11 +162,12 @@ class HTTPClient(httplib2.Http):
             return resp, body
         except exceptions.Unauthorized, ex:
             try:
-                self.authenticate()
-                kwargs['headers']['X-InFormAPI-SessionKey'] = self.auth_token
-                resp, body = self._time_request(self.management_url + url,
-                                                method, **kwargs)
-                return resp, body
+		if self.auth_try != 1:
+                    self.reauth()
+                    kwargs['headers']['X-InFormAPI-SessionKey'] = self.session_key
+                    resp, body = self._time_request(self.management_url + url,
+                                                    method, **kwargs)
+                    return resp, body
             except exceptions.Unauthorized:
                 raise ex
 
