@@ -135,8 +135,6 @@ class HTTPRESTClient(httplib2.Http):
             body = None
 
         if resp.status >= 400:
-            pprint.pprint(resp)
-            pprint.pprint(body)
             raise exceptions.from_response(resp, body)
 
         return resp, body
