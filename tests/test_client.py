@@ -22,8 +22,19 @@ def get_client():
 
 cl = get_client()
 cl.debug_rest(True)
-pprint.pprint(cl)
 #this will fail
-cl.login("username", "hp")
+try: 
+   cl.login("username", "hp")
+   pprint.pprint("Login worked")
+except exceptions.Unauthorized, ex:
+   pprint.pprint("Login Failed")
+
+
 #this will work
-cl.login("user", "hp")
+try: 
+   cl.login("user", "hp")
+   pprint.pprint("Login worked")
+except exceptions.Unauthorized, ex:
+   pprint.pprint("Login Failed")
+
+
