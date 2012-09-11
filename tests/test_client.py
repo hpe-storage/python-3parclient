@@ -11,7 +11,7 @@ cmd_folder = os.path.realpath(os.path.abspath("..") )
 if cmd_folder not in sys.path:
      sys.path.insert(0, cmd_folder)
 
-from hp3parclient import client
+from hp3parclient import client, exceptions
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-debug", help="Turn on http debugging", default=False, action="store_true")
@@ -28,7 +28,7 @@ if "debug" in args and args.debug == True:
 try: 
    cl.login("username", "hp")
    pprint.pprint("Login worked")
-except exceptions.Unauthorized, ex:
+except exceptions.Unauthorized as ex:
    pprint.pprint("Login Failed")
 
 
@@ -36,7 +36,13 @@ except exceptions.Unauthorized, ex:
 try: 
    cl.login("user", "hp")
    pprint.pprint("Login worked")
-except exceptions.Unauthorized, ex:
+except exceptions.Unauthorized as ex:
    pprint.pprint("Login Failed")
+
+try: 
+   cl.logout()
+   pprint.pprint("Logout worked")
+except exceptions.Unauthorized as ex:
+   pprint.pprint("Logout Failed")
 
 

@@ -110,7 +110,7 @@ class HTTPRESTClient(httplib2.Http):
     def http_log_resp(self, resp, body):
         if not self.http_log_debug:
             return
-        self._logger.debug("RESP:%s\n", resp)
+        self._logger.debug("RESP:%s\n", pprint.pformat(resp))
         self._logger.debug("RESP BODY:%s\n", body)
 
     def request(self, *args, **kwargs):
@@ -124,6 +124,14 @@ class HTTPRESTClient(httplib2.Http):
         self.http_log_req(args, kwargs)
         resp, body = super(HTTPRESTClient, self).request(*args, **kwargs)
         self.http_log_resp(resp, body)
+       
+	try:
+	    if 'x-informapi-sessionkey' in resp:
+	        self.session_key = resp['x-informapi-sessionkey']
+	except Exception as ex:
+	    pprint.pprint(ex)
+	    #there was no header, so we won't save it.
+            pass
 
         if body:
             try:
