@@ -28,6 +28,7 @@ def credentials():
             return 'GET AUTH PASS'
         else:
             #authentication failed!
+            abort(401)
             return 'GET AUTH FAIL'
     elif request.method == 'DELETE':
         return 'DELETE credentials called'

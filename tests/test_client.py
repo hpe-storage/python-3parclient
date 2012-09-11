@@ -15,12 +15,12 @@ from hp3parclient import client
 
 
 def get_client():
-    cl = client.HP3ParRESTClient("username", "some password",
-                           "http://localhost:5000/api/v1", False, None, False, False, True)
+    cl = client.HP3ParClient("username", "some password",
+                           "http://localhost:5000/api/v1")
     return cl
 
 
 
 cl = get_client()
 pprint.pprint(cl)
-cl.authenticate()
+cl.login()
