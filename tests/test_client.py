@@ -13,15 +13,17 @@ if cmd_folder not in sys.path:
 
 from hp3parclient import client
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-debug", help="Turn on http debugging", default=False, action="store_true")
 
-def get_client():
-    cl = client.HP3ParClient("http://localhost:5000/api/v1")
-    return cl
+args = parser.parse_args()
 
 
+cl = client.HP3ParClient("http://localhost:5000/api/v1")
+if "debug" in args and args.debug == True:
+    cl.debug_rest(True)
 
-cl = get_client()
-cl.debug_rest(True)
+
 #this will fail
 try: 
    cl.login("username", "hp")
