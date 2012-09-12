@@ -45,4 +45,9 @@ try:
 except exceptions.Unauthorized as ex:
    pprint.pprint("Logout Failed")
 
-
+try:
+   cl.create_volume("Foo", "someCPG", "300")
+except exceptions.Unauthorized as ex:
+   pprint.pprint("You must login first")
+except Exception as ex:
+   pprint.pprint(ex)

@@ -40,4 +40,23 @@ class HP3ParClient:
 	self.http.authenticate(username, password)
 
     def logout(self):
-        self.http.unauthenticate()		
+        self.http.unauthenticate()
+
+
+
+    ##Volume methods
+
+    def create_volume(self, name, cpg, sizeMB):
+        info = {'name': name, 'cpg': cpg, 'sizeMB': sizeMB}
+        self.http.post('/volumes', body=info)
+
+
+    def create_snapshot(self, name, copyOfName): 
+        info = {'name': name, 'copyOfName': copyOfName, 'isCopy': 1}
+        self.http.post('/volumes', body=info)
+        
+
+
+    
+
+
