@@ -62,9 +62,12 @@ def index():
         return 'Logged in as %s' % escape(session['username'])
     abort(401)
 
-@app.route('/hello')
-def hello():
-    return 'Hello World'
+
+@app.errorhandler(404)
+def not_found(error):
+    pprint.pprint(request.path)
+    return Response("%s has not been implemented" % request.path, status=501)
+
 
 @app.route('/api/v1/credentials', methods=['GET', 'POST'])
 def credentials():
