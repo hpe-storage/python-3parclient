@@ -2,17 +2,59 @@
 from flask import *
 import pprint
 import json, os, random, string
+from werkzeug.exceptions import default_exceptions
+from werkzeug.exceptions import HTTPException
 
-import pkg_resources
-pprint.pprint(pkg_resources.get_distribution('flask').version)
-
-app = Flask(__name__)
-app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
+__all__ = ['make_json_app']
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
   return ''.join(random.choice(chars) for x in range(size))
 
+def make_json_app(import_name, **kwargs):
+    """
+    Creates a JSON-oriented Flask app.
+
+    All error responses that you don't specifically
+    manage yourself will have application/json content
+    type, and will contain JSON like this (just an example):
+
+    { "message": "405: Method Not Allowed" }
+    """
+    def make_json_error(ex):
+        pprint.pprint(ex)
+        pprint.pprint(ex.code)
+        #response = jsonify(message=str(ex))
+        response = jsonify(ex)
+        ass = jsonify(shit='balls')
+        pprint.pprint(ass)
+        response.status_code = (ex.code
+                                if isinstance(ex, HTTPException)
+                                else 500)
+        return response
+
+    app = Flask(import_name, **kwargs)
+    app.secret_key = id_generator(24)
+
+    for code in default_exceptions.iterkeys():
+        app.error_handler_spec[None][code] = make_json_error
+
+    return app
+
+app = make_json_app(__name__)
+
 session_key = id_generator(24)
+
+
+def throw_error(http_code, error_code=None, desc=None, debug1=None, debug2=None):
+    if error_code:
+        info = {'code': error_code, 'desc': desc}
+        if debug1:
+            info['debug1'] = debug1
+        if debug2:
+            info['debug2'] = debug2
+        abort(Response(json.dumps(info), status=http_code))
+    else:
+        abort(http_code)
 
 @app.route('/')
 def index():
@@ -37,7 +79,6 @@ def credentials():
 
         if data['user'] == 'user' and data['password'] == 'hp':
             #do something good here
-            pprint.pprint("authorized")
             try:
                 resp = make_response(json.dumps({'key':session_key}), 201)
                 resp.headers['Location'] = '/api/v1/credentials/%s' % session_key
@@ -50,8 +91,7 @@ def credentials():
 
         else:
             #authentication failed!
-            pprint.pprint("auth failed")
-            abort(401)
+            throw_error(401, "HTTP_AUTH_FAIL", "Username and or Password was incorrect")
 
 
 @app.route('/api/v1/credentials/<session_key>', methods=['DELETE'])

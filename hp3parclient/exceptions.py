@@ -37,8 +37,33 @@ class ClientException(Exception):
     """
     The base exception class for all exceptions this library raises.
     """
-    def __str__(self):
-        formatted_string = "%s (HTTP %s)" % (self.message, self.code)
+    error_code = None
+    error_desc = None
+
+    debug1 = None
+    debug2 = None
+    def __init__(self, error=None):
+        if 'code' in error:
+            self.error_code = error['code']
+
+        if 'desc' in error:
+            self.error_desc = error['desc']
+
+        if 'debug1' in error:
+            self.debug1 = error['debug1']
+        if 'debug2' in error:
+            self.debug2 = error['debug2']
+
+
+    def __str__(self, error=None):
+
+        formatted_string = "%s (HTTP %s)" % (self.message, self.http_status)
+        if 'code' in error:
+            formatted_string += " %s" % self.error_code
+
+        if 'desc' in error:
+            formatted_string += " - %s" % self.error_desc
+          
         return formatted_string
 
 
@@ -81,6 +106,14 @@ class OverLimit(ClientException):
     http_status = 413
     message = "Over limit"
 
+class Conflict(ClientException):
+    """
+    HTTP 409 - Conflict: A Conflict happened on the server
+    """
+    http_status = 409
+    message = "Conflict"
+
+
 
 # NotImplemented is a python keyword.
 class HTTPNotImplemented(ClientException):
@@ -112,4 +145,4 @@ def from_response(response, body):
             raise exception_from_response(resp, body)
     """
     cls = _code_map.get(response.status, ClientException)
-    return cls()
+    return cls(body)

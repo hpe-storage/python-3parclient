@@ -9,3 +9,9 @@ How to run the tests
 
 * Now run the test client.
   python test_client.py
+
+
+
+for overriding error content in flask
+http://flask.pocoo.org/snippets/83/
+http://flask.pocoo.org/docs/api/?highlight=abort#flask.Flask.errorhandler
