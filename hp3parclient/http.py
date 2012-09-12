@@ -64,10 +64,12 @@ class HTTPRESTClient(httplib2.Http):
             self._logger.addHandler(ch)
 
     def authenticate(self, user, password):
-	#make sure we have a user and password
-        info = {'user':user, 'password':password}
+        #this prevens re-auth attempt if auth fails
 	self.auth_try = 1
-        self.post('/credentials', body=info)
+        info = {'user':user, 'password':password}
+        resp, body = self.post('/credentials', body=info)
+        if body and 'key' in body:
+            self.session_key = body['key']
 	self.auth_try = 0
         self.user = user
 	self.password = password
@@ -170,10 +172,10 @@ class HTTPRESTClient(httplib2.Http):
             try:
 		if self.auth_try != 1:
                     self.reauth()
-                    kwargs['headers']['X-InFormAPI-SessionKey'] = self.session_key
-                    resp, body = self._time_request(self.management_url + url,
-                                                    method, **kwargs)
+                    resp, body = self._time_request(self.management_url + url, method, **kwargs)
                     return resp, body
+                else:
+                    raise ex
             except exceptions.Unauthorized:
                 raise ex
 

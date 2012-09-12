@@ -1,8 +1,7 @@
 #from flask import Flask, request, abort, make_response, session, escape
 from flask import *
 import pprint
-import json
-import os
+import json, os, random, string
 
 import pkg_resources
 pprint.pprint(pkg_resources.get_distribution('flask').version)
@@ -10,19 +9,11 @@ pprint.pprint(pkg_resources.get_distribution('flask').version)
 app = Flask(__name__)
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
-session_key = "abc123"
+def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+  return ''.join(random.choice(chars) for x in range(size))
 
-def make_good_response(body):
-    resp = make_response(body, 200)
-    resp.headers['X-InFormAPI-SessionKey'] = session_key
-    return resp
+session_key = id_generator(24)
 
-def set_session_data(session, data, response):
-    session['username'] = data['user']
-    session['password'] = data['password']
-    session['X-InFormAPI-SessionKey'] = response.headers['X-InFormAPI-SessionKey']
-    
-   
 @app.route('/')
 def index():
     if 'username' in session:
@@ -48,9 +39,11 @@ def credentials():
             #do something good here
             pprint.pprint("authorized")
             try:
-                resp = make_good_response("Auth Worked")
-                set_session_data(session, data, resp)
-                #pprint.pprint(resp.headers)
+                resp = make_response(json.dumps({'key':session_key}), 201)
+                resp.headers['Location'] = '/api/v1/credentials/%s' % session_key
+                session['username'] = data['user']
+                session['password'] = data['password']
+                session['session_key'] = session_key
                 return resp
             except Exception as ex:
                 pprint.pprint(ex)
