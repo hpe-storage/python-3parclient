@@ -21,3 +21,18 @@
 .. automodule:: 3parclient
 .. moduleauthor:: walter.boring@hp.com
 """
+
+__author__ = "Walter A. Boring IV"
+__copyright__ = "Copyright 2012, Hewlett Packard Development Company, L.P."
+#__credits__ = []
+__license__ = "Apache"
+__version__ = "2.0"
+__maintainer__ = "Walter A. Boring IV"
+__email__ = "walter.boring@hp.com"
+__status__ = "pre-alpha"
+
+
+#__all__=["volume", "client", "http", "WsapiEnumIF"]
+
+import WsapiEnumIF
+import volume
