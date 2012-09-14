@@ -30,9 +30,3 @@ __version__ = "2.0"
 __maintainer__ = "Walter A. Boring IV"
 __email__ = "walter.boring@hp.com"
 __status__ = "pre-alpha"
-
-
-#__all__=["volume", "client", "http", "WsapiEnumIF"]
-
-import WsapiEnumIF
-import volume
