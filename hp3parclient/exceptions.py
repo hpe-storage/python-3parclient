@@ -44,7 +44,6 @@ class ClientException(Exception):
     debug1 = None
     debug2 = None
     def __init__(self, error=None):
-        pprint.pprint(error)
         if 'code' in error:
             self.error_code = error['code']
         if 'desc' in error:
