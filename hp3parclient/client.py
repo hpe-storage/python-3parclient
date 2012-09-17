@@ -31,7 +31,7 @@ from hp3parclient import http
 class HP3ParClient:
 
     def __init__(self, api_url):
-	self.http = http.HTTPRESTClient(api_url)
+	self.http = http.HTTPJSONRESTClient(api_url)
 
     def debug_rest(self,flag):
 	self.http.set_debug_flag(flag)
@@ -77,6 +77,7 @@ class HP3ParClient:
 	info = {'name': name}
 	response, body = self.http.delete('/volumes', body=info)
 	return body
+
 
     def createSnapshot(self, name, copyOfName): 
         info = {'name': name, 'copyOfName': copyOfName, 'isCopy': 1}

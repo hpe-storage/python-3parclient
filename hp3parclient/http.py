@@ -32,7 +32,10 @@ except ImportError:
 
 from hp3parclient import exceptions
 
-class HTTPRESTClient(httplib2.Http):
+class HTTPJSONRESTClient(httplib2.Http):
+    """ An HTTP REST Client that sends and recieves JSON data
+    as the body of the HTTP request
+    """
 
     USER_AGENT = 'python-3parclient'
     #this is what was in the sample python lib
@@ -45,7 +48,7 @@ class HTTPRESTClient(httplib2.Http):
                  insecure=False, timeout=None, 
                  timings=False, no_cache=False, 
                  http_log_debug=False):
-        super(HTTPRESTClient, self).__init__(timeout=timeout)
+        super(HTTPJSONRESTClient, self).__init__(timeout=timeout)
 
         self.session_key = None
 
@@ -129,17 +132,11 @@ class HTTPRESTClient(httplib2.Http):
             kwargs['body'] = json.dumps(kwargs['body'])
 
         self.http_log_req(args, kwargs)
-        resp, body = super(HTTPRESTClient, self).request(*args, **kwargs)
+        resp, body = super(HTTPJSONRESTClient, self).request(*args, **kwargs)
         self.http_log_resp(resp, body)
-       
-	#try:
-	#    if 'x-informapi-sessionkey' in resp:
-	#        self.session_key = resp['x-informapi-sessionkey']
-	#except Exception as ex:
-	#    pprint.pprint(ex)
-	##    #there was no header, so we won't save it.
-        #    pass
-
+      
+        # Try and conver the body response to an object
+        # This assumes the body of the reply is JSON 
         if body:
             try:
                 body = json.loads(body)

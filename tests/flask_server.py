@@ -2,10 +2,19 @@
 from flask import *
 import pprint
 import json, os, random, string
+import argparse
 from werkzeug.exceptions import default_exceptions
 from werkzeug.exceptions import HTTPException
+from flask_debugtoolbar import DebugToolbarExtension
 
-__all__ = ['make_json_app']
+parser = argparse.ArgumentParser()
+parser.add_argument("-debug", help="Turn on http debugging", default=False, action="store_true")
+args = parser.parse_args()
+debugRequests = False
+if "debug" in args and args.debug == True:
+    debugRequests = True
+
+#__all__ = ['make_json_app']
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
   return ''.join(random.choice(chars) for x in range(size))
@@ -25,15 +34,15 @@ def make_json_app(import_name, **kwargs):
         pprint.pprint(ex.code)
         #response = jsonify(message=str(ex))
         response = jsonify(ex)
-        ass = jsonify(shit='balls')
-        pprint.pprint(ass)
         response.status_code = (ex.code
                                 if isinstance(ex, HTTPException)
                                 else 500)
         return response
 
     app = Flask(import_name, **kwargs)
+    app.debug = True
     app.secret_key = id_generator(24)
+    
 
     for code in default_exceptions.iterkeys():
         app.error_handler_spec[None][code] = make_json_error
@@ -43,6 +52,13 @@ def make_json_app(import_name, **kwargs):
 app = make_json_app(__name__)
 
 session_key = id_generator(24)
+
+def debugRequest(request):
+    if debugRequests:
+        print "\n"
+        pprint.pprint(request)
+        pprint.pprint(request.headers)
+        pprint.pprint(request.data)
 
 
 def throw_error(http_code, error_code=None, desc=None, debug1=None, debug2=None):
@@ -58,21 +74,26 @@ def throw_error(http_code, error_code=None, desc=None, debug1=None, debug2=None)
 
 @app.route('/')
 def index():
+    debugRequest(request)
     if 'username' in session:
         return 'Logged in as %s' % escape(session['username'])
     abort(401)
 
+@app.route('/api/v1/throwerror')
+def errtest():
+    debugRequest(request)
+    throw_error(405, 'ERR_TEST', 'testing throwing an error', 'debug1 message', 'debug2 message')
+
 
 @app.errorhandler(404)
 def not_found(error):
-    pprint.pprint(request.path)
+    debugRequest(request)
     return Response("%s has not been implemented" % request.path, status=501)
 
 
 @app.route('/api/v1/credentials', methods=['GET', 'POST'])
 def credentials():
-    pprint.pprint("credentials %s" % request.method)
-    #pprint.pprint("data = %s" % request.data)
+    debugRequest(request)
 
     if request.method == 'GET':
         return 'GET credentials called'
@@ -99,11 +120,10 @@ def credentials():
 
 @app.route('/api/v1/credentials/<session_key>', methods=['DELETE'])
 def credentials_logout(session_key):
-    pprint.pprint("credentials %s" % request.method)
+    debugRequest(request)
     session.clear()
     return 'DELETE credentials called'
 
 
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()

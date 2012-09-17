@@ -18,6 +18,7 @@
 Exceptions for the client
 """
 
+import pprint
 
 class UnsupportedVersion(Exception):
     """Indicates that the user is trying to use an unsupported
@@ -43,26 +44,29 @@ class ClientException(Exception):
     debug1 = None
     debug2 = None
     def __init__(self, error=None):
+        pprint.pprint(error)
         if 'code' in error:
             self.error_code = error['code']
-
         if 'desc' in error:
             self.error_desc = error['desc']
-
         if 'debug1' in error:
             self.debug1 = error['debug1']
         if 'debug2' in error:
             self.debug2 = error['debug2']
 
 
-    def __str__(self, error=None):
-
+    def __str__(self):
         formatted_string = "%s (HTTP %s)" % (self.message, self.http_status)
-        if 'code' in error:
+        if self.error_code:
             formatted_string += " %s" % self.error_code
-
-        if 'desc' in error:
+        if self.error_desc:
             formatted_string += " - %s" % self.error_desc
+
+        if self.debug1:
+            formatted_string += " (1: '%s')" % self.debug1
+
+        if self.debug2:
+            formatted_string += " (2: '%s')" % self.debug2
           
         return formatted_string
 
@@ -99,12 +103,12 @@ class NotFound(ClientException):
     http_status = 404
     message = "Not found"
 
-class OverLimit(ClientException):
+class MethodNotAllowed(ClientException):
     """
-    HTTP 413 - Over limit: you're over the API limits for this time period.
+    HTTP 405 - Method not Allowed 
     """
-    http_status = 413
-    message = "Over limit"
+    http_status = 405
+    message = "Method Not Allowed"
 
 class Conflict(ClientException):
     """
@@ -112,6 +116,13 @@ class Conflict(ClientException):
     """
     http_status = 409
     message = "Conflict"
+
+class OverLimit(ClientException):
+    """
+    HTTP 413 - Over limit: you're over the API limits for this time period.
+    """
+    http_status = 413
+    message = "Over limit"
 
 
 
@@ -130,7 +141,8 @@ class HTTPNotImplemented(ClientException):
 #
 # Instead, we have to hardcode it:
 _code_map = dict((c.http_status, c) for c in [BadRequest, Unauthorized,
-                   Forbidden, NotFound, OverLimit, HTTPNotImplemented])
+                   Forbidden, NotFound, MethodNotAllowed, Conflict, 
+                   OverLimit, HTTPNotImplemented])
 
 
 def from_response(response, body):
