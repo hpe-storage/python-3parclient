@@ -35,6 +35,11 @@ from hp3parclient import exceptions
 class HTTPRESTClient(httplib2.Http):
 
     USER_AGENT = 'python-3parclient'
+    #this is what was in the sample python lib
+    #SESSION_COOKIE_NAME = 'X-Hp3Par-Wsapi-Sessionkey'
+
+    #this is what is in the API docs
+    SESSION_COOKIE_NAME = 'X-InFormAPI-SessionKey'
 
     def __init__(self, api_url=None,
                  insecure=False, timeout=None, 
@@ -127,13 +132,13 @@ class HTTPRESTClient(httplib2.Http):
         resp, body = super(HTTPRESTClient, self).request(*args, **kwargs)
         self.http_log_resp(resp, body)
        
-	try:
-	    if 'x-informapi-sessionkey' in resp:
-	        self.session_key = resp['x-informapi-sessionkey']
-	except Exception as ex:
-	    pprint.pprint(ex)
-	    #there was no header, so we won't save it.
-            pass
+	#try:
+	#    if 'x-informapi-sessionkey' in resp:
+	#        self.session_key = resp['x-informapi-sessionkey']
+	#except Exception as ex:
+	#    pprint.pprint(ex)
+	##    #there was no header, so we won't save it.
+        #    pass
 
         if body:
             try:
@@ -163,7 +168,7 @@ class HTTPRESTClient(httplib2.Http):
         # re-authenticate and try again. If it still fails, bail.
         try:
             if self.session_key:
-                kwargs.setdefault('headers', {})['X-InFormAPI-SessionKey'] = self.session_key
+                kwargs.setdefault('headers', {})[self.SESSION_COOKIE_NAME] = self.session_key
 
             resp, body = self._time_request(self.api_url + url, method,
                                             **kwargs)
