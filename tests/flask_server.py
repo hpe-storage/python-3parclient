@@ -125,5 +125,65 @@ def credentials_logout(session_key):
     return 'DELETE credentials called'
 
 
+@app.route('/api/v1/volumes', methods=['GET'])
+def volumes_get():
+    debugRequest(request)
+
+    volume1 = { 'id': 1, 'name': 'Volume1', 'domain': 'somedomain',
+               'provisioning' : 1, 'copyType' : 2, 'baseld' : 12345,
+               'readOnly' : False, 'state' : 1, 'failedStates' : None,
+               'degradedStates' : None, 'additionalStates' : None,
+               'adminReservedMB' : 222, 'rawAdminReservedMB' : 111,
+               'adminUsedMB': 5432, 'adminFreeMB' : 1234567890,
+               'snapshotReservedMB' : 123, 'rawSnapshotReservedMB' : 123,
+               'snapshotUsedMB' : 111, 'snapshotFreeMB': 222,
+               'rawUserReservedMB' : 999, 'userUsedMB': 123456,
+               'userFreeMB': 987654321, 'sizeMB' : 9876543210,
+               'parentld' : '123', 'roChildld' : '444',
+               'rwChildld' : '555', 'physParentld' : '777', 'wmn':'someWMN',
+               'creationTimeSec' : 123456789, 'creationTime8601' : 'uhhh',
+               'expirationTimeSec' : 2222222, 'expirationTime8601' : 33333333,
+               'retentionTimeSec' : 44444444, 'retentionTime8601' : 55555555,
+               'policies' : {'staleSS' : False, 'oneHost' : True, 
+                             'zeroDetect' : True, 'system' : False, 
+                             'caching' : True}, 
+               'userCPG' : "SomethingCPG",
+               'snapCPG' : "SomeSnapCPG", 'comment' : "this is a bogus volume!"}
+
+    volume2 = { 'id': 2, 'name': 'Volume2', 'domain': 'anotherdomain',
+               'provisioning' : 1, 'copyType' : 2, 'baseld' : 12345,
+               'readOnly' : False, 'state' : 1, 'failedStates' : None,
+               'degradedStates' : None, 'additionalStates' : None,
+               'adminReservedMB' : 222, 'rawAdminReservedMB' : 111,
+               'adminUsedMB': 5432, 'adminFreeMB' : 1234567890,
+               'snapshotReservedMB' : 123, 'rawSnapshotReservedMB' : 123,
+               'snapshotUsedMB' : 111, 'snapshotFreeMB': 222,
+               'rawUserReservedMB' : 999, 'userUsedMB': 123456,
+               'userFreeMB': 987654321, 'sizeMB' : 9876543210,
+               'parentld' : '123', 'roChildld' : '444',
+               'rwChildld' : '555', 'physParentld' : '777', 'wmn':'someWMN',
+               'creationTimeSec' : 123456789, 'creationTime8601' : 'uhhh',
+               'expirationTimeSec' : 2222222, 'expirationTime8601' : 33333333,
+               'retentionTimeSec' : 44444444, 'retentionTime8601' : 55555555,
+               'policies' : {'staleSS' : False, 'oneHost' : True, 
+                             'zeroDetect' : True, 'system' : False, 
+                             'caching' : True}, 
+               'userCPG' : "SomethingCPG",
+               'snapCPG' : "SomeSnapCPG", 'comment' : "another bogus volume!"}
+
+    resp = make_response(json.dumps([volume1, volume2]), 200)
+    return resp
+
+@app.route('/api/v1/volumes', methods=['POST'])
+def volumes_post():
+    throw_error(501, 'BLAH', "Not implemented yet dude!")
+     
+
+@app.route('/api/v1/volumes', methods=['DELETE'])
+def volumes_delete():
+    throw_error(501, 'BLAH', "Not implemented yet dude!")
+
+
+
 if __name__ == "__main__":
     app.run()

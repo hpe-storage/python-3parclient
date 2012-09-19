@@ -63,7 +63,8 @@ def test_get_volumes():
     print "Get Volumes"
     try:
        cl.login("user", "hp")
-       cl.getVolumes()
+       volumes = cl.getVolumes()
+       pprint.pprint(volumes)
     except exceptions.Unauthorized as ex:
        pprint.pprint("You must login first")
     except Exception as ex:
@@ -82,5 +83,5 @@ def test_error():
 
 
 #test_create_volume()
+#test_error()
 test_get_volumes()
-test_error()
