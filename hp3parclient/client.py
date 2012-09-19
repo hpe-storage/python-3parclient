@@ -83,8 +83,7 @@ class HP3ParClient:
 	:Returns:
 	    None
 	"""
-	info = {'name': name}
-	response, body = self.http.delete('/volumes', body=info)
+	response, body = self.http.delete('/volumes/%s' % name)
 	return body
 
 

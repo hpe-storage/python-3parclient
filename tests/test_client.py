@@ -47,6 +47,17 @@ def test_logout():
     except exceptions.Unauthorized as ex:
        pprint.pprint("Logout Failed")
 
+def test_get_volumes():
+    print "Get Volumes"
+    try:
+       cl.login("user", "hp")
+       volumes = cl.getVolumes()
+       pprint.pprint(volumes)
+    except exceptions.Unauthorized as ex:
+       pprint.pprint("You must login first")
+    except Exception as ex:
+       print ex
+
 
 def test_create_volume():
     print "Create Volumes"
@@ -71,47 +82,61 @@ def test_create_volume():
     except exceptions.BadRequest as ex:
 	print "Got Expected Exception %s" % ex
         pass
-    except Exception as ex:
-       pass
 
     try:
 	volume = cl.createVolume("VolumeExists", "testCPG", 2048)
     except exceptions.Conflict as ex:
 	print "Got Expected Exception %s" % ex
         pass
-    except Exception as ex:
-       pass
 
     try:
 	volume = cl.createVolume("VolumeTooLarge", "testCPG", 10241024)
     except exceptions.BadRequest as ex:
 	print "Got Expected Exception %s" % ex
         pass
-    except Exception as ex:
-       pass
 
     try:
 	volume = cl.createVolume("VolumeNotEnoughSpace", "testCPG", 9999)
     except exceptions.BadRequest as ex:
 	print "Got Expected Exception %s" % ex
         pass
-    except Exception as ex:
-       pass
-
 
     print "Complete\n"
 
+def test_delete_volume():
+    print "Test Delete Volume"
 
-def test_get_volumes():
-    print "Get Volumes"
     try:
-       cl.login("user", "hp")
-       volumes = cl.getVolumes()
-       pprint.pprint(volumes)
-    except exceptions.Unauthorized as ex:
-       pprint.pprint("You must login first")
-    except Exception as ex:
-       print ex
+	cl.deleteVolume("foo")
+    except exceptions.NotFound as ex:
+	print "Got Expected Exception %s" % ex
+        pass
+
+    try:
+	cl.deleteVolume("forbidden")
+    except exceptions.Forbidden as ex:
+	print "Got Expected Exception %s" % ex
+        pass
+
+    try:
+	cl.deleteVolume("retained")
+    except exceptions.Forbidden as ex:
+	print "Got Expected Exception %s" % ex
+        pass
+
+    try:
+	cl.deleteVolume("readonlychild")
+    except exceptions.Forbidden as ex:
+	print "Got Expected Exception %s" % ex
+        pass
+
+    try:
+	cl.deleteVolume("works")
+    except exceptions.NotFound as ex:
+	print "Got Expected Exception %s" % ex
+        pass
+
+    print "Complete\n"
 
 
 def test_error():
@@ -124,7 +149,7 @@ def test_error():
        print ex
 
 
-
-test_create_volume()
+#test_create_volume()
+test_delete_volume()
 #test_error()
 #test_get_volumes()

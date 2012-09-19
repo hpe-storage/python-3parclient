@@ -124,6 +124,11 @@ def credentials_logout(session_key):
     session.clear()
     return 'DELETE credentials called'
 
+
+
+#### VOLUMES ####
+
+
 @app.route('/api/v1/volumes', methods=['POST'])
 def volumes_create():
     debugRequest(request)
@@ -155,6 +160,23 @@ def volumes_create():
 
     #return  make_response(request.data, 200)
     return  make_response("", 200)
+
+
+
+@app.route('/api/v1/volumes/<volume_name>', methods=['DELETE'])
+def volumes_delete(volume_name):
+    debugRequest(request)
+
+    if volume_name == "foo":
+	throw_error(404, 'NON_EXISTENT_SV', "The volume '%s' doesn't exist" % volume_name)
+    elif volume_name == "forbidden":
+	throw_error(403, "PERM_DENIED", "Insufficient privileges to delete '%s'" % volume_name)
+    elif volume_name == "retained":
+	throw_error(403, "RETAINED", "Volume Retention for '%s' has not timed out" % volume_name)
+    elif volume_name == "readonlychild":
+	throw_error(403, "HAS_RO_CHILD", "Volume '%s' has a read only child" % volume_name)
+ 
+    return make_response("", 200)
 
 
 @app.route('/api/v1/volumes', methods=['GET'])
@@ -210,12 +232,6 @@ def volumes_get():
 def volumes_post():
     throw_error(501, 'BLAH', "Not implemented yet dude!")
      
-
-@app.route('/api/v1/volumes', methods=['DELETE'])
-def volumes_delete():
-    throw_error(501, 'BLAH', "Not implemented yet dude!")
-
-
 
 if __name__ == "__main__":
     app.run()
