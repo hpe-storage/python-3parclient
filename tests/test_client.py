@@ -52,11 +52,54 @@ def test_create_volume():
     print "Create Volumes"
     try:
        cl.login("user", "hp")
-       cl.createVolume("Foo", "someCPG", "300")
+       cl.createVolume("Volume1", "someCPG", "300")
+       cl.createVolume("Volume2", "anotherCPG", 1024, 
+                                {'comment': 'something', 'snapCPG':'somesnapcpg'})
+
     except exceptions.Unauthorized as ex:
        pprint.pprint("You must login first")
     except Exception as ex:
        print ex
+
+    try:
+       cl.createVolume("Volume3", "testCPG", 2048, "foo")
+    except Exception as ex:
+       pass
+
+    try:
+	volume = cl.createVolume("VolumeBad", "testCPG", 2048, {'bogus':'break'})
+    except exceptions.BadRequest as ex:
+	print "Got Expected Exception %s" % ex
+        pass
+    except Exception as ex:
+       pass
+
+    try:
+	volume = cl.createVolume("VolumeExists", "testCPG", 2048)
+    except exceptions.Conflict as ex:
+	print "Got Expected Exception %s" % ex
+        pass
+    except Exception as ex:
+       pass
+
+    try:
+	volume = cl.createVolume("VolumeTooLarge", "testCPG", 10241024)
+    except exceptions.BadRequest as ex:
+	print "Got Expected Exception %s" % ex
+        pass
+    except Exception as ex:
+       pass
+
+    try:
+	volume = cl.createVolume("VolumeNotEnoughSpace", "testCPG", 9999)
+    except exceptions.BadRequest as ex:
+	print "Got Expected Exception %s" % ex
+        pass
+    except Exception as ex:
+       pass
+
+
+    print "Complete\n"
 
 
 def test_get_volumes():
@@ -82,6 +125,6 @@ def test_error():
 
 
 
-#test_create_volume()
+test_create_volume()
 #test_error()
-test_get_volumes()
+#test_get_volumes()

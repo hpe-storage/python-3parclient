@@ -54,16 +54,25 @@ class HP3ParClient:
 	response, body = self.http.get('/volumes')
         return body
 
-    def createVolume(self, name, cpgName, sizeMB):
+    def createVolume(self, name, cpgName, sizeMB, extra=None):
 	""" Create a new volume
 	:Parameters:
 	    'name' - (str) - the name of the volume
 	    'cpgName' - (str) - the name of the destination CPG 
 	    'sizeMB' - (int) - size in MegaBytes for the volume
+            'extra' - (dict) - dict of other optional items
+                               {'comment': 'some comment', 'snapCPG' :'CPG name'}
 	:Returns:
 	    List of Volumes
 	"""
         info = {'name': name, 'cpg': cpgName, 'sizeMB': sizeMB}
+        if extra:
+            if type(extra) is dict:
+	        for key in extra.keys():
+                    info[key] = extra[key]
+            else:
+                raise Exception("extra must be a dictionary")
+
         response, body = self.http.post('/volumes', body=info)
 	return body
 
@@ -80,7 +89,7 @@ class HP3ParClient:
 
 
     def createSnapshot(self, name, copyOfName): 
-        info = {'name': name, 'copyOfName': copyOfName, 'isCopy': 1}
+        info = {'name': name, 'copyOfName': copyOfName, 'isCopy': True}
         response, body = self.http.post('/volumes', body=info)
 	return body
 

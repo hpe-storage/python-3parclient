@@ -124,6 +124,38 @@ def credentials_logout(session_key):
     session.clear()
     return 'DELETE credentials called'
 
+@app.route('/api/v1/volumes', methods=['POST'])
+def volumes_create():
+    debugRequest(request)
+    data = json.loads(request.data)
+
+    valid_keys = {'name':None, 'cpg':None, 'sizeMB':None, 'id':None,
+                  'comment':None, 'policies':None, 'snapCPG':None,
+                  'ssSpcAllocWarningPct': None, 'ssSpcAllocLimitPct': None,
+                  'tpvv':None, 'usrSpcAllocWarningPct':None,
+                  'usrSpcAllocLimitPct': None, 'isCopy':None,
+                  'copyOfName':None, 'copyRO':None, 'expirationHours': None,
+                  'retentionHours':None}
+
+    ## do some fake errors here depending on data
+    for key in data.keys():
+        if key not in valid_keys.keys():
+           throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key) 
+
+
+    if data['name'] == 'VolumeExists':
+	throw_error(409, 'EXISTENT_SV', "The volume '%s' already exists" % data['name'])
+
+
+    if data['sizeMB'] == 10241024:
+	throw_error(400, 'TOO_LARGE', "Volume size '%s' above architectural limit" % data['sizeMB'])
+
+    if data['sizeMB'] == 9999:
+	throw_error(400, 'NO_SPACE', "Not enough space currently available")
+
+    #return  make_response(request.data, 200)
+    return  make_response("", 200)
+
 
 @app.route('/api/v1/volumes', methods=['GET'])
 def volumes_get():
