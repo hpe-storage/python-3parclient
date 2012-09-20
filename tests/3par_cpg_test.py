@@ -182,12 +182,6 @@ def delete_CPG():
     print "Complete\n"
 
 
-#test_create_volume()
-#test_delete_volume()
-#test_error()
 cl.login(username, password)
-#get_volumes()
-#get_VLUNs()
-#get_CPGs()
 create_CPG()
 delete_CPG()
