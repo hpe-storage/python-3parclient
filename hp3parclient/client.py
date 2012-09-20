@@ -54,24 +54,20 @@ class HP3ParClient:
 	response, body = self.http.get('/volumes')
         return body
 
-    def createVolume(self, name, cpgName, sizeMB, extra=None):
+    def createVolume(self, name, cpgName, sizeMB, optional=None):
 	""" Create a new volume
 	:Parameters:
 	    'name' - (str) - the name of the volume
 	    'cpgName' - (str) - the name of the destination CPG 
 	    'sizeMB' - (int) - size in MegaBytes for the volume
-            'extra' - (dict) - dict of other optional items
+            'optional' - (dict) - dict of other optional items
                                {'comment': 'some comment', 'snapCPG' :'CPG name'}
 	:Returns:
 	    List of Volumes
 	"""
         info = {'name': name, 'cpg': cpgName, 'sizeMB': sizeMB}
-        if extra:
-            if type(extra) is dict:
-	        for key in extra.keys():
-                    info[key] = extra[key]
-            else:
-                raise Exception("extra must be a dictionary")
+        if optional:
+            info = self._mergeDict(info, optional)
 
         response, body = self.http.post('/volumes', body=info)
 	return body
@@ -106,13 +102,41 @@ class HP3ParClient:
 	response, body = self.http.get('/cpgs')
 	return body
 
-    def createCPG(self, name):
+    def createCPG(self, name, optional=None):
 	""" Create a CPG
 	:Parameters
             'name' (str) - cpg name    
+            'optional' (dict) - optional parameters
+
+                List of optional keys
+
+                'growthIncrementMB' (int) - Specifies the growth increment, the
+                    amount of logical disk storage created on each auto-grow operation.
+                'growthLimitMB' (int) - Specifies that the auto-grow operation
+                    is limited to the specified storage amount that sets the growth limit.
+                'usedLDWarningAlertMB' (int) - Specifies that the threshold of
+                    used logical disk space, when exceeded results in a warning alert.
+                'domain' (str) - Specifies the name of the domain in which the
+                    object will reside.
+                'LDLayout' (obj) - Specifies Logical Disk types to be used for
+                    this CPG.
+
+                example optional dict:
+
+                {'growthIncrementMB' : 100,
+                 'growthLimitMB' : 1024,
+                 'usedLDWarningAlertMB' : 200,
+                 'domain' : 'MyDomain',
+                 'LDLayout' : {'RAIDType' : 1, 'setSize' : 100, 'HA': 0,
+                               'chunkletPosPref' : 2, 'diskPatterns': []}
+                 }
 	:Returns
+            returns HTTP 200 response with no body on success
 	"""
 	info = {'name': name}
+        if optional:
+            info = self._mergeDict(info, optional)
+
 	reponse, body = self.http.post('/cpgs', body=info)
 	return body
     
@@ -123,8 +147,7 @@ class HP3ParClient:
         :Returns:
             None
         """
-	info = {'name': name}
-	reponse, body = self.http.delete('/cpgs', body=info)
+	reponse, body = self.http.delete('/cpgs/%s' % name)
 	return body
 
 
@@ -156,10 +179,26 @@ class HP3ParClient:
         :Returns:
             None
         """
-	info = {'name': name}
-	response, body = self.http.delete('/vluns', body=info)
+	response, body = self.http.delete('/vluns/%s' % name)
 	return body
 
-    
+
+
+    def _mergeDict(selft, dict1, dict2):
+        """Safely merge 2 dictionaries together
+        :Parameters:
+            'dict1' (dict)
+            'dict2' (dict)
+        :Returns:
+            dict
+        """
+        if type(dict1) is not dict:
+            raise Exception("dict1 is not a dictionary")
+        if type(dict2) is not dict:
+            raise Exception("dict2 is not a dictionary")
+        
+        dict3 = dict1.copy()
+        dict3.update(dict2)
+        return dict3
 
 
