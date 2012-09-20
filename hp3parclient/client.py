@@ -152,23 +152,67 @@ class HP3ParClient:
 
 
 
-    ##VLUN methods
+    ## VLUN methods
+
+    ## Virtual-LUN, or VLUN, is a pairing between a virtual volume and a
+    ## logical unit number (LUN), expressed as either a VLUN template or an active
+    ## VLUN
+
+    ## A VLUN template sets up an association between a virtual volume and a
+    ## LUN-host, LUN-port, or LUN-host-port combination by establishing the export
+    ## rule, or the manner in which the Volume is exported. 
+
+
     def getVLUNs(self):
 	""" Get VLUNs
         :Parameters:
             None          
         :Returns:
-            All vluns
+            Array of VLUNs
         """
 	reponse, body = self.http.get('/vluns')
 	return body
 
-    def createVLUN(self, name):
+    def createVLUN(self, volumeName, lun, hostname, portPos=None, noVcn=None,
+                   overrideLowerPriority=None):
 	""" Create a new VLUN
+            When creating a VLUN, the volumeName and lun members are required.
+            Either hostname or portPos (or both in the case of matched sets) is
+            also required.  The noVcn and overrideLowerPriority members are
+            optional.
 	:Parameters:
+            'volumeName' (str) - Name of the volume to be exported
+            'lun' (int) - LUN id
+
+            'hostname' (str) - Name of the host which the volume is to be
+                exported.
+
+            'portPos' (dict) - System port of VLUN exported to. It includes
+                node number, slot number, and card port number
+                example:
+                    {'node': 1, 'slot': 2, 'cardPort': 3}
+
+            'noVcn' (bool) - A VLUN change notification (VCN) not be issued
+                after export (-novcn). Default: False.
+
+            'verrideLowerPriority' (bool) - Existing lower priority VLUNs will
+                be overridden (-ovrd). Use only if hostname member exists. Default:
+                False.
+
 	:Returns
+            HTTP 200 on success with no body
 	"""
-	info = {'name': name}
+	info = {'volumeName': volumeName, 'lun': lun, 'hostname':hostname}
+
+        if portPos:
+            info['portPos'] = portPos
+
+        if noVcn:
+            info['noVcn'] = noVcn
+
+        if overrideLowerPriority:
+            info['overrideLowerPriority'] = overrideLowerPriority
+
 	response, body = self.http.post('/vluns', body=info)
 	return body
         
