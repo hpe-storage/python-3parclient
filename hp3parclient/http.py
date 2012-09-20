@@ -38,17 +38,13 @@ class HTTPJSONRESTClient(httplib2.Http):
     """
 
     USER_AGENT = 'python-3parclient'
-    #this is what was in the sample python lib
-    #SESSION_COOKIE_NAME = 'X-Hp3Par-Wsapi-Sessionkey'
-
-    #this is what is in the API docs
-    SESSION_COOKIE_NAME = 'X-InFormAPI-SessionKey'
+    SESSION_COOKIE_NAME = 'X-Hp3Par-Wsapi-Sessionkey'
 
     def __init__(self, api_url=None,
                  insecure=False, timeout=None, 
                  timings=False, no_cache=False, 
                  http_log_debug=False):
-        super(HTTPJSONRESTClient, self).__init__(timeout=timeout)
+        super(HTTPJSONRESTClient, self).__init__(disable_ssl_certificate_validation=True)
 
         self.session_key = None
 
@@ -60,7 +56,7 @@ class HTTPJSONRESTClient(httplib2.Http):
 
         # httplib2 overrides
         self.force_exception_to_status_code = True
-        self.disable_ssl_certificate_validation = insecure
+        #self.disable_ssl_certificate_validation = insecure
 
         self._logger = logging.getLogger(__name__)
 
