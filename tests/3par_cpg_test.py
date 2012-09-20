@@ -17,8 +17,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-debug", help="Turn on http debugging", default=False, action="store_true")
 args = parser.parse_args()
 
-username = "SOMEVALUE"
-password = "SOMEVALUE"
+username = "3paradm"
+password = "3pardata"
 
 cl = client.HP3ParClient("http://10.10.22.241:8008/api/v1")
 if "debug" in args and args.debug == True:
@@ -153,8 +153,15 @@ def create_CPG():
     print "Create CPGs"
     try:
         optional = {}
-        cl.createCPG("WaltTestCPG", optional)
-        cl.createCPG("WaltTestCPGi2", {'LDLayout': {'RAIDType' : 1}})
+        name = "WaltTestCPG"
+        cl.createCPG(name, optional)
+        print "Created '%s'" % name
+        name = "WaltTestCPG2"
+        cl.createCPG(name, {'LDLayout': {'RAIDType' : 1}})
+        print "Created '%s'" % name
+        name = "WaltTestCPG3"
+        cl.createCPG(name, {'LDLayout': {'RAIDType' : 2}})
+        print "Created '%s'" % name
         get_CPGs()
     except Exception as ex:
         print ex
@@ -182,5 +189,5 @@ cl.login(username, password)
 #get_volumes()
 #get_VLUNs()
 #get_CPGs()
-delete_CPG()
 create_CPG()
+delete_CPG()
