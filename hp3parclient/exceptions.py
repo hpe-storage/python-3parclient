@@ -196,7 +196,7 @@ class HTTPUnsupportedMediaType(ClientException):
     http_status = 415
     message = "Unsupported Media Type"
 
-class HTTPRequestedRageNotSatisfiable(ClientException):
+class HTTPRequestedRangeNotSatisfiable(ClientException):
     """
     HTTP 416 - The client has asked for a portion of the file, but the server
                cannot supply that portion.
@@ -270,9 +270,17 @@ class HTTPVersionNotSupported(ClientException):
 #                      for c in ClientException.__subclasses__())
 #
 # Instead, we have to hardcode it:
-_code_map = dict((c.http_status, c) for c in [BadRequest, Unauthorized,
-                   Forbidden, NotFound, MethodNotAllowed, Conflict, 
-                   OverLimit, HTTPNotImplemented])
+_code_map = dict((c.http_status, c) for c in [HTTPBadRequest, HTTPUnauthorized,
+                   HTTPForbidden, HTTPNotFound, HTTPMethodNotAllowed,
+                   HTTPNotAcceptable, HTTPProxyAuthRequired, HTTPRequestTimeout, 
+                   HTTPConflict, HTTPGone, HTTPLengthRequired,
+                   HTTPPreconditionFailed, HTTPRequestEntityTooLarge,
+                   HTTPRequestURITooLong, HTTPUnsupportedMediaType,
+                   HTTPRequestedRangeNotSatisfiable, HTTPExpectationFailed,
+                   HTTPTeaPot,
+                   HTTPNotImplemented, HTTPBadGateway,
+                   HTTPServiceUnavailable, HTTPGatewayTimeout,
+                   HTTPVersionNotSupported])
 
 
 def from_response(response, body):
