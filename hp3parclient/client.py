@@ -54,16 +54,31 @@ class HP3ParClient:
 	response, body = self.http.get('/volumes')
         return body
 
-    def createVolume(self, name, cpgName, sizeMB, optional=None):
+    def createVolume(self, name, cpgName, sizeMiB, optional=None):
 	""" Create a new volume
 	:Parameters:
 	    'name' - (str) - the name of the volume
 	    'cpgName' - (str) - the name of the destination CPG 
-	    'sizeMB' - (int) - size in MegaBytes for the volume
+	    'sizeMiB' - (int) - size in MiB for the volume
             'optional' - (dict) - dict of other optional items
-                               {'comment': 'some comment', 'snapCPG' :'CPG name'}
+                       {'id': 12, 'comment': 'some comment', 
+                        'snapCPG' :'CPG name', 
+                        'ssSpcAllocWarningPct' : 12,
+                        'ssSpcAllocLimitPct': 22,
+                        'tpvv' : True,
+                        'usrSpcAllocWarningPct': 22,
+                        'usrSpcAllocLimitPct': 22,
+                        'expirationHours': 256,
+                        'retentionHours': 256 }
 	:Returns:
 	    List of Volumes
+        :Exceptions:
+            INV_INPUT - HTTP 400 - Invalid Parameter
+            PERM_DENIED - HTTP 403 - Permission denied
+            EXISTENT_SV = HTTP 409 - Volume Exists already 
+            INT_SERV_ERR - HTTP 500 - Communication with the CLI failed
+            TOO_LARGE - HTTP 400 - Volume size above limit
+            NO_SPACE - HTTP 400 - Not Enough space is available.
 	"""
         info = {'name': name, 'cpg': cpgName, 'sizeMB': sizeMB}
         if optional:
@@ -83,8 +98,19 @@ class HP3ParClient:
 	return body
 
 
-    def createSnapshot(self, name, copyOfName): 
+    def createSnapshot(self, name, copyOfName, optional=None): 
+        """ Create a snapshot of an existing Volume
+        :Parameters:
+            'name' (str) - Name of the Snapshot
+            'copyOfName' (str) - The volume you want to snapshot            
+        :Returns:
+            None
+        :Exceptions:
+        """
         info = {'name': name, 'copyOfName': copyOfName, 'isCopy': True}
+        if optional:
+            info = self._mergeDict(info, optional)
+
         response, body = self.http.post('/volumes', body=info)
 	return body
 
