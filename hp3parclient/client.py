@@ -25,7 +25,7 @@ import httplib2
 import time
 import pprint
 
-from hp3parclient import http
+from hp3parclient import http,exceptions
 
 
 class HP3ParClient:
@@ -93,7 +93,7 @@ class HP3ParClient:
 
     ##CPG methods
     def getCPGs(self):
-	""" Get CPGs
+	""" Get entire list of CPGs
         :Parameters:
             None          
         :Returns:
@@ -110,11 +110,11 @@ class HP3ParClient:
 
                 List of optional keys
 
-                'growthIncrementMB' (int) - Specifies the growth increment, the
+                'growthIncrementMiB' (int) - Specifies the growth increment, the
                     amount of logical disk storage created on each auto-grow operation.
-                'growthLimitMB' (int) - Specifies that the auto-grow operation
+                'growthLimitMiB' (int) - Specifies that the auto-grow operation
                     is limited to the specified storage amount that sets the growth limit.
-                'usedLDWarningAlertMB' (int) - Specifies that the threshold of
+                'usedLDWarningAlertMiB' (int) - Specifies that the threshold of
                     used logical disk space, when exceeded results in a warning alert.
                 'domain' (str) - Specifies the name of the domain in which the
                     object will reside.
@@ -123,9 +123,9 @@ class HP3ParClient:
 
                 example optional dict:
 
-                {'growthIncrementMB' : 100,
-                 'growthLimitMB' : 1024,
-                 'usedLDWarningAlertMB' : 200,
+                {'growthIncrementMiB' : 100,
+                 'growthLimitMiB' : 1024,
+                 'usedLDWarningAlertMiB' : 200,
                  'domain' : 'MyDomain',
                  'LDLayout' : {'RAIDType' : 1, 'setSize' : 100, 'HA': 0,
                                'chunkletPosPref' : 2, 'diskPatterns': []}
@@ -146,9 +146,15 @@ class HP3ParClient:
             'name' (str) - cpg name    
         :Returns:
             None
+        :Exceptions:
+            INV_INPUT - HTTP 400 - Invalud URI Syntax
+            PERM_DENIED - HTTP 403 - Permission denied
+            NON_EXISTENT_CPG = HTTP 404 - CPG Not Found
+            INT_SERV_ERR - HTTP 500 - Communication with the CLI failed
+            IN_USE - HTTP 408 - The CPG Cannot be removed because it is
+               in use.
         """
 	reponse, body = self.http.delete('/cpgs/%s' % name)
-	return body
 
 
 
@@ -201,6 +207,8 @@ class HP3ParClient:
 
 	:Returns
             HTTP 200 on success with no body
+            A 'Location' header will contain the VLUN information
+
 	"""
 	info = {'volumeName': volumeName, 'lun': lun, 'hostname':hostname}
 
@@ -214,7 +222,11 @@ class HP3ParClient:
             info['overrideLowerPriority'] = overrideLowerPriority
 
 	response, body = self.http.post('/vluns', body=info)
-	return body
+        if response:
+            location = response['headers']['location'].replace('/api/v1/vluns/', '')
+	    return location
+        else:
+            return None
         
     def deleteVLUN(self, name):
 	""" Delete a VLUN
