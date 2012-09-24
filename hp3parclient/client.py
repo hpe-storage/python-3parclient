@@ -130,8 +130,19 @@ class HP3ParClient:
                  'LDLayout' : {'RAIDType' : 1, 'setSize' : 100, 'HA': 0,
                                'chunkletPosPref' : 2, 'diskPatterns': []}
                  }
-	:Returns
+	:Returns:
             returns HTTP 200 response with no body on success
+
+        :Exceptions:
+            INV_INPUT - HTTP 400 - Invalud URI Syntax
+            NON_EXISTENT_DOMAIN - HTTP 400 - Domain doesn't exist
+            PERM_DENIED - HTTP 403 - Permission denied
+            OTHER - HTTP 400 - Other miscellaneous errors
+            EXISTENT_CPG = HTTP 409 - CPG Exists already 
+            INT_SERV_ERR - HTTP 500 - Communication with the CLI failed
+            NO_SPACE - HTTP 400 - Not Enough space is available.
+            BAD_CPG_PATTERN - HTTP 400 - A Pattern in a CPG specifies illegal
+                                         values
 	"""
 	info = {'name': name}
         if optional:
