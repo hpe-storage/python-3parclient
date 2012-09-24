@@ -40,6 +40,7 @@ class ClientException(Exception):
     """
     error_code = None
     error_desc = None
+    error_ref = None
 
     debug1 = None
     debug2 = None
@@ -48,6 +49,9 @@ class ClientException(Exception):
             self.error_code = error['code']
         if 'desc' in error:
             self.error_desc = error['desc']
+        if 'ref' in error:
+            self.error_ref = error['ref']
+
         if 'debug1' in error:
             self.debug1 = error['debug1']
         if 'debug2' in error:
@@ -60,6 +64,8 @@ class ClientException(Exception):
             formatted_string += " %s" % self.error_code
         if self.error_desc:
             formatted_string += " - %s" % self.error_desc
+        if self.error_ref:
+            formatted_string += " - %s" % self.error_ref
 
         if self.debug1:
             formatted_string += " (1: '%s')" % self.debug1
@@ -70,7 +76,12 @@ class ClientException(Exception):
         return formatted_string
 
 
-class BadRequest(ClientException):
+##
+## 400 Errors
+##
+
+
+class HTTPBadRequest(ClientException):
     """
     HTTP 400 - Bad request: you sent some malformed data.
     """
@@ -78,7 +89,7 @@ class BadRequest(ClientException):
     message = "Bad request"
 
 
-class Unauthorized(ClientException):
+class HTTPUnauthorized(ClientException):
     """
     HTTP 401 - Unauthorized: bad credentials.
     """
@@ -86,7 +97,7 @@ class Unauthorized(ClientException):
     message = "Unauthorized"
 
 
-class Forbidden(ClientException):
+class HTTPForbidden(ClientException):
     """
     HTTP 403 - Forbidden: your credentials don't give you access to this
     resource.
@@ -95,35 +106,123 @@ class Forbidden(ClientException):
     message = "Forbidden"
 
 
-class NotFound(ClientException):
+class HTTPNotFound(ClientException):
     """
     HTTP 404 - Not found
     """
     http_status = 404
     message = "Not found"
 
-class MethodNotAllowed(ClientException):
+class HTTPMethodNotAllowed(ClientException):
     """
     HTTP 405 - Method not Allowed 
     """
     http_status = 405
     message = "Method Not Allowed"
 
-class Conflict(ClientException):
+class HTTPNotAcceptable(ClientException):
+    """
+    HTTP 406 - Method not Acceptable
+    """
+    http_status = 406
+    message = "Method Not Acceptable"
+
+class HTTPProxyAuthRequired(ClientException):
+    """
+    HTTP 407 - The client must first authenticate itself with the proxy.
+    """
+    http_status = 407
+    message = "Proxy Authentication Required"
+
+class HTTPRequestTimeout(ClientException):
+    """
+    HTTP 408 - The server timed out waiting for the request.
+    """
+    http_status = 408
+    message = "Request Timeout"
+
+
+class HTTPConflict(ClientException):
     """
     HTTP 409 - Conflict: A Conflict happened on the server
     """
     http_status = 409
     message = "Conflict"
 
-class OverLimit(ClientException):
+class HTTPGone(ClientException):
     """
-    HTTP 413 - Over limit: you're over the API limits for this time period.
+    HTTP 410 - Indicates that the resource requested is no longer available and
+               will not be available again.
     """
-    http_status = 413
+    http_status = 410
+    message = "Gone"
+
+class HTTPLengthRequired(ClientException):
+    """
+    HTTP 411 - The request did not specify the length of its content, which is
+               required by the requested resource.
+    """
+    http_status = 411
+    message = "Length Required"
+
+class HTTPPreconditionFailed(ClientException):
+    """
+    HTTP 412 - The server does not meet one of the preconditions that the
+               requester put on the request.
+    """
+    http_status = 412
     message = "Over limit"
 
+class HTTPRequestEntityTooLarge(ClientException):
+    """
+    HTTP 413 - The request is larger than the server is willing or able to
+               process
+    """
+    http_status = 413
+    message = "Request Entity Too Large"
 
+class HTTPRequestURITooLong(ClientException):
+    """
+    HTTP 414 - The URI provided was too long for the server to process.
+    """
+    http_status = 414
+    message = "Request URI Too Large"
+
+class HTTPUnsupportedMediaType(ClientException):
+    """
+    HTTP 415 - The request entity has a media type which the server or resource
+               does not support.
+    """
+    http_status = 415
+    message = "Unsupported Media Type"
+
+class HTTPRequestedRageNotSatisfiable(ClientException):
+    """
+    HTTP 416 - The client has asked for a portion of the file, but the server
+               cannot supply that portion.
+    """
+    http_status = 416
+    message = "Requested Range Not Satisfiable"
+
+class HTTPExpectationFailed(ClientException):
+    """
+    HTTP 417 - The server cannot meet the requirements of the Expect
+               request-header field.
+    """
+    http_status = 417
+    message = "Expectation Failed"
+
+class HTTPTeaPot(ClientException):
+    """
+    HTTP 418 - I'm a Tea Pot
+    """
+    http_status = 418
+    message = "I'm A Teapot. (RFC 2324)"
+
+
+##
+## 500 Errors
+##
 
 # NotImplemented is a python keyword.
 class HTTPNotImplemented(ClientException):
@@ -132,6 +231,38 @@ class HTTPNotImplemented(ClientException):
     """
     http_status = 501
     message = "Not Implemented"
+
+class HTTPBadGateway(ClientException):
+    """
+    HTTP 502 - The server was acting as a gateway or proxy and received an
+               invalid response from the upstream server. 
+    """
+    http_status = 502
+    message = "Bad Gateway"
+
+class HTTPServiceUnavailable(ClientException):
+    """
+    HTTP 503 - The server is currently unavailable
+    """
+    http_status = 503
+    message = "Service Unavailable"
+
+class HTTPGatewayTimeout(ClientException):
+    """
+    HTTP 504 - The server was acting as a gateway or proxy and did not receive
+               a timely response from the upstream server.
+    """
+    http_status = 504
+    message = "Gateway Timeout"
+
+class HTTPVersionNotSupported(ClientException):
+    """
+    HTTP 505 - The server does not support the HTTP protocol version used in
+               the request.
+    """
+    http_status = 505
+    message = "Version Not Supported"
+
 
 # In Python 2.4 Exception is old-style and thus doesn't have a __subclasses__()
 # so we can do this:

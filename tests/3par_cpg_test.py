@@ -36,16 +36,19 @@ def get_CPGs():
 def create_CPG():
     print "Create CPGs"
     try:
-        optional = {}
+        optional = {'domain' : 'WALT_TEST'}
         name = "WaltTestCPG"
         cl.createCPG(name, optional)
         print "Created '%s'" % name
+
         name = "WaltTestCPG2"
-        cl.createCPG(name, {'LDLayout': {'RAIDType' : 1}})
+        opts = optional.copy()
+        extra = {'LDLayout': {'RAIDType': 1}}
+        opts.update(extra)
+        cl.createCPG(name, opts)
+
         print "Created '%s'" % name
-        name = "WaltTestCPG3"
-        cl.createCPG(name, {'LDLayout': {'RAIDType' : 2}})
-        print "Created '%s'" % name
+
         get_CPGs()
     except Exception as ex:
         print ex

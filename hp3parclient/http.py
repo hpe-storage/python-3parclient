@@ -166,7 +166,7 @@ class HTTPJSONRESTClient(httplib2.Http):
             resp, body = self._time_request(self.api_url + url, method,
                                             **kwargs)
             return resp, body
-        except exceptions.Unauthorized, ex:
+        except exceptions.HTTPUnauthorized, ex:
             try:
 		if self.auth_try != 1:
                     self.reauth()
@@ -174,7 +174,7 @@ class HTTPJSONRESTClient(httplib2.Http):
                     return resp, body
                 else:
                     raise ex
-            except exceptions.Unauthorized:
+            except exceptions.HTTPUnauthorized:
                 raise ex
 
     def get(self, url, **kwargs):
