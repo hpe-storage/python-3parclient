@@ -80,7 +80,7 @@ class HP3ParClient:
             TOO_LARGE - HTTP 400 - Volume size above limit
             NO_SPACE - HTTP 400 - Not Enough space is available.
 	"""
-        info = {'name': name, 'cpg': cpgName, 'sizeMB': sizeMB}
+        info = {'name': name, 'cpg': cpgName, 'sizeMiB': sizeMiB}
         if optional:
             info = self._mergeDict(info, optional)
 

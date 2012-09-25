@@ -20,6 +20,8 @@ args = parser.parse_args()
 username = "3paradm"
 password = "3pardata"
 
+testVolName = "WALTTESTVOL"
+
 cl = client.HP3ParClient("http://10.10.22.241:8008/api/v1")
 if "debug" in args and args.debug == True:
     cl.debug_rest(True)
@@ -29,95 +31,69 @@ def get_volumes():
     print "Get Volumes"
     try:
        volumes = cl.getVolumes()
-       pprint.pprint(volumes)
-    except exceptions.Unauthorized as ex:
-       pprint.pprint("You must login first")
+       if volumes:
+           for volume in volumes['members']:
+               print "Found '%s'" % volume['name']
+    except exceptions.HTTPUnauthorized as ex:
+       print "You must login first"
     except Exception as ex:
        print ex
     print "Complete\n"
 
 
-def test_create_volume():
+def create_volumes():
     print "Create Volumes"
-    try:
-       cl.login(username, password)
-       cl.createVolume("Volume1", "someCPG", "300")
-       cl.createVolume("Volume2", "anotherCPG", 1024, 
-                                {'comment': 'something', 'snapCPG':'somesnapcpg'})
+    cpgName = "WALTTESTCPG"
 
-    except exceptions.Unauthorized as ex:
+    try:
+       cl.createCPG(cpgName, {'LDLayout' : {'RAIDType' : 1}})
+    except exceptions.HTTPUnauthorized as ex:
+       print "You must login first"
+    except exceptions.HTTPConflict as ex:
+       # the cpg already exists.
+       pass
+    except Exceptions as ex:
+       pprint.pprint(ex)
+       return
+
+
+    try:
+       volName = "%s1" % testVolName
+       print "Creating '%s'" % volName
+       cl.createVolume(volName, cpgName, 300)
+       volName = "%s2" % testVolName
+       print "Creating '%s'" % volName
+       cl.createVolume(volName, cpgName, 1024, 
+                       {'comment': 'something', 'tpvv': True})
+
+    except exceptions.HTTPUnauthorized as ex:
        pprint.pprint("You must login first")
     except Exception as ex:
        print ex
 
     try:
-       cl.createVolume("Volume3", "testCPG", 2048, "foo")
+	volume = cl.createVolume("%s1" % testVolName, cpgName, 2048)
+    except exceptions.HTTPConflict as ex:
+	print "Got Expected Exception %s" % ex
+        pass
+
+    print "Complete\n"
+
+def delete_volumes():
+    try:
+       volumes = cl.getVolumes()
+       if volumes:
+           for volume in volumes['members']:
+               if volume['name'].startswith(testVolName):
+                   print "Deleting volume '%s'" % volume['name']
+                   cl.deleteVolume(volume['name'])
+    except exceptions.HTTPUnauthorized as ex:
+       print "You must login first"
     except Exception as ex:
-       pass
-
-    try:
-	volume = cl.createVolume("VolumeBad", "testCPG", 2048, {'bogus':'break'})
-    except exceptions.BadRequest as ex:
-	print "Got Expected Exception %s" % ex
-        pass
-
-    try:
-	volume = cl.createVolume("VolumeExists", "testCPG", 2048)
-    except exceptions.Conflict as ex:
-	print "Got Expected Exception %s" % ex
-        pass
-
-    try:
-	volume = cl.createVolume("VolumeTooLarge", "testCPG", 10241024)
-    except exceptions.BadRequest as ex:
-	print "Got Expected Exception %s" % ex
-        pass
-
-    try:
-	volume = cl.createVolume("VolumeNotEnoughSpace", "testCPG", 9999)
-    except exceptions.BadRequest as ex:
-	print "Got Expected Exception %s" % ex
-        pass
-
-    print "Complete\n"
-
-def test_delete_volume():
-    print "Test Delete Volume"
-
-    try:
-	cl.deleteVolume("foo")
-    except exceptions.NotFound as ex:
-	print "Got Expected Exception %s" % ex
-        pass
-
-    try:
-	cl.deleteVolume("forbidden")
-    except exceptions.Forbidden as ex:
-	print "Got Expected Exception %s" % ex
-        pass
-
-    try:
-	cl.deleteVolume("retained")
-    except exceptions.Forbidden as ex:
-	print "Got Expected Exception %s" % ex
-        pass
-
-    try:
-	cl.deleteVolume("readonlychild")
-    except exceptions.Forbidden as ex:
-	print "Got Expected Exception %s" % ex
-        pass
-
-    try:
-	cl.deleteVolume("works")
-    except exceptions.NotFound as ex:
-	print "Got Expected Exception %s" % ex
-        pass
-
-    print "Complete\n"
+       print ex
 
 
 cl.login(username, password)
 get_volumes()
-#create_volumes()
-#delete_volumes()
+create_volumes()
+delete_volumes()
