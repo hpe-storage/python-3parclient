@@ -153,6 +153,20 @@ class HP3ParClient:
 	response, body = self.http.get('/cpgs')
 	return body
 
+    def getCPG(self, name):
+        """ Get information about a CPG
+        :Parameters:
+	    'name' - (str) - the name of the CPG
+        :Returns:
+            CPG
+        """
+        cpgs = self.getCPGs()
+        if cpgs:
+            for cpg in cpgs['members']:
+                if cpg['name'] == name:
+                    return cpg 
+        return None
+
     def createCPG(self, name, optional=None):
 	""" Create a CPG
 	:Parameters

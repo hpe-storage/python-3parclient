@@ -46,10 +46,12 @@ def create_CPG():
         extra = {'LDLayout': {'RAIDType': 1}}
         opts.update(extra)
         cl.createCPG(name, opts)
-
         print "Created '%s'" % name
 
         get_CPGs()
+        cpg = cl.getCPG(name)
+
+
     except Exception as ex:
         print ex
     print "Complete\n"
