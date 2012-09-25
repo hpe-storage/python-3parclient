@@ -105,8 +105,9 @@ def create_snapshots():
         snapName = "%s1" % testSNAPName
         print "Creating Snapshot '%s'" % snapName
         cl.createSnapshot(snapName, volName, 
-                          {'copyRO' : True, 'comment': "Some comment",
-                           'retentionHours' : 11, 'retentionHours' : 7})
+#                          {'copyRO' : True, 'comment': "Some comment",
+                          {'comment': "Some comment",
+                           'retentionHours' : 7})
     except exceptions.HTTPUnauthorized as ex:
        print "You must login first"
     except Exception as ex:
