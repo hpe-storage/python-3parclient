@@ -54,6 +54,20 @@ class HP3ParClient:
 	response, body = self.http.get('/volumes')
         return body
 
+    def getVolume(self, name):
+        """ Get information about a volume
+        :Parameters:
+	    'name' - (str) - the name of the volume
+        :Returns:
+            dictionary of volume
+        """
+        volumes = self.getVolumes()
+        if volumes:
+            for volume in volumes['members']:
+                if volume['name'] == name:
+                    return volume
+        return None
+
     def createVolume(self, name, cpgName, sizeMiB, optional=None):
 	""" Create a new volume
 	:Parameters:
@@ -103,15 +117,26 @@ class HP3ParClient:
         :Parameters:
             'name' (str) - Name of the Snapshot
             'copyOfName' (str) - The volume you want to snapshot            
+            'optional' (dict) - Dictionary of optional params
+                { 'id' : 12, # Specifies the ID of the volume, next by default
+                  'comment' : "some comment", 
+                  'copyRO' : True, # Read Only?
+                  'expirationHours' : 36 # time from now to expire
+                  'retentionHours' : 12 # time from now to expire }
+
+
         :Returns:
             None
         :Exceptions:
         """
-        info = {'name': name, 'copyOfName': copyOfName, 'isCopy': True}
+        parameters = {'name' : name}
         if optional:
-            info = self._mergeDict(info, optional)
+            parameters = self._mergeDict(parameters, optional)
 
-        response, body = self.http.post('/volumes', body=info)
+        info = {'action' : 'createSnapshot',
+                'parameters' : parameters}
+
+        response, body = self.http.post('/volumes/%s' % copyOfName, body=info)
 	return body
 
 
