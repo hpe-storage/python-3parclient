@@ -15,18 +15,27 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 """
-:mod:`3parclient` -- Package contains hp-specific modules
-=====================================================================
-
-.. automodule:: 3parclient
-.. moduleauthor:: walter.boring@hp.com
+HP 3Par REST Client
 """
+#.. automodule:: hp3parclient
+#.. moduleauthor:: walter.boring@hp.com
 
 __author__ = "Walter A. Boring IV"
 __copyright__ = "Copyright 2012, Hewlett Packard Development Company, L.P."
 #__credits__ = []
-__license__ = "Apache"
-__version__ = "2.0"
+__license__ = "Apache v2.0"
+__version__ = "1.0"
 __maintainer__ = "Walter A. Boring IV"
 __email__ = "walter.boring@hp.com"
 __status__ = "pre-alpha"
+
+
+version_tuple = (0, 5, '+')
+
+def get_version_string():
+    if isinstance(version_tuple[-1], basestring):
+        return '.'.join(map(str, version_tuple[:-1])) + version_tuple[-1]
+    return '.'.join(map(str, version_tuple))
+
+version = get_version_string()
+"""Current version of HP3PARClient."""

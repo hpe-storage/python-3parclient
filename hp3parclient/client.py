@@ -16,6 +16,12 @@
 #    under the License.
 """
 HP3Par REST Client
+
+.. module: HP3ParClient
+.. moduleauthor: Walter A. Boring IV
+:Author: Walter A. Boring IV
+:Description: This is the 3PAR Client that talks to 3PAR's REST WSAPI Service.  It provides the ability to provision 3PAR volumes, VLUNs, CPGs.
+
 """
 
 import logging
@@ -29,70 +35,115 @@ from hp3parclient import http,exceptions
 
 
 class HP3ParClient:
+    """
+    The 3PAR REST API Client
+
+    :param api_url: The url to the WSAPI service on 3PAR ie. http://<3par server>:8008/api/v1
+    :type api_url: str
+
+    """
 
     def __init__(self, api_url):
 	self.http = http.HTTPJSONRESTClient(api_url)
 
     def debug_rest(self,flag):
+        """
+        This is useful for debugging requests to 3PAR
+
+        :param flag: set to True to enable debugging
+        :type flag: bool
+
+        """
 	self.http.set_debug_flag(flag)
 
     def login(self, username, password):
+        """
+        This authenticates against the 3Par wsapi server and creates a session.
+
+        :param username: The username
+        :type username: str
+        :param password: The Password
+        :type password: str
+
+        :returns: None
+
+        """
 	self.http.authenticate(username, password)
 
     def logout(self):
+        """
+        This destroys the session and logs out from the 3PAR server
+
+        :returns: None
+
+        """
+	self.http.authenticate(username, password)
         self.http.unauthenticate()
 
 
     ##Volume methods
     def getVolumes(self):
-	""" Get the list of Volumes
-	:Parameters:
-	    None
-	:Returns:
-	    List of Volumes
+	""" 
+        Get the list of Volumes
+
+        :returns: list of Volumes
 	"""
 	response, body = self.http.get('/volumes')
         return body
 
     def getVolume(self, name):
-        """ Get information about a volume
-        :Parameters:
-	    'name' - (str) - the name of the volume
-        :Returns:
-            dictionary of volume
+        """ 
+        Get information about a volume
+
+        :param name: The name of the volume to find
+        :type name: str
+
+        :returns: volume
+        :raises HTTPNotFound:  NON_EXISTENT_VOL - volume doesn't exist
         """
         volumes = self.getVolumes()
         if volumes:
             for volume in volumes['members']:
                 if volume['name'] == name:
                     return volume
-        return None
+
+        raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_VOL', 'desc': "Volume '%s' was not found" % name})
 
     def createVolume(self, name, cpgName, sizeMiB, optional=None):
 	""" Create a new volume
-	:Parameters:
-	    'name' - (str) - the name of the volume
-	    'cpgName' - (str) - the name of the destination CPG 
-	    'sizeMiB' - (int) - size in MiB for the volume
-            'optional' - (dict) - dict of other optional items
-                       {'id': 12, 'comment': 'some comment', 
-                        'snapCPG' :'CPG name', 
-                        'ssSpcAllocWarningPct' : 12,
-                        'ssSpcAllocLimitPct': 22,
-                        'tpvv' : True,
-                        'usrSpcAllocWarningPct': 22,
-                        'usrSpcAllocLimitPct': 22,
-                        'expirationHours': 256,
-                        'retentionHours': 256 }
-	:Returns:
-	    List of Volumes
-        :Exceptions:
-            INV_INPUT - HTTP 400 - Invalid Parameter
-            PERM_DENIED - HTTP 403 - Permission denied
-            EXISTENT_SV = HTTP 409 - Volume Exists already 
-            INT_SERV_ERR - HTTP 500 - Communication with the CLI failed
-            TOO_LARGE - HTTP 400 - Volume size above limit
-            NO_SPACE - HTTP 400 - Not Enough space is available.
+
+        :param name: the name of the volume
+        :type name: str
+        :param cpgName: the name of the destination CPG 
+        :type cpgName: str
+        :param sizeMiB: size in MiB for the volume
+        :type sizeMiB: int
+        :param optional: dict of other optional items
+        :type optional: dict
+
+        .. code-block:: python
+
+            optional = {
+             'id': 12, 
+             'comment': 'some comment', 
+             'snapCPG' :'CPG name', 
+             'ssSpcAllocWarningPct' : 12,
+             'ssSpcAllocLimitPct': 22,
+             'tpvv' : True,
+             'usrSpcAllocWarningPct': 22,
+             'usrSpcAllocLimitPct': 22,
+             'expirationHours': 256,
+             'retentionHours': 256 
+            }
+
+	:returns: List of Volumes
+
+        :raises HTTPBadRequest:  INV_INPUT - Invalid Parameter
+        :raises HTTPBadRequest:  TOO_LARGE - Volume size above limit
+        :raises HTTPBadRequest: NO_SPACE - Not Enough space is available 
+        :raises HTTPForbidden: PERM_DENIED - Permission denied
+        :raises HTTPConflict: EXISTENT_SV - Volume Exists already
+
 	"""
         info = {'name': name, 'cpg': cpgName, 'sizeMiB': sizeMiB}
         if optional:
@@ -102,32 +153,44 @@ class HP3ParClient:
 	return body
 
     def deleteVolume(self, name):
-	""" Delete a volume
-	:Parameters:
-	    'name' - (str) - the name of the volume
-	:Returns:
-	    None
+	""" 
+        Delete a volume
+        
+        :param name: the name of the volume
+        :type name: str
+        
+        :raises HTTPNotFound: NON_EXISTENT_VOL - The volume does not exist
+        :raises HTTPForbidden: PERM_DENIED - Permission denied
+        :raises HTTPForbidden: RETAINED - Volume retention time has not expired
+        :raises HTTPForbidden: HAS_RO_CHILD - Volume has read-only child
 	"""
 	response, body = self.http.delete('/volumes/%s' % name)
 	return body
 
 
     def createSnapshot(self, name, copyOfName, optional=None): 
-        """ Create a snapshot of an existing Volume
-        :Parameters:
-            'name' (str) - Name of the Snapshot
-            'copyOfName' (str) - The volume you want to snapshot            
-            'optional' (dict) - Dictionary of optional params
-                { 'id' : 12, # Specifies the ID of the volume, next by default
-                  'comment' : "some comment", 
-                  'copyRO' : True, # Read Only?
-                  'expirationHours' : 36 # time from now to expire
-                  'retentionHours' : 12 # time from now to expire }
+        """ 
+        Create a snapshot of an existing Volume
 
+        :param name: Name of the Snapshot
+        :type name: str
+        :param copyOfName: The volume you want to snapshot
+        :type copyOfName: str
+        :param optional: Dictionary of optional params
+        :type optional: dict
 
-        :Returns:
-            None
-        :Exceptions:
+        .. code-block:: python
+
+            optional = { 
+                'id' : 12, # Specifies the ID of the volume, next by default
+                'comment' : "some comment", 
+                'copyRO' : True, # Read Only?
+                'expirationHours' : 36 # time from now to expire
+                'retentionHours' : 12 # time from now to expire 
+            }
+
+        :raises HTTPNotFound: NON_EXISTENT_VOL - The volume does not exist
+        :raises HTTPForbidden: PERM_DENIED - Permission denied
         """
         parameters = {'name' : name}
         if optional:
@@ -144,70 +207,59 @@ class HP3ParClient:
 
     ##CPG methods
     def getCPGs(self):
-	""" Get entire list of CPGs
-        :Parameters:
-            None          
-        :Returns:
-            All cpgs
+	""" 
+        Get entire list of CPGs
+
+        :returns: list of cpgs
         """
 	response, body = self.http.get('/cpgs')
 	return body
 
+
     def getCPG(self, name):
-        """ Get information about a CPG
-        :Parameters:
-	    'name' - (str) - the name of the CPG
-        :Returns:
-            CPG
+        """ 
+        Get information about a CPG
+
+        :param name: The name of the CPG to find
+        :type name: str
+
+        :returns: cpg dict
+        :raises HTTPNotFound:  NON_EXISTENT_CPG - CPG doesn't exist
         """
         cpgs = self.getCPGs()
         if cpgs:
             for cpg in cpgs['members']:
                 if cpg['name'] == name:
                     return cpg 
-        return None
+
+        raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_CPG', 'desc': "CPG '%s' was not found" % name})
 
     def createCPG(self, name, optional=None):
-	""" Create a CPG
-	:Parameters
-            'name' (str) - cpg name    
-            'optional' (dict) - optional parameters
+	""" 
+        Create a CPG
 
-                List of optional keys
+        :param name: CPG Name
+        :type name: str
+        :param optional: Optional parameters
+        :type optional: dict
 
-                'growthIncrementMiB' (int) - Specifies the growth increment, the
-                    amount of logical disk storage created on each auto-grow operation.
-                'growthLimitMiB' (int) - Specifies that the auto-grow operation
-                    is limited to the specified storage amount that sets the growth limit.
-                'usedLDWarningAlertMiB' (int) - Specifies that the threshold of
-                    used logical disk space, when exceeded results in a warning alert.
-                'domain' (str) - Specifies the name of the domain in which the
-                    object will reside.
-                'LDLayout' (obj) - Specifies Logical Disk types to be used for
-                    this CPG.
+        .. code-block:: python
 
-                example optional dict:
+            optional = {
+                'growthIncrementMiB' : 100,
+                'growthLimitMiB' : 1024,
+                'usedLDWarningAlertMiB' : 200,
+                'domain' : 'MyDomain',
+                'LDLayout' : {'RAIDType' : 1, 'setSize' : 100, 'HA': 0,
+                              'chunkletPosPref' : 2, 'diskPatterns': []}
+            }
 
-                {'growthIncrementMiB' : 100,
-                 'growthLimitMiB' : 1024,
-                 'usedLDWarningAlertMiB' : 200,
-                 'domain' : 'MyDomain',
-                 'LDLayout' : {'RAIDType' : 1, 'setSize' : 100, 'HA': 0,
-                               'chunkletPosPref' : 2, 'diskPatterns': []}
-                 }
-	:Returns:
-            returns HTTP 200 response with no body on success
+        :raises HTTPBadRequest: INV_INPUT Invalid URI Syntax :raises HTTPBadRequest: NON_EXISTENT_DOMAIN - Domain doesn't exist
+        :raises HTTPBadRequest: NO_SPACE - Not Enough space is available.
+        :raises HTTPBadRequest: BAD_CPG_PATTERN  A Pattern in a CPG specifies illegal values
+        :raises HTTPForbidden: PERM_DENIED - Permission denied
+        :raises HTTPConflict: EXISTENT_CPG - CPG Exists already 
 
-        :Exceptions:
-            INV_INPUT - HTTP 400 - Invalud URI Syntax
-            NON_EXISTENT_DOMAIN - HTTP 400 - Domain doesn't exist
-            PERM_DENIED - HTTP 403 - Permission denied
-            OTHER - HTTP 400 - Other miscellaneous errors
-            EXISTENT_CPG = HTTP 409 - CPG Exists already 
-            INT_SERV_ERR - HTTP 500 - Communication with the CLI failed
-            NO_SPACE - HTTP 400 - Not Enough space is available.
-            BAD_CPG_PATTERN - HTTP 400 - A Pattern in a CPG specifies illegal
-                                         values
 	"""
 	info = {'name': name}
         if optional:
@@ -217,18 +269,16 @@ class HP3ParClient:
 	return body
     
     def deleteCPG(self, name):
-	""" Delete a CPG
-        :Parameters:
-            'name' (str) - cpg name    
-        :Returns:
-            None
-        :Exceptions:
-            INV_INPUT - HTTP 400 - Invalud URI Syntax
-            PERM_DENIED - HTTP 403 - Permission denied
-            NON_EXISTENT_CPG = HTTP 404 - CPG Not Found
-            INT_SERV_ERR - HTTP 500 - Communication with the CLI failed
-            IN_USE - HTTP 408 - The CPG Cannot be removed because it is
-               in use.
+	"""
+        Delete a CPG
+
+        :param name: CPG Name
+        :type name: str
+
+        :raises HTTPNotFound: NON_EXISTENT_CPG - CPG Not Found 
+        :raises HTTPFrobidden: IN_USE - The CPG Cannot be removed because it's in use.
+        :raises HTTPForbidden: PERM_DENIED - Permission denied
+
         """
 	reponse, body = self.http.delete('/cpgs/%s' % name)
 
@@ -246,47 +296,66 @@ class HP3ParClient:
 
 
     def getVLUNs(self):
-	""" Get VLUNs
-        :Parameters:
-            None          
-        :Returns:
-            Array of VLUNs
+	""" 
+        Get VLUNs
+        
+        :returns: Array of VLUNs
         """
 	reponse, body = self.http.get('/vluns')
 	return body
 
-    def createVLUN(self, volumeName, lun, hostname, portPos=None, noVcn=None,
+    def getVLUN(self, name):
+        """ 
+        Get information about a VLUN
+
+        :param name: The name of the VLUN to find
+        :type name: str
+
+        :returns: VLUN
+
+        :raises HTTPNotFound:  NON_EXISTENT_VLUN - VLUN doesn't exist
+
+        """
+        vluns = self.getVLUNs()
+        if vluns:
+            for vlun in vluns['members']:
+                if vlun['name'] == name:
+                    return vlun
+
+        raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_VLUN', 'desc': "VLUN '%s' was not found" % name})
+
+    def createVLUN(self, volumeName, lun, hostname=None, portPos=None, noVcn=None,
                    overrideLowerPriority=None):
-	""" Create a new VLUN
-            When creating a VLUN, the volumeName and lun members are required.
-            Either hostname or portPos (or both in the case of matched sets) is
-            also required.  The noVcn and overrideLowerPriority members are
-            optional.
-	:Parameters:
-            'volumeName' (str) - Name of the volume to be exported
-            'lun' (int) - LUN id
+	""" 
+        Create a new VLUN
 
-            'hostname' (str) - Name of the host which the volume is to be
-                exported.
+        When creating a VLUN, the volumeName and lun members are required.
+        Either hostname or portPos (or both in the case of matched sets) is
+        also required.  The noVcn and overrideLowerPriority members are
+        optional.
 
-            'portPos' (dict) - System port of VLUN exported to. It includes
-                node number, slot number, and card port number
-                example:
-                    {'node': 1, 'slot': 2, 'cardPort': 3}
-
-            'noVcn' (bool) - A VLUN change notification (VCN) not be issued
-                after export (-novcn). Default: False.
-
-            'verrideLowerPriority' (bool) - Existing lower priority VLUNs will
+        :param volumeName: Name of the volume to be exported
+        :type volumeName: str
+        :param lun: The new LUN id
+        :type lun: int
+        :param hostname:  Name of the host which the volume is to be exported.
+        :type hostname: str
+        :param portPos: 'portPos' (dict) - System port of VLUN exported to. It includes node number, slot number, and card port number
+        :type portPos: dict
+        :param noVcn: A VLUN change notification (VCN) not be issued after export (-novcn). Default: False.
+        :type noVcn: bool
+        :param overrideLowerPriority: Existing lower priority VLUNs will
                 be overridden (-ovrd). Use only if hostname member exists. Default:
                 False.
+        :type overrideLowerPriority: bool
 
-	:Returns
-            HTTP 200 on success with no body
-            A 'Location' header will contain the VLUN information
+	:returns: the location of the VLUN
 
 	"""
-	info = {'volumeName': volumeName, 'lun': lun, 'hostname':hostname}
+	info = {'volumeName': volumeName, 'lun': lun}
+
+        if hostname:
+            info['hostname'] = hostname
 
         if portPos:
             info['portPos'] = portPos
@@ -304,25 +373,54 @@ class HP3ParClient:
         else:
             return None
         
-    def deleteVLUN(self, name):
-	""" Delete a VLUN
-        :Parameters:
-            'name' (str) - vlun name    
-        :Returns:
-            None
+    def deleteVLUN(self, name, lunID, hostname=None, port=None):
+	""" 
+        Delete a VLUN
+        
+        :param name: the name of the VLUN
+        :type name: str
+        :param lunID: The LUN ID 
+        :type lunID: int
+        :param hostname: Name of the host which the volume is exported. For VLUN of port type,the value is empty
+        :type hostname: str
+        :param port: Specifies the system port of the VLUN export.  It includes the system node number, PCI bus slot number, and card port number on the FC card in the format <node>:<slot>:<port>
+        :type port: str
+
+
+        
+        :raises HTTPBadRequest: INV_INPUT_MISSING_REQUIRED - Incomplete VLUN info. Missing volumeName or lun, or both hostname and port. 
+        :raises HTTPBadRequest: INV_INPUT_PORT_SELECTION - Specified port is invalid. 
+        :raises HTTPBadRequest: INV_INPUT_EXCEEDS_RANGE - The LUN specified exceeds expected range.
+        :raises HTTPNotFound: NON_EXISTENT_HOST - The host does not exist
+        :raises HTTPNotFound: NON_EXISTENT_VLUN - The VLUN does not exist
+        :raises HTTPNotFound: NON_EXISTENT_PORT - The port does not exist
+        :raises HTTPForbidden: PERM_DENIED - Permission denied
         """
-	response, body = self.http.delete('/vluns/%s' % name)
-	return body
+
+        vlun = ("%s,%s" % name, lunID)
+
+        if hostname:
+            vlun += ",%s" % hostname
+
+        if port:
+            vlun += ",%s" % port
+
+	response, body = self.http.delete('/vluns/%s' % vlun)
 
 
 
     def _mergeDict(selft, dict1, dict2):
-        """Safely merge 2 dictionaries together
-        :Parameters:
-            'dict1' (dict)
-            'dict2' (dict)
-        :Returns:
-            dict
+        """
+        Safely merge 2 dictionaries together
+        
+        :param dict1: The first dictionary
+        :type dict1: dict
+        :param dict2: The second dictionary
+        :type dict2: dict
+
+        :returns: dict
+
+        :raises Exception: dict1, dict2 is not a dictionary
         """
         if type(dict1) is not dict:
             raise Exception("dict1 is not a dictionary")

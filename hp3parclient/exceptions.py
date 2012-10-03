@@ -151,32 +151,28 @@ class HTTPConflict(ClientException):
 
 class HTTPGone(ClientException):
     """
-    HTTP 410 - Indicates that the resource requested is no longer available and
-               will not be available again.
+    HTTP 410 - Indicates that the resource requested is no longer available and will not be available again.
     """
     http_status = 410
     message = "Gone"
 
 class HTTPLengthRequired(ClientException):
     """
-    HTTP 411 - The request did not specify the length of its content, which is
-               required by the requested resource.
+    HTTP 411 - The request did not specify the length of its content, which is required by the requested resource.
     """
     http_status = 411
     message = "Length Required"
 
 class HTTPPreconditionFailed(ClientException):
     """
-    HTTP 412 - The server does not meet one of the preconditions that the
-               requester put on the request.
+    HTTP 412 - The server does not meet one of the preconditions that the requester put on the request.
     """
     http_status = 412
     message = "Over limit"
 
 class HTTPRequestEntityTooLarge(ClientException):
     """
-    HTTP 413 - The request is larger than the server is willing or able to
-               process
+    HTTP 413 - The request is larger than the server is willing or able to process
     """
     http_status = 413
     message = "Request Entity Too Large"
@@ -190,24 +186,21 @@ class HTTPRequestURITooLong(ClientException):
 
 class HTTPUnsupportedMediaType(ClientException):
     """
-    HTTP 415 - The request entity has a media type which the server or resource
-               does not support.
+    HTTP 415 - The request entity has a media type which the server or resource does not support.
     """
     http_status = 415
     message = "Unsupported Media Type"
 
 class HTTPRequestedRangeNotSatisfiable(ClientException):
     """
-    HTTP 416 - The client has asked for a portion of the file, but the server
-               cannot supply that portion.
+    HTTP 416 - The client has asked for a portion of the file, but the server cannot supply that portion.
     """
     http_status = 416
     message = "Requested Range Not Satisfiable"
 
 class HTTPExpectationFailed(ClientException):
     """
-    HTTP 417 - The server cannot meet the requirements of the Expect
-               request-header field.
+    HTTP 417 - The server cannot meet the requirements of the Expect request-header field.
     """
     http_status = 417
     message = "Expectation Failed"
@@ -234,8 +227,7 @@ class HTTPNotImplemented(ClientException):
 
 class HTTPBadGateway(ClientException):
     """
-    HTTP 502 - The server was acting as a gateway or proxy and received an
-               invalid response from the upstream server. 
+    HTTP 502 - The server was acting as a gateway or proxy and received an invalid response from the upstream server. 
     """
     http_status = 502
     message = "Bad Gateway"
@@ -249,16 +241,14 @@ class HTTPServiceUnavailable(ClientException):
 
 class HTTPGatewayTimeout(ClientException):
     """
-    HTTP 504 - The server was acting as a gateway or proxy and did not receive
-               a timely response from the upstream server.
+    HTTP 504 - The server was acting as a gateway or proxy and did not receive a timely response from the upstream server.
     """
     http_status = 504
     message = "Gateway Timeout"
 
 class HTTPVersionNotSupported(ClientException):
     """
-    HTTP 505 - The server does not support the HTTP protocol version used in
-               the request.
+    HTTP 505 - The server does not support the HTTP protocol version used in the request.
     """
     http_status = 505
     message = "Version Not Supported"

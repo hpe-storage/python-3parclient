@@ -45,7 +45,7 @@ def get_volumes():
 
 def create_test_cpg():
     try:
-       cl.createCPG(testCPGName, {'LDLayout' : {'RAIDType' : 1}})
+       cl.createCPG(testCPGName, {'domain':'WALT_TEST', 'LDLayout' : {'RAIDType' : 1}})
     except exceptions.HTTPUnauthorized as ex:
        print "You must login first"
     except exceptions.HTTPConflict as ex:
@@ -105,9 +105,10 @@ def create_snapshots():
         snapName = "%s1" % testSNAPName
         print "Creating Snapshot '%s'" % snapName
         cl.createSnapshot(snapName, volName, 
-#                          {'copyRO' : True, 'comment': "Some comment",
-                          {'comment': "Some comment",
-                           'retentionHours' : 7})
+                          {'readOnly' : True, 'comment': "Some comment",
+#                          {'comment': "Some comment",
+                           'retentionHours' : 1,
+                           'expirationHours' : 2})
     except exceptions.HTTPUnauthorized as ex:
        print "You must login first"
     except Exception as ex:
@@ -156,4 +157,4 @@ create_test_cpg()
 delete_volumes()
 create_snapshots()
 delete_snapshots()
-delete_test_cpg()
+#delete_test_cpg()
