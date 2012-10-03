@@ -16,6 +16,9 @@
 #    under the License.
 """
 HP3Par HTTP Client
+:Author: Walter A. Boring IV
+:Description: This is the HTTP Client that is used to make the actual calls. IT includes the authentication that knows the cookie name for 3PAR.
+
 """
 
 import logging
@@ -33,8 +36,15 @@ except ImportError:
 from hp3parclient import exceptions
 
 class HTTPJSONRESTClient(httplib2.Http):
-    """ An HTTP REST Client that sends and recieves JSON data
-    as the body of the HTTP request
+    """ 
+    An HTTP REST Client that sends and recieves JSON data as the body of the HTTP request
+
+    :param api_url: The url to the WSAPI service on 3PAR ie. http://<3par server>:8008/api/v1
+    :type api_url: str
+    :param insecure: Use https?
+    :type insecure: bool
+    :param timeout: the timeout length for each request
+    :type timeout: int
     """
 
     USER_AGENT = 'python-3parclient'
