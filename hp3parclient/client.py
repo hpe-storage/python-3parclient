@@ -19,6 +19,7 @@ HP3Par REST Client
 
 .. module: HP3ParClient
 .. moduleauthor: Walter A. Boring IV
+
 :Author: Walter A. Boring IV
 :Description: This is the 3PAR Client that talks to 3PAR's REST WSAPI Service.  It provides the ability to provision 3PAR volumes, VLUNs, CPGs.
 
