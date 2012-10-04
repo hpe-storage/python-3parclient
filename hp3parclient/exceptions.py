@@ -16,13 +16,19 @@
 #    under the License.
 """ 
 Exceptions for the client
+
+.. module: Exceptions
+
+:Author: Walter A. Boring IV
+:Description: This contains the HTTP exceptions that can come back from the REST calls to 3PAR
 """
 
 import pprint
 
 class UnsupportedVersion(Exception):
-    """Indicates that the user is trying to use an unsupported
-    version of the API"""
+    """
+    Indicates that the user is trying to use an unsupported version of the API
+    """
     pass
 
 class CommandError(Exception):
@@ -37,41 +43,45 @@ class NoUniqueMatch(Exception):
 class ClientException(Exception):
     """
     The base exception class for all exceptions this library raises.
-    """
-    error_code = None
-    error_desc = None
-    error_ref = None
 
-    debug1 = None
-    debug2 = None
+    :param error: The error array 
+    :type error: array
+
+    """
+    _error_code = None
+    _error_desc = None
+    _error_ref = None
+
+    _debug1 = None
+    _debug2 = None
     def __init__(self, error=None):
         if 'code' in error:
-            self.error_code = error['code']
+            self._error_code = error['code']
         if 'desc' in error:
-            self.error_desc = error['desc']
+            self._error_desc = error['desc']
         if 'ref' in error:
-            self.error_ref = error['ref']
+            self._error_ref = error['ref']
 
         if 'debug1' in error:
-            self.debug1 = error['debug1']
+            self._debug1 = error['debug1']
         if 'debug2' in error:
-            self.debug2 = error['debug2']
+            self._debug2 = error['debug2']
 
 
     def __str__(self):
         formatted_string = "%s (HTTP %s)" % (self.message, self.http_status)
-        if self.error_code:
-            formatted_string += " %s" % self.error_code
-        if self.error_desc:
-            formatted_string += " - %s" % self.error_desc
-        if self.error_ref:
-            formatted_string += " - %s" % self.error_ref
+        if self._error_code:
+            formatted_string += " %s" % self._error_code
+        if self._error_desc:
+            formatted_string += " - %s" % self._error_desc
+        if self._error_ref:
+            formatted_string += " - %s" % self._error_ref
 
-        if self.debug1:
-            formatted_string += " (1: '%s')" % self.debug1
+        if self._debug1:
+            formatted_string += " (1: '%s')" % self._debug1
 
-        if self.debug2:
-            formatted_string += " (2: '%s')" % self.debug2
+        if self._debug2:
+            formatted_string += " (2: '%s')" % self._debug2
           
         return formatted_string
 
@@ -278,11 +288,12 @@ def from_response(response, body):
     Return an instance of an ClientException or subclass
     based on an httplib2 response.
 
-    Usage::
+    Usage:: 
 
         resp, body = http.request(...)
         if resp.status != 200:
             raise exception_from_response(resp, body)
+
     """
     cls = _code_map.get(response.status, ClientException)
     return cls(body)
