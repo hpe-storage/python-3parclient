@@ -138,11 +138,11 @@ class HP3ParClient:
 
 	:returns: List of Volumes
 
-        :raises HTTPBadRequest:  INV_INPUT - Invalid Parameter
-        :raises HTTPBadRequest:  TOO_LARGE - Volume size above limit
-        :raises HTTPBadRequest: NO_SPACE - Not Enough space is available 
-        :raises HTTPForbidden: PERM_DENIED - Permission denied
-        :raises HTTPConflict: EXISTENT_SV - Volume Exists already
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT - Invalid Parameter
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - TOO_LARGE - Volume size above limit
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - NO_SPACE - Not Enough space is available 
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXISTENT_SV - Volume Exists already
 
 	"""
         info = {'name': name, 'cpg': cpgName, 'sizeMiB': sizeMiB}
@@ -159,10 +159,10 @@ class HP3ParClient:
         :param name: the name of the volume
         :type name: str
         
-        :raises HTTPNotFound: NON_EXISTENT_VOL - The volume does not exist
-        :raises HTTPForbidden: PERM_DENIED - Permission denied
-        :raises HTTPForbidden: RETAINED - Volume retention time has not expired
-        :raises HTTPForbidden: HAS_RO_CHILD - Volume has read-only child
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VOL - The volume does not exist
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - RETAINED - Volume retention time has not expired
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - HAS_RO_CHILD - Volume has read-only child
 	"""
 	response, body = self.http.delete('/volumes/%s' % name)
 	return body
@@ -189,8 +189,8 @@ class HP3ParClient:
                 'retentionHours' : 12 # time from now to expire 
             }
 
-        :raises HTTPNotFound: NON_EXISTENT_VOL - The volume does not exist
-        :raises HTTPForbidden: PERM_DENIED - Permission denied
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VOL - The volume does not exist
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
         """
         parameters = {'name' : name}
         if optional:
@@ -224,7 +224,7 @@ class HP3ParClient:
         :type name: str
 
         :returns: cpg dict
-        :raises HTTPNotFound:  NON_EXISTENT_CPG - CPG doesn't exist
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` -  NON_EXISTENT_CPG - CPG doesn't exist
         """
         cpgs = self.getCPGs()
         if cpgs:
@@ -254,11 +254,12 @@ class HP3ParClient:
                               'chunkletPosPref' : 2, 'diskPatterns': []}
             }
 
-        :raises HTTPBadRequest: INV_INPUT Invalid URI Syntax :raises HTTPBadRequest: NON_EXISTENT_DOMAIN - Domain doesn't exist
-        :raises HTTPBadRequest: NO_SPACE - Not Enough space is available.
-        :raises HTTPBadRequest: BAD_CPG_PATTERN  A Pattern in a CPG specifies illegal values
-        :raises HTTPForbidden: PERM_DENIED - Permission denied
-        :raises HTTPConflict: EXISTENT_CPG - CPG Exists already 
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT Invalid URI Syntax 
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - NON_EXISTENT_DOMAIN - Domain doesn't exist
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - NO_SPACE - Not Enough space is available.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - BAD_CPG_PATTERN  A Pattern in a CPG specifies illegal values
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXISTENT_CPG - CPG Exists already 
 
 	"""
 	info = {'name': name}
@@ -275,9 +276,9 @@ class HP3ParClient:
         :param name: CPG Name
         :type name: str
 
-        :raises HTTPNotFound: NON_EXISTENT_CPG - CPG Not Found 
-        :raises HTTPFrobidden: IN_USE - The CPG Cannot be removed because it's in use.
-        :raises HTTPForbidden: PERM_DENIED - Permission denied
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_CPG - CPG Not Found 
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` -  IN_USE - The CPG Cannot be removed because it's in use.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
 
         """
 	reponse, body = self.http.delete('/cpgs/%s' % name)
@@ -313,7 +314,7 @@ class HP3ParClient:
 
         :returns: VLUN
 
-        :raises HTTPNotFound:  NON_EXISTENT_VLUN - VLUN doesn't exist
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` -  NON_EXISTENT_VLUN - VLUN doesn't exist
 
         """
         vluns = self.getVLUNs()
@@ -388,13 +389,13 @@ class HP3ParClient:
 
 
         
-        :raises HTTPBadRequest: INV_INPUT_MISSING_REQUIRED - Incomplete VLUN info. Missing volumeName or lun, or both hostname and port. 
-        :raises HTTPBadRequest: INV_INPUT_PORT_SELECTION - Specified port is invalid. 
-        :raises HTTPBadRequest: INV_INPUT_EXCEEDS_RANGE - The LUN specified exceeds expected range.
-        :raises HTTPNotFound: NON_EXISTENT_HOST - The host does not exist
-        :raises HTTPNotFound: NON_EXISTENT_VLUN - The VLUN does not exist
-        :raises HTTPNotFound: NON_EXISTENT_PORT - The port does not exist
-        :raises HTTPForbidden: PERM_DENIED - Permission denied
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_MISSING_REQUIRED - Incomplete VLUN info. Missing volumeName or lun, or both hostname and port. 
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_PORT_SELECTION - Specified port is invalid. 
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_EXCEEDS_RANGE - The LUN specified exceeds expected range.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_HOST - The host does not exist
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VLUN - The VLUN does not exist
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_PORT - The port does not exist
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
         """
 
         vlun = ("%s,%s" % name, lunID)
@@ -430,5 +431,4 @@ class HP3ParClient:
         dict3 = dict1.copy()
         dict3.update(dict2)
         return dict3
-
 
