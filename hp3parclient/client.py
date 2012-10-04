@@ -78,7 +78,6 @@ class HP3ParClient:
         :returns: None
 
         """
-	self.http.authenticate(username, password)
         self.http.unauthenticate()
 
 
@@ -100,7 +99,7 @@ class HP3ParClient:
         :type name: str
 
         :returns: volume
-        :raises HTTPNotFound:  NON_EXISTENT_VOL - volume doesn't exist
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VOL - volume doesn't exist
         """
         volumes = self.getVolumes()
         if volumes:

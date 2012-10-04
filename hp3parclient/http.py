@@ -41,10 +41,12 @@ class HTTPJSONRESTClient(httplib2.Http):
 
     :param api_url: The url to the WSAPI service on 3PAR ie. http://<3par server>:8008/api/v1
     :type api_url: str
-    :param insecure: Use https?
+    :param insecure: Use https? requires a local certificate
     :type insecure: bool
     :param timeout: the timeout length for each request
     :type timeout: int
+
+    :keyword 
     """
 
     USER_AGENT = 'python-3parclient'
@@ -71,6 +73,13 @@ class HTTPJSONRESTClient(httplib2.Http):
         self._logger = logging.getLogger(__name__)
 
     def set_debug_flag(self, flag):
+        """
+        This turns on/off http request/response debugging output to console
+
+        :param flag: Set to True to enable debugging output
+        :type flag: bool
+
+        """
 	self.http_log_debug = flag
         if self.http_log_debug:
             ch = logging.StreamHandler()
@@ -78,8 +87,18 @@ class HTTPJSONRESTClient(httplib2.Http):
             self._logger.addHandler(ch)
 
     def authenticate(self, user, password):
+        """
+        This tries to create an authenticated session with the 3PAR server
+
+        :param user: The username
+        :type user: str
+        :param password: Password
+        :type password: str
+
+        """
         #this prevens re-auth attempt if auth fails
 	self.auth_try = 1
+
         info = {'user':user, 'password':password}
         resp, body = self.post('/credentials', body=info)
         if body and 'key' in body:
@@ -93,18 +112,27 @@ class HTTPJSONRESTClient(httplib2.Http):
         
 
     def unauthenticate(self):
-        """Forget all of our authentication information."""
+        """
+        This clears the authenticated session with the 3PAR server.  It logs out.
+        
+        """
 	#delete the session on the 3Par
         self.delete('/credentials/%s' % self.session_key)
         self.session_key = None
 
     def get_timings(self):
+        """
+        Ths gives an array of the request timings since last reset_timings call
+        """
         return self.times
 
     def reset_timings(self):
+        """
+        This resets the request/response timings array
+        """
         self.times = []
 
-    def http_log_req(self, args, kwargs):
+    def _http_log_req(self, args, kwargs):
         if not self.http_log_debug:
             return
 
@@ -123,13 +151,16 @@ class HTTPJSONRESTClient(httplib2.Http):
         if 'body' in kwargs:
             self._logger.debug("REQ BODY: %s\n" % (kwargs['body']))
 
-    def http_log_resp(self, resp, body):
+    def _http_log_resp(self, resp, body):
         if not self.http_log_debug:
             return
         self._logger.debug("RESP:%s\n", pprint.pformat(resp))
         self._logger.debug("RESP BODY:%s\n", body)
 
     def request(self, *args, **kwargs):
+        """
+        This makes an HTTP Request to the 3Par server.  You should use get, post, delete instead.
+        """
         kwargs.setdefault('headers', kwargs.get('headers', {}))
         kwargs['headers']['User-Agent'] = self.USER_AGENT
         kwargs['headers']['Accept'] = 'application/json'
@@ -137,9 +168,9 @@ class HTTPJSONRESTClient(httplib2.Http):
             kwargs['headers']['Content-Type'] = 'application/json'
             kwargs['body'] = json.dumps(kwargs['body'])
 
-        self.http_log_req(args, kwargs)
+        self._http_log_req(args, kwargs)
         resp, body = super(HTTPJSONRESTClient, self).request(*args, **kwargs)
-        self.http_log_resp(resp, body)
+        self._http_log_resp(resp, body)
       
         # Try and conver the body response to an object
         # This assumes the body of the reply is JSON 
@@ -188,13 +219,87 @@ class HTTPJSONRESTClient(httplib2.Http):
                 raise ex
 
     def get(self, url, **kwargs):
+        """
+        Make an HTTP GET request to the server.
+
+        .. code-block:: python
+            
+            #example call
+            try {
+                headers, body = http.get('/volumes')
+            } except exceptions.HTTPUnauthorized as ex:
+                print "Not logged in"
+            }
+
+        :param url: The relative url from the 3PAR api_url
+        :type url: str
+
+        :returns: headers - dict of HTTP Response headers
+        :returns: body - the body of the response.  If the body was JSON, it will be an object
+        """
         return self._cs_request(url, 'GET', **kwargs)
 
     def post(self, url, **kwargs):
+        """
+        Make an HTTP POST request to the server.
+
+        .. code-block:: python
+            
+            #example call
+            try {
+                info = {'name': 'new volume name', 'cpg': 'MyCPG', 'sizeMiB': 300}
+                headers, body = http.post('/volumes', body=info)
+            } except exceptions.HTTPUnauthorized as ex:
+                print "Not logged in"
+            }
+
+        :param url: The relative url from the 3PAR api_url
+        :type url: str
+
+        :returns: headers - dict of HTTP Response headers
+        :returns: body - the body of the response.  If the body was JSON, it will be an object
+        """
         return self._cs_request(url, 'POST', **kwargs)
 
     def put(self, url, **kwargs):
+        """
+        Make an HTTP PUT request to the server.
+
+        .. code-block:: python
+            
+            #example call
+            try {
+                info = {'name': 'something'}
+                headers, body = http.put('/volumes', body=info)
+            } except exceptions.HTTPUnauthorized as ex:
+                print "Not logged in"
+            }
+
+        :param url: The relative url from the 3PAR api_url
+        :type url: str
+
+        :returns: headers - dict of HTTP Response headers
+        :returns: body - the body of the response.  If the body was JSON, it will be an object
+        """
         return self._cs_request(url, 'PUT', **kwargs)
 
     def delete(self, url, **kwargs):
+        """
+        Make an HTTP DELETE request to the server.
+
+        .. code-block:: python
+            
+            #example call
+            try {
+                headers, body = http.delete('/volumes/%s' % name)
+            } except exceptions.HTTPUnauthorized as ex:
+                print "Not logged in"
+            }
+
+        :param url: The relative url from the 3PAR api_url
+        :type url: str
+
+        :returns: headers - dict of HTTP Response headers
+        :returns: body - the body of the response.  If the body was JSON, it will be an object
+        """
         return self._cs_request(url, 'DELETE', **kwargs)
