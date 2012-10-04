@@ -2,6 +2,7 @@ Installing / Upgrading
 ======================
 .. highlight:: bash
 
+DO NOT FOLLOW THIS RIGHT NOW.....IT IS NOT ACURATE.
 This document is a placeholder for when we get the driver opensourced.
 DO NOT FOLLOW THIS RIGHT NOW.....IT IS NOT ACURATE.
 

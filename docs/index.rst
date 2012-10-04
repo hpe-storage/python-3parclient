@@ -10,6 +10,9 @@ distribution containing tools for working with
 work with MongoDB from Python. This documentation attempts to explain
 everything you need to know to use **HP3PARClient**.
 
+:doc:`installation`
+  Instructions on how to get the distribution.
+
 :doc:`tutorial`
   Start here for a quick overview.
 
