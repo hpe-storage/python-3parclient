@@ -10,6 +10,12 @@ distribution containing tools for working with
 work with MongoDB from Python. This documentation attempts to explain
 everything you need to know to use **HP3PARClient**.
 
+:doc:`tutorial`
+  Start here for a quick overview.
+
+:doc:`api/index`
+  The complete API documentation, organized by module.
+
 Issues
 ------
 The Client currently doesn't support host creation/management.  This is due
@@ -33,14 +39,21 @@ About This Documentation
 This documentation is generated using the `Sphinx
 <http://sphinx.pocoo.org/>`_ documentation generator. The source files
 for the documentation are located in the *doc/* directory of the
-**PyMongo** distribution. To generate the docs locally run the
-following command from the root directory of the **PyMongo** source:
+**HP3ParClient** distribution. To generate the docs locally run the
+following command from the root directory of the **HP3ParClient** source:a
+
+.. code-block:: bash
+
+   $ python setup.py doc
+
 
 .. toctree::
-   :maxdepth: 4
+   :hidden:
 
-   hp3parclient
+   installation
+   tutorial
    changelog
+   api/index
 
 
 Indices and tables

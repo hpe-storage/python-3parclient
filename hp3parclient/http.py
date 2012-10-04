@@ -43,19 +43,13 @@ class HTTPJSONRESTClient(httplib2.Http):
     :type api_url: str
     :param insecure: Use https? requires a local certificate
     :type insecure: bool
-    :param timeout: the timeout length for each request
-    :type timeout: int
 
-    :keyword 
     """
 
     USER_AGENT = 'python-3parclient'
     SESSION_COOKIE_NAME = 'X-Hp3Par-Wsapi-Sessionkey'
 
-    def __init__(self, api_url=None,
-                 insecure=False, timeout=None, 
-                 timings=False, no_cache=False, 
-                 http_log_debug=False):
+    def __init__(self, api_url, insecure=False, http_log_debug=False):
         super(HTTPJSONRESTClient, self).__init__(disable_ssl_certificate_validation=True)
 
         self.session_key = None

@@ -16,21 +16,14 @@
 #    under the License.
 """
 HP 3Par REST Client
+
+:Author: Walter A. Boring IV
+:Copyright: Copyright 2012, Hewlett Packard Development Company, L.P.
+:License: Apache v2.0
+ 
 """
-#.. automodule:: hp3parclient
-#.. moduleauthor:: walter.boring@hp.com
 
-__author__ = "Walter A. Boring IV"
-__copyright__ = "Copyright 2012, Hewlett Packard Development Company, L.P."
-#__credits__ = []
-__license__ = "Apache v2.0"
-__version__ = "1.0"
-__maintainer__ = "Walter A. Boring IV"
-__email__ = "walter.boring@hp.com"
-__status__ = "pre-alpha"
-
-
-version_tuple = (0, 5, '+')
+version_tuple = (0, 5, 0)
 
 def get_version_string():
     if isinstance(version_tuple[-1], basestring):
