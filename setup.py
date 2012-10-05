@@ -17,7 +17,7 @@ setup(
   keywords=["hp", "3par", "rest"],
   requires=['httplib2(>=0.6.0)'],
   install_requires=['httplib2 >= 0.6.0'],
-  tests_require=["nose"],
+  tests_require=["nose", "werkzeug"],
   license="Apache License, Version 2.0",
   packages=find_packages(),
   provides=['hp3parclient'],
