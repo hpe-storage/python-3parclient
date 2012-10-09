@@ -5,7 +5,6 @@ import json, os, random, string
 import argparse
 from werkzeug.exceptions import default_exceptions
 from werkzeug.exceptions import HTTPException
-from flask_debugtoolbar import DebugToolbarExtension
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-debug", help="Turn on http debugging", default=False, action="store_true")
