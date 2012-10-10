@@ -57,7 +57,7 @@ class HP3ParClient:
         """
 	self.http.set_debug_flag(flag)
 
-    def login(self, username, password):
+    def login(self, username, password, optional=None):
         """
         This authenticates against the 3Par wsapi server and creates a session.
 
@@ -69,7 +69,7 @@ class HP3ParClient:
         :returns: None
 
         """
-	self.http.authenticate(username, password)
+	self.http.authenticate(username, password, optional)
 
     def logout(self):
         """

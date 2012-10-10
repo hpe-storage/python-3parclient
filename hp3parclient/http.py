@@ -80,7 +80,7 @@ class HTTPJSONRESTClient(httplib2.Http):
             self._logger.setLevel(logging.DEBUG)
             self._logger.addHandler(ch)
 
-    def authenticate(self, user, password):
+    def authenticate(self, user, password, optional=None):
         """
         This tries to create an authenticated session with the 3PAR server
 
@@ -94,6 +94,10 @@ class HTTPJSONRESTClient(httplib2.Http):
 	self.auth_try = 1
 
         info = {'user':user, 'password':password}
+
+        if optional:
+            info.update(optional)
+
         resp, body = self.post('/credentials', body=info)
         if body and 'key' in body:
             self.session_key = body['key']
