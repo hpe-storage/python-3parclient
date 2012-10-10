@@ -203,6 +203,69 @@ class HP3ParClient:
 	return body
 
 
+    ##Host methods
+
+    def getHosts(self):
+	""" 
+        Get the list of Hosts
+
+        :returns: list of Hosts
+	"""
+	response, body = self.http.get('/hosts')
+        return body
+
+    def getHost(self, name):
+        """ 
+        Get information about a Host
+
+        :param name: The name of the Host to find
+        :type name: str
+
+        :returns: host dict
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_HOST - HOST doesn't exist
+        """
+        hosts = self.getHosts()
+        if hosts:
+            for host in hosts['members']:
+                if host['name'] == name:
+                    return host
+
+        raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_HOST', 'desc': "HOST '%s' was not found" % name})
+
+    def createHost(self, name, optional):
+        """
+        Create a new Host entry
+
+        :param name: The name of the host
+        :type name: str
+        :param optional: The optional stuff
+        :type optional: dict
+
+        """
+        info = {'name' : name}
+
+        if optional:
+            info = self._mergeDict(info, optional)
+
+        response, body = self.http.post('/hosts', body=info)
+        return body
+
+    def deleteHost(self, name):
+	"""
+        Delete a Host
+
+        :param name: Host Name
+        :type name: str
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_HOST - HOST Not Found 
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` -  IN_USE - The HOST Cannot be removed because it's in use.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
+
+        """
+	reponse, body = self.http.delete('/hosts/%s' % name)
+        
+
+
 
 
     ##CPG methods
