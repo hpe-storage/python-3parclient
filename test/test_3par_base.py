@@ -10,9 +10,14 @@ class Test3PARBase(unittest.TestCase):
     def setUp(self):
         username = "3paradm"
         password = "3pardata"
-        global cl
-        cl = client.HP3ParClient("http://10.10.22.241:8008/api/v1")
-        cl.login(username, password)
+        self.cl = client.HP3ParClient("http://10.10.22.241:8008/api/v1")
+        self.cl.login(username, password)
 
     def tearDown(self):
-        cl.logout()
+        self.cl.logout()
+
+    def printHeader(self, name):
+        print "Start testing '%s'" % name
+
+    def printFooter(self, name):
+        print "Compeleted testing '%s'" % name
