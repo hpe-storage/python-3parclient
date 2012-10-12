@@ -4,18 +4,9 @@ sys.path.insert(0,os.path.realpath(os.path.abspath('../')))
 from hp3parclient import client, exceptions
 import unittest
 import pprint
+import test_3par_base
 
-class TestCPG(unittest.TestCase):
-
-    def setUp(self):
-        username = "3paradm"
-        password = "3pardata"
-        global cl
-        cl = client.HP3ParClient("http://10.10.22.241:8008/api/v1")
-        cl.login(username, password)
-
-    def tearDown(self):
-        cl.logout()
+class TestCPG(test_3par_base.Test3PARBase):
 
     def test_1_create_CPG(self):
         print "Start testing create_CPG"
@@ -25,12 +16,18 @@ class TestCPG(unittest.TestCase):
             cl.createCPG(name, optional)
             print "Created %s " % name
 
+            cpg1 = cl.getCPG(name)
+            self.assertIsNotNone(cpg1)
+
             name = 'UnitTestCPG2'
             optional2 = optional.copy()
             more_optional = {'LDLayout':{'RAIDType':1}}
             optional2.update(more_optional)
             cl.createCPG(name, optional2)
             print "Created %s " % name
+
+            cpg2 = cl.getCPG(name)
+            self.assertIsNotNone(cpg2)
 
         except Exception as ex:
             print ex
