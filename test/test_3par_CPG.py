@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test class of  3Par Client handling CPG"""
+"""Test class of 3Par Client handling CPG"""
 
 import sys, os
 sys.path.insert(0,os.path.realpath(os.path.abspath('../')))
@@ -181,7 +181,8 @@ class TestCPG(test_3par_base.Test3PARBase):
                 self.fail ("Failed with unexpected exception")
 
         except Exception as ex:
-            self.fail (ex)
+            print ex
+            self.fail ("Failed with unexpected exception")
 
         self.printFooter('delete_CPGs')
 
