@@ -194,6 +194,19 @@ class HTTPJSONRESTClient(httplib2.Http):
         return resp, body
 
 
+    def _do_reauth(self, url, method, ex, **kwargs):
+        try:
+	    if self.auth_try != 1:
+               self.reauth()
+               resp, body = self._time_request(self.management_url + url, method, **kwargs)
+               return resp, body
+            else:
+               raise ex
+        except exceptions.HTTPUnauthorized:
+            raise ex
+
+
+
     def _cs_request(self, url, method, **kwargs):
         # Perform the request once. If we get a 401 back then it
         # might be because the auth token expired, so try to
@@ -206,15 +219,10 @@ class HTTPJSONRESTClient(httplib2.Http):
                                             **kwargs)
             return resp, body
         except exceptions.HTTPUnauthorized, ex:
-            try:
-		if self.auth_try != 1:
-                    self.reauth()
-                    resp, body = self._time_request(self.management_url + url, method, **kwargs)
-                    return resp, body
-                else:
-                    raise ex
-            except exceptions.HTTPUnauthorized:
-                raise ex
+	    resp, body = self._do_reauth(url, method, ex, **kwargs)
+        except exceptions.HTTPForbidden, ex:
+            resp, body = self._do_reauth(url, method, ex, **kwargs)
+
 
     def get(self, url, **kwargs):
         """
