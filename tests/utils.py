@@ -49,6 +49,15 @@ def get_host(cl,hostname):
     except Exception as ex:
        print ex
 
+def get_ports(cl):
+    try:
+        ports = cl.getPorts()
+        pprint.pprint(ports)
+    except exceptions.HTTPUnauthorized as ex:
+       print "You must login first"
+    except Exception as ex:
+       print ex
+
 
 def get_vluns(cl):
     print "Get VLUNs"
