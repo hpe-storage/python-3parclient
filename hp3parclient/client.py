@@ -209,6 +209,8 @@ class HP3ParClient:
 	""" 
         Get the list of Hosts
 
+        Note: This is not part of 3.1.2
+
         :returns: list of Hosts
 	"""
 	response, body = self.http.get('/hosts')
@@ -217,6 +219,7 @@ class HP3ParClient:
     def getHost(self, name):
         """ 
         Get information about a Host
+        Note: This is not part of 3.1.2
 
         :param name: The name of the Host to find
         :type name: str
@@ -235,6 +238,7 @@ class HP3ParClient:
     def createHost(self, name, optional):
         """
         Create a new Host entry
+        Note: This is not part of 3.1.2
 
         :param name: The name of the host
         :type name: str
@@ -253,6 +257,7 @@ class HP3ParClient:
     def deleteHost(self, name):
 	"""
         Delete a Host
+        Note: This is not part of 3.1.2
 
         :param name: Host Name
         :type name: str
@@ -263,7 +268,47 @@ class HP3ParClient:
 
         """
 	reponse, body = self.http.delete('/hosts/%s' % name)
-        
+
+
+    ## PORT Methods
+    def getPorts(self):
+        """
+        Get the list of ports on the 3Par
+
+              {'linkState': 4,
+               'mode': 2,
+               'nodeWwn': None,
+               'portPos': {'cardPort': 1, 'node': 1, 'slot': 8},
+               'portWwn': '2C27D75375D6',
+               'protocol': 2,
+               'type': 7}
+
+        Modes:
+        2 - target
+        3 - initiator
+        4 - peer
+
+        Types:
+        1 - host
+        2 - disk
+        3 - free
+        6 - rcip
+        7 - iSCSI
+         
+        Protocol:
+        1 - FC
+        2 - iSCSI
+        4 - IP
+
+        States:
+        4 - ready
+        5 - loss_sync
+        10 - offline
+
+        Note: This is not part of 3.1.2
+        """
+        response, body = self.http.get('/ports')
+        return body
 
 
 
