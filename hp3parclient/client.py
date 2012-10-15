@@ -368,11 +368,11 @@ class HP3ParClient:
 	reponse, body = self.http.get('/vluns')
 	return body
 
-    def getVLUN(self, name):
+    def getVLUN(self, volumeName):
         """ 
         Get information about a VLUN
 
-        :param name: The name of the VLUN to find
+        :param volumeName: The volume name of the VLUN to find
         :type name: str
 
         :returns: VLUN
@@ -383,7 +383,7 @@ class HP3ParClient:
         vluns = self.getVLUNs()
         if vluns:
             for vlun in vluns['members']:
-                if vlun['name'] == name:
+                if vlun['volumeName'] == volumeName:
                     return vlun
 
         raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_VLUN', 'desc': "VLUN '%s' was not found" % name})
@@ -461,13 +461,14 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
         """
 
-        vlun = ("%s,%s" % name, lunID)
+        vlun = "%s,%s" % (name, lunID)
 
         if hostname:
             vlun += ",%s" % hostname
 
         if port:
             vlun += ",%s" % port
+
 
 	response, body = self.http.delete('/vluns/%s' % vlun)
 

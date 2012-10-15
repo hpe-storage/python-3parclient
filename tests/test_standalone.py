@@ -49,7 +49,52 @@ def get_hosts():
        hosts = cl.getHosts()
        if hosts:
            for host in hosts['members']:
-               print "Found '%s'" % host['name']
+               pprint.pprint(host)
+#               print "Found '%s'" % host['name']
+    except exceptions.HTTPUnauthorized as ex:
+       print "You must login first"
+    except Exception as ex:
+       print ex
+
+def get_host(hostname):
+    try:
+        host = cl.getHost(hostname)
+        pprint.pprint(host)
+    except exceptions.HTTPUnauthorized as ex:
+       print "You must login first"
+    except Exception as ex:
+       print ex
+
+def get_vluns():
+    print "Get VLUNs"
+    try:
+        vluns = cl.getVLUNs()
+        if vluns:
+            pprint.pprint(vluns)
+            for vlun in vluns['members']:
+                print "Found CPG '%s'" % vlun['volumeName']
+    except exceptions.HTTPUnauthorized as ex:
+       print "You must login first"
+    except Exception as ex:
+       print ex
+
+def get_vlun(vlunname):
+    try:
+        vlun = cl.getVLUN(vlunname)
+        pprint.pprint(vlun)
+    except exceptions.HTTPUnauthorized as ex:
+       print "You must login first"
+    except Exception as ex:
+       print ex
+
+
+def get_cpgs():
+    print "Get CPGs"
+    try:
+        cpgs = cl.getCPGs()
+        if cpgs:
+            for cpg in cpgs['members']:
+                print "Found CPG '%s'" % cpg['name']
     except exceptions.HTTPUnauthorized as ex:
        print "You must login first"
     except Exception as ex:
@@ -75,7 +120,6 @@ def delete_test_host():
         print "You must login"
     except Exception as ex:
         print ex
-
 
 def create_test_cpg():
     try:
@@ -185,10 +229,14 @@ def delete_volumes():
 
 
 cl.login(username, password, {'InServ':'10.10.22.241'})
-create_test_host()
+#get_cpgs()
+#create_test_host()
 get_hosts()
-delete_test_host()
-get_hosts()
+#get_host('manualkvmtest')
+#get_vluns()
+#get_vlun('WALTTESTVOL11')
+#delete_test_host()
+#get_hosts()
 #get_volumes()
 #create_test_cpg()
 #create_volumes()
