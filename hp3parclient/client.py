@@ -475,9 +475,9 @@ class HP3ParClient:
         if overrideLowerPriority:
             info['overrideLowerPriority'] = overrideLowerPriority
 
-	response, body = self.http.post('/vluns', body=info)
-        if response:
-            location = response['headers']['location'].replace('/api/v1/vluns/', '')
+	headers, body = self.http.post('/vluns', body=info)
+        if headers:
+            location = headers['location'].replace('/api/v1/vluns/', '')
 	    return location
         else:
             return None
@@ -512,7 +512,7 @@ class HP3ParClient:
             vlun += ",%s" % hostname
 
         if port:
-            vlun += ",%s" % port
+            vlun += ",%s:%s:%s" % (port['node'], port['slot'], port['cardPort'])
 
 
 	response, body = self.http.delete('/vluns/%s' % vlun)
