@@ -4,6 +4,7 @@ import random
 from sys import path
 from os import getcwd
 import os, sys, inspect, pprint
+import time
 
 # this is a hack to get the hp driver module
 # and it's utils module on the search path.
@@ -21,11 +22,12 @@ args = parser.parse_args()
 username = "3paradm"
 password = "3pardata"
 
-testVolName = "WALTTESTVOL99"
+testVolName = "WALTTESTVOL6969"
 testSNAPName = testVolName+"SNAP"
 testCPGName = "WALTTESTCPG"
 TESTHOST = 'WALTOpenStackHost'
 DOMAIN = 'WALT_TEST'
+PORT = {'node': 1, 'slot' : 8, 'cardPort':1}
 
 #cl = client.HP3ParClient("https://localhost:8080/api/v1")
 cl = client.HP3ParClient("https://10.10.22.132:8080/api/v1")
@@ -43,7 +45,8 @@ def create_test_volume():
 
 def create_test_vlun():
     try:
-        cl.createVLUN(testVolName, 1, TESTHOST, {'node': 1, 'slot' : 8, 'cardPort':1})
+        location = cl.createVLUN(testVolName, 1, TESTHOST, PORT)
+        print "Location of VLUN = '%s'" % pprint.pformat(location)
     except exceptions.HTTPUnauthorized as ex:
         print "You must login"
     except Exception as ex:
@@ -52,7 +55,7 @@ def create_test_vlun():
 
 def delete_test_vlun():
     try:
-        cl.deleteVLUN(testVolName, 1, TESTHOST)
+        cl.deleteVLUN(testVolName, 1, TESTHOST, PORT)
     except exceptions.HTTPUnauthorized as ex:
         print "You must login"
     except Exception as ex:
@@ -134,12 +137,15 @@ def delete_volumes():
 cl.login(username, password, {'InServ':'10.10.22.241'})
 #get_cpgs()
 #get_host(cl, 'WALTTESTHOST')
-#get_host(cl, 'devstackvm')
+#get_host(cl, TESTHOST)
 #get_vlun(cl, 'WALTTESTVOL11')
 #get_vluns(cl)
-get_ports(cl)
+#get_ports(cl)
 #create_test_volume()
+#time.sleep(2)
 #create_test_host()
+#time.sleep(2)
+#delete_test_vlun()
 #create_test_vlun()
 #get_vlun(cl, testVolName)
 #delete_test_vlun()
