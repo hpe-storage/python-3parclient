@@ -133,8 +133,8 @@ def volumes_create():
     debugRequest(request)
     data = json.loads(request.data)
 
-    valid_keys = {'name':None, 'cpg':None, 'sizeMB':None, 'id':None,
-                  'comment':None, 'policies':None, 'snapCPG':None,
+    valid_keys = {'name':None, 'cpg':None, 'sizeMiB':None, 'id':None,
+                           'comment':None, 'policies':None, 'snapCPG':None,
                   'ssSpcAllocWarningPct': None, 'ssSpcAllocLimitPct': None,
                   'tpvv':None, 'usrSpcAllocWarningPct':None,
                   'usrSpcAllocLimitPct': None, 'isCopy':None,
@@ -147,16 +147,99 @@ def volumes_create():
            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key) 
 
 
-    if data['name'] == 'VolumeExists':
+    if data['name'] == 'UnitTestVolumeExists':
 	throw_error(409, 'EXISTENT_SV', "The volume '%s' already exists" % data['name'])
 
 
-    if data['sizeMB'] == 10241024:
-	throw_error(400, 'TOO_LARGE', "Volume size '%s' above architectural limit" % data['sizeMB'])
+    if data['sizeMiB'] == 10241024:
+	throw_error(400, 'TOO_LARGE', "Volume size '%s' above architectural limit" % data['sizeMiB'])
 
-    if data['sizeMB'] == 9999:
+    if data['sizeMiB'] == 9999:
 	throw_error(400, 'NO_SPACE', "Not enough space currently available")
-
+    
+    #fake create volumes
+    global volumes
+  
+    volumes = {'members': [{ 'additionalStates': [],
+                                                'adminSpace': {'freeMiB': 0,
+                                                                         'rawReservedMiB': 384,
+                                                                         'reservedMiB': 128,
+                                                                         'usedMiB': 128},
+                                                 'baseId': 1,
+                                                 'copyType': 1,
+                                                 'creationTime8601': u'2012-09-24T15:12:13-07:00',
+                                                 'creationTimeSec': 1348524733,
+                                                 'degradedStates': [],
+                                                 'domain': 'UNIT_TEST',
+                                                 'failedStates': [],
+                                                 'id': 1,
+                                                 'name': 'UnitTestVolume',
+                                                 'policies': {'caching': True,
+                                                                   'oneHost': False,
+                                                                   'staleSS': True,
+                                                                   'system': False,
+                                                                   'zeroDetect': False},
+                                                  'provisioningType': 1,
+                                                  'readOnly': False,
+                                                  'sizeMiB': 102400,
+                                                  'snapCPG': 'UnitTestCPG',
+                                                  'snapshotSpace': {'freeMiB': 0,
+                                                                                 'rawReservedMiB': 1024,
+                                                                                 'reservedMiB': 512,
+                                                                                 'usedMiB': 512},
+                                                 'ssSpcAllocLimitPct': 0,
+                                                 'ssSpcAllocWarningPct': 95,
+                                                 'state': 1,
+                                                 'userCPG': 'UnitTestCPG',
+                                                 'userSpace': {'freeMiB': 0,
+                                                                        'rawReservedMiB': 204800,
+                                                                        'reservedMiB': 102400,
+                                                                        'usedMiB': 102400},
+                                                 'usrSpcAllocLimitPct': 0,
+                                                 'usrSpcAllocWarningPct': 0,
+                                                 'uuid': '8bc9394e-f87a-4c1a-8777-11cba75af94c',
+                                                 'wwn': '50002AC00001383D'},
+                                                {'additionalStates': [],
+                                                 'adminSpace': {'freeMiB': 0,
+                                                                          'rawReservedMiB': 384,
+                                                                          'reservedMiB': 128,
+                                                                          'usedMiB': 128},
+                                                 'baseId': 41,
+                                                 'comment': 'test volume',
+                                                 'copyType': 1,
+                                                 'creationTime8601': '2012-09-27T14:11:56-07:00',
+                                                 'creationTimeSec': 1348780316,
+                                                 'degradedStates': [],
+                                                 'domain': 'UNIT_TEST',
+                                                 'failedStates': [],
+                                                 'id': 2,
+                                                 'name': 'UnitTestVolume2',
+                                                 'policies': {'caching': True,
+                                                                   'oneHost': False,
+                                                                   'staleSS': True,
+                                                                   'system': False,
+                                                                   'zeroDetect': False},
+                                                 'provisioningType': 1,
+                                                 'readOnly': False,
+                                                 'sizeMiB': 10240,
+                                                 'snapCPG': 'UnitTestCPG',
+                                                 'snapshotSpace': {'freeMiB': 0,
+                                                                                'rawReservedMiB': 1024,
+                                                                                'reservedMiB': 512,
+                                                                                'usedMiB': 512},
+                                                 'ssSpcAllocLimitPct': 0,
+                                                 'ssSpcAllocWarningPct': 0,
+                                                 'state': 1,
+                                                 'userCPG': 'UnitTestCPG',
+                                                 'userSpace': {'freeMiB': 0,
+                                                                        'rawReservedMiB': 20480,
+                                                                        'reservedMiB': 10240,
+                                                                        'usedMiB': 10240},
+                                                 'usrSpcAllocLimitPct': 0,
+                                                 'usrSpcAllocWarningPct': 0,
+                                                 'uuid': '6d5542b2-f06a-4788-879e-853ad0a3be42',
+                                                 'wwn': '50002AC00029383D'}],
+u'total': 26}
     #return  make_response(request.data, 200)
     return  make_response("", 200)
 
@@ -166,7 +249,7 @@ def volumes_create():
 def volumes_delete(volume_name):
     debugRequest(request)
 
-    if volume_name == "foo":
+    if volume_name == "NonExistVolume":
 	throw_error(404, 'NON_EXISTENT_SV', "The volume '%s' doesn't exist" % volume_name)
     elif volume_name == "forbidden":
 	throw_error(403, "PERM_DENIED", "Insufficient privileges to delete '%s'" % volume_name)
@@ -174,59 +257,19 @@ def volumes_delete(volume_name):
 	throw_error(403, "RETAINED", "Volume Retention for '%s' has not timed out" % volume_name)
     elif volume_name == "readonlychild":
 	throw_error(403, "HAS_RO_CHILD", "Volume '%s' has a read only child" % volume_name)
- 
+
+    #fake delete 
+    volumes  = {'members':[], 'total':0} 
     return make_response("", 200)
 
 
 @app.route('/api/v1/volumes', methods=['GET'])
 def volumes_get():
     debugRequest(request)
-
-    volume1 = { 'id': 1, 'name': 'Volume1', 'domain': 'somedomain',
-               'provisioning' : 1, 'copyType' : 2, 'baseld' : 12345,
-               'readOnly' : False, 'state' : 1, 'failedStates' : None,
-               'degradedStates' : None, 'additionalStates' : None,
-               'adminReservedMB' : 222, 'rawAdminReservedMB' : 111,
-               'adminUsedMB': 5432, 'adminFreeMB' : 1234567890,
-               'snapshotReservedMB' : 123, 'rawSnapshotReservedMB' : 123,
-               'snapshotUsedMB' : 111, 'snapshotFreeMB': 222,
-               'rawUserReservedMB' : 999, 'userUsedMB': 123456,
-               'userFreeMB': 987654321, 'sizeMB' : 9876543210,
-               'parentld' : '123', 'roChildld' : '444',
-               'rwChildld' : '555', 'physParentld' : '777', 'wmn':'someWMN',
-               'creationTimeSec' : 123456789, 'creationTime8601' : 'uhhh',
-               'expirationTimeSec' : 2222222, 'expirationTime8601' : 33333333,
-               'retentionTimeSec' : 44444444, 'retentionTime8601' : 55555555,
-               'policies' : {'staleSS' : False, 'oneHost' : True, 
-                             'zeroDetect' : True, 'system' : False, 
-                             'caching' : True}, 
-               'userCPG' : "SomethingCPG",
-               'snapCPG' : "SomeSnapCPG", 'comment' : "this is a bogus volume!"}
-
-    volume2 = { 'id': 2, 'name': 'Volume2', 'domain': 'anotherdomain',
-               'provisioning' : 1, 'copyType' : 2, 'baseld' : 12345,
-               'readOnly' : False, 'state' : 1, 'failedStates' : None,
-               'degradedStates' : None, 'additionalStates' : None,
-               'adminReservedMB' : 222, 'rawAdminReservedMB' : 111,
-               'adminUsedMB': 5432, 'adminFreeMB' : 1234567890,
-               'snapshotReservedMB' : 123, 'rawSnapshotReservedMB' : 123,
-               'snapshotUsedMB' : 111, 'snapshotFreeMB': 222,
-               'rawUserReservedMB' : 999, 'userUsedMB': 123456,
-               'userFreeMB': 987654321, 'sizeMB' : 9876543210,
-               'parentld' : '123', 'roChildld' : '444',
-               'rwChildld' : '555', 'physParentld' : '777', 'wmn':'someWMN',
-               'creationTimeSec' : 123456789, 'creationTime8601' : 'uhhh',
-               'expirationTimeSec' : 2222222, 'expirationTime8601' : 33333333,
-               'retentionTimeSec' : 44444444, 'retentionTime8601' : 55555555,
-               'policies' : {'staleSS' : False, 'oneHost' : True, 
-                             'zeroDetect' : True, 'system' : False, 
-                             'caching' : True}, 
-               'userCPG' : "SomethingCPG",
-               'snapCPG' : "SomeSnapCPG", 'comment' : "another bogus volume!"}
-
-    resp = make_response(json.dumps([volume1, volume2]), 200)
+    resp = make_response(json.dumps(volumes), 200)
     return resp
 
+###CPG###
 @app.route('/api/v1/cpgs', methods=['POST'])
 def cpg_create():
     debugRequest(request)
@@ -250,7 +293,7 @@ def cpg_create():
     if data['domain'] == 'BAD_DOMAIN': 
 	throw_error(404, 'NON_EXISTENT_DOMAIN', "Non-existing domain specified.")
     if data['name'] == 'UniteTestCPG3': 
-	throw_error(409, 'EXISTENT_CPG', "CPG is already existing.")
+	throw_error(409, 'EXISTENT_CPG', "CPG '%s' already exist." % data['name'])
     
     #fake create 2 CPGs
     global cpgs  
