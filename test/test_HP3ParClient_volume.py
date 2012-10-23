@@ -96,7 +96,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         self.printFooter('create_volume_badDup')
     
     def test_1_create_volume_badParams(self):
-        self.printHeader('create_CPG_badParams')
+        self.printHeader('create_volume_badParams')
 
         #add one
         try:
@@ -110,7 +110,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             print ex
             self.fail("Failed with unexpected exception")
 
-        self.printFooter('create_CPG_badParams')
+        self.printFooter('create_volume_badParams')
     
     def test_2_get_volume_bad(self):
         self.printHeader('get_volume_bad')
@@ -148,7 +148,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         self.printHeader('delete_volume_nonExist')
 
         try:
-            self.cl.deleteCPG('NonExistVolume')
+            self.cl.deleteVolume('NonExistVolume')
         except exceptions.HTTPNotFound:
             print "Expected exception"
         except Exception as ex:
@@ -168,8 +168,8 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
                         self.cl.deleteVolume(vol['name'])
             #assert
             try:
-                name = 'UnitTestVolume1'
-                cpg = self.cl.getVolume(name)
+                name = 'UnitTestVolume'
+                vol = self.cl.getVolume(name)
             except exceptions.HTTPNotFound:
                 print "Expected exception"
             except Exception as ex:
@@ -178,7 +178,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
 
             try:
                 name = 'UnitTestVolume2'
-                cpg = self.cl.getVolume(name)
+                vol = self.cl.getVolume(name)
             except exceptions.HTTPNotFound:
                 print "Expected exception"
             except Exception as ex:
