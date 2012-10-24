@@ -27,6 +27,17 @@ def get_volumes(cl):
        print ex
     print "Complete\n"
 
+def get_volume(cl, name):
+    print "Get Volume %s" % name
+    try:
+        vol = cl.getVolume(name)
+        pprint.pprint(vol)
+    except exceptions.HTTPUnauthorized as ex:
+       print "You must login first"
+    except Exception as ex:
+       print ex
+    print "Complete\n"
+
 def get_hosts(cl):
     print "Get Hosts"
     try:
@@ -96,3 +107,11 @@ def get_cpgs(cl):
     except Exception as ex:
        print ex
 
+def get_cpg(cl, name):
+    try:
+        cpg = cl.getCPG(name)
+        pprint.pprint(cpg)
+    except exceptions.HTTPUnauthorized as ex:
+       print "You must login first"
+    except Exception as ex:
+       print ex
