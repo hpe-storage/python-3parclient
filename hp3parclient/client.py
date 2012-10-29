@@ -184,7 +184,7 @@ class HP3ParClient:
             optional = { 
                 'id' : 12, # Specifies the ID of the volume, next by default
                 'comment' : "some comment", 
-                'copyRO' : True, # Read Only?
+                'readOnly' : True, # Read Only?
                 'expirationHours' : 36 # time from now to expire
                 'retentionHours' : 12 # time from now to expire 
             }
@@ -239,6 +239,7 @@ class HP3ParClient:
         """
         Create a new Host entry
         Note: This is not part of 3.1.2
+	TODO: get the list of thrown exceptions 
 
         :param name: The name of the host
         :type name: str
