@@ -23,8 +23,6 @@ Exceptions for the client
 :Description: This contains the HTTP exceptions that can come back from the REST calls to 3PAR
 """
 
-import pprint
-
 class UnsupportedVersion(Exception):
     """
     Indicates that the user is trying to use an unsupported version of the API
@@ -54,6 +52,7 @@ class ClientException(Exception):
 
     _debug1 = None
     _debug2 = None
+
     def __init__(self, error=None):
         if 'code' in error:
             self._error_code = error['code']
@@ -66,6 +65,15 @@ class ClientException(Exception):
             self._debug1 = error['debug1']
         if 'debug2' in error:
             self._debug2 = error['debug2']
+
+    def get_code(self):
+	return self._error_code
+
+    def get_description(self):
+	return self._error_desc
+
+    def get_ref(self):
+        return self._error_ref
 
 
     def __str__(self):
