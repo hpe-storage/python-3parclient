@@ -96,6 +96,7 @@ class HTTPJSONRESTClient(httplib2.Http):
         info = {'user':user, 'password':password}
 
         if optional:
+	    self._auth_optional = optional
             info.update(optional)
 
         resp, body = self.post('/credentials', body=info)
@@ -106,7 +107,7 @@ class HTTPJSONRESTClient(httplib2.Http):
 	self.password = password
 
     def _reauth(self):
-	self.authenticate(self.user, self.password)
+	self.authenticate(self.user, self.password, self._auth_optional)
         
 
     def unauthenticate(self):
@@ -213,7 +214,7 @@ class HTTPJSONRESTClient(httplib2.Http):
         # might be because the auth token expired, so try to
         # re-authenticate and try again. If it still fails, bail.
         try:
-            if self.session_key:
+            if self.session_key and self.auth_try != 1 :
                 kwargs.setdefault('headers', {})[self.SESSION_COOKIE_NAME] = self.session_key
 
             resp, body = self._time_request(self.api_url + url, method,
