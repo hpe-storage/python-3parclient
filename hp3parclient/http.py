@@ -94,6 +94,7 @@ class HTTPJSONRESTClient(httplib2.Http):
 	self.auth_try = 1
 
         info = {'user':user, 'password':password}
+        self._auth_optional = None
 
         if optional:
 	    self._auth_optional = optional
@@ -107,7 +108,8 @@ class HTTPJSONRESTClient(httplib2.Http):
 	self.password = password
 
     def _reauth(self):
-	self.authenticate(self.user, self.password, self._auth_optional)
+        self.authenticate(self.user, self.password, self._auth_optional)
+            
         
 
     def unauthenticate(self):
@@ -200,7 +202,7 @@ class HTTPJSONRESTClient(httplib2.Http):
         try:
 	    if self.auth_try != 1:
                self._reauth()
-               resp, body = self._time_request(self.management_url + url, method, **kwargs)
+               resp, body = self._time_request(self.api_url + url, method, **kwargs)
                return resp, body
             else:
                raise ex
