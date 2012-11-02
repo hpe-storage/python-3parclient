@@ -36,7 +36,7 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
 
          self.cl = client.HP3ParClient("http://localhost:5000/api/v1")
          if self.debug == 'debug':
-             self.cl.debug_rest(False)
+             self.cl.debug_rest(True)
          else: 
              self.mockServer = subprocess.Popen([sys.executable, './test_HP3ParMockServer_flask.py'], 
                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)

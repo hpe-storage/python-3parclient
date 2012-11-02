@@ -46,8 +46,8 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             #add another
 	    volumeName = 'UnitTestVolume2'
             lun = 2
-            optional = {'host':'UnitTestHost', 'noVcn': True, 'overrideLowerPriority': True}
-            self.cl.createVolume(volumeName, lun, optional)
+            hostname = 'UnitTestHost2'
+            self.cl.createVLUN(volumeName, lun, hostname)
 
             #assert
             vlun2 = self.cl.getVLUN(volumeName)
@@ -82,7 +82,7 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
   
     def test_1_create_VLUN_volulmenonexist(self):
-        self.printHeader('create_VLUN_volnonexist')
+        self.printHeader('create_VLUN_volNonExist')
 
         #add one
         try:
@@ -99,7 +99,7 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             print ex
             self.fail("Failed with unexpected exception")
 
-        self.printFooter('create_VLUN_volnonexist')
+        self.printFooter('create_VLUN_volNonExist')
        
     def test_1_create_VLUN_badParams(self):
         self.printHeader('create_VLUN_badParams')
@@ -111,7 +111,7 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             hostname = 'UnitTestHost'
             noVcn =  False
             overrideLowerPriority = True
-            portPos = {'bad node':1, 'cardPort':1, 'slot':2}
+            portPos = {'badNode':1, 'cardPort':1, 'slot':2}
             self.cl.createVLUN(volumeName, lun, hostname,portPos,noVcn,overrideLowerPriority)
         except exceptions.HTTPBadRequest:
             print "Expected exception"
