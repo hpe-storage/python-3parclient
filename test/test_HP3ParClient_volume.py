@@ -190,7 +190,58 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.fail ("Failed with unexpected exception")
 
         self.printFooter('delete_volumes')
+
+    def test_4_create_snapshot(self):
+        self.printHeader('create_snapshot')
+
+        try:
+            #add one
+            name = 'UnitTestSnapshot'
+            volName = 'UnitTestVolume'
+            optional = {'id': 1, 'comment': 'test snapshot', 'copyRO': True, 'expirationHours': 300}
+            self.cl.createSnapshot(name, volName, optional)
+
+            #not sure how to assert
+            #TODO: 
+        except Exception as ex:
+            print ex
+            self.fail("Failed with unexpected exception")
+
+        self.printFooter('create_snapshot')
    
+    def test_4_create_snapshot_badParams(self):
+        self.printHeader('create_snapshot_badParams')
+
+        #add one
+        try:
+            name = 'UnitTestSnapshot'
+            volName = 'UnitTestVolume'
+            optional = {'id': 1, 'comment': 'test snapshot', 'copyROBad': True, 'expirationHours': 300}
+            self.cl.createVolume(name, volName, optional)
+        except exceptions.HTTPBadRequest:
+            print "Expected exception"
+        except Exception as ex:
+            print ex
+            self.fail("Failed with unexpected exception")
+
+        self.printFooter('create_snapshot_badParams')
+
+    def test_4_create_snapshot_nonExistVolume(self):
+        self.printHeader('create_snapshot_nonExistVolume')
+
+        #add one
+        try:
+            name = 'UnitTestBadSnapshot'
+            volName = 'NonExistVolume'
+            optional = {'id': 1, 'comment': 'test snapshot', 'copyRO': True, 'expirationHours': 300}
+            self.cl.createVolume(name, volName, optional)
+        except exceptions.HTTPBadRequest:
+            print "Expected exception"
+        except Exception as ex:
+            print ex
+            self.fail("Failed with unexpected exception")
+
+        self.printFooter('create_snapshot_nonExistVolume')
 #testing
 suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVolumeTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

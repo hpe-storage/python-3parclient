@@ -22,21 +22,34 @@ from hp3parclient import client, exceptions
 import unittest
 import subprocess
 import time
+import pprint
 
 class HP3ParClientBaseTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.mockServer = subprocess.Popen([sys.executable, './test_HP3ParMockServer_flask.py'], 
-                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+         #if have debug as second argument for the test
+         #for example, pythong test_HP3ParClient_CPG.py debug
+         #need to manaully start test_HP3ParMockServer_flask.py before run 
+         #test
+         if len(sys.argv) >= 2:
+             self.debug = sys.argv[1]
 
-        time.sleep(1) 
-        self.cl = client.HP3ParClient("http://localhost:5000/api/v1")
-#        self.cl.debug_rest(True)
-        self.cl.login("user", "hp")
+         self.cl = client.HP3ParClient("http://localhost:5000/api/v1")
+         if self.debug == 'debug':
+             self.cl.debug_rest(False)
+         else: 
+             self.mockServer = subprocess.Popen([sys.executable, './test_HP3ParMockServer_flask.py'], 
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+             time.sleep(1) 
+         
+         self.cl.login("user", "hp")
 
     def tearDown(self):
         self.cl.logout()
-        self.mockServer.kill()
+        if self.debug != 'debug':
+            #TODO: it seems to kill all the process except the last one...
+            #don't know why 
+            self.mockServer.kill()
 
     def printHeader(self, name):
         print "Start testing '%s'" % name

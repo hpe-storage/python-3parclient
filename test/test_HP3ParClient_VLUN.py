@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test class of 3Par Client handling vlun"""
+"""Test class of 3Par Client handling VLUN"""
 
 import sys, os
 sys.path.insert(0,os.path.realpath(os.path.abspath('../')))

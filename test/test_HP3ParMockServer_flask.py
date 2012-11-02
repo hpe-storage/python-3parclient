@@ -118,15 +118,228 @@ def credentials():
 
 
 @app.route('/api/v1/credentials/<session_key>', methods=['DELETE'])
-def credentials_logout(session_key):
+def logout_credentials(session_key):
     debugRequest(request)
     session.clear()
     return 'DELETE credentials called'
 
+
+#### CPG ####
+
+@app.route('/api/v1/cpgs', methods=['POST'])
+def create_cpgs():
+    debugRequest(request)
+    data = json.loads(request.data)
+
+    valid_keys = {'name':None, 'growthIncrementMB':None, 'growthLimitMB':None, 
+                  'usedLDWarningAlertMB':None, 'domain':None, 'LDLayout':None}
+
+    valid_LDLayout_keys = {'RAIDType':None, 'setSize':None, 'HA':None, 
+                           'chuckletPosRef':None, 'diskPatterns':None} 
+
+    for key in data.keys():
+        if key not in valid_keys.keys():
+           throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
+        elif 'LDLayout' in data.keys():
+           layout = data ['LDLayout']
+           for subkey in layout.keys():
+               if subkey not in valid_LDLayout_keys:
+                   throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey) 
+
+    if data['domain'] == 'BAD_DOMAIN': 
+	throw_error(404, 'NON_EXISTENT_DOMAIN', "Non-existing domain specified.")
+    elif data['name'] == 'UniteTestCPG3': 
+	throw_error(409, 'EXISTENT_CPG', "CPG '%s' already exist." % data['name'])
+    
+    #fake create 2 CPGs
+    global cpgs  
+    cpgs = {'members': 
+           [{'SAGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
+                         'incrementMiB': 8192},
+            'SAUsage': {'rawTotalMiB': 24576,
+                         'rawUsedMiB': 768,
+                         'totalMiB': 8192,
+                         'usedMiB': 256},
+            'SDGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
+                         'incrementMiB': 16384,
+                         'limitMiB': 256000,
+                         'warningMiB': 204800},
+            'SDUsage': {'rawTotalMiB': 32768,
+                        'rawUsedMiB': 2048,
+                        'totalMiB': 16384,
+                        'usedMiB': 1024},
+            'UsrUsage': {'rawTotalMiB': 239616,
+                         'rawUsedMiB': 229376,
+                         'totalMiB': 119808,
+                         'usedMiB': 114688},
+            'additionalStates': [],
+            'degradedStates': [],
+            'domain': 'UNIT_TEST',
+            'failedStates': [],
+            'id': 0,
+            'name': 'UnitTestCPG',
+            'numFPVVs': 12,
+            'numTPVVs': 0,
+            'state': 1,
+            'uuid': 'f9b018cc-7cb6-4358-a0bf-93243f853d96'},
+           {'SAGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
+                          'incrementMiB': 8192},
+             'SAUsage': {'rawTotalMiB': 24576,
+                         'rawUsedMiB': 768,
+                         'totalMiB': 8192,
+                         'usedMiB': 256},
+             'SDGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
+                          'incrementMiB': 16384,
+                          'limitMiB': 256000,
+                          'warningMiB': 204800},
+             'SDUsage': {'rawTotalMiB': 32768,
+                         'rawUsedMiB': 2048,
+                         'totalMiB': 16384,
+                         'usedMiB': 1024},
+             'UsrUsage': {'rawTotalMiB': 239616,
+                          'rawUsedMiB': 229376,
+                          'totalMiB': 119808,
+                          'usedMiB': 114688},
+             'additionalStates': [],
+             'degradedStates': [],
+             'domain': 'UNIT_TEST',
+             'failedStates': [],
+             'id': 0,
+             'name': 'UnitTestCPG2',
+             'numFPVVs': 12,
+             'numTPVVs': 0,
+             'state': 1,
+             'uuid': 'f9b018cc-7cb6-4358-a0bf-93243f853d97'}],
+      'total': 2}
+ 
+    return  make_response("", 200)
+
+@app.route('/api/v1/cpgs', methods=['GET'])
+def get_cpgs():
+    debugRequest(request)
+    
+    #should get it from global cpgs 
+    resp = make_response(json.dumps(cpgs), 200)
+    return resp
+
+@app.route('/api/v1/cpgs/<cpg_name>', methods=['DELETE'])
+def delete_cpg(cpg_name):
+    debugRequest(request)
+
+    if cpg_name == "NonExistCPG":
+	throw_error(404, 'NON_EXISTENT_CPG', "CPG '%s' doesn't exist" % cpg_name)
+    
+    #fake delete
+    cpgs = {'members':[], 'total':0} 
+    return make_response("", 200)
+
+#### Host ####
+
+@app.route('/api/v1/hosts', methods=['POST'])
+def create_hosts():
+    debugRequest(request)
+    data = json.loads(request.data)
+    valid_keys = {'FCPaths':None, 'descriptors':None, 'domain':None, 'iSCSIPaths':None,
+                  'id': 0,'name':None}
+
+    valid_iscsi_keys = {'driverVersion': None, 'firmwareVersion':None, 'hostSpeed':None, 
+                        'ipAddr': None, 'model':None, 'name': None, 'portPos': None,
+                        'vendor': None}
+ 
+    ## do some fake errors here depending on data
+    for key in data.keys():
+        if key not in valid_keys.keys():
+           throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key) 
+        elif 'iSCSIPaths' in data.keys():
+           iscsiP = data ['iSCSIPaths']
+           for subkey in iscsiP.keys():
+               if subkey not in valid_iscsi_keys:
+                   throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey) 
+
+    #fake hosts
+    global hosts 
+    hosts = {'members': 
+             [{'FCPaths': [],
+               'descriptors': None,
+               'domain': 'UNIT_TEST',
+               'iSCSIPaths': [{'driverVersion': '1.0',
+                               'firmwareVersion': '1.0',
+                               'hostSpeed': 100,
+                               'ipAddr': '10.10.221.59',
+                               'model': 'TestModel',
+                               'name': 'iqnTestName',
+                               'portPos': {'cardPort': 1, 'node': 1,
+                                           'slot': 8},
+                               'vendor': 'HP'}],
+               'id': 11,
+               'name': 'UnitTestHost'},
+              {'FCPaths': [],
+               'descriptors': None,
+               'domain': 'UNIT_TEST',
+               'iSCSIPaths': [{'driverVersion': '1.0',
+                               'firmwareVersion': '1.0',
+                               'hostSpeed': 100,
+                               'ipAddr': '10.10.221.58',
+                               'model': 'TestMode2',
+                               'name': 'iqnTestName2',
+                               'portPos': {'cardPort': 1, 'node': 1,
+                                           'slot': 8},
+                               'vendor': 'HP'}],
+               'id': 12,
+               'name': 'UnitTestHost2'}],
+            'total': 2}
+    resp = make_response("", 201)
+    return resp
+
+@app.route('/api/v1/hosts/<host_name>', methods=['DELETE'])
+def delete_host(host_name):
+    debugRequest(request)
+
+    if host_name == "UnitTestNonExistHost":
+	throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % host_name)
+    elif host_name == "UnitTestInUseHost":
+	throw_error(403, 'IN_USE', "The host '%s' is in-use" % host_name)
+
+    #fake delete 
+    hosts  = {'members':[], 'total':0} 
+    return make_response("", 200)
+
+@app.route('/api/v1/hosts', methods=['GET'])
+def get_hosts():
+    debugRequest(request)
+    resp = make_response(json.dumps(hosts), 200)
+    return resp
+
+#### Port ####
+
+@app.route('/api/v1/ports', methods=['GET'])
+def get_ports():
+    debugRequest(request)
+
+    #fake ports 
+    ports = {'members': 
+             [{'linkState': 4,
+               'mode': 2,
+               'nodeWwn': None,
+               'portPos': {'cardPort': 1, 'node': 1, 'slot': 8},
+               'portWwn': '2C27D75375D6',
+               'protocol': 2,
+               'type': 7},
+              {'linkState': 4,
+               'mode': 2,
+               'nodeWwn': None,
+               'portPos': {'cardPort': 1, 'node': 1, 'slot': 8},
+               'portWwn': '2C27D75375D6',
+               'protocol': 2,
+               'type': 7}],
+            'total': 2}
+    resp = make_response(json.dumps(ports), 200)
+    return resp
+
 #### VLUN ####
 
 @app.route('/api/v1/vluns', methods=['POST'])
-def vluns_create():
+def create_vluns():
     debugRequest(request)
     data = json.loads(request.data)
 
@@ -140,7 +353,6 @@ def vluns_create():
     for key in data.keys():
         if key not in valid_keys.keys():
            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key) 
-
         elif 'portPos' in data.keys():
            portP = data ['portPos']
            for subkey in portP.keys():
@@ -196,7 +408,7 @@ def vluns_create():
 
 
 @app.route('/api/v1/vluns/<vlun_str>', methods=['DELETE'])
-def vluns_delete(vlun_str):
+def delete_vluns(vlun_str):
     #<vlun_str> is like volumeName,lun,host,node:slot:port
     debugRequest(request)
 
@@ -213,21 +425,47 @@ def vluns_delete(vlun_str):
 
 
 @app.route('/api/v1/vluns', methods=['GET'])
-def vluns_get():
+def get_vluns():
     debugRequest(request)
     resp = make_response(json.dumps(vluns), 200)
     return resp
 
+
 #### VOLUMES ####
 
+@app.route('/api/v1/volumes/<volume_name>', methods=['POST'])
+def create_snapshot(volume_name):
+    debugRequest(request)
+    data = json.loads(request.data)
 
+    valid_keys = {'action': None, 'parameters': None}
+    valid_parm_keys = {'name':None, 'id':None, 'comment': None,
+                       'copyRO':None, 'expirationHours': None,
+                       'retentionHours':None}
+
+    ## do some fake errors here depending on data
+    for key in data.keys():
+        if key not in valid_keys.keys():
+           throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
+        elif 'parameters' in data.keys():
+           parm = data ['parameters']
+           for subkey in parm.keys():
+               if subkey not in valid_parm_keys:
+                   throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey) 
+
+    if volume_name == "NonExistVolume":
+	throw_error(404, 'NON_EXISTENT_VOLUME', "The volume '%s' doesn't exist" % volume_name)
+
+    #return  make_response(request.data, 200)
+    return  make_response("", 200)
+ 
 @app.route('/api/v1/volumes', methods=['POST'])
-def volumes_create():
+def create_volumes():
     debugRequest(request)
     data = json.loads(request.data)
 
     valid_keys = {'name':None, 'cpg':None, 'sizeMiB':None, 'id':None,
-                           'comment':None, 'policies':None, 'snapCPG':None,
+                  'comment':None, 'policies':None, 'snapCPG':None,
                   'ssSpcAllocWarningPct': None, 'ssSpcAllocLimitPct': None,
                   'tpvv':None, 'usrSpcAllocWarningPct':None,
                   'usrSpcAllocLimitPct': None, 'isCopy':None,
@@ -336,7 +574,7 @@ def volumes_create():
 
 
 @app.route('/api/v1/volumes/<volume_name>', methods=['DELETE'])
-def volumes_delete(volume_name):
+def delete_volumes(volume_name):
     debugRequest(request)
 
     if volume_name == "NonExistVolume":
@@ -354,119 +592,11 @@ def volumes_delete(volume_name):
 
 
 @app.route('/api/v1/volumes', methods=['GET'])
-def volumes_get():
+def get_volumes():
     debugRequest(request)
     resp = make_response(json.dumps(volumes), 200)
     return resp
 
-#### CPG ####
-
-@app.route('/api/v1/cpgs', methods=['POST'])
-def cpg_create():
-    debugRequest(request)
-    data = json.loads(request.data)
-
-    valid_keys = {'name':None, 'growthIncrementMB':None, 'growthLimitMB':None, 
-                  'usedLDWarningAlertMB':None, 'domain':None, 'LDLayout':None}
-
-    valid_LDLayout_keys = {'RAIDType':None, 'setSize':None, 'HA':None, 
-                           'chuckletPosRef':None, 'diskPatterns':None} 
-
-    for key in data.keys():
-        if key not in valid_keys.keys():
-           throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
-        elif 'LDLayout' in data.keys():
-           layout = data ['LDLayout']
-           for subkey in layout.keys():
-               if subkey not in valid_LDLayout_keys:
-                   throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey) 
-
-    if data['domain'] == 'BAD_DOMAIN': 
-	throw_error(404, 'NON_EXISTENT_DOMAIN', "Non-existing domain specified.")
-    elif data['name'] == 'UniteTestCPG3': 
-	throw_error(409, 'EXISTENT_CPG', "CPG '%s' already exist." % data['name'])
-    
-    #fake create 2 CPGs
-    global cpgs  
-    cpgs = {'members': 
-           [{'SAGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
-                         'incrementMiB': 8192},
-            'SAUsage': {'rawTotalMiB': 24576,
-                         'rawUsedMiB': 768,
-                         'totalMiB': 8192,
-                         'usedMiB': 256},
-            'SDGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
-                         'incrementMiB': 16384,
-                         'limitMiB': 256000,
-                         'warningMiB': 204800},
-            'SDUsage': {'rawTotalMiB': 32768,
-                        'rawUsedMiB': 2048,
-                        'totalMiB': 16384,
-                        'usedMiB': 1024},
-            'UsrUsage': {'rawTotalMiB': 239616,
-                         'rawUsedMiB': 229376,
-                         'totalMiB': 119808,
-                         'usedMiB': 114688},
-            'additionalStates': [],
-            'degradedStates': [],
-            'domain': 'UNIT_TEST',
-            'failedStates': [],
-            'id': 0,
-            'name': 'UnitTestCPG',
-            'numFPVVs': 12,
-            'numTPVVs': 0,
-            'state': 1,
-            'uuid': 'f9b018cc-7cb6-4358-a0bf-93243f853d96'},
-           {'SAGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
-                          'incrementMiB': 8192},
-             'SAUsage': {'rawTotalMiB': 24576,
-                         'rawUsedMiB': 768,
-                         'totalMiB': 8192,
-                         'usedMiB': 256},
-             'SDGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
-                          'incrementMiB': 16384,
-                          'limitMiB': 256000,
-                          'warningMiB': 204800},
-             'SDUsage': {'rawTotalMiB': 32768,
-                         'rawUsedMiB': 2048,
-                         'totalMiB': 16384,
-                         'usedMiB': 1024},
-             'UsrUsage': {'rawTotalMiB': 239616,
-                          'rawUsedMiB': 229376,
-                          'totalMiB': 119808,
-                          'usedMiB': 114688},
-             'additionalStates': [],
-             'degradedStates': [],
-             'domain': 'UNIT_TEST',
-             'failedStates': [],
-             'id': 0,
-             'name': 'UnitTestCPG2',
-             'numFPVVs': 12,
-             'numTPVVs': 0,
-             'state': 1,
-             'uuid': 'f9b018cc-7cb6-4358-a0bf-93243f853d97'}],
-      'total': 2}
- 
-    return  make_response("", 200)
-
-@app.route('/api/v1/cpgs', methods=['GET'])
-def cpgs_get():
-    debugRequest(request)
-    
-    #should get it from global cpgs 
-    resp = make_response(json.dumps(cpgs), 200)
-    return resp
-
-@app.route('/api/v1/cpgs/<cpg_name>', methods=['DELETE'])
-def cpg_delete(cpg_name):
-    debugRequest(request)
-
-    if cpg_name == "NonExistCPG":
-	throw_error(404, 'NON_EXISTENT_CPG', "CPG '%s' doesn't exist" % cpg_name)
-    
-    #fake delete
-    cpgs = {'members':[], 'total':0} 
-    return make_response("", 200)
 
 if __name__ == "__main__":
     app.run()
