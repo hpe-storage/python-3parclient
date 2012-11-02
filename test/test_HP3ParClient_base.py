@@ -38,11 +38,8 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
          if self.debug == 'debug':
              self.cl.debug_rest(True)
          else: 
-             self.mockServer = subprocess.Popen([sys.executable, 
-                                                './test_HP3ParMockServer_flask.py'], 
-                                                stdout=subprocess.PIPE, 
-                                                stderr=subprocess.PIPE, 
-                                                stdin=subprocess.PIPE)
+             self.mockServer = subprocess.Popen([sys.executable, './test_HP3ParMockServer_flask.py'], 
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
              time.sleep(1) 
          
          self.cl.login("user", "hp")
@@ -55,8 +52,8 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
             self.mockServer.kill()
 
     def printHeader(self, name):
-        print "\n##Start testing '%s'" % name
+        print "Start testing '%s'" % name
 
     def printFooter(self, name):
-        print "##Compeleted testing '%s\n" % name
+        print "Compeleted testing '%s'" % name
 

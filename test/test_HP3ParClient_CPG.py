@@ -33,7 +33,7 @@ class HP3ParClientCPGTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             name = 'UnitTestCPG'
             self.cl.createCPG(name, optional)
             
-            #check
+            #assert
             cpg1 = self.cl.getCPG(name)
             self.assertIsNotNone(cpg1)
             cpgName = cpg1['name']
@@ -46,7 +46,7 @@ class HP3ParClientCPGTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             optional2.update(more_optional)
             self.cl.createCPG(name, optional2)
 
-            #check
+            #assert
             cpg2 = self.cl.getCPG(name)
             self.assertIsNotNone(cpg2)
             cpgName = cpg2['name']
@@ -73,13 +73,13 @@ class HP3ParClientCPGTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
         self.printFooter('create_CPG_badDomain')
    
-    def test_1_create_CPG_dup(self):
-        self.printHeader('create_CPG_dup')
+    def test_1_create_CPG_badDupCPG(self):
+        self.printHeader('create_CPG_badDupCPG')
 
         #add one
         try:
             optional = {'domain': 'UNIT_TEST'}
-            name = 'UnitTestCPGExisting'
+            name = 'UnitTestCPG3'
             self.cl.createCPG(name, optional)
         except exceptions.HTTPConflict:
             print "Expected exception"
@@ -87,26 +87,10 @@ class HP3ParClientCPGTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             print ex
             self.fail("Failed with unexpected exception")
 
-        self.printFooter('create_CPG_dup')
+        self.printFooter('create_CPG_badDupCPG')
     
     def test_1_create_CPG_badParams(self):
         self.printHeader('create_CPG_badParams')
-
-        #add one
-        try:
-            optional = {'domainBad': 'UNIT_TEST'}
-            name = 'UnitTestCPGbad'
-            self.cl.createCPG(name, optional)
-        except exceptions.HTTPBadRequest:
-            print "Expected exception"
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
-
-        self.printFooter('create_CPG_badParams')
-
-    def test_1_create_CPG_badParams2(self):
-        self.printHeader('create_CPG_badParams2')
 
         #add one
         try:
@@ -121,10 +105,10 @@ class HP3ParClientCPGTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             print ex
             self.fail("Failed with unexpected exception")
 
-        self.printFooter('create_CPG_badParams2')
+        self.printFooter('create_CPG_badParams')
     
-    def test_2_get_CPG_bad(self):
-        self.printHeader('get_CPG_bad')
+    def test_2_get_CPG_Bad(self):
+        self.printHeader('get_CPG_Bad')
 
         try:
             cpg = self.cl.getCPG('BadName')
@@ -134,7 +118,7 @@ class HP3ParClientCPGTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             print ex
             self.fail("Failed with unexpected exception")
 
-        self.printFooter('get_CPG_bad')
+        self.printFooter('get_CPG_Bad')
    
     def test_2_get_CPGs(self):
         self.printHeader('get_CPGs')
@@ -155,8 +139,8 @@ class HP3ParClientCPGTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
         self.printFooter('get_CPGs')
     
-    def test_3_delete_CPG_nonExist(self):
-        self.printHeader('delete_CPG_nonExist')
+    def test_3_delete_CPG_NonExist(self):
+        self.printHeader('delete_CPG_NonExist')
 
         try:
             self.cl.deleteCPG('NonExistCPG')
@@ -166,7 +150,7 @@ class HP3ParClientCPGTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             print ex
             self.fail("Failed with unexpected exception")
 
-        self.printFooter('delete_CPG_nonExist')
+        self.printFooter('delete_CPG_NonExist')
     
     def test_3_delete_CPGs(self):
         self.printHeader('delete_CPGs')
@@ -178,7 +162,7 @@ class HP3ParClientCPGTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
                     if cpg['name'].startswith('UnitTestCPG'):
                         #pprint.pprint("Deleting CPG %s " % cpg['name'])
                         self.cl.deleteCPG(cpg['name'])
-            #check
+            #assert
             try:
                 name = 'UnitTestCPG'
                 cpg = self.cl.getCPG(name)

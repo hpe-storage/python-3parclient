@@ -184,7 +184,7 @@ class HP3ParClient:
             optional = { 
                 'id' : 12, # Specifies the ID of the volume, next by default
                 'comment' : "some comment", 
-                'copyRO' : True, # Read Only?
+                'readOnly' : True, # Read Only?
                 'expirationHours' : 36 # time from now to expire
                 'retentionHours' : 12 # time from now to expire 
             }
@@ -432,7 +432,7 @@ class HP3ParClient:
                 if vlun['volumeName'] == volumeName:
                     return vlun
 
-        raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_VLUN', 'desc': "VLUN '%s' was not found" % volumeName})
+        raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_VLUN', 'desc': "VLUN '%s' was not found" % name})
 
     def createVLUN(self, volumeName, lun, hostname=None, portPos=None, noVcn=None,
                    overrideLowerPriority=None):

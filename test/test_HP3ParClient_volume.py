@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test class of 3Par Client handling volume & snapshot """
+"""Test class of 3Par Client handling volume"""
 
 import sys, os
 sys.path.insert(0,os.path.realpath(os.path.abspath('../')))
@@ -34,7 +34,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             optional = {'id': 1, 'comment': 'test volume', 'tpvv': True}
             self.cl.createVolume(name, cpgName, 1024, optional)
             
-            #check
+            #assert
             vol1 = self.cl.getVolume(name)
             self.assertIsNotNone(vol1)
             volName = vol1['name']
@@ -47,7 +47,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             optional = {'id': 2, 'comment': 'test volume2', 'tpvv': True}
             self.cl.createVolume(name, cpgName, 1024, optional)
 
-            #check
+            #assert
             vol2 = self.cl.getVolume(name)
             self.assertIsNotNone(vol2)
             volName = vol2['name']
@@ -61,10 +61,10 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         self.printFooter('create_volume')
 
     
-    def test_1_create_volume_tooLarge(self):
-        self.printHeader('create_volume_tooLarge')
+    def test_1_create_volume_toolarge(self):
+        self.printHeader('create_volume_badTooLarge')
 
-        #add one and check
+        #add one
         try:
             name = 'UnitTestVolume3'
             cpgName = 'UnitTestCPG'
@@ -76,12 +76,12 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             print ex
             self.fail("Failed with unexpected exception")
 
-        self.printFooter('create_volume_tooLarge')
+        self.printFooter('create_volume_badTooLarge')
   
     def test_1_create_volume_dup(self):
-        self.printHeader('create_volume_dup')
+        self.printHeader('create_volume_badDup')
 
-        #add one and check
+        #add one
         try:
             name = 'UnitTestExistingVolume'
             cpgName = 'UnitTestCPG'
@@ -93,12 +93,12 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             print ex
             self.fail("Failed with unexpected exception")
 
-        self.printFooter('create_volume_dup')
+        self.printFooter('create_volume_badDup')
     
     def test_1_create_volume_badParams(self):
         self.printHeader('create_volume_badParams')
 
-        #add one and check
+        #add one
         try:
             name = 'UnitTestBadVolume'
             cpgName = 'UnitTestCPG'
@@ -131,7 +131,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         try:
             vols = self.cl.getVolumes()
 
-            #check
+            #assert
             name = 'UnitTestVolume'
             vol1 = self.cl.getVolume(name)
 	    name = 'UnitTestVolume2'
@@ -166,7 +166,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
                 for vol in volumes['members']:
                     if vol['name'].startswith('UnitTestVolume'):
                         self.cl.deleteVolume(vol['name'])
-            #check
+            #assert
             try:
                 name = 'UnitTestVolume'
                 vol = self.cl.getVolume(name)
@@ -198,10 +198,11 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             #add one
             name = 'UnitTestSnapshot'
             volName = 'UnitTestVolume'
-            optional = {'id': 1, 'comment': 'test snapshot', 
-                        'copyRO': True, 'expirationHours': 300}
+            optional = {'id': 1, 'comment': 'test snapshot', 'copyRO': True, 'expirationHours': 300}
             self.cl.createSnapshot(name, volName, optional)
-            #no API to get and check 
+
+            #not sure how to assert
+            #TODO: 
         except Exception as ex:
             print ex
             self.fail("Failed with unexpected exception")
@@ -215,9 +216,8 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         try:
             name = 'UnitTestSnapshot'
             volName = 'UnitTestVolume'
-            optional = {'id': 1, 'comment': 'test snapshot', 
-                        'copyROBad': True, 'expirationHours': 300}
-            self.cl.createSnapshot(name, volName, optional)
+            optional = {'id': 1, 'comment': 'test snapshot', 'copyROBad': True, 'expirationHours': 300}
+            self.cl.createVolume(name, volName, optional)
         except exceptions.HTTPBadRequest:
             print "Expected exception"
         except Exception as ex:
@@ -231,12 +231,11 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
 
         #add one
         try:
-            name = 'UnitTestSnapshot'
+            name = 'UnitTestBadSnapshot'
             volName = 'NonExistVolume'
-            optional = {'id': 1, 'comment': 'test snapshot', 
-                        'copyRO': True, 'expirationHours': 300}
-            self.cl.createSnapshot(name, volName, optional)
-        except exceptions.HTTPNotFound:
+            optional = {'id': 1, 'comment': 'test snapshot', 'copyRO': True, 'expirationHours': 300}
+            self.cl.createVolume(name, volName, optional)
+        except exceptions.HTTPBadRequest:
             print "Expected exception"
         except Exception as ex:
             print ex
