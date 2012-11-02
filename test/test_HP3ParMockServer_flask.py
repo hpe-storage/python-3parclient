@@ -7,7 +7,8 @@ from werkzeug.exceptions import default_exceptions
 from werkzeug.exceptions import HTTPException
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-debug", help="Turn on http debugging", default=False, action="store_true")
+parser.add_argument("-debug", help="Turn on http debugging", 
+                    default=False, action="store_true")
 args = parser.parse_args()
 debugRequests = False
 if "debug" in args and args.debug == True:
@@ -81,7 +82,8 @@ def index():
 @app.route('/api/v1/throwerror')
 def errtest():
     debugRequest(request)
-    throw_error(405, 'ERR_TEST', 'testing throwing an error', 'debug1 message', 'debug2 message')
+    throw_error(405, 'ERR_TEST', 'testing throwing an error', 
+                'debug1 message', 'debug2 message')
 
 
 @app.errorhandler(404)
@@ -148,10 +150,10 @@ def create_cpgs():
 
     if data['domain'] == 'BAD_DOMAIN': 
 	throw_error(404, 'NON_EXISTENT_DOMAIN', "Non-existing domain specified.")
-    elif data['name'] == 'UniteTestCPG3': 
+    elif data['name'] == 'UniteTestCPGExisting': 
 	throw_error(409, 'EXISTENT_CPG', "CPG '%s' already exist." % data['name'])
     
-    #fake create 2 CPGs
+    #fake 2 CPGs
     global cpgs  
     cpgs = {'members': 
            [{'SAGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
@@ -360,11 +362,14 @@ def create_vluns():
                    throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey) 
 
     if data['volumeName'] == 'UnitTestNonExistVolume':
-        throw_error(404, 'NON_EXISTENT_VOL', "The vlun does not have volume '%s' exists" % data['volumeName'])
+        throw_error(404, 'NON_EXISTENT_VOL', 
+                    "The vlun does not have volume '%s' exists" % data['volumeName'])
     elif data['hostname'] == 'UnitTestNonExistHost':
-        throw_error(404, 'NON_EXISTENT_HOST', "The vlun does not have host '%s' exists" % data['hotname'])
-    elif 'portPos' in data.keys() and data['portPos'] == '{\'node\':-1,\'slot\':-1,\'cardPort\':-1}':
-        throw_error(404, 'NON_EXISTENT_PORT', "The vlun does not have port '%s' exists" % data['portPos'])
+        throw_error(404, 'NON_EXISTENT_HOST', 
+                   "The vlun does not have host '%s' exists" % data['hotname'])
+    elif 'portPos' in data.keys() and  data['portPos'] == '{\'node\':-1,\'slot\':-1,\'cardPort\':-1}':
+        throw_error(404, 'NON_EXISTENT_PORT', 
+                    "The vlun does not have port '%s' exists" % data['portPos'])
     elif data['volumeName'] == 'UnitTestLunTooLarge':
         throw_error(400, 'TOO_LARGE', "The VLUN size '%s' is too large" % data['lun'])
     elif data['lun'] == '10241024':
@@ -391,6 +396,7 @@ def create_vluns():
                'hostname': u'UnitTestHost2',
                'lun': 2,
                'multipathing': 1,
+               'portPos': {'cardPort': 2, 'node': 2, 'slot': 3},
                'type': 3,
                'volumeName': u'UnitTestVolume2',
                'volumeWWN': u'50002AC00029383D'}],
@@ -431,7 +437,7 @@ def get_vluns():
     return resp
 
 
-#### VOLUMES ####
+#### VOLUMES & SNAPSHOTS ####
 
 @app.route('/api/v1/volumes/<volume_name>', methods=['POST'])
 def create_snapshot(volume_name):
@@ -456,7 +462,6 @@ def create_snapshot(volume_name):
     if volume_name == "NonExistVolume":
 	throw_error(404, 'NON_EXISTENT_VOLUME', "The volume '%s' doesn't exist" % volume_name)
 
-    #return  make_response(request.data, 200)
     return  make_response("", 200)
  
 @app.route('/api/v1/volumes', methods=['POST'])
@@ -481,11 +486,12 @@ def create_volumes():
     if data['name'] == 'UnitTestVolumeExists':
 	throw_error(409, 'EXISTENT_SV', "The volume '%s' already exists" % data['name'])
     elif data['sizeMiB'] == 10241024:
-	throw_error(400, 'TOO_LARGE', "Volume size '%s' above architectural limit" % data['sizeMiB'])
+	throw_error(400, 'TOO_LARGE', 
+                    "Volume size '%s' above architectural limit" % data['sizeMiB'])
     elif data['sizeMiB'] == 9999:
 	throw_error(400, 'NO_SPACE', "Not enough space currently available")
     
-    #fake create volumes
+    #fake  volumes
     global volumes
   
     volumes = {'members': 
@@ -569,7 +575,6 @@ def create_volumes():
                  'uuid': '6d5542b2-f06a-4788-879e-853ad0a3be42',
                  'wwn': '50002AC00029383D'}],
               'total': 26}
-    #return  make_response(request.data, 200)
     return  make_response("", 200)
 
 
@@ -578,13 +583,17 @@ def delete_volumes(volume_name):
     debugRequest(request)
 
     if volume_name == "NonExistVolume":
-	throw_error(404, 'NON_EXISTENT_SV', "The volume '%s' doesn't exist" % volume_name)
+	throw_error(404, 'NON_EXISTENT_SV', 
+                   "The volume '%s' doesn't exist" % volume_name)
     elif volume_name == "forbidden":
-	throw_error(403, "PERM_DENIED", "Insufficient privileges to delete '%s'" % volume_name)
+	throw_error(403, "PERM_DENIED", 
+                   "Insufficient privileges to delete '%s'" % volume_name)
     elif volume_name == "retained":
-	throw_error(403, "RETAINED", "Volume Retention for '%s' has not timed out" % volume_name)
+	throw_error(403, "RETAINED", 
+                   "Volume Retention for '%s' has not timed out" % volume_name)
     elif volume_name == "readonlychild":
-	throw_error(403, "HAS_RO_CHILD", "Volume '%s' has a read only child" % volume_name)
+	throw_error(403, "HAS_RO_CHILD", 
+                   "Volume '%s' has a read only child" % volume_name)
 
     #fake delete 
     volumes  = {'members':[], 'total':0} 
