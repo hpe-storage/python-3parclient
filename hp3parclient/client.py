@@ -184,7 +184,7 @@ class HP3ParClient:
             optional = { 
                 'id' : 12, # Specifies the ID of the volume, next by default
                 'comment' : "some comment", 
-                'copyRO' : True, # Read Only, based on the 3PAR API doc
+                'readOnly' : True, # Read Only
                 'expirationHours' : 36 # time from now to expire
                 'retentionHours' : 12 # time from now to expire 
             }
