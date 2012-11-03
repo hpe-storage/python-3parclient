@@ -446,7 +446,7 @@ def create_snapshot(volume_name):
 
     valid_keys = {'action': None, 'parameters': None}
     valid_parm_keys = {'name':None, 'id':None, 'comment': None,
-                       'copyRO':None, 'expirationHours': None,
+                       'readOnly':None, 'expirationHours': None,
                        'retentionHours':None}
 
     ## do some fake errors here depending on data

@@ -199,7 +199,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             name = 'UnitTestSnapshot'
             volName = 'UnitTestVolume'
             optional = {'id': 1, 'comment': 'test snapshot', 
-                        'copyRO': True, 'expirationHours': 300}
+                        'readOnly': True, 'expirationHours': 300}
             self.cl.createSnapshot(name, volName, optional)
             #no API to get and check 
         except Exception as ex:
@@ -216,7 +216,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             name = 'UnitTestSnapshot'
             volName = 'UnitTestVolume'
             optional = {'id': 1, 'comment': 'test snapshot', 
-                        'copyROBad': True, 'expirationHours': 300}
+                        'Bad': True, 'expirationHours': 300}
             self.cl.createSnapshot(name, volName, optional)
         except exceptions.HTTPBadRequest:
             print "Expected exception"
@@ -234,7 +234,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             name = 'UnitTestSnapshot'
             volName = 'NonExistVolume'
             optional = {'id': 1, 'comment': 'test snapshot', 
-                        'copyRO': True, 'expirationHours': 300}
+                        'readOnly': True, 'expirationHours': 300}
             self.cl.createSnapshot(name, volName, optional)
         except exceptions.HTTPNotFound:
             print "Expected exception"
