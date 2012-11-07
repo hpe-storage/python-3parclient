@@ -76,7 +76,8 @@ def create_test_host():
                  'descriptors': {
                      'ipAddr' : '10.10.22.132',
                      'os' : 'Ubuntu Linux 12.04'
-                 }
+                 },
+                 'portPos': {'cardPort': 1, 'node': 1, 'slot': 8}
                 }
         cl.createHost(TESTHOST, extra)
         pass
@@ -135,7 +136,9 @@ def delete_volumes():
 
 
 cl.login(username, password, {'InServ':'10.10.22.241'})
-#get_cpgs()
+#get_cpgs(cl)
+#get_cpg(cl, 'OpenStackCPG_RAID6_NL')
+#get_hosts(cl)
 #get_host(cl, 'WALTTESTHOST')
 #get_host(cl, TESTHOST)
 #get_vlun(cl, 'WALTTESTVOL11')
@@ -155,11 +158,18 @@ cl.login(username, password, {'InServ':'10.10.22.241'})
 #get_vluns()
 #get_vlun('WALTTESTVOL11')
 #delete_test_host()
-#get_hosts()
-#get_volumes()
+#get_hosts(cl)
+#get_volumes(cl)
+#get_volume(cl, 'osv-OjMepF8VSbaSPTR7TkU.hA')
 #create_test_cpg()
 #create_volumes()
 #delete_volumes()
 #create_snapshots()
 #delete_snapshots()
 #delete_test_cpg()
+
+ports = cl.getiSCSIPorts(cl.PORT_STATE_READY)
+pprint.pprint(ports)
+#cl.deleteVLUN('osv-I1xu4dk.TniwSTxkD7y09A', 228, 'ubuntu-devstack', PORT)
+
+#cl.deleteHost('ubuntu-devstack')

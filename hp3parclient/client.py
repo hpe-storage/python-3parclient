@@ -44,6 +44,24 @@ class HP3ParClient:
 
     """
 
+    PORT_MODE_TARGET=2
+    PORT_MODE_INITIATOR=3
+    PORT_MODE_PEER=4
+
+    PORT_TYPE_HOST=1
+    PORT_TYPE_DISK=2
+    PORT_TYPE_FREE=3
+    PORT_TYPE_RCIP=6
+    PORT_TYPE=ISCSI=7
+
+    PORT_PROTO_FC=1
+    PORT_PROTO_ISCSI=2
+    PORT_PROTO_IP=4
+
+    PORT_STATE_READY=4
+    PORT_STATE_SYNC=5
+    PORT_STATE_OFFLINE=10
+
     def __init__(self, api_url):
 	self.http = http.HTTPJSONRESTClient(api_url)
 
@@ -312,6 +330,27 @@ class HP3ParClient:
         return body
 
 
+    def getProtocolPorts(self, protocol, state=None):
+        return_ports = []
+        ports = self.getPorts()
+        if ports:
+            for port in ports['members']:
+                if port['protocol'] == protocol:
+                    if state is None:
+                        return_ports.append(port)
+                    elif port['linkState'] == state:
+                        return_ports.append(port)
+                        
+        return return_ports
+            
+    def getFCPorts(self, state=None):
+        return self.getProtocolPorts(1, state)
+
+    def getiSCSIPorts(self, state=None):
+        return self.getProtocolPorts(2, state)
+
+    def getIPPorts(self, state=None):
+        return self.getProtocolPorts(4, state)
 
 
     ##CPG methods
