@@ -21,7 +21,10 @@ HP3Par REST Client
 .. moduleauthor: Walter A. Boring IV
 
 :Author: Walter A. Boring IV
-:Description: This is the 3PAR Client that talks to 3PAR's REST WSAPI Service.  It provides the ability to provision 3PAR volumes, VLUNs, CPGs.
+:Description: This is the 3PAR Client that talks to 3PAR's REST WSAPI Service.  
+It provides the ability to provision 3PAR volumes, VLUNs, CPGs.
+
+This client requires and works with 3Par InForm 3.1.2 firmware
 
 """
 
@@ -43,24 +46,6 @@ class HP3ParClient:
     :type api_url: str
 
     """
-
-    PORT_MODE_TARGET=2
-    PORT_MODE_INITIATOR=3
-    PORT_MODE_PEER=4
-
-    PORT_TYPE_HOST=1
-    PORT_TYPE_DISK=2
-    PORT_TYPE_FREE=3
-    PORT_TYPE_RCIP=6
-    PORT_TYPE=ISCSI=7
-
-    PORT_PROTO_FC=1
-    PORT_PROTO_ISCSI=2
-    PORT_PROTO_IP=4
-
-    PORT_STATE_READY=4
-    PORT_STATE_SYNC=5
-    PORT_STATE_OFFLINE=10
 
     def __init__(self, api_url):
         self.http = http.HTTPJSONRESTClient(api_url)
@@ -219,138 +204,6 @@ class HP3ParClient:
 
         response, body = self.http.post('/volumes/%s' % copyOfName, body=info)
         return body
-
-
-    ##Host methods
-
-    def getHosts(self):
-        """ 
-        Get the list of Hosts
-
-        Note: This is not part of 3.1.2
-
-        :returns: list of Hosts
-        """
-        response, body = self.http.get('/hosts')
-        return body
-
-    def getHost(self, name):
-        """ 
-        Get information about a Host
-        Note: This is not part of 3.1.2
-
-        :param name: The name of the Host to find
-        :type name: str
-
-        :returns: host dict
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_HOST - HOST doesn't exist
-        """
-        hosts = self.getHosts()
-        if hosts:
-            for host in hosts['members']:
-                if host['name'] == name:
-                    return host
-
-        raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_HOST', 'desc': "HOST '%s' was not found" % name})
-
-    def createHost(self, name, optional):
-        """
-        Create a new Host entry
-        Note: This is not part of 3.1.2
-        TODO: get the list of thrown exceptions 
-
-        :param name: The name of the host
-        :type name: str
-        :param optional: The optional stuff
-        :type optional: dict
-
-        """
-        info = {'name' : name}
-
-        if optional:
-            info = self._mergeDict(info, optional)
-
-        response, body = self.http.post('/hosts', body=info)
-        return body
-
-    def deleteHost(self, name):
-        """
-        Delete a Host
-        Note: This is not part of 3.1.2
-
-        :param name: Host Name
-        :type name: str
-
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_HOST - HOST Not Found 
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` -  IN_USE - The HOST Cannot be removed because it's in use.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
-
-        """
-        reponse, body = self.http.delete('/hosts/%s' % name)
-
-
-    ## PORT Methods
-    def getPorts(self):
-        """
-        Get the list of ports on the 3Par
-
-              {'linkState': 4,
-               'mode': 2,
-               'nodeWwn': None,
-               'portPos': {'cardPort': 1, 'node': 1, 'slot': 8},
-               'portWwn': '2C27D75375D6',
-               'protocol': 2,
-               'type': 7}
-
-        Modes:
-        2 - target
-        3 - initiator
-        4 - peer
-
-        Types:
-        1 - host
-        2 - disk
-        3 - free
-        6 - rcip
-        7 - iSCSI
-         
-        Protocol:
-        1 - FC
-        2 - iSCSI
-        4 - IP
-
-        States:
-        4 - ready
-        5 - loss_sync
-        10 - offline
-
-        Note: This is not part of 3.1.2
-        """
-        response, body = self.http.get('/ports')
-        return body
-
-
-    def getProtocolPorts(self, protocol, state=None):
-        return_ports = []
-        ports = self.getPorts()
-        if ports:
-            for port in ports['members']:
-                if port['protocol'] == protocol:
-                    if state is None:
-                        return_ports.append(port)
-                    elif port['linkState'] == state:
-                        return_ports.append(port)
-                        
-        return return_ports
-            
-    def getFCPorts(self, state=None):
-        return self.getProtocolPorts(1, state)
-
-    def getiSCSIPorts(self, state=None):
-        return self.getProtocolPorts(2, state)
-
-    def getIPPorts(self, state=None):
-        return self.getProtocolPorts(4, state)
 
 
     ##CPG methods
