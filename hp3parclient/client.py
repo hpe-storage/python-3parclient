@@ -63,7 +63,7 @@ class HP3ParClient:
     PORT_STATE_OFFLINE=10
 
     def __init__(self, api_url):
-	self.http = http.HTTPJSONRESTClient(api_url)
+        self.http = http.HTTPJSONRESTClient(api_url)
 
     def debug_rest(self,flag):
         """
@@ -73,7 +73,7 @@ class HP3ParClient:
         :type flag: bool
 
         """
-	self.http.set_debug_flag(flag)
+        self.http.set_debug_flag(flag)
 
     def login(self, username, password, optional=None):
         """
@@ -87,7 +87,7 @@ class HP3ParClient:
         :returns: None
 
         """
-	self.http.authenticate(username, password, optional)
+        self.http.authenticate(username, password, optional)
 
     def logout(self):
         """
@@ -101,12 +101,12 @@ class HP3ParClient:
 
     ##Volume methods
     def getVolumes(self):
-	""" 
+        """ 
         Get the list of Volumes
 
         :returns: list of Volumes
-	"""
-	response, body = self.http.get('/volumes')
+        """
+        response, body = self.http.get('/volumes')
         return body
 
     def getVolume(self, name):
@@ -128,7 +128,7 @@ class HP3ParClient:
         raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_VOL', 'desc': "Volume '%s' was not found" % name})
 
     def createVolume(self, name, cpgName, sizeMiB, optional=None):
-	""" Create a new volume
+        """ Create a new volume
 
         :param name: the name of the volume
         :type name: str
@@ -154,7 +154,7 @@ class HP3ParClient:
              'retentionHours': 256 
             }
 
-	:returns: List of Volumes
+        :returns: List of Volumes
 
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT - Invalid Parameter
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - TOO_LARGE - Volume size above limit
@@ -162,16 +162,16 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
         :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXISTENT_SV - Volume Exists already
 
-	"""
+        """
         info = {'name': name, 'cpg': cpgName, 'sizeMiB': sizeMiB}
         if optional:
             info = self._mergeDict(info, optional)
 
         response, body = self.http.post('/volumes', body=info)
-	return body
+        return body
 
     def deleteVolume(self, name):
-	""" 
+        """ 
         Delete a volume
         
         :param name: the name of the volume
@@ -181,9 +181,9 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - RETAINED - Volume retention time has not expired
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - HAS_RO_CHILD - Volume has read-only child
-	"""
-	response, body = self.http.delete('/volumes/%s' % name)
-	return body
+        """
+        response, body = self.http.delete('/volumes/%s' % name)
+        return body
 
 
     def createSnapshot(self, name, copyOfName, optional=None): 
@@ -218,20 +218,20 @@ class HP3ParClient:
                 'parameters' : parameters}
 
         response, body = self.http.post('/volumes/%s' % copyOfName, body=info)
-	return body
+        return body
 
 
     ##Host methods
 
     def getHosts(self):
-	""" 
+        """ 
         Get the list of Hosts
 
         Note: This is not part of 3.1.2
 
         :returns: list of Hosts
-	"""
-	response, body = self.http.get('/hosts')
+        """
+        response, body = self.http.get('/hosts')
         return body
 
     def getHost(self, name):
@@ -257,7 +257,7 @@ class HP3ParClient:
         """
         Create a new Host entry
         Note: This is not part of 3.1.2
-	TODO: get the list of thrown exceptions 
+        TODO: get the list of thrown exceptions 
 
         :param name: The name of the host
         :type name: str
@@ -274,7 +274,7 @@ class HP3ParClient:
         return body
 
     def deleteHost(self, name):
-	"""
+        """
         Delete a Host
         Note: This is not part of 3.1.2
 
@@ -286,7 +286,7 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
 
         """
-	reponse, body = self.http.delete('/hosts/%s' % name)
+        reponse, body = self.http.delete('/hosts/%s' % name)
 
 
     ## PORT Methods
@@ -355,13 +355,13 @@ class HP3ParClient:
 
     ##CPG methods
     def getCPGs(self):
-	""" 
+        """ 
         Get entire list of CPGs
 
         :returns: list of cpgs
         """
-	response, body = self.http.get('/cpgs')
-	return body
+        response, body = self.http.get('/cpgs')
+        return body
 
 
     def getCPG(self, name):
@@ -383,7 +383,7 @@ class HP3ParClient:
         raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_CPG', 'desc': "CPG '%s' was not found" % name})
 
     def createCPG(self, name, optional=None):
-	""" 
+        """ 
         Create a CPG
 
         :param name: CPG Name
@@ -409,16 +409,16 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
         :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXISTENT_CPG - CPG Exists already 
 
-	"""
-	info = {'name': name}
+        """
+        info = {'name': name}
         if optional:
             info = self._mergeDict(info, optional)
 
-	reponse, body = self.http.post('/cpgs', body=info)
-	return body
+        reponse, body = self.http.post('/cpgs', body=info)
+        return body
     
     def deleteCPG(self, name):
-	"""
+        """
         Delete a CPG
 
         :param name: CPG Name
@@ -429,7 +429,7 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
 
         """
-	reponse, body = self.http.delete('/cpgs/%s' % name)
+        reponse, body = self.http.delete('/cpgs/%s' % name)
 
 
 
@@ -445,13 +445,13 @@ class HP3ParClient:
 
 
     def getVLUNs(self):
-	""" 
+        """ 
         Get VLUNs
         
         :returns: Array of VLUNs
         """
-	reponse, body = self.http.get('/vluns')
-	return body
+        reponse, body = self.http.get('/vluns')
+        return body
 
     def getVLUN(self, volumeName):
         """ 
@@ -475,7 +475,7 @@ class HP3ParClient:
 
     def createVLUN(self, volumeName, lun, hostname=None, portPos=None, noVcn=None,
                    overrideLowerPriority=None):
-	""" 
+        """ 
         Create a new VLUN
 
         When creating a VLUN, the volumeName and lun members are required.
@@ -498,10 +498,10 @@ class HP3ParClient:
                 False.
         :type overrideLowerPriority: bool
 
-	:returns: the location of the VLUN
+        :returns: the location of the VLUN
 
-	"""
-	info = {'volumeName': volumeName, 'lun': lun}
+        """
+        info = {'volumeName': volumeName, 'lun': lun}
 
         if hostname:
             info['hostname'] = hostname
@@ -515,15 +515,15 @@ class HP3ParClient:
         if overrideLowerPriority:
             info['overrideLowerPriority'] = overrideLowerPriority
 
-	headers, body = self.http.post('/vluns', body=info)
+        headers, body = self.http.post('/vluns', body=info)
         if headers:
             location = headers['location'].replace('/api/v1/vluns/', '')
-	    return location
+            return location
         else:
             return None
         
     def deleteVLUN(self, name, lunID, hostname=None, port=None):
-	""" 
+        """ 
         Delete a VLUN
         
         :param name: the name of the VLUN
@@ -555,7 +555,7 @@ class HP3ParClient:
             vlun += ",%s:%s:%s" % (port['node'], port['slot'], port['cardPort'])
 
 
-	response, body = self.http.delete('/vluns/%s' % vlun)
+        response, body = self.http.delete('/vluns/%s' % vlun)
 
 
 

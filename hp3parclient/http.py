@@ -54,9 +54,9 @@ class HTTPJSONRESTClient(httplib2.Http):
 
         self.session_key = None
 
-	#should be http://<Server:Port>/api/v1
+        #should be http://<Server:Port>/api/v1
         self.api_url = api_url.rstrip('/')
-	self.set_debug_flag(http_log_debug)
+        self.set_debug_flag(http_log_debug)
 
         self.times = []  # [("item", starttime, endtime), ...]
 
@@ -74,7 +74,7 @@ class HTTPJSONRESTClient(httplib2.Http):
         :type flag: bool
 
         """
-	self.http_log_debug = flag
+        self.http_log_debug = flag
         if self.http_log_debug:
             ch = logging.StreamHandler()
             self._logger.setLevel(logging.DEBUG)
@@ -91,21 +91,21 @@ class HTTPJSONRESTClient(httplib2.Http):
 
         """
         #this prevens re-auth attempt if auth fails
-	self.auth_try = 1
+        self.auth_try = 1
 
         info = {'user':user, 'password':password}
         self._auth_optional = None
 
         if optional:
-	    self._auth_optional = optional
+            self._auth_optional = optional
             info.update(optional)
 
         resp, body = self.post('/credentials', body=info)
         if body and 'key' in body:
             self.session_key = body['key']
-	self.auth_try = 0
+        self.auth_try = 0
         self.user = user
-	self.password = password
+        self.password = password
 
     def _reauth(self):
         self.authenticate(self.user, self.password, self._auth_optional)
@@ -117,7 +117,7 @@ class HTTPJSONRESTClient(httplib2.Http):
         This clears the authenticated session with the 3PAR server.  It logs out.
         
         """
-	#delete the session on the 3Par
+        #delete the session on the 3Par
         self.delete('/credentials/%s' % self.session_key)
         self.session_key = None
 
@@ -198,9 +198,9 @@ class HTTPJSONRESTClient(httplib2.Http):
 
 
     def _do_reauth(self, url, method, ex, **kwargs):
-	print "_do_reauth called"
+        print "_do_reauth called"
         try:
-	    if self.auth_try != 1:
+            if self.auth_try != 1:
                self._reauth()
                resp, body = self._time_request(self.api_url + url, method, **kwargs)
                return resp, body
@@ -224,7 +224,7 @@ class HTTPJSONRESTClient(httplib2.Http):
             return resp, body
         except exceptions.HTTPUnauthorized, ex:
             print "_CS_REQUEST HTTPUnauthorized"
-	    resp, body = self._do_reauth(url, method, ex, **kwargs)
+            resp, body = self._do_reauth(url, method, ex, **kwargs)
         except exceptions.HTTPForbidden, ex:
             print "_CS_REQUEST HTTPForbidden"
             resp, body = self._do_reauth(url, method, ex, **kwargs)

@@ -67,10 +67,10 @@ class ClientException(Exception):
             self._debug2 = error['debug2']
 
     def get_code(self):
-	return self._error_code
+        return self._error_code
 
     def get_description(self):
-	return self._error_desc
+        return self._error_desc
 
     def get_ref(self):
         return self._error_ref
