@@ -1,3 +1,6 @@
+This directory is going away.....
+The unit tests are in 'test'
+
 This directory contains unit tests
 
 flask_server.py -- is a sample server that acts like a 3Par API server.   
