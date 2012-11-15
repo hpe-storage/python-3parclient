@@ -43,9 +43,9 @@ Unit Tests
 
 Folders
 =======
-docs -- contains the documentation.
-hp3parclient -- the actual client.py library
-test -- unit tests
+* docs -- contains the documentation.
+* hp3parclient -- the actual client.py library
+* test -- unit tests
 
 
 Documentation
