@@ -46,6 +46,7 @@ Folders
 * docs -- contains the documentation.
 * hp3parclient -- the actual client.py library
 * test -- unit tests
+* samples -- some sample uses
 
 
 Documentation
