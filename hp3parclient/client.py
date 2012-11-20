@@ -225,9 +225,7 @@ class HP3ParClient:
 
     def getHosts(self):
         """ 
-        Get the list of Hosts
-
-        Note: This is not part of 3.1.2
+        Get information about every Host on the 3Par array
 
         :returns: list of Hosts
         """
@@ -237,7 +235,6 @@ class HP3ParClient:
     def getHost(self, name):
         """ 
         Get information about a Host
-        Note: This is not part of 3.1.2
 
         :param name: The name of the Host to find
         :type name: str
@@ -256,7 +253,6 @@ class HP3ParClient:
     def createHost(self, name, iscsiNames=None, FCWwns=None, optional=None):
         """
         Create a new Host entry
-        Note: This is not part of 3.1.2
         TODO: get the list of thrown exceptions 
 
         :param name: The name of the host
@@ -288,7 +284,6 @@ class HP3ParClient:
     def deleteHost(self, name):
         """
         Delete a Host
-        Note: This is not part of 3.1.2
 
         :param name: Host Name
         :type name: str
@@ -306,43 +301,13 @@ class HP3ParClient:
         """
         Get the list of ports on the 3Par
 
-              {'linkState': 4,
-               'mode': 2,
-               'nodeWwn': None,
-               'portPos': {'cardPort': 1, 'node': 1, 'slot': 8},
-               'portWwn': '2C27D75375D6',
-               'protocol': 2,
-               'type': 7}
-
-        Modes:
-        2 - target
-        3 - initiator
-        4 - peer
-
-        Types:
-        1 - host
-        2 - disk
-        3 - free
-        6 - rcip
-        7 - iSCSI
-         
-        Protocol:
-        1 - FC
-        2 - iSCSI
-        4 - IP
-
-        States:
-        4 - ready
-        5 - loss_sync
-        10 - offline
-
-        Note: This is not part of 3.1.2
+        :returns: list of Ports
         """
         response, body = self.http.get('/ports')
         return body
 
 
-    def getProtocolPorts(self, protocol, state=None):
+    def _getProtocolPorts(self, protocol, state=None):
         return_ports = []
         ports = self.getPorts()
         if ports:
@@ -356,13 +321,28 @@ class HP3ParClient:
         return return_ports
             
     def getFCPorts(self, state=None):
-        return self.getProtocolPorts(1, state)
+        """ 
+        Get a list of Fibre Channel Ports
+
+        :returns: list of Fibre Channel Ports
+        """
+        return self._getProtocolPorts(1, state)
 
     def getiSCSIPorts(self, state=None):
-        return self.getProtocolPorts(2, state)
+        """ 
+        Get a list of iSCSI Ports
+
+        :returns: list of iSCSI Ports
+        """
+        return self._getProtocolPorts(2, state)
 
     def getIPPorts(self, state=None):
-        return self.getProtocolPorts(4, state)
+        """ 
+        Get a list of IP Ports
+
+        :returns: list of IP Ports
+        """
+        return self._getProtocolPorts(4, state)
 
 
     ##CPG methods

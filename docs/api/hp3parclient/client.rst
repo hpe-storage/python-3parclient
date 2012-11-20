@@ -22,3 +22,11 @@
       .. automethod:: getVLUN
       .. automethod:: createVLUN
       .. automethod:: deleteVLUN
+      .. automethod:: createHost
+      .. automethod:: getHosts
+      .. automethod:: getHost
+      .. automethod:: deleteHost
+      .. automethod:: getPorts
+      .. automethod:: getFCPorts
+      .. automethod:: getiSCSIPorts
+      .. automethod:: getIPPorts
