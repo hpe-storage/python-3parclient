@@ -26,6 +26,7 @@
       .. automethod:: getHosts
       .. automethod:: getHost
       .. automethod:: deleteHost
+      .. automethod:: getHostVLUNs
       .. automethod:: getPorts
       .. automethod:: getFCPorts
       .. automethod:: getiSCSIPorts

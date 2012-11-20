@@ -295,6 +295,28 @@ class HP3ParClient:
         """
         reponse, body = self.http.delete('/hosts/%s' % name)
 
+    def getHostVLUNs(self, hostName):
+        """
+        Get all of the VLUNs on a specific Host
+
+        :param name: Host name
+        :type name: str
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_HOST - HOST Not Found 
+        """
+
+        host = self.getHost(hostName)
+        allVLUNs = self.getVLUNs()
+
+        vluns = []
+
+        if allVLUNs:
+            for vlun in allVLUNs['members']:
+                if vlun['hostname'] == hostName:
+                    vluns.append(vlun)
+           
+        return vluns
+
 
     ## PORT Methods
     def getPorts(self):
