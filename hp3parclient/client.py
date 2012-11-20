@@ -253,7 +253,7 @@ class HP3ParClient:
 
         raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_HOST', 'desc': "HOST '%s' was not found" % name})
 
-    def createHost(self, name, optional):
+    def createHost(self, name, iscsiNames=None, FCWwns=None, optional=None):
         """
         Create a new Host entry
         Note: This is not part of 3.1.2
@@ -261,11 +261,23 @@ class HP3ParClient:
 
         :param name: The name of the host
         :type name: str
+        :param iscsiNames: Array if iscsi iqns
+        :type name: array
+        :param FCWwns: Array if Fibre Channel World Wide Names
+        :type name: array
         :param optional: The optional stuff
         :type optional: dict
 
         """
         info = {'name' : name}
+
+        if iscsiNames:
+            iscsi = {'iSCSINames' : iscsiNames}
+            info = self._mergeDict(info, iscsi)
+
+        if FCWwns:
+            fc = {'FCWwns' : FCWwns}
+            info = self._mergeDict(info, fc)
 
         if optional:
             info = self._mergeDict(info, optional)
