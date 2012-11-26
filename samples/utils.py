@@ -60,6 +60,37 @@ def get_host(cl,hostname):
     except Exception as ex:
        print ex
 
+def delete_host(cl,hostname):
+    try:
+        host = cl.deleteHost(hostname)
+    except exceptions.HTTPUnauthorized as ex:
+       print "You must login first"
+    except Exception as ex:
+       print ex
+
+def get_host_vluns(cl,hostname):
+    try:
+        host = cl.getHostVLUNs(hostname)
+        pprint.pprint(host)
+    except exceptions.HTTPUnauthorized as ex:
+       print "You must login first"
+    except Exception as ex:
+       print ex
+
+def delete_host_vluns(cl, hostName):
+    try:
+        vluns = cl.getHostVLUNs(hostName)
+        if vluns:
+            for vlun in vluns:
+                print "Deleting VLUN %s " % vlun['volumeName']
+                cl.deleteVLUN(vlun['volumeName'], vlun['lun'], 
+                              vlun['hostname'], vlun['portPos'])
+
+    except exceptions.HTTPUnauthorized as ex:
+        print "You must login"
+    except Exception as ex:
+        print ex
+
 def get_ports(cl):
     try:
         ports = cl.getPorts()
