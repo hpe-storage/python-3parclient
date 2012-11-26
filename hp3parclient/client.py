@@ -375,11 +375,11 @@ class HP3ParClient:
         else:
             return None
         
-    def deleteVLUN(self, name, lunID, hostname=None, port=None):
+    def deleteVLUN(self, volumeName, lunID, hostname=None, port=None):
         """ 
         Delete a VLUN
         
-        :param name: the name of the VLUN
+        :param volumeName: the name of the VLUN
         :type name: str
         :param lunID: The LUN ID 
         :type lunID: int
@@ -399,7 +399,7 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
         """
 
-        vlun = "%s,%s" % (name, lunID)
+        vlun = "%s,%s" % (volumeName, lunID)
 
         if hostname:
             vlun += ",%s" % hostname
