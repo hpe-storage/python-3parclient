@@ -540,7 +540,7 @@ class HP3ParClient:
         """ 
         Delete a VLUN
         
-        :param name: the name of the VLUN
+        :param name: the volume name of the VLUN
         :type name: str
         :param lunID: The LUN ID 
         :type lunID: int
