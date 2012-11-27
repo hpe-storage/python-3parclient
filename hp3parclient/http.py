@@ -92,6 +92,7 @@ class HTTPJSONRESTClient(httplib2.Http):
         """
         #this prevens re-auth attempt if auth fails
         self.auth_try = 1
+        self.session_key = None
 
         info = {'user':user, 'password':password}
         self._auth_optional = None
