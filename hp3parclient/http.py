@@ -163,6 +163,9 @@ class HTTPJSONRESTClient(httplib2.Http):
         """
         This makes an HTTP Request to the 3Par server.  You should use get, post, delete instead.
         """
+        if self.session_key and self.auth_try != 1 :
+            kwargs.setdefault('headers', {})[self.SESSION_COOKIE_NAME] = self.session_key
+
         kwargs.setdefault('headers', kwargs.get('headers', {}))
         kwargs['headers']['User-Agent'] = self.USER_AGENT
         kwargs['headers']['Accept'] = 'application/json'
@@ -217,18 +220,17 @@ class HTTPJSONRESTClient(httplib2.Http):
         # might be because the auth token expired, so try to
         # re-authenticate and try again. If it still fails, bail.
         try:
-            if self.session_key and self.auth_try != 1 :
-                kwargs.setdefault('headers', {})[self.SESSION_COOKIE_NAME] = self.session_key
-
             resp, body = self._time_request(self.api_url + url, method,
                                             **kwargs)
             return resp, body
         except exceptions.HTTPUnauthorized, ex:
             print "_CS_REQUEST HTTPUnauthorized"
             resp, body = self._do_reauth(url, method, ex, **kwargs)
+            return resp, body
         except exceptions.HTTPForbidden, ex:
             print "_CS_REQUEST HTTPForbidden"
             resp, body = self._do_reauth(url, method, ex, **kwargs)
+            return resp, body
 
 
     def get(self, url, **kwargs):
