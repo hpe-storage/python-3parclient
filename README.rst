@@ -5,6 +5,10 @@ storage array has a REST web service interface as of 3.1.2 of the firmware.
 This client library implements a simple interface to talking with that REST
 interface using the python httplib2 http library.
 
+Requirements
+============
+This REST Client reqiures the 3.1.2 3PAR firmware to be installed on the array.
+
 Capabilities
 ============
 * Create Volume
