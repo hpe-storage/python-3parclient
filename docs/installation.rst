@@ -35,8 +35,8 @@ Installing from source
 ----------------------
 
 If you'd rather install directly from the source (i.e. to stay on the
-bleeding edge), install the C extension dependencies then check out the
-latest source from github and install the driver from the resulting tree::
+bleeding edge), then check out the latest source from github and 
+install the driver from the resulting tree::
 
   $ git clone -b 3.1.2 https://github.com/WaltHP/python-3parclient.git
   $ cd python-3parclient
