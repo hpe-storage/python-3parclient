@@ -1,9 +1,14 @@
 HP 3PAR REST Client
 ===================
 This is a Client library that can talk to the HP 3PAR Storage array.  The 3PAR
-storage array has a REST web service interface as of 3.1.2 of the firmware.
+storage array has a REST web service interface.
 This client library implements a simple interface to talking with that REST
 interface using the python httplib2 http library.
+
+Requirements
+============
+This branch requires 3.1.2++ version of the 3par firmware.  This 
+version of the firmware is yet to be released.
 
 Capabilities
 ============
@@ -21,6 +26,11 @@ Capabilities
 * Delete a VLUN
 * Get all VLUNs
 * Get a VLUN
+
+* Create a Host
+* Delete a Host
+* Get all Hosts
+* Get a host
 
 
 Installation
