@@ -28,8 +28,8 @@ Doing so is easy:
 
   from hp3parclient import client, exceptions
   #this creates the client object and sets the url to the
-  #3PAR server with IP 10.10.10.10 on port 8008.
-  cl = client.HP3ParClient("http://10.10.10.10:8008/api/v1")
+  #3PAR server with IP 10.10.10.10 on port 8080.
+  cl = client.HP3ParClient("http://10.10.10.10:8080/api/v1")
 
   try:
       cl.login(username, password)
