@@ -21,6 +21,7 @@ setup(
   license="Apache License, Version 2.0",
   packages=find_packages(),
   provides=['hp3parclient'],
+  url="http://packages.python.org/hp3parclient",
   classifiers=[
      'Development Status :: 3 - Alpha',
      'Intended Audience :: Developers',
