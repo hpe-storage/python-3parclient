@@ -1,8 +1,13 @@
 Changelog
 =========
 
+Changes in Version 1.0.1
+----------------------
 
-Changes in Version 0.5
+- The unit tests now work when running nosetest from the top level dir 
+  and from the test dir
+
+Changes in Version 1.0.0
 ----------------------
 
 - First implementation of the REST API Client
