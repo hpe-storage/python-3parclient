@@ -23,6 +23,7 @@ import unittest
 import subprocess
 import time
 import pprint
+import inspect
 
 class HP3ParClientBaseTestCase(unittest.TestCase):
 
@@ -34,12 +35,16 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
          if len(sys.argv) >= 2:
              self.debug = sys.argv[1]
 
+         cwd = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+
          self.cl = client.HP3ParClient("http://localhost:5000/api/v1")
          if self.debug == 'debug':
              self.cl.debug_rest(True)
          else: 
+             script = 'test_HP3ParMockServer_flask.py'
+             path = "%s/%s" % (cwd, script)
              self.mockServer = subprocess.Popen([sys.executable, 
-                                                './test_HP3ParMockServer_flask.py'], 
+                                                path], 
                                                 stdout=subprocess.PIPE, 
                                                 stderr=subprocess.PIPE, 
                                                 stdin=subprocess.PIPE)
