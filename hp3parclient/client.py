@@ -245,7 +245,7 @@ class HP3ParClient:
         hosts = self.getHosts()
         if hosts:
             for host in hosts['members']:
-                if host['name'] == name:
+                if 'name' in host and host['name'] == name:
                     return host
 
         raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_HOST', 'desc': "HOST '%s' was not found" % name})
@@ -374,7 +374,7 @@ class HP3ParClient:
 
         :returns: list of cpgs
         """
-        response, body = self.http.get('/cpgs')
+        response, body = self.http.get('/cpgs/TEST_')
         return body
 
 

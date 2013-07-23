@@ -72,5 +72,6 @@ def delete_CPG():
 
 
 cl.login(username, password)
+get_CPGs()
 create_CPG()
 delete_CPG()
