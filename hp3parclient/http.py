@@ -41,7 +41,7 @@ class HTTPJSONRESTClient(httplib2.Http):
     An HTTP REST Client that sends and recieves JSON data as the body of the HTTP request
 
     :param api_url: The url to the WSAPI service on 3PAR 
-                    ie. http://<3par server>:8080/api/v1
+                    ie. http://<3par server>:8080
     :type api_url: str
     :param insecure: Use https? requires a local certificate
     :type insecure: bool
@@ -57,8 +57,7 @@ class HTTPJSONRESTClient(httplib2.Http):
         self.session_key = None
 
         #should be http://<Server:Port>/api/v1
-        self.api_url = api_url.rstrip('/')        
-        
+        self.api_url = api_url.rstrip('/')
         self.set_debug_flag(http_log_debug)
 
         self.times = []  # [("item", starttime, endtime), ...]

@@ -45,10 +45,11 @@ def create_CPG():
         opts = optional.copy()
         extra = {'LDLayout': {'RAIDType': 2}}
         opts.update(extra)
-        cl.createCPG(name, opts)        
+        cl.createCPG(name, opts)
+        print "Created '%s'" % name
 
+        get_CPGs()
         cpg = cl.getCPG(name)
-        print "Created '%s'" % cpg
 
 
     except Exception as ex:
@@ -79,8 +80,6 @@ def get_CPG(name):
     print "Complete\n"
 
 cl.login(username, password)
-get_CPG('WaltTestCPG2')
-get_CPGs()
 create_CPG()
 get_CPG('WaltTestCPG2')
 delete_CPG()

@@ -40,7 +40,7 @@ def make_json_app(import_name, **kwargs):
         return response
 
     app = Flask(import_name, **kwargs)
-    #app.debug = True
+    app.debug = True
     app.secret_key = id_generator(24)
     
 
@@ -638,4 +638,4 @@ def get_version():
     return resp
 
 if __name__ == "__main__":
-    app.run(port=5001)
+    app.run()

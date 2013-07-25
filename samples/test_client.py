@@ -18,7 +18,7 @@ parser.add_argument("-debug", help="Turn on http debugging", default=False, acti
 args = parser.parse_args()
 
 
-cl = client.HP3ParClient("http://localhost:5000/api/v1")
+cl = client.HP3ParClient("http://10.10.22.241:80808")
 if "debug" in args and args.debug == True:
     cl.debug_rest(True)
 

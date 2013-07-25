@@ -39,7 +39,7 @@ class HP3ParClient:
     """
     The 3PAR REST API Client
 
-    :param api_url: The url to the WSAPI service on 3PAR ie. http://<3par server>:8008/api/v1
+    :param api_url: The url to the WSAPI service on 3PAR ie. http://<3par server>:8008
     :type api_url: str
 
     """

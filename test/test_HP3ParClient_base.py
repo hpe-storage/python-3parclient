@@ -37,7 +37,7 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
 
          cwd = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
-         self.cl = client.HP3ParClient("http://localhost:5001")
+         self.cl = client.HP3ParClient("http://localhost:5000")
          if self.debug == 'debug':
              self.cl.debug_rest(True)
          else: 
