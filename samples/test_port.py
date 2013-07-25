@@ -30,7 +30,7 @@ DOMAIN = 'WALT_TEST'
 PORT = {'node': 1, 'slot' : 8, 'cardPort':1}
 
 #cl = client.HP3ParClient("https://localhost:8080/api/v1")
-cl = client.HP3ParClient("https://10.10.22.132:8080/api/v1")
+cl = client.HP3ParClient("https://10.10.22.241:8080")
 if "debug" in args and args.debug == True:
     cl.debug_rest(True)
 cl.login(username, password, {'InServ':'10.10.22.241'})

@@ -20,7 +20,7 @@ args = parser.parse_args()
 username = "3paradm"
 password = "3pardata"
 
-cl = client.HP3ParClient("http://10.10.22.241:8008/api/v1")
+cl = client.HP3ParClient("http://10.10.22.241:8008")
 if "debug" in args and args.debug == True:
     cl.debug_rest(True)
 
@@ -43,13 +43,12 @@ def create_CPG():
 
         name = "WaltTestCPG2"
         opts = optional.copy()
-        extra = {'LDLayout': {'RAIDType': 1}}
+        extra = {'LDLayout': {'RAIDType': 2}}
         opts.update(extra)
-        cl.createCPG(name, opts)
-        print "Created '%s'" % name
+        cl.createCPG(name, opts)        
 
-        get_CPGs()
         cpg = cl.getCPG(name)
+        print "Created '%s'" % cpg
 
 
     except Exception as ex:
@@ -70,8 +69,18 @@ def delete_CPG():
         print ex
     print "Complete\n"
 
+def get_CPG(name):
+    print "Get CPG "+name
+    try:
+       cpg = cl.getCPG(name)
+       pprint.pprint(cpg)
+    except Exception as ex:
+       print ex
+    print "Complete\n"
 
 cl.login(username, password)
+get_CPG('WaltTestCPG2')
 get_CPGs()
 create_CPG()
+get_CPG('WaltTestCPG2')
 delete_CPG()

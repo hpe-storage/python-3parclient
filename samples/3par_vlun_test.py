@@ -24,7 +24,7 @@ testVolume = "WALT_TEST_VOL"
 testHost = "WALT_TEST_HOST"
 testCPG = 'WALTTESTCPG'
 
-cl = client.HP3ParClient("http://10.10.22.241:8008/api/v1")
+cl = client.HP3ParClient("http://10.10.22.241:8008")
 if "debug" in args and args.debug == True:
     cl.debug_rest(True)
 
@@ -51,7 +51,7 @@ def getVolume():
             cl.createVolume(testVolume, testCPG, 200)
             volume = cl.getVolume(testVolume)
             pprint.pprint(volume)
-        except exception as ex:
+        except Exception as ex:
             pprint.pprint(ex)
             return None
         pass

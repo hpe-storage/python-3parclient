@@ -24,7 +24,7 @@ testVolName = "WALTTESTVOL"
 testSNAPName = testVolName+"SNAP"
 testCPGName = "WALTTESTCPG"
 
-cl = client.HP3ParClient("http://10.10.22.241:8008/api/v1")
+cl = client.HP3ParClient("http://10.10.22.241:8008")
 if "debug" in args and args.debug == True:
     cl.debug_rest(True)
 
@@ -51,7 +51,7 @@ def create_test_cpg():
     except exceptions.HTTPConflict as ex:
        # the cpg already exists.
        pass
-    except Exceptions as ex:
+    except Exception as ex:
        pprint.pprint(ex)
        return
 
@@ -63,7 +63,7 @@ def delete_test_cpg():
     except exceptions.HTTPConflict as ex:
        # the cpg already exists.
        pass
-    except Exceptions as ex:
+    except Exception as ex:
        pprint.pprint(ex)
        return
 

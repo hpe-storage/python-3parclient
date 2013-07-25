@@ -64,6 +64,9 @@ class HP3ParClient:
 
     def __init__(self, api_url):
         self.http = http.HTTPJSONRESTClient(api_url)
+        self.version_major = self.http.get_version_major()
+        self.version_minor = self.http.get_version_minor()
+        self.version_build = self.http.get_version_build()
 
     def debug_rest(self,flag):
         """
@@ -119,13 +122,8 @@ class HP3ParClient:
         :returns: volume
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VOL - volume doesn't exist
         """
-        volumes = self.getVolumes()
-        if volumes:
-            for volume in volumes['members']:
-                if volume['name'] == name:
-                    return volume
-
-        raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_VOL', 'desc': "Volume '%s' was not found" % name})
+        response, body = self.http.get('/volumes/%s' % name)
+        return body
 
     def createVolume(self, name, cpgName, sizeMiB, optional=None):
         """ Create a new volume
@@ -242,13 +240,8 @@ class HP3ParClient:
         :returns: host dict
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_HOST - HOST doesn't exist
         """
-        hosts = self.getHosts()
-        if hosts:
-            for host in hosts['members']:
-                if 'name' in host and host['name'] == name:
-                    return host
-
-        raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_HOST', 'desc': "HOST '%s' was not found" % name})
+        response, body = self.http.get('/hosts/%s' % name)
+        return body
 
     def createHost(self, name, iscsiNames=None, FCWwns=None, optional=None):
         """
@@ -314,6 +307,9 @@ class HP3ParClient:
             for vlun in allVLUNs['members']:
                 if vlun['hostname'] == hostName:
                     vluns.append(vlun)
+                    
+        if len(vluns) < 1 :
+            raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_HOST', 'desc': 'HOST Not Found'})
            
         return vluns
 
@@ -374,7 +370,7 @@ class HP3ParClient:
 
         :returns: list of cpgs
         """
-        response, body = self.http.get('/cpgs/TEST_')
+        response, body = self.http.get('/cpgs')
         return body
 
 
@@ -388,13 +384,8 @@ class HP3ParClient:
         :returns: cpg dict
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` -  NON_EXISTENT_CPG - CPG doesn't exist
         """
-        cpgs = self.getCPGs()
-        if cpgs:
-            for cpg in cpgs['members']:
-                if cpg['name'] == name:
-                    return cpg 
-
-        raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_CPG', 'desc': "CPG '%s' was not found" % name})
+        response, body = self.http.get('/cpgs/%s' % name)
+        return body
 
     def createCPG(self, name, optional=None):
         """ 
@@ -573,7 +564,7 @@ class HP3ParClient:
 
 
 
-    def _mergeDict(selft, dict1, dict2):
+    def _mergeDict(self, dict1, dict2):
         """
         Safely merge 2 dictionaries together
         

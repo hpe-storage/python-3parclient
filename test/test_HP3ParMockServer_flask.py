@@ -40,7 +40,7 @@ def make_json_app(import_name, **kwargs):
         return response
 
     app = Flask(import_name, **kwargs)
-    app.debug = True
+    #app.debug = True
     app.secret_key = id_generator(24)
     
 
@@ -223,6 +223,17 @@ def get_cpgs():
     #should get it from global cpgs 
     resp = make_response(json.dumps(cpgs), 200)
     return resp
+
+@app.route('/api/v1/cpgs/<cpg_name>', methods=['GET'])
+def get_cpg(cpg_name):
+    debugRequest(request)
+    
+    for cpg in cpgs['members']:
+        if cpg['name'] == cpg_name:
+            resp = make_response(json.dumps(cpg), 200)
+            return resp
+        
+    throw_error(404, 'NON_EXISTENT_CPG', "CPG '%s' doesn't exist" % cpg_name)
 
 @app.route('/api/v1/cpgs/<cpg_name>', methods=['DELETE'])
 def delete_cpg(cpg_name):
@@ -606,6 +617,25 @@ def get_volumes():
     resp = make_response(json.dumps(volumes), 200)
     return resp
 
+@app.route('/api/v1/volumes/<volume_name>', methods=['GET'])
+def get_volume(volume_name):
+    debugRequest(request)
+    
+    for volume in volumes['members']:
+        if volume['name'] == volume_name:
+            resp = make_response(json.dumps(volume), 200)
+            return resp
+
+    throw_error(404, 'NON_EXISTENT_VOL', "volume doesn't exist")
+
+@app.route('/api', methods=['GET'])
+def get_version():
+    debugRequest(request)
+    version = {'major': 1,
+               'minor': 2,
+               'build': 30102422}
+    resp = make_response(json.dumps(version), 200)
+    return resp
 
 if __name__ == "__main__":
     app.run(port=5001)
