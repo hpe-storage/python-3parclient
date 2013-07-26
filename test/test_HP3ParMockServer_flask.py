@@ -326,14 +326,13 @@ def get_hosts():
 @app.route('/api/v1/hosts/<host_name>', methods=['GET'])
 def get_host(host_name):
     debugRequest(request)
-    if hosts['total'] == 0:
-        throw_error(404, 'NON_EXISTENT_HOST',"No hosts created.")
+    
     for host in hosts['members']:
         if host['name'] == host_name:
-            break
-
-    resp = make_response(json.dumps(host, 200))
-    return resp
+            resp = make_response(json.dumps(host), 200)
+            return resp
+        
+    throw_error(404, 'NON_EXISTENT_HOST', "Host '%s' doesn't exist" % host_name)
 
 #### Port ####
 
