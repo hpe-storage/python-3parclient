@@ -256,6 +256,21 @@ class HP3ParClient:
         :type name: array
         :param optional: The optional stuff
         :type optional: dict
+        
+        .. code-block:: python
+
+            optional = { 
+                'domain' : 'myDomain', 
+                'forceTearDown' : False, 
+                'iSCSINames' : True, # Read Only
+                'descriptors' : 36 # time from now to expire
+                'retentionHours' : 12 # time from now to expire 
+            }
+        
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_MISSING_REQUIRED - Name not specified.        
+        :raises: :class:`~hp3parclient.exceptions.HTTPConfiict` - EXISTENT_PATH - host WWN/iSCSI name already used by another host
+        HTTPConflict: Conflict (HTTP 409) 73 - host WWN/iSCSI name already used by another host
 
         """
         info = {'name' : name}
