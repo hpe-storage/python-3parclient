@@ -33,23 +33,29 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.cl.createHost(name, None, None, optional)             
         except exceptions.HTTPBadRequest:
             print "Expected exception"  
+            self.printFooter('create_host_badParams')
+            return
         except Exception as ex:
             print ex
             self.fail("Failed with unexpected exception")
-        self.printFooter('create_host_badParams')
+        self.fail("No error occurred")
+        
         
     def test_1_create_host_badParams2(self):
         self.printHeader('create_host_badParams2')
         try:
             name='UnitTestHostBadParams2'
-            optional={}
+            optional={'domainBad': 'hp'}
             self.cl.createHost(name, None, None, optional) 
         except exceptions.HTTPBadRequest:
             print "Expected exception"
+            self.printFooter('create_host_badParams2')
+            return
         except Exception as ex:
             print ex
-            self.fail("Failed with unexpected exception")       
-        self.printFooter('create_host_badParams2')
+            self.fail("Failed with unexpected exception")
+        self.fail("No error occurred")       
+        
         
     def test_1_create_host(self):
         self.printHeader('create_host')  
@@ -86,10 +92,13 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.cl.deleteHost("UnitTestNonExistHost")
         except exceptions.HTTPNotFound:
             print "Expected exception"
+            self.printFooter("delete_host_non_exist")
+            return
         except Exception as ex:
             print ex
             self.fail("Unexpected Exception")
-        self.printFooter("delete_host_non_exist")
+        self.fail("No error occurred")
+        
 
     def test_2_delete_host_in_use(self):
         self.printHeader("delete_host_in_use")
@@ -97,10 +106,13 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.cl.deleteHost("UnitTestInUseHost")
         except exceptions.HTTPForbidden:
             print "Expected exception"
+            self.printFooter("delete_host_in_use")
+            return
         except Exception as ex:
             print ex
             self.fail("Unexpected Exception")
-        self.printFooter("delete_host_in_use")
+        self.fail("No error occurred")
+        
         
     def test_2_delete_host(self):
         self.printHeader("delete_host")
@@ -140,10 +152,12 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             host = self.cl.getHost("BadHostName")
         except exceptions.HTTPNotFound:
             print "Expected exception"
+            self.printFooter("get_host_bad")
+            return
         except Exception as ex:
             print ex
             self.fail("Failed with unexpected exception")
-        self.printFooter("get_host_bad")
+        self.fail("No error occurred")
 
     def test_3_get_host(self):
         self.printHeader("get_host")
@@ -156,4 +170,4 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         except Exception as ex:
             print ex
             self.fail("Failed with unexpected exception")
-        self.printFooter('get_CPGs')
+        self.printFooter('get_host')
