@@ -260,18 +260,25 @@ class HP3ParClient:
         .. code-block:: python
 
             optional = { 
-                'domain' : 'myDomain', 
-                'forceTearDown' : False, 
+                'domain' : 'myDomain', # Create the host in the specified domain, or default domain if unspecified.
+                'forceTearDown' : False, # If True, force to tear down low-priority VLUN exports.
                 'iSCSINames' : True, # Read Only
-                'descriptors' : 36 # time from now to expire
-                'retentionHours' : 12 # time from now to expire 
+                'descriptors' : {'location' : 'earth', 'IPAddr' : '10.10.10.10', 'os': 'linux',
+                              'model' : 'ex', 'contact': 'Smith', 'comment' : 'Joe's box}
+ 
             }
         
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_MISSING_REQUIRED - Name not specified.        
-        :raises: :class:`~hp3parclient.exceptions.HTTPConfiict` - EXISTENT_PATH - host WWN/iSCSI name already used by another host
-        HTTPConflict: Conflict (HTTP 409) 73 - host WWN/iSCSI name already used by another host
-
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_MISSING_REQUIRED - Name not specified. 
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_PARAM_CONFLICT - FCWWNs and iSCSINames are both specified.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_EXCEEDS_LENGTH - Host name, domain name, or iSCSI name is too long.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_EMPTY_STR - Input string (for domain name, iSCSI name, etc.) is empty.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Any error from host-name or domain-name parsing.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_TOO_MANY_WWN_OR_iSCSI - More than 1024 WWNs or iSCSI names are specified.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_WRONG_TYPE - The length of WWN is not 16. WWN specification contains non-hexadecimal digit.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXISTENT_PATH - host WWN/iSCSI name already used by another host
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXISTENT_HOST - host name is already used.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - NO_SPACE - No space to create host.
         """
         info = {'name' : name}
 
@@ -288,6 +295,30 @@ class HP3ParClient:
 
         response, body = self.http.post('/hosts', body=info)
         return body
+    
+    def modifyHost(self, name, mod_request):
+        """
+        Create a new Host entry
+        TODO: get the list of thrown exceptions 
+
+        :param name: The name of the host
+        :type name: str
+        :param mod_request: Objects for Host Modification Request
+        :type mod_request: dict
+        
+        .. code-block:: python
+
+            mod_request = { 
+                'newName' : 'myNewName', # New name of the host
+                'pathOperation' : 1, # If adding, adds the WWN or iSCSI name to the existing host.
+ 
+            }
+        
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT - Missing host name.
+        """
+
+        response, body = self.http.post('/hosts/%s' % name, body=mod_request)
+        return body    
 
     def deleteHost(self, name):
         """
