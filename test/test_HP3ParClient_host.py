@@ -129,22 +129,22 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.fail('Failed with unexpected exception')
         self.fail('No exception occurred.')
         
-#     def test_1_create_host_param_conflict(self):
-#         self.printHeader('create_host_param_conflict')
-#         try:
-#             optional = {'domain' : 'default', 
-#                         'FCPaths': {'fcpath1':'path1'},
-#                         'iSCSIPaths' : {'vendor' : 'hp'}}
-#             name = 'DualPathHost'
-#             self.cl.createHost(name, None, None, optional)
-#         except exceptions.HTTPBadRequest:
-#             print 'Expected exception'
-#             self.printFooter('create_host_param_conflict')
-#             return
-#         except Exception as ex:
-#             print ex
-#             self.fail('Failed with unexpected exception')
-#         self.fail('No exception occurred.')
+    def test_1_create_host_param_conflict(self):
+        self.printHeader('create_host_param_conflict')
+        try:
+            optional = {'domain' : 'default'}
+            FCWwns = {'fcpath1':'path1'}
+            iSCSINames = {'vendor' : 'hp'}
+            name = 'DualPathHost'
+            self.cl.createHost(name, iSCSINames, FCWwns, optional)
+        except exceptions.HTTPBadRequest:
+            print 'Expected exception'
+            self.printFooter('create_host_param_conflict')
+            return
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception')
+        self.fail('No exception occurred.')
 #                  
 #     def test_1_create_host_long_params(self):
 #         self.printHeader('create_host_long_params')
@@ -235,7 +235,7 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             #add another
             name2 = 'UnitTestHost2'
             optional2 = optional.copy()
-            more_optional = {'iSCSIPaths':{'ipAddr': '10.10.221.58'}}
+            more_optional = {'iSCSINames':{'ipAddr': '10.10.221.58'}}
             optional2.update(more_optional)
             self.cl.createHost(name2, None, None, optional2)
             #check

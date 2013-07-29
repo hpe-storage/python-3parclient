@@ -252,7 +252,7 @@ def delete_cpg(cpg_name):
 def create_hosts():
     debugRequest(request)
     data = json.loads(request.data)
-    valid_keys = {'FCPaths':None, 'descriptors':None, 'domain':None, 'iSCSIPaths':None,
+    valid_keys = {'FCWwns':None, 'descriptors':None, 'domain':None, 'iSCSINames':None,
                   'id': 0,'name':None}
 
     valid_iscsi_keys = {'driverVersion': None, 'firmwareVersion':None, 'hostSpeed':None, 
@@ -264,8 +264,8 @@ def create_hosts():
         if key not in valid_keys.keys():
             throw_error(400, 'INV_INPUT',
                         "Invalid Parameter '%s'" % key) 
-        elif 'iSCSIPaths' in data.keys():
-            iscsiP = data ['iSCSIPaths']
+        elif 'iSCSINames' in data.keys():
+            iscsiP = data ['iSCSINames']
             for subkey in iscsiP.keys():
                 if subkey not in valid_iscsi_keys:
                     throw_error(400, 'INV_INPUT',
@@ -293,6 +293,10 @@ def create_hosts():
     elif data['domain'] == 'NoSpace':
         throw_error(400, 'NO_SPACE', 'No space to create host.')
 
+    if 'FCWwns' in data.keys():
+        if 'iSCSINames' in data.keys():
+            throw_error(400, 'INV_INPUT_PARAM_CONFLICT',
+                        'FCWWNS and iSCSINames are both specified.')
 #     elif data['WWN'] == '1024':
 #         throw_error(400, 'INV_INPUT_TOO_MANY_WWN_OR_iSCSI',
 #                     'More than 1024 WWNs or iSCSI names are specified.')
@@ -309,10 +313,10 @@ def create_hosts():
     #fake hosts
     global hosts 
     hosts = {'members': 
-             [{'FCPaths': [],
+             [{'FCWwns': [],
                'descriptors': None,
                'domain': 'UNIT_TEST',
-               'iSCSIPaths': [{'driverVersion': '1.0',
+               'iSCSINames': [{'driverVersion': '1.0',
                                'firmwareVersion': '1.0',
                                'hostSpeed': 100,
                                'ipAddr': '10.10.221.59',
@@ -323,10 +327,10 @@ def create_hosts():
                                'vendor': 'HP'}],
                'id': 11,
                'name': 'UnitTestHost'},
-              {'FCPaths': [],
+              {'FCWwns': [],
                'descriptors': None,
                'domain': 'UNIT_TEST',
-               'iSCSIPaths': [{'driverVersion': '1.0',
+               'iSCSINames': [{'driverVersion': '1.0',
                                'firmwareVersion': '1.0',
                                'hostSpeed': 100,
                                'ipAddr': '10.10.221.58',
