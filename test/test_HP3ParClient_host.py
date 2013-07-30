@@ -60,7 +60,8 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         self.printHeader('create_host_perm_denied')
         try:
             name = 'PermissionDeniedHost'
-            self.cl.createHost(name, None, None, None)
+            optional = {'domain' : 'default'}
+            self.cl.createHost(name, None, None, optional)
         except exceptions.HTTPForbidden:
             print 'Expected exception'
             self.printFooter('create_host_perm_denied')
@@ -117,7 +118,7 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
     def test_1_create_host_illegal_string(self):
         self.printHeader('create_host_illegal_string')
         try:
-            optional = {'domain' : 'doma!n'}
+            optional = {'domain' : 'doma&n'}
             name = 'IllegalDomainHost'
             self.cl.createHost(name, None, None, optional)
         except exceptions.HTTPBadRequest:
@@ -321,7 +322,20 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         except Exception as ex:
             print ex
             self.fail("Failed with unexpected exception")
-        self.fail("No error occurred")
+        self.fail("No exception occurred")
+
+    def test_3_get_host_illegal(self):
+        self.printHeader("get_host_illegal")
+        try:
+            self.cl.getHost('B&dHostName')
+        except exceptions.HTTPBadRequest:
+            print 'Expected exception'
+            self.printFooter("get_host_illegal")
+            return
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception')
+        self.fail('No exception occurred.')
 
     def test_3_get_host(self):
         self.printHeader("get_host")

@@ -250,7 +250,7 @@ def delete_cpg(cpg_name):
 
 @app.route('/api/v1/hosts', methods=['POST'])
 def create_hosts():
-    debugRequest(request)
+    debugRequest(request)  
     data = json.loads(request.data)
     valid_keys = {'FCWwns':None, 'descriptors':None, 'domain':None, 'iSCSINames':None,
                   'id': 0,'name':None}
@@ -283,15 +283,21 @@ def create_hosts():
     elif data['domain'] == '':
         throw_error(400,'INV_INPUT_EMPTY_STR',
                     'Input string (for domain, iSCSI etc.) is empty.')
-    elif data['domain'] == 'doma!n':
-        throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
-                    'Error parsing host-name or domain-name')
-    
+
     elif data['name'] == 'ExistentHost':
         throw_error(409, 'EXISTENT_HOST', 'Host name is already used.')
     
     elif data['domain'] == 'NoSpace':
         throw_error(400, 'NO_SPACE', 'No space to create host.')
+
+    charset = {'!', '@', '#', '$', '%', '&', '^'}
+    for char in charset:
+        if char in data['name']:
+            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+                        'Error parsing host-name or domain-name')
+        elif char in data['domain']:
+            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+                        'Error parsing host-name or domain-name')
 
     if 'FCWwns' in data.keys():
         if 'iSCSINames' in data.keys():
@@ -369,7 +375,12 @@ def get_hosts():
 @app.route('/api/v1/hosts/<host_name>', methods=['GET'])
 def get_host(host_name):
     debugRequest(request)
-    
+    charset = {'!', '@', '#', '$', '%', '&', '^'}
+    for char in charset:
+        if char in host_name:
+            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+                        'Host name contains invalid character.')
+        
     for host in hosts['members']:
         if host['name'] == host_name:
             resp = make_response(json.dumps(host), 200)
