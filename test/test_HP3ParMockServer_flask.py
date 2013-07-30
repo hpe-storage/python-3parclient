@@ -297,19 +297,21 @@ def create_hosts():
         if 'iSCSINames' in data.keys():
             throw_error(400, 'INV_INPUT_PARAM_CONFLICT',
                         'FCWWNS and iSCSINames are both specified.')
-#     elif data['WWN'] == '1024':
-#         throw_error(400, 'INV_INPUT_TOO_MANY_WWN_OR_iSCSI',
-#                     'More than 1024 WWNs or iSCSI names are specified.')
-#     elif data['WWN'] == 'LessThan16':
-#         throw_error(400, 'INV_INPUT_WRONG_TYPE',
-#                     'Length of WWN is not 16.')
-#     elif data['WWN'] == 'ExistentPath':
-#         throw_error(409, 'EXISTENT_PATH',
-#                     'iSCSI name or WWN is already claimed by other host.')
-#     elif not data['FCPaths'] is None & data['iSCSIPaths'] is None:
-#         throw_error(400, 'INV_INPUT_PARAM_CONFLICT',
-#                     'FCWWNS and iSCSINames are both specified.')
-        
+    
+    if 'FCWwns' in data.keys():
+        fc = data['FCWwns']
+        if 'length' in fc.keys():
+            if fc['length'] == '1024':
+                throw_error(400, 'INV_INPUT_TOO_MANY_WWN_OR_iSCSI',
+                            'More than 1024 WWNs or iSCSI names are specified.')
+            elif fc['length'] == 'LessThan16':
+                throw_error(400, 'INV_INPUT_WRONG_TYPE',
+                            'Length of WWN is not 16.')
+        elif 'path' in fc.keys():
+            if fc['path'] == 'ExistentPath':
+                throw_error(409, 'EXISTENT_PATH',
+                            'iSCSI name or WWN is already claimed by other host.')
+                        
     #fake hosts
     global hosts 
     hosts = {'members': 

@@ -145,52 +145,55 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             print ex
             self.fail('Failed with unexpected exception')
         self.fail('No exception occurred.')
-#                  
-#     def test_1_create_host_long_params(self):
-#         self.printHeader('create_host_long_params')
-#         try:
-#             optional = {'WWN' : '1024'}
-#             name = 'LongParamsHost'
-#             self.cl.createHost(name, None, None, optional)
-#         except exceptions.HTTPBadRequest:
-#             print 'Expected exception'
-#             self.printFooter('create_host_long_params')
-#             return
-#         except Exception as ex:
-#             print ex
-#             self.fail('Failed with unexpected exception')
-#         self.fail('No exception occurred.')
-#                     
-#     def test_1_create_host_wrong_type(self):
-#         self.printHeader('create_host_wrong_type')
-#         try:
-#             optional = {'WWN' :'LessThan16'}
-#             name = 'WrongTypeHost'
-#             self.cl.createHost(name, None, None, optional)
-#         except exceptions.HTTPBadRequest:
-#             print 'Expected exception'
-#             self.printFooter('create_host_wrong_type')
-#             return
-#         except Exception as ex:
-#             print ex
-#             self.fail('Failed with unexpected exception')
-#         self.fail('No exception occurred.')
-#     
-#     def test_1_create_host_existent_path(self):
-#         self.printHeader('create_host_existent_path')
-#         try:
-#             optional = {'WWN':'ExistentPath'}
-#             name = 'ExistentPathHost'
-#             self.cl.createHost(name, None, None, optional)
-#         except exceptions.HTTPConflict:
-#             print 'Expected exception'
-#             self.printFooter('create_host_existent_path')
-#             return
-#         except Exception as ex:
-#             print ex
-#             self.fail('Failed with unexpected exception')
-#         self.fail('No exception occurred.')
-#         
+                  
+    def test_1_create_host_long_params(self):
+        self.printHeader('create_host_long_params')
+        try:
+            optional = {'domain' : 'default'}
+            name = 'LongParamsHost'
+            fc = {'length' : '1024'}
+            self.cl.createHost(name, None, fc, optional)
+        except exceptions.HTTPBadRequest:
+            print 'Expected exception'
+            self.printFooter('create_host_long_params')
+            return
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception')
+        self.fail('No exception occurred.')
+                     
+    def test_1_create_host_wrong_type(self):
+        self.printHeader('create_host_wrong_type')
+        try:
+            optional = {'domain' :'default'}
+            fc = {'length' : 'LessThan16'}
+            name = 'WrongTypeHost'
+            self.cl.createHost(name, None, fc, optional)
+        except exceptions.HTTPBadRequest:
+            print 'Expected exception'
+            self.printFooter('create_host_wrong_type')
+            return
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception')
+        self.fail('No exception occurred.')
+     
+    def test_1_create_host_existent_path(self):
+        self.printHeader('create_host_existent_path')
+        try:
+            optional = {'domain':'default'}
+            fc = {'path' : 'ExistentPath'}
+            name = 'ExistentPathHost'
+            self.cl.createHost(name, None, fc, optional)
+        except exceptions.HTTPConflict:
+            print 'Expected exception'
+            self.printFooter('create_host_existent_path')
+            return
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception')
+        self.fail('No exception occurred.')
+         
     def test_1_create_host_duplicate(self):
         self.printHeader('create_host_duplicate')
         try:
@@ -234,10 +237,8 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.assertEqual(name, name1)
             #add another
             name2 = 'UnitTestHost2'
-            optional2 = optional.copy()
-            more_optional = {'iSCSINames':{'ipAddr': '10.10.221.58'}}
-            optional2.update(more_optional)
-            self.cl.createHost(name2, None, None, optional2)
+            iSCSINames = {'ipAddr': '10.10.221.58'}
+            self.cl.createHost(name2, iSCSINames, None, optional)
             #check
             host2 = self.cl.getHost(name2)
             self.assertIsNotNone(host2)
@@ -312,7 +313,7 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
     def test_3_get_host_bad(self):
         self.printHeader("get_host_bad")
         try:
-            host = self.cl.getHost("BadHostName")
+            self.cl.getHost("BadHostName")
         except exceptions.HTTPNotFound:
             print "Expected exception"
             self.printFooter("get_host_bad")
