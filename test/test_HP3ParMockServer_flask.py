@@ -270,23 +270,24 @@ def create_hosts():
                 if subkey not in valid_iscsi_keys:
                     throw_error(400, 'INV_INPUT',
                                 "Invalid Parameter '%s'" % subkey) 
-    
+
     if data['name'] is None:
         throw_error(400,'INV_INPUT_MISSING_REQUIRED', 'Name not specified.')
-    
+
     elif data['name'] == "PermissionDeniedHost":
         throw_error(403, 'PERM_DENIED', "Permission denied.")
-        
+
     elif data['domain'] == 'ThisDomainNameIsWayTooLongToMakeAnySense':
         throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH',
                     'Host name, domain name or iSCSI name is too long.')
+
     elif data['domain'] == '':
         throw_error(400,'INV_INPUT_EMPTY_STR',
                     'Input string (for domain, iSCSI etc.) is empty.')
 
     elif data['name'] == 'ExistentHost':
         throw_error(409, 'EXISTENT_HOST', 'Host name is already used.')
-    
+
     elif data['domain'] == 'NoSpace':
         throw_error(400, 'NO_SPACE', 'No space to create host.')
 
@@ -303,7 +304,7 @@ def create_hosts():
         if 'iSCSINames' in data.keys():
             throw_error(400, 'INV_INPUT_PARAM_CONFLICT',
                         'FCWWNS and iSCSINames are both specified.')
-    
+
     if 'FCWwns' in data.keys():
         fc = data['FCWwns']
         if 'length' in fc.keys():
@@ -317,7 +318,7 @@ def create_hosts():
             if fc['path'] == 'ExistentPath':
                 throw_error(409, 'EXISTENT_PATH',
                             'iSCSI name or WWN is already claimed by other host.')
-                        
+
     #fake hosts
     global hosts 
     hosts = {'members': 
@@ -380,12 +381,15 @@ def get_host(host_name):
         if char in host_name:
             throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
                         'Host name contains invalid character.')
-        
+
+    if host_name == 'InvalidURI':
+        throw_error(400, 'INV_INPUT', 'Invalid URI Syntax.') 
+
     for host in hosts['members']:
         if host['name'] == host_name:
             resp = make_response(json.dumps(host), 200)
             return resp
-        
+
     throw_error(404, 'NON_EXISTENT_HOST', "Host '%s' doesn't exist" % host_name)
 
 #### Port ####
