@@ -322,7 +322,7 @@ def create_hosts():
     #fake hosts
     global hosts 
     hosts = {'members': 
-             [{'FCWwns': [],
+             [{'FCWWNs': [],
                'descriptors': None,
                'domain': 'UNIT_TEST',
                'iSCSINames': [{'driverVersion': '1.0',
@@ -336,7 +336,7 @@ def create_hosts():
                                'vendor': 'HP'}],
                'id': 11,
                'name': 'UnitTestHost'},
-              {'FCWwns': [],
+              {'FCWWNs': [],
                'descriptors': None,
                'domain': 'UNIT_TEST',
                'iSCSINames': [{'driverVersion': '1.0',
@@ -354,10 +354,20 @@ def create_hosts():
     resp = make_response("", 201)
     return resp
 
+@app.route('/api/v1/hosts/<host_name>', methods=['PUT'])
+def modify_host(host_name):
+    print "------------FLASK---------------------"
+    debugRequest(request)
+#UNDER CONSTRUCTION
+    print host_name
+    data = json.loads(request.data)
+    print data
+    print "------------FLASK---------------------"
+    return make_response("", 200)
+
 @app.route('/api/v1/hosts/<host_name>', methods=['DELETE'])
 def delete_host(host_name):
     debugRequest(request)
-
     if host_name == "UnitTestNonExistHost":
 	throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % host_name)
     elif host_name == "UnitTestInUseHost":

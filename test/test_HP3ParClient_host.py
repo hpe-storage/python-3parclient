@@ -357,3 +357,15 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             print ex
             self.fail("Failed with unexpected exception")
         self.printFooter('get_host')
+
+    def test_4_modify_host(self):
+        self.printHeader('modify_host')
+        try:
+            name = 'ModifyHost'
+            mod_request = {'newName' : 'ModifiedHost'}
+            self.cl.modifyHost(name, mod_request)
+            self.printFooter('modfiy_host')
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception.')
+        

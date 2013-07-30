@@ -312,7 +312,6 @@ class HP3ParClient:
     def modifyHost(self, name, mod_request):
         """
         Modify an existing Host entry
-        TODO: get the list of thrown exceptions 
 
         :param name: The name of the host
         :type name: str
@@ -330,6 +329,26 @@ class HP3ParClient:
             }
         
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT - Missing host name.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_PARAM_CONFLICT - Both iSCSINames & FCWWNs are specified. (lot of other possibilities)
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ONE_REQUIRED - iSCSINames or FCWwns missing.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ONE_REQUIRED - No path operation specified.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BAD_ENUM_VALUE - Invalid enum value.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_MISSING_REQUIRED - Required fields missing.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_EXCEEDS_LENGTH - Host descriptor argument length, new host name, or iSCSI name is too long.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Error parsing host or iSCSI name.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXISTENT_HOST - New host name is already used.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_HOST - Host to be modified does not exist.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_TOO_MANY_WWN_OR_iSCSI - More than 1024 WWNs or iSCSI names are specified.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_WRONG_TYPE - Input value is of the wrong type.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXISTENT_PATH - WWN or iSCSI name is already claimed by other host.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BAD_LENGTH - CHAP hex secret length is not 16 bytes, or chap ASCII secret length is not 12 to 16 characters.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NO_INITIATOR_CHAP - Setting target CHAP without initiator CHAP.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_CHAP - Remove non-existing CHAP.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - NON_UNIQUE_CHAP_SECRET - CHAP secret is not unique.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXPORTED_VLUN - Setting persona with active export; remove a host path on an active export.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - NON_EXISTENT_PATH - Remove a non-existing path.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - LUN_HOSTPERSONA_CONFLICT - LUN number and persona capability conflict.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_DUP_PATH - Duplicate path specified.
         """
         response, body = self.http.put('/hosts/%s' % name, body=mod_request)
         return body    
