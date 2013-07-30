@@ -66,10 +66,20 @@ class HP3ParClient:
     HOST_EDIT_REMOVE=2
 
     def __init__(self, api_url):
-        self.http = http.HTTPJSONRESTClient(api_url)
-        self.version_major = self.http.get_version_major()
-        self.version_minor = self.http.get_version_minor()
-        self.version_build = self.http.get_version_build()
+        self.api_url = api_url
+        self.http = http.HTTPJSONRESTClient(self.api_url)
+        
+    def getWsApiVersion(self):
+        """
+        Get the 3PAR WS API version
+        """
+        try :
+            host_url = self.api_url.split('/api')
+            self.http.set_url(host_url[0])
+            response, body = self.http.get('/api')
+            return body
+        finally:
+            self.http.set_url(self.api_url)
 
     def debug_rest(self,flag):
         """

@@ -30,7 +30,7 @@ DOMAIN = 'WALT_TEST'
 PORT = {'node': 1, 'slot' : 8, 'cardPort':1}
 
 #cl = client.HP3ParClient("https://localhost:8080/api/v1")
-cl = client.HP3ParClient("https://10.10.22.241:8080")
+cl = client.HP3ParClient("https://10.10.22.241:8080/api/v1")
 if "debug" in args and args.debug == True:
     cl.debug_rest(True)
 
@@ -205,8 +205,9 @@ cl.login(username, password, {'InServ':'10.10.22.241'})
 #create_snapshots()
 #delete_snapshots()
 #delete_test_cpg()
-get_volume(cl, 'WALTTESTVOL6969SNAP1')
-
+#get_volume(cl, 'WALTTESTVOL6969SNAP1')
+foo = cl.getWsApiVersion()
+bar = foo
 #ports = cl.getiSCSIPorts(cl.PORT_STATE_READY)
 #pprint.pprint(ports)
 #cl.deleteVLUN('osv-I1xu4dk.TniwSTxkD7y09A', 228, 'ubuntu-devstack', PORT)
