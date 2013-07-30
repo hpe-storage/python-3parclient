@@ -252,7 +252,7 @@ def delete_cpg(cpg_name):
 def create_hosts():
     debugRequest(request)
     data = json.loads(request.data)
-    valid_keys = {'FCPaths':None, 'descriptors':None, 'domain':None, 'iSCSIPaths':None,
+    valid_keys = {'FCWwns':None, 'descriptors':None, 'domain':None, 'iSCSINames':None,
                   'id': 0,'name':None}
 
     valid_iscsi_keys = {'driverVersion': None, 'firmwareVersion':None, 'hostSpeed':None, 
@@ -262,20 +262,63 @@ def create_hosts():
     ## do some fake errors here depending on data
     for key in data.keys():
         if key not in valid_keys.keys():
-           throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key) 
-        elif 'iSCSIPaths' in data.keys():
-           iscsiP = data ['iSCSIPaths']
-           for subkey in iscsiP.keys():
-               if subkey not in valid_iscsi_keys:
-                   throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey) 
+            throw_error(400, 'INV_INPUT',
+                        "Invalid Parameter '%s'" % key) 
+        elif 'iSCSINames' in data.keys():
+            iscsiP = data ['iSCSINames']
+            for subkey in iscsiP.keys():
+                if subkey not in valid_iscsi_keys:
+                    throw_error(400, 'INV_INPUT',
+                                "Invalid Parameter '%s'" % subkey) 
+    
+    if data['name'] is None:
+        throw_error(400,'INV_INPUT_MISSING_REQUIRED', 'Name not specified.')
+    
+    elif data['name'] == "PermissionDeniedHost":
+        throw_error(403, 'PERM_DENIED', "Permission denied.")
+        
+    elif data['domain'] == 'ThisDomainNameIsWayTooLongToMakeAnySense':
+        throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH',
+                    'Host name, domain name or iSCSI name is too long.')
+    elif data['domain'] == '':
+        throw_error(400,'INV_INPUT_EMPTY_STR',
+                    'Input string (for domain, iSCSI etc.) is empty.')
+    elif data['domain'] == 'doma!n':
+        throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+                    'Error parsing host-name or domain-name')
+    
+    elif data['name'] == 'ExistentHost':
+        throw_error(409, 'EXISTENT_HOST', 'Host name is already used.')
+    
+    elif data['domain'] == 'NoSpace':
+        throw_error(400, 'NO_SPACE', 'No space to create host.')
 
+    if 'FCWwns' in data.keys():
+        if 'iSCSINames' in data.keys():
+            throw_error(400, 'INV_INPUT_PARAM_CONFLICT',
+                        'FCWWNS and iSCSINames are both specified.')
+    
+    if 'FCWwns' in data.keys():
+        fc = data['FCWwns']
+        if 'length' in fc.keys():
+            if fc['length'] == '1024':
+                throw_error(400, 'INV_INPUT_TOO_MANY_WWN_OR_iSCSI',
+                            'More than 1024 WWNs or iSCSI names are specified.')
+            elif fc['length'] == 'LessThan16':
+                throw_error(400, 'INV_INPUT_WRONG_TYPE',
+                            'Length of WWN is not 16.')
+        elif 'path' in fc.keys():
+            if fc['path'] == 'ExistentPath':
+                throw_error(409, 'EXISTENT_PATH',
+                            'iSCSI name or WWN is already claimed by other host.')
+                        
     #fake hosts
     global hosts 
     hosts = {'members': 
-             [{'FCPaths': [],
+             [{'FCWwns': [],
                'descriptors': None,
                'domain': 'UNIT_TEST',
-               'iSCSIPaths': [{'driverVersion': '1.0',
+               'iSCSINames': [{'driverVersion': '1.0',
                                'firmwareVersion': '1.0',
                                'hostSpeed': 100,
                                'ipAddr': '10.10.221.59',
@@ -286,10 +329,10 @@ def create_hosts():
                                'vendor': 'HP'}],
                'id': 11,
                'name': 'UnitTestHost'},
-              {'FCPaths': [],
+              {'FCWwns': [],
                'descriptors': None,
                'domain': 'UNIT_TEST',
-               'iSCSIPaths': [{'driverVersion': '1.0',
+               'iSCSINames': [{'driverVersion': '1.0',
                                'firmwareVersion': '1.0',
                                'hostSpeed': 100,
                                'ipAddr': '10.10.221.58',
