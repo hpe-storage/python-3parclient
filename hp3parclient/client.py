@@ -61,6 +61,9 @@ class HP3ParClient:
     PORT_STATE_READY=4
     PORT_STATE_SYNC=5
     PORT_STATE_OFFLINE=10
+    
+    HOST_EDIT_ADD=1
+    HOST_EDIT_REMOVE=2
 
     def __init__(self, api_url):
         self.http = http.HTTPJSONRESTClient(api_url)
@@ -287,7 +290,7 @@ class HP3ParClient:
             info = self._mergeDict(info, iscsi)
 
         if FCWwns:
-            fc = {'FCWwns' : FCWwns}
+            fc = {'FCWWNs' : FCWwns}
             info = self._mergeDict(info, fc)
 
         if optional:
@@ -298,7 +301,7 @@ class HP3ParClient:
     
     def modifyHost(self, name, mod_request):
         """
-        Create a new Host entry
+        Modify an existing Host entry
         TODO: get the list of thrown exceptions 
 
         :param name: The name of the host
@@ -311,13 +314,14 @@ class HP3ParClient:
             mod_request = { 
                 'newName' : 'myNewName', # New name of the host
                 'pathOperation' : 1, # If adding, adds the WWN or iSCSI name to the existing host.
+                'FCWWNs' : [], # One or more WWN to set for the host.
+                'iSCSINames' : [], # One or more iSCSI names to set for the host.
  
             }
         
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT - Missing host name.
         """
-
-        response, body = self.http.post('/hosts/%s' % name, body=mod_request)
+        response, body = self.http.put('/hosts/%s' % name, body=mod_request)
         return body    
 
     def deleteHost(self, name):

@@ -75,7 +75,46 @@ def delete_test_host():
     except Exception as ex:
         print ex
 
+def modify_test_host():
+    try:
+        host = cl.getHost(TESTHOST)
+        print "host already exists"
+        iscsi = ['iqn.1993-08.org.debian:01:00000000000', 'iqn.bogus.org.debian:01:0000000000']
+        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        extra = {
+#                 'iSCSINames': ['iqn.1993-08.org.debian:01:00000000000', 'iqn.bogus.org.debian:01:0000000000'],
+#                 'FCWwns': ['00:00:00:00:00:00:00:00', 
+#                            '11:11:11:11:11:11:11:11'],
+                 'domain' : DOMAIN,
+                 'descriptors': {
+                     'IPAddr' : '10.10.22.132',
+                     'os' : 'Ubuntu Linux 12.04',
+                     'location' : 'death star',
+                     'model' : 'episode IV',
+                     'contact' : 'Vader',
+                     'comment' : 'Use the force luke'
+                 },
+#                 'portPos': {'cardPort': 1, 'node': 1, 'slot': 8}
+                }
+        
+        mod_request = { 
+                'pathOperation' : 1,
+                'iSCSINames' : iscsi, # One or more WWN to set for the host.
+        }
+        
+        cl.modifyHost(TESTHOST, mod_request)
+        #cl.createHost(TESTHOST, None, fc, extra)
+        #cl.createHost(TESTHOST, None, None, extra)
+        pass
+    except exceptions.HTTPUnauthorized as ex:
+        print "You must login"
+    except Exception as ex:
+        print ex
+
+#create_test_host()
+#get_host(cl, TESTHOST)
+#delete_test_host()
 
 create_test_host()
-get_host(cl, TESTHOST)
+modify_test_host()
 delete_test_host()
