@@ -252,7 +252,7 @@ def delete_cpg(cpg_name):
 def create_hosts():
     debugRequest(request)  
     data = json.loads(request.data)
-    valid_keys = {'FCWwns':None, 'descriptors':None, 'domain':None, 'iSCSINames':None,
+    valid_keys = {'FCWWNs':None, 'descriptors':None, 'domain':None, 'iSCSINames':None,
                   'id': 0,'name':None}
 
     valid_iscsi_keys = {'driverVersion': None, 'firmwareVersion':None, 'hostSpeed':None, 
@@ -300,13 +300,13 @@ def create_hosts():
             throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
                         'Error parsing host-name or domain-name')
 
-    if 'FCWwns' in data.keys():
+    if 'FCWWNs' in data.keys():
         if 'iSCSINames' in data.keys():
             throw_error(400, 'INV_INPUT_PARAM_CONFLICT',
                         'FCWWNS and iSCSINames are both specified.')
 
-    if 'FCWwns' in data.keys():
-        fc = data['FCWwns']
+    if 'FCWWNs' in data.keys():
+        fc = data['FCWWNs']
         if 'length' in fc.keys():
             if fc['length'] == '1024':
                 throw_error(400, 'INV_INPUT_TOO_MANY_WWN_OR_iSCSI',
