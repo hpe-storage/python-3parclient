@@ -12,7 +12,6 @@ if cmd_folder not in sys.path:
      sys.path.insert(0, cmd_folder)
 
 from hp3parclient import client, exceptions
-from utils import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-debug", help="Turn on http debugging", default=False, action="store_true")
@@ -25,7 +24,7 @@ testVolName = "WALTTESTVOL"
 testSNAPName = testVolName+"SNAP"
 testCPGName = "WALTTESTCPG"
 
-cl = client.HP3ParClient("http://10.10.22.241:8008")
+cl = client.HP3ParClient("http://10.10.22.241:8008/api/v1")
 if "debug" in args and args.debug == True:
     cl.debug_rest(True)
 
@@ -152,7 +151,6 @@ def delete_volumes():
 
 
 cl.login(username, password)
-get_volume(cl, "osv-aPpJ-yNGQb6DhhGDGdcp9w")
 get_volumes()
 create_test_cpg()
 #create_volumes()

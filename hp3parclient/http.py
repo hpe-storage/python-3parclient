@@ -57,7 +57,7 @@ class HTTPJSONRESTClient(httplib2.Http):
         self.session_key = None
 
         #should be http://<Server:Port>/api/v1
-        self.api_url = api_url.rstrip('/')
+        self.set_url(api_url)
         self.set_debug_flag(http_log_debug)
 
         self.times = []  # [("item", starttime, endtime), ...]
@@ -65,27 +65,14 @@ class HTTPJSONRESTClient(httplib2.Http):
         # httplib2 overrides
         self.force_exception_to_status_code = True
         #self.disable_ssl_certificate_validation = insecure    
-        
-        # get the api version
-        resp, body = self.get('/api')
-        
-        self.version_major = body['major']
-        self.version_minor = body['minor']
-        self.version_build = body['build'] 
-        
-        self.api_url = self.api_url + '/api/v' + str(self.version_major)  
 
         self._logger = logging.getLogger(__name__)
         
-    def get_version_major(self):
-        return self.version_major
-    
-    def get_version_minor(self):
-        return self.version_minor
-    
-    def get_version_build(self):
-        return self.version_build
-
+    def set_url(self, api_url):
+        #should be http://<Server:Port>/api/v1
+        self.api_url = api_url.rstrip('/')
+        self.api_url = self.api_url
+        
     def set_debug_flag(self, flag):
         """
         This turns on/off http request/response debugging output to console

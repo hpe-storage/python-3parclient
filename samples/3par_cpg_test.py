@@ -20,7 +20,7 @@ args = parser.parse_args()
 username = "3paradm"
 password = "3pardata"
 
-cl = client.HP3ParClient("http://10.10.22.241:8008")
+cl = client.HP3ParClient("http://10.10.22.241:8008/api/v1")
 if "debug" in args and args.debug == True:
     cl.debug_rest(True)
 
