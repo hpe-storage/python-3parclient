@@ -22,186 +22,144 @@ from hp3parclient import client, exceptions
 import unittest
 import test_HP3ParClient_base
 
+DOMAIN = 'UNIT_TEST_DOMAIN'
+CPG_NAME1 = 'CPG1_UNIT_TEST'
+CPG_NAME2 = 'CPG2_UNIT_TEST'
+
 class HP3ParClientCPGTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
+    
+    def setUp(self):
+        super(HP3ParClientCPGTestCase, self).setUp()
+        
+    def tearDown(self):
+        try :
+            self.cl.deleteCPG(CPG_NAME1)
+        except :
+            pass
+        try :
+            self.cl.deleteCPG(CPG_NAME2)
+        except :
+            pass        
+        
+        # very last, tear down base class
+        super(HP3ParClientCPGTestCase, self).tearDown()
 
     def test_1_create_CPG(self):
         self.printHeader('create_CPG')
 
-        try:
-            #add one
-            optional = {'domain': 'UNIT_TEST'}
-            name = 'UnitTestCPG'
-            self.cl.createCPG(name, optional)
+        #add one
+        optional = {'domain': DOMAIN}
+        name = CPG_NAME1
+        self.cl.createCPG(name, optional)
             
-            #check
-            cpg1 = self.cl.getCPG(name)
-            self.assertIsNotNone(cpg1)
-            cpgName = cpg1['name']
-            self.assertEqual(name, cpgName)
+        #check
+        cpg1 = self.cl.getCPG(name)
+        self.assertIsNotNone(cpg1)
+        cpgName = cpg1['name']
+        self.assertEqual(name, cpgName)
 
-            #add another
-	    name = 'UnitTestCPG2'
-            optional2 = optional.copy()
-            more_optional = {'LDLayout':{'RAIDType':1}}
-            optional2.update(more_optional)
-            self.cl.createCPG(name, optional2)
+        #add another
+        name = CPG_NAME2
+        optional2 = optional.copy()
+        more_optional = {'LDLayout':{'RAIDType':2}}
+        optional2.update(more_optional)
+        self.cl.createCPG(name, optional2)
 
-            #check
-            cpg2 = self.cl.getCPG(name)
-            self.assertIsNotNone(cpg2)
-            cpgName = cpg2['name']
-            self.assertEqual(name, cpgName)
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
+        #check
+        cpg2 = self.cl.getCPG(name)
+        self.assertIsNotNone(cpg2)
+        cpgName = cpg2['name']
+        self.assertEqual(name, cpgName)
 
         self.printFooter('create_CPG')
     
     def test_1_create_CPG_badDomain(self):
         self.printHeader('create_CPG_badDomain')
-
-        #add one
-        try:
-            optional = {'domain': 'BAD_DOMAIN'}
-            name = 'UnitTestCPG'
-            self.cl.createCPG(name, optional)
-        except exceptions.HTTPNotFound:
-            print "Expected exception"
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
-
+        
+        optional = {'domain': 'BAD_DOMAIN'}
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.createCPG, CPG_NAME1, optional)
+        
         self.printFooter('create_CPG_badDomain')
-   
+  
     def test_1_create_CPG_dup(self):
         self.printHeader('create_CPG_dup')
-
-        #add one
-        try:
-            optional = {'domain': 'UNIT_TEST'}
-            name = 'UnitTestCPGExisting'
-            self.cl.createCPG(name, optional)
-        except exceptions.HTTPConflict:
-            print "Expected exception"
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
-
+        
+        optional = {'domain': DOMAIN}
+        name = CPG_NAME1
+        self.cl.createCPG(name, optional)
+        self.assertRaises(exceptions.HTTPConflict, self.cl.createCPG, CPG_NAME1, optional)
+        
         self.printFooter('create_CPG_dup')
     
     def test_1_create_CPG_badParams(self):
         self.printHeader('create_CPG_badParams')
-
-        #add one
-        try:
-            optional = {'domainBad': 'UNIT_TEST'}
-            name = 'UnitTestCPGbad'
-            self.cl.createCPG(name, optional)
-        except exceptions.HTTPBadRequest:
-            print "Expected exception"
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
-
+        
+        optional = {'domainBad': 'UNIT_TEST'}
+        self.assertRaises(exceptions.HTTPBadRequest, self.cl.createCPG, CPG_NAME1, optional)
+ 
         self.printFooter('create_CPG_badParams')
 
     def test_1_create_CPG_badParams2(self):
         self.printHeader('create_CPG_badParams2')
-
-        #add one
-        try:
-            optional = {'domain': 'UNIT_TEST'}
-            more_optional = {'LDLayout':{'RAIDBadType':1}}
-            optional.update(more_optional)
-            name = 'UnitTestCPGbad'
-            self.cl.createCPG(name, optional)
-        except exceptions.HTTPBadRequest:
-            print "Expected exception"
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
-
+        
+        optional = {'domain': 'UNIT_TEST'}
+        more_optional = {'LDLayout':{'RAIDBadType':1}}
+        optional.update(more_optional)
+        self.assertRaises(exceptions.HTTPBadRequest, self.cl.createCPG, CPG_NAME1, optional)
+        
         self.printFooter('create_CPG_badParams2')
     
     def test_2_get_CPG_bad(self):
         self.printHeader('get_CPG_bad')
-
-        try:
-            cpg = self.cl.getCPG('BadName')
-        except exceptions.HTTPNotFound:
-            print "Expected exception"
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
-
+        
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.getCPG, 'BadName')
+        
         self.printFooter('get_CPG_bad')
    
     def test_2_get_CPGs(self):
         self.printHeader('get_CPGs')
 
-        try:
-            cpgs = self.cl.getCPGs()
-
-            #assert
-            name = 'UnitTestCPG'
-            cpg1 = self.cl.getCPG(name)
-	    name = 'UnitTestCPG2'
-            cpg2 = self.cl.getCPG(name)
-            self.assertIn(cpg1, cpgs['members'])
-            self.assertIn(cpg2, cpgs['members'])
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
+        optional = {'domain': DOMAIN}
+        name = CPG_NAME1
+        self.cl.createCPG(name, optional)
+            
+        cpgs = self.cl.getCPGs()
+        self.assertGreater(len(cpgs), 0, 'getCPGs failed with no CPGs')
+        self.assertTrue(self.findInDict(cpgs['members'], 'name', CPG_NAME1))
 
         self.printFooter('get_CPGs')
     
     def test_3_delete_CPG_nonExist(self):
         self.printHeader('delete_CPG_nonExist')
-
-        try:
-            self.cl.deleteCPG('NonExistCPG')
-        except exceptions.HTTPNotFound:
-            print "Expected exception"
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
+        
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.deleteCPG, 'NonExistCPG')
 
         self.printFooter('delete_CPG_nonExist')
-    
+     
     def test_3_delete_CPGs(self):
         self.printHeader('delete_CPGs')
 
-        try:
-            cpgs = self.cl.getCPGs()
-            if cpgs and cpgs['total'] > 0:
-                for cpg in cpgs['members']:
-                    if cpg['name'].startswith('UnitTestCPG'):
-                        #pprint.pprint("Deleting CPG %s " % cpg['name'])
+
+        #add one
+        optional = {'domain': DOMAIN}
+        self.cl.createCPG(CPG_NAME1, optional)            
+            
+        cpg = self.cl.getCPG(CPG_NAME1)
+        self.assertTrue(cpg['name'], CPG_NAME1)
+            
+        cpgs = self.cl.getCPGs()
+        if cpgs and cpgs['total'] > 0:
+            for cpg in cpgs['members']:
+                if cpg['name'] == CPG_NAME1:
+                    #pprint.pprint("Deleting CPG %s " % cpg['name'])
                         self.cl.deleteCPG(cpg['name'])
-            #check
-            try:
-                name = 'UnitTestCPG'
-                cpg = self.cl.getCPG(name)
-            except exceptions.HTTPNotFound:
-                print "Expected exception"
-            except Exception as ex:
-                print ex
-                self.fail("Failed with unexpected exception")
-
-            try:
-                name = 'UnitTestCPG2'
-                cpg = self.cl.getCPG(name)
-            except exceptions.HTTPNotFound:
-                print "Expected exception"
-            except Exception as ex:
-                print ex
-                self.fail ("Failed with unexpected exception")
-
-        except Exception as ex:
-            print ex
-            self.fail ("Failed with unexpected exception")
+                        
+                        
+        #check
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.getCPG, CPG_NAME1)
 
         self.printFooter('delete_CPGs')
+
    
 #testing
 suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientCPGTestCase)

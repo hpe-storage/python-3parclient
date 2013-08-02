@@ -40,7 +40,7 @@ def make_json_app(import_name, **kwargs):
         return response
 
     app = Flask(import_name, **kwargs)
-    app.debug = True
+    #app.debug = True
     app.secret_key = id_generator(24)
     
 
@@ -102,7 +102,7 @@ def credentials():
     elif request.method == 'POST':
 	data = json.loads(request.data)
 
-        if data['user'] == 'user' and data['password'] == 'hp':
+        if data['user'] == '3paradm' and data['password'] == '3pardata':
             #do something good here
             try:
                 resp = make_response(json.dumps({'key':session_key}), 201)
@@ -132,7 +132,7 @@ def logout_credentials(session_key):
 def create_cpgs():
     debugRequest(request)
     data = json.loads(request.data)
-
+        
     valid_keys = {'name':None, 'growthIncrementMB':None, 'growthLimitMB':None, 
                   'usedLDWarningAlertMB':None, 'domain':None, 'LDLayout':None}
 
@@ -149,70 +149,14 @@ def create_cpgs():
                    throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey) 
 
     if data['domain'] == 'BAD_DOMAIN': 
-	throw_error(404, 'NON_EXISTENT_DOMAIN', "Non-existing domain specified.")
-    elif data['name'] == 'UniteTestCPGExisting': 
-	throw_error(409, 'EXISTENT_CPG', "CPG '%s' already exist." % data['name'])
+        throw_error(404, 'NON_EXISTENT_DOMAIN', "Non-existing domain specified.")     
     
-    #fake 2 CPGs
-    global cpgs  
-    cpgs = {'members': 
-           [{'SAGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
-                         'incrementMiB': 8192},
-            'SAUsage': {'rawTotalMiB': 24576,
-                         'rawUsedMiB': 768,
-                         'totalMiB': 8192,
-                         'usedMiB': 256},
-            'SDGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
-                         'incrementMiB': 16384,
-                         'limitMiB': 256000,
-                         'warningMiB': 204800},
-            'SDUsage': {'rawTotalMiB': 32768,
-                        'rawUsedMiB': 2048,
-                        'totalMiB': 16384,
-                        'usedMiB': 1024},
-            'UsrUsage': {'rawTotalMiB': 239616,
-                         'rawUsedMiB': 229376,
-                         'totalMiB': 119808,
-                         'usedMiB': 114688},
-            'additionalStates': [],
-            'degradedStates': [],
-            'domain': 'UNIT_TEST',
-            'failedStates': [],
-            'id': 0,
-            'name': 'UnitTestCPG',
-            'numFPVVs': 12,
-            'numTPVVs': 0,
-            'state': 1,
-            'uuid': 'f9b018cc-7cb6-4358-a0bf-93243f853d96'},
-           {'SAGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
-                          'incrementMiB': 8192},
-             'SAUsage': {'rawTotalMiB': 24576,
-                         'rawUsedMiB': 768,
-                         'totalMiB': 8192,
-                         'usedMiB': 256},
-             'SDGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
-                          'incrementMiB': 16384,
-                          'limitMiB': 256000,
-                          'warningMiB': 204800},
-             'SDUsage': {'rawTotalMiB': 32768,
-                         'rawUsedMiB': 2048,
-                         'totalMiB': 16384,
-                         'usedMiB': 1024},
-             'UsrUsage': {'rawTotalMiB': 239616,
-                          'rawUsedMiB': 229376,
-                          'totalMiB': 119808,
-                          'usedMiB': 114688},
-             'additionalStates': [],
-             'degradedStates': [],
-             'domain': 'UNIT_TEST',
-             'failedStates': [],
-             'id': 0,
-             'name': 'UnitTestCPG2',
-             'numFPVVs': 12,
-             'numTPVVs': 0,
-             'state': 1,
-             'uuid': 'f9b018cc-7cb6-4358-a0bf-93243f853d97'}],
-      'total': 2}
+    for cpg in cpgs['members'] :
+        if data['name'] == cpg['name'] :
+            throw_error(409, 'EXISTENT_CPG', "CPG '%s' already exist." % data['name'])
+    
+    cpgs['members'].append(data)
+    cpgs['total'] = cpgs['total'] +1
  
     return  make_response("", 200)
 
@@ -238,13 +182,14 @@ def get_cpg(cpg_name):
 @app.route('/api/v1/cpgs/<cpg_name>', methods=['DELETE'])
 def delete_cpg(cpg_name):
     debugRequest(request)
-
-    if cpg_name == "NonExistCPG":
-	throw_error(404, 'NON_EXISTENT_CPG', "CPG '%s' doesn't exist" % cpg_name)
     
-    #fake delete
-    cpgs = {'members':[], 'total':0} 
-    return make_response("", 200)
+    for cpg in cpgs['members']:
+        if cpg['name'] == cpg_name:
+            cpgs['members'].remove(cpg)
+            return make_response("", 200)            
+
+    throw_error(404, 'NON_EXISTENT_CPG', "CPG '%s' doesn't exist" % cpg_name)
+
 
 #### Host ####
 
@@ -252,24 +197,33 @@ def delete_cpg(cpg_name):
 def create_hosts():
     debugRequest(request)  
     data = json.loads(request.data)
-    valid_keys = {'FCWWNs':None, 'descriptors':None, 'domain':None, 'iSCSINames':None,
-                  'id': 0,'name':None}
-
-    valid_iscsi_keys = {'driverVersion': None, 'firmwareVersion':None, 'hostSpeed':None, 
-                        'ipAddr': None, 'model':None, 'name': None, 'portPos': None,
-                        'vendor': None}
+    
+    valid_members = ['FCWWNs', 'descriptors', 'domain', 'iSCSINames', 'id','name']
+    
+#     valid_keys = {'FCWWNs':None, 'descriptors':None, 'domain':None, 'iSCSINames':None,
+#                   'id': 0,'name':None}
+# 
+#     valid_iscsi_keys = {'driverVersion': None, 'firmwareVersion':None, 'hostSpeed':None, 
+#                         'ipAddr': None, 'model':None, 'name': None, 'portPos': None,
+#                         'vendor': None}
+    
+    for member_key in data.keys() :
+        if member_key not in valid_members :
+            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % member_key)
+            
+        
  
     ## do some fake errors here depending on data
-    for key in data.keys():
-        if key not in valid_keys.keys():
-            throw_error(400, 'INV_INPUT',
-                        "Invalid Parameter '%s'" % key) 
-        elif 'iSCSINames' in data.keys():
-            iscsiP = data ['iSCSINames']
-            for subkey in iscsiP.keys():
-                if subkey not in valid_iscsi_keys:
-                    throw_error(400, 'INV_INPUT',
-                                "Invalid Parameter '%s'" % subkey) 
+#     for key in data.keys():
+#         if key not in valid_keys.keys():
+#             throw_error(400, 'INV_INPUT',
+#                         "Invalid Parameter '%s'" % key) 
+#         elif 'iSCSINames' in data.keys():
+#             iscsiP = data ['iSCSINames']
+#             for subkey in iscsiP.keys():
+#                 if subkey not in valid_iscsi_keys:
+#                     throw_error(400, 'INV_INPUT',
+#                                 "Invalid Parameter '%s'" % subkey) 
 
     if data['name'] is None:
         throw_error(400,'INV_INPUT_MISSING_REQUIRED', 'Name not specified.')
@@ -277,26 +231,26 @@ def create_hosts():
     elif data['name'] == "PermissionDeniedHost":
         throw_error(403, 'PERM_DENIED', "Permission denied.")
 
-    elif data['domain'] == 'ThisDomainNameIsWayTooLongToMakeAnySense':
-        throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH',
-                    'Host name, domain name or iSCSI name is too long.')
-
-    elif data['domain'] == '':
-        throw_error(400,'INV_INPUT_EMPTY_STR',
-                    'Input string (for domain, iSCSI etc.) is empty.')
-
     elif data['name'] == 'ExistentHost':
         throw_error(409, 'EXISTENT_HOST', 'Host name is already used.')
 
-    elif data['domain'] == 'NoSpace':
+    elif 'domain' in data and data['domain'] == 'NoSpace':
         throw_error(400, 'NO_SPACE', 'No space to create host.')
+        
+    elif 'domain' in data and data['domain'] == 'ThisDomainNameIsWayTooLongToMakeAnySense':
+        throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH',
+                    'Host name, domain name or iSCSI name is too long.')
+        
+    elif 'domain' in data and data['domain'] == '':
+        throw_error(400,'INV_INPUT_EMPTY_STR',
+                    'Input string (for domain, iSCSI etc.) is empty.')        
 
     charset = {'!', '@', '#', '$', '%', '&', '^'}
     for char in charset:
         if char in data['name']:
             throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
                         'Error parsing host-name or domain-name')
-        elif char in data['domain']:
+        elif 'domain' in data and char in data['domain']:
             throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
                         'Error parsing host-name or domain-name')
 
@@ -307,57 +261,47 @@ def create_hosts():
 
     if 'FCWWNs' in data.keys():
         fc = data['FCWWNs']
-        if 'length' in fc.keys():
-            if fc['length'] == '1024':
-                throw_error(400, 'INV_INPUT_TOO_MANY_WWN_OR_iSCSI',
-                            'More than 1024 WWNs or iSCSI names are specified.')
-            elif fc['length'] == 'LessThan16':
+        for wwn in fc :
+            if len(wwn.replace(':','')) <> 16 : 
                 throw_error(400, 'INV_INPUT_WRONG_TYPE',
                             'Length of WWN is not 16.')
-        elif 'path' in fc.keys():
-            if fc['path'] == 'ExistentPath':
-                throw_error(409, 'EXISTENT_PATH',
-                            'iSCSI name or WWN is already claimed by other host.')
+            
+#             
+#             if fc['length'] == '1024':
+#                 throw_error(400, 'INV_INPUT_TOO_MANY_WWN_OR_iSCSI',
+#                             'More than 1024 WWNs or iSCSI names are specified.')
+#             elif fc['length'] == 'LessThan16':
+#                 throw_error(400, 'INV_INPUT_WRONG_TYPE',
+#                             'Length of WWN is not 16.')
+#         elif 'path' in fc.keys():
+#             if fc['path'] == 'ExistentPath':
+#                 throw_error(409, 'EXISTENT_PATH',
+#                             'iSCSI name or WWN is already claimed by other host.')
 
-    #fake hosts
-    global hosts 
-    hosts = {'members': 
-             [{'FCWWNs': [],
-               'descriptors': None,
-               'domain': 'UNIT_TEST',
-               'iSCSINames': [{'driverVersion': '1.0',
-                               'firmwareVersion': '1.0',
-                               'hostSpeed': 100,
-                               'ipAddr': '10.10.221.59',
-                               'model': 'TestModel',
-                               'name': 'iqnTestName',
-                               'portPos': {'cardPort': 1, 'node': 1,
-                                           'slot': 8},
-                               'vendor': 'HP'}],
-               'id': 11,
-               'name': 'UnitTestHost'},
-              {'FCWWNs': [],
-               'descriptors': None,
-               'domain': 'UNIT_TEST',
-               'iSCSINames': [{'driverVersion': '1.0',
-                               'firmwareVersion': '1.0',
-                               'hostSpeed': 100,
-                               'ipAddr': '10.10.221.58',
-                               'model': 'TestMode2',
-                               'name': 'iqnTestName2',
-                               'portPos': {'cardPort': 1, 'node': 1,
-                                           'slot': 8},
-                               'vendor': 'HP'}],
-               'id': 12,
-               'name': 'UnitTestHost2'}],
-            'total': 2}
+    for host in hosts['members'] :
+        if data['name'] == host['name'] :
+            throw_error(409, 'EXISTENT_HOST', "HOST '%s' already exist." % data['name'])
+    
+    hosts['members'].append(data)
+    hosts['total'] = cpgs['total'] +1
+
     resp = make_response("", 201)
     return resp
 
 @app.route('/api/v1/hosts/<host_name>', methods=['PUT'])
 def modify_host(host_name):
-    print "------------FLASK---------------------"
-    debugRequest(request)
+    debugRequest(request)  
+    data = json.loads(request.data)
+    
+    for host in hosts['members']:
+        if host['name'] == host_name:
+            for member_key in data.keys() :
+                host[member_key] = data[member_key]            
+            
+    resp = make_response(json.dumps(host), 200)
+    return resp 
+    
+    
 #UNDER CONSTRUCTION
     print host_name
     data = json.loads(request.data)
@@ -368,14 +312,13 @@ def modify_host(host_name):
 @app.route('/api/v1/hosts/<host_name>', methods=['DELETE'])
 def delete_host(host_name):
     debugRequest(request)
-    if host_name == "UnitTestNonExistHost":
-	throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % host_name)
-    elif host_name == "UnitTestInUseHost":
-	throw_error(403, 'IN_USE', "The host '%s' is in-use" % host_name)
-
-    #fake delete 
-    hosts  = {'members':[], 'total':0} 
-    return make_response("", 200)
+    
+    for host in hosts['members']:
+        if host['name'] == host_name:
+            hosts['members'].remove(host)
+            return make_response("", 200)    
+    
+    throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % host_name)
 
 @app.route('/api/v1/hosts', methods=['GET'])
 def get_hosts():
@@ -717,4 +660,99 @@ def get_version():
     return resp
 
 if __name__ == "__main__":
+    
+    #fake 2 CPGs
+    global cpgs    
+    cpgs = {'members': 
+           [{'SAGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
+                         'incrementMiB': 8192},
+            'SAUsage': {'rawTotalMiB': 24576,
+                         'rawUsedMiB': 768,
+                         'totalMiB': 8192,
+                         'usedMiB': 256},
+            'SDGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
+                         'incrementMiB': 16384,
+                         'limitMiB': 256000,
+                         'warningMiB': 204800},
+            'SDUsage': {'rawTotalMiB': 32768,
+                        'rawUsedMiB': 2048,
+                        'totalMiB': 16384,
+                        'usedMiB': 1024},
+            'UsrUsage': {'rawTotalMiB': 239616,
+                         'rawUsedMiB': 229376,
+                         'totalMiB': 119808,
+                         'usedMiB': 114688},
+            'additionalStates': [],
+            'degradedStates': [],
+            'domain': 'UNIT_TEST',
+            'failedStates': [],
+            'id': 0,
+            'name': 'UnitTestCPG',
+            'numFPVVs': 12,
+            'numTPVVs': 0,
+            'state': 1,
+            'uuid': 'f9b018cc-7cb6-4358-a0bf-93243f853d96'},
+           {'SAGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
+                          'incrementMiB': 8192},
+             'SAUsage': {'rawTotalMiB': 24576,
+                         'rawUsedMiB': 768,
+                         'totalMiB': 8192,
+                         'usedMiB': 256},
+             'SDGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
+                          'incrementMiB': 16384,
+                          'limitMiB': 256000,
+                          'warningMiB': 204800},
+             'SDUsage': {'rawTotalMiB': 32768,
+                         'rawUsedMiB': 2048,
+                         'totalMiB': 16384,
+                         'usedMiB': 1024},
+             'UsrUsage': {'rawTotalMiB': 239616,
+                          'rawUsedMiB': 229376,
+                          'totalMiB': 119808,
+                          'usedMiB': 114688},
+             'additionalStates': [],
+             'degradedStates': [],
+             'domain': 'UNIT_TEST',
+             'failedStates': [],
+             'id': 0,
+             'name': 'UnitTestCPG2',
+             'numFPVVs': 12,
+             'numTPVVs': 0,
+             'state': 1,
+             'uuid': 'f9b018cc-7cb6-4358-a0bf-93243f853d97'}],
+      'total': 2}   
+    
+    #fake hosts
+    global hosts 
+    hosts = {'members': 
+             [{'FCWWNs': [],
+               'descriptors': None,
+               'domain': 'UNIT_TEST',
+               'iSCSINames': [{'driverVersion': '1.0',
+                               'firmwareVersion': '1.0',
+                               'hostSpeed': 100,
+                               'ipAddr': '10.10.221.59',
+                               'model': 'TestModel',
+                               'name': 'iqnTestName',
+                               'portPos': {'cardPort': 1, 'node': 1,
+                                           'slot': 8},
+                               'vendor': 'HP'}],
+               'id': 11,
+               'name': 'UnitTestHost'},
+              {'FCWWNs': [],
+               'descriptors': None,
+               'domain': 'UNIT_TEST',
+               'iSCSINames': [{'driverVersion': '1.0',
+                               'firmwareVersion': '1.0',
+                               'hostSpeed': 100,
+                               'ipAddr': '10.10.221.58',
+                               'model': 'TestMode2',
+                               'name': 'iqnTestName2',
+                               'portPos': {'cardPort': 1, 'node': 1,
+                                           'slot': 8},
+                               'vendor': 'HP'}],
+               'id': 12,
+               'name': 'UnitTestHost2'}],
+            'total': 2} 
+    
     app.run(port=5001)

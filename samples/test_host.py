@@ -110,11 +110,19 @@ def modify_test_host():
         print "You must login"
     except Exception as ex:
         print ex
+        
+def get_hosts():
+    try:
+        hosts = cl.getHosts()
+        print hosts
+    except exceptions.HTTPNotFound as ex:
+        print ex
 
 #create_test_host()
 #get_host(cl, TESTHOST)
 #delete_test_host()
 
+get_hosts()
 create_test_host()
 modify_test_host()
 delete_test_host()

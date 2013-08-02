@@ -23,349 +23,261 @@ from hp3parclient import client, exceptions
 import unittest
 import test_HP3ParClient_base
 
+DOMAIN = 'UNIT_TEST_DOMAIN'
+HOST_NAME1 = 'HOST1_UNIT_TEST'
+HOST_NAME2 = 'HOST2_UNIT_TEST'
+
 class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
+    
+    def setUp(self):
+        super(HP3ParClientHostTestCase, self).setUp()
+        
+    def tearDown(self):
+        try :
+            self.cl.deleteHost(HOST_NAME1)
+        except :
+            pass
+        try :
+            self.cl.deleteHost(HOST_NAME2)
+        except :
+            pass        
+        
+        # very last, tear down base class
+        super(HP3ParClientHostTestCase, self).tearDown()
 
     def test_1_create_host_badParams(self):
-        self.printHeader('create_host_badParams')
-        try:
-            name = 'UnitTestHostBadParams'
-            optional = {'iSCSIPaths': {'modelBad': 'UNIT_TEST'}}
-            self.cl.createHost(name, None, None, optional)             
-        except exceptions.HTTPBadRequest:
-            print "Expected exception"  
-            self.printFooter('create_host_badParams')
-            return
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
-        self.fail("No exception occurred")
-
-    def test_1_create_host_badParams2(self):
-        self.printHeader('create_host_badParams2')
-        try:
-            name = 'UnitTestHostBadParams2'
-            optional = {'domainBad': 'hp'}
-            self.cl.createHost(name, None, None, optional) 
-        except exceptions.HTTPBadRequest:
-            print "Expected exception"
-            self.printFooter('create_host_badParams2')
-            return
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
-        self.fail("No exception occurred")       
-
-    def test_1_create_host_perm_denied(self):
-        self.printHeader('create_host_perm_denied')
-        try:
-            name = 'PermissionDeniedHost'
-            optional = {'domain' : 'default'}
-            self.cl.createHost(name, None, None, optional)
-        except exceptions.HTTPForbidden:
-            print 'Expected exception'
-            self.printFooter('create_host_perm_denied')
-            return
-        except Exception as ex:
-            print ex
-            self.fail('Failed with unexpected exception')
-        self.fail('No exception occurred.')
+        self.printHeader('create_host_badParams')        
+        
+        name = 'UnitTestHostBadParams'
+        optional = {'iSCSIPaths': 'foo bar'}
+        self.assertRaises(exceptions.HTTPBadRequest, 
+                          self.cl.createHost, 
+                          name,
+                          None, 
+                          None, 
+                          optional)
+        
+        self.printFooter('create_host_badParams')
+ 
 
     def test_1_create_host_no_name(self):
         self.printHeader('create_host_no_name')
-        try:
-            optional = {'domain' : 'default'}
-            self.cl.createHost(None, None, None, optional)
-        except exceptions.HTTPBadRequest:
-            print 'Expected exception'
-            self.printFooter('create_host_no_name')
-            return
-        except Exception as ex:
-            print ex
-            self.fail('Failed with unexpected exception')
-        self.fail('No exception occurred.')
+        
+        optional = {'domain' : 'default'}
+        self.assertRaises(exceptions.HTTPBadRequest, 
+                          self.cl.createHost, 
+                          None,
+                          None, 
+                          None, 
+                          optional)
+        
+        self.printFooter('create_host_no_name') 
 
     def test_1_create_host_exceed_length(self):
         self.printHeader('create_host_exceed_length')
-        try:
-            optional = {'domain': 'ThisDomainNameIsWayTooLongToMakeAnySense'}
-            name = 'LongDomainHost'
-            self.cl.createHost(name, None, None, optional)
-        except exceptions.HTTPBadRequest:
-            print 'Expected exception'
-            self.printFooter('create_host_exceed_length')
-            return
-        except Exception as ex:
-            print ex
-            self.fail('Failed with unexpected exception')
-        self.fail('No exception occurred.')
-
+        
+        optional = {'domain': 'ThisDomainNameIsWayTooLongToMakeAnySense'}
+        self.assertRaises(exceptions.HTTPBadRequest, 
+                          self.cl.createHost, 
+                          HOST_NAME1,
+                          None, 
+                          None, 
+                          optional)        
+        
+        self.printFooter('create_host_exceed_length')
+        
+ 
     def test_1_create_host_empty_domain(self):
         self.printHeader('create_host_empty_domain')
-        try:
-            optional={'domain': ''}
-            name = 'EmptyDomainHost'
-            self.cl.createHost(name, None, None, optional)
-        except exceptions.HTTPBadRequest:
-            print 'Expected exception'
-            self.printFooter('create_host_empty_domain')
-            return
-        except Exception as ex:
-            print ex
-            self.fail('Failed with unexpected exception')
-        self.fail('No exception occurred.')
+        
+        optional={'domain': ''}
+        self.assertRaises(exceptions.HTTPBadRequest, 
+                          self.cl.createHost, 
+                          HOST_NAME1,
+                          None, 
+                          None, 
+                          optional)                
+        
+        self.printFooter('create_host_empty_domain')        
 
     def test_1_create_host_illegal_string(self):
         self.printHeader('create_host_illegal_string')
-        try:
-            optional = {'domain' : 'doma&n'}
-            name = 'IllegalDomainHost'
-            self.cl.createHost(name, None, None, optional)
-        except exceptions.HTTPBadRequest:
-            print 'Expected exception'
-            self.printFooter('create_host_illegal_string')
-            return
-        except Exception as ex:
-            print ex
-            self.fail('Failed with unexpected exception')
-        self.fail('No exception occurred.')
+        
+        optional = {'domain' : 'doma&n'}
+        self.assertRaises(exceptions.HTTPBadRequest, 
+                          self.cl.createHost, 
+                          HOST_NAME1,
+                          None, 
+                          None, 
+                          optional)     
+        
+        self.printFooter('create_host_illegal_string')     
 
     def test_1_create_host_param_conflict(self):
         self.printHeader('create_host_param_conflict')
-        try:
-            optional = {'domain' : 'default'}
-            FCWwns = {'fcpath1':'path1'}
-            iSCSINames = {'vendor' : 'hp'}
-            name = 'DualPathHost'
-            self.cl.createHost(name, iSCSINames, FCWwns, optional)
-        except exceptions.HTTPBadRequest:
-            print 'Expected exception'
-            self.printFooter('create_host_param_conflict')
-            return
-        except Exception as ex:
-            print ex
-            self.fail('Failed with unexpected exception')
-        self.fail('No exception occurred.')
-
-    def test_1_create_host_long_params(self):
-        self.printHeader('create_host_long_params')
-        try:
-            optional = {'domain' : 'default'}
-            name = 'LongParamsHost'
-            fc = {'length' : '1024'}
-            self.cl.createHost(name, None, fc, optional)
-        except exceptions.HTTPBadRequest:
-            print 'Expected exception'
-            self.printFooter('create_host_long_params')
-            return
-        except Exception as ex:
-            print ex
-            self.fail('Failed with unexpected exception')
-        self.fail('No exception occurred.')
-
+        
+        optional = {'domain': DOMAIN}
+        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        iscsi = ['iqn.1993-08.org.debian:01:00000000000', 'iqn.bogus.org.debian:01:0000000000']
+        self.assertRaises(exceptions.HTTPBadRequest, 
+                          self.cl.createHost, 
+                          HOST_NAME1,
+                          iscsi, 
+                          fc, 
+                          optional)   
+        
+        self.printFooter('create_host_param_conflict')
+        
     def test_1_create_host_wrong_type(self):
         self.printHeader('create_host_wrong_type')
-        try:
-            optional = {'domain' :'default'}
-            fc = {'length' : 'LessThan16'}
-            name = 'WrongTypeHost'
-            self.cl.createHost(name, None, fc, optional)
-        except exceptions.HTTPBadRequest:
-            print 'Expected exception'
-            self.printFooter('create_host_wrong_type')
-            return
-        except Exception as ex:
-            print ex
-            self.fail('Failed with unexpected exception')
-        self.fail('No exception occurred.')
-
+        
+        optional = {'domain': DOMAIN}
+        fc = ['00:00:00:00:00:00:00']
+        self.assertRaises(exceptions.HTTPBadRequest, 
+                          self.cl.createHost, 
+                          HOST_NAME1,
+                          None, 
+                          fc, 
+                          optional)       
+        self.printFooter('create_host_wrong_type')            
+        
     def test_1_create_host_existent_path(self):
         self.printHeader('create_host_existent_path')
-        try:
-            optional = {'domain':'default'}
-            fc = {'path' : 'ExistentPath'}
-            name = 'ExistentPathHost'
-            self.cl.createHost(name, None, fc, optional)
-        except exceptions.HTTPConflict:
-            print 'Expected exception'
-            self.printFooter('create_host_existent_path')
-            return
-        except Exception as ex:
-            print ex
-            self.fail('Failed with unexpected exception')
-        self.fail('No exception occurred.')
+        
+        optional = {'domain':DOMAIN}
+        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        self.cl.createHost(HOST_NAME1, None, fc, optional)
+        self.assertRaises(exceptions.HTTPConflict, 
+                          self.cl.createHost, 
+                          HOST_NAME1,
+                          None, 
+                          fc, 
+                          optional)   
+        
+        self.printFooter('create_host_existent_path')        
 
     def test_1_create_host_duplicate(self):
         self.printHeader('create_host_duplicate')
-        try:
-            optional = {'domain' : 'default'}
-            name = 'ExistentHost'
-            self.cl.createHost(name, None, None, optional)
-        except exceptions.HTTPConflict:
-            print 'Expected exception'
-            self.printFooter('create_host_duplicate')
-            return
-        except Exception as ex:
-            print ex
-            self.fail('Failed with unexpected exception')
-        self.fail('No exception occurred.')
-
-    def test_1_create_host_no_space(self):
-        self.printHeader('create_host_no_space')
-        try:
-            optional = {'domain' : 'NoSpace'}
-            name = 'NoSpaceHost'
-            self.cl.createHost(name, None, None, optional)
-        except exceptions.HTTPBadRequest:
-            print 'Expected exception'
-            self.printFooter('create_host_no_space')
-            return
-        except Exception as ex:
-            print ex
-            self.fail('Failed with unexpected exception')
+        
+        optional = {'domain' : DOMAIN}
+        self.cl.createHost(HOST_NAME1, None, None, optional)
+        self.assertRaises(exceptions.HTTPConflict, 
+                          self.cl.createHost, 
+                          HOST_NAME1,
+                          None, 
+                          None, 
+                          optional)  
+        
+        self.printFooter('create_host_duplicate')
 
     def test_1_create_host(self):
         self.printHeader('create_host')  
-        try:
-            #add one
-            name = 'UnitTestHost'
-            optional = {'domain': 'UNIT_TEST'}
-            fc = {'fcpath':'path1'}
-            self.cl.createHost(name, None, fc, optional)
-            #check 
-            host1 = self.cl.getHost(name)
-            self.assertIsNotNone(host1)
-            name1 = host1['name']
-            self.assertEqual(name, name1)
-            #add another
-            name2 = 'UnitTestHost2'
-            iSCSINames = {'ipAddr': '10.10.221.58'}
-            self.cl.createHost(name2, iSCSINames, None, optional)
-            #check
-            host2 = self.cl.getHost(name2)
-            self.assertIsNotNone(host2)
-            name3 = host2['name']
-            self.assertEqual(name2, name3)
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
+ 
+        #add one
+            
+        optional = {'domain': DOMAIN}
+        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        self.cl.createHost(HOST_NAME1, None, fc, optional)
+        #check 
+        host1 = self.cl.getHost(HOST_NAME1)
+        self.assertIsNotNone(host1)
+        name1 = host1['name']
+        self.assertEqual(HOST_NAME1, name1)
+        #add another            
+        iscsi = ['iqn.1993-08.org.debian:01:00000000000', 'iqn.bogus.org.debian:01:0000000000']
+        self.cl.createHost(HOST_NAME2, iscsi, None, optional)
+        #check
+        host2 = self.cl.getHost(HOST_NAME2)
+        self.assertIsNotNone(host2)
+        name3 = host2['name']
+        self.assertEqual(HOST_NAME2, name3)
+
         self.printFooter('create_host')
 
     def test_2_delete_host_nonExist(self):
         self.printHeader("delete_host_non_exist")
-        try:
-            self.cl.deleteHost("UnitTestNonExistHost")
-        except exceptions.HTTPNotFound:
-            print "Expected exception"
-            self.printFooter("delete_host_non_exist")
-            return
-        except Exception as ex:
-            print ex
-            self.fail("Unexpected Exception")
-        self.fail("No error occurred")
-
-    def test_2_delete_host_in_use(self):
-        self.printHeader("delete_host_in_use")
-        try:
-            self.cl.deleteHost("UnitTestInUseHost")
-        except exceptions.HTTPForbidden:
-            print "Expected exception"
-            self.printFooter("delete_host_in_use")
-            return
-        except Exception as ex:
-            print ex
-            self.fail("Unexpected Exception")
-        self.fail("No error occurred")
+        
+        self.assertRaises(exceptions.HTTPNotFound, 
+                          self.cl.deleteHost, 
+                          "UnitTestNonExistHost")  
+        
+        self.printFooter("delete_host_non_exist")
 
     def test_2_delete_host(self):
         self.printHeader("delete_host")
-        try:
-            hosts = self.cl.getHosts()
-            if hosts and hosts['total'] > 0:
-                for host in hosts['members']:
-                    if host['name'].startswith('UnitTestHost'):
-                        self.cl.deleteHost(host['name'])
-            #check
-            try:
-                name = 'UnitTestHost'
-                host = self.cl.getHost(name)
-            except exceptions.HTTPNotFound:
-                print "Expected exception"
-            except Exception as ex:
-                print ex
-                self.fail("Failed with unexpected exception")
+        
+        optional = {'domain': DOMAIN}
+        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        self.cl.createHost(HOST_NAME1, None, fc, optional)
+        
+        #check 
+        host1 = self.cl.getHost(HOST_NAME1)
+        self.assertIsNotNone(host1)
+        
 
-            try:
-                name = 'UnitTestHost2'
-                host = self.cl.getHost(name)
-            except exceptions.HTTPNotFound:
-                print "Expected exception"
-            except Exception as ex:
-                print ex
-                self.fail ("Failed with unexpected exception")
-        except Exception as ex:
-            print ex
-            self.fail ("Failed with unexpected exception")
+        hosts = self.cl.getHosts()
+        if hosts and hosts['total'] > 0:
+            for host in hosts['members']:
+                if 'name' in host and host['name'] == HOST_NAME1:
+                    self.cl.deleteHost(host['name'])                
+
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.getHost, HOST_NAME1)  
+        
+        self.printFooter("delete_host")                    
+
 
     def test_3_get_host_bad(self):
         self.printHeader("get_host_bad")
-        try:
-            self.cl.getHost("BadHostName")
-        except exceptions.HTTPNotFound:
-            print "Expected exception"
-            self.printFooter("get_host_bad")
-            return
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
-        self.fail("No exception occurred")
+        
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.getHost, "BadHostName")
+        
+        self.printFooter("get_host_bad")
 
     def test_3_get_host_illegal(self):
         self.printHeader("get_host_illegal")
-        try:
-            self.cl.getHost('B&dHostName')
-        except exceptions.HTTPBadRequest:
-            print 'Expected exception'
-            self.printFooter("get_host_illegal")
-            return
-        except Exception as ex:
-            print ex
-            self.fail('Failed with unexpected exception')
-        self.fail('No exception occurred.')
-
-    def test_3_get_host_invalid_URI(self):
-        self.printHeader('get_host_invalid_URI')
-        try:
-            self.cl.getHost('InvalidURI')
-        except exceptions.HTTPBadRequest:
-            print 'Expected exception'
-            self.printFooter('get_host_invalid_URI')
-            return
-        except Exception as ex:
-            print ex
-            self.fail('Failed with unexpected exception')
-        self.fail('No exception occurred.')
-
+        
+        self.assertRaises(exceptions.HTTPBadRequest, self.cl.getHost, "B&dHostName")
+        
+        self.printFooter("get_host_illegal")
+ 
     def test_3_get_host(self):
         self.printHeader("get_host")
-        try:
-            hosts = self.cl.getHosts()
-            host1 = self.cl.getHost("UnitTestHost")
-            host2 = self.cl.getHost("UnitTestHost2")
-            self.assertIn(host1, hosts['members'])
-            self.assertIn(host2, hosts['members'])
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
+        
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.getHost, HOST_NAME1)
+        
+        optional = {'domain': DOMAIN}
+        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        self.cl.createHost(HOST_NAME1, None, fc, optional)
+        
+        host1 = self.cl.getHost(HOST_NAME1)
+        self.assertEquals(host1['name'], HOST_NAME1)        
+
         self.printFooter('get_host')
 
     def test_4_modify_host(self):
         self.printHeader('modify_host')
-        try:
-            name = 'ModifyHost'
-            mod_request = {'newName' : 'ModifiedHost'}
-            self.cl.modifyHost(name, mod_request)
-            self.printFooter('modfiy_host')
-        except Exception as ex:
-            print ex
-            self.fail('Failed with unexpected exception.')
+        
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.getHost, HOST_NAME1)
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.getHost, HOST_NAME2)
+        
+        optional = {'domain': DOMAIN}
+        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        self.cl.createHost(HOST_NAME1, None, fc, optional)
+        
+        # validate host was created
+        host1 = self.cl.getHost(HOST_NAME1)
+        self.assertEquals(host1['name'], HOST_NAME1)
+        
+        # change host name
+        mod_request = {'newName' : HOST_NAME2}
+        self.cl.modifyHost(HOST_NAME1, mod_request)
+        
+        # validate host name was changed
+        host2 = self.cl.getHost(HOST_NAME2)
+        self.assertEquals(host2['name'], HOST_NAME2)
+        
+        # host 1 name should be history
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.getHost, HOST_NAME1)
+        
+        self.printFooter('modfiy_host')
         

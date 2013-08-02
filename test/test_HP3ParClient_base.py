@@ -25,7 +25,7 @@ import time
 import pprint
 import inspect
 
-class HP3ParClientBaseTestCase(unittest.TestCase):
+class HP3ParClientBaseTestCase(unittest.TestCase):    
 
     def setUp(self):
          #if have debug as second argument for the test
@@ -33,24 +33,25 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
          #need to manaully start test_HP3ParMockServer_flask.py before run 
          #test
          if len(sys.argv) >= 2:
-             self.debug = sys.argv[1]
+             self.debug = 'debug' #sys.argv[1]
 
          cwd = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
          self.cl = client.HP3ParClient("http://localhost:5001/api/v1")
+         #self.cl = client.HP3ParClient("http://10.10.22.241:8008/api/v1")
          if self.debug == 'debug':
-             self.cl.debug_rest(True)
+            self.cl.debug_rest(True)
          else: 
-             script = 'test_HP3ParMockServer_flask.py'
-             path = "%s/%s" % (cwd, script)
-             self.mockServer = subprocess.Popen([sys.executable, 
-                                                path], 
-                                                stdout=subprocess.PIPE, 
-                                                stderr=subprocess.PIPE, 
-                                                stdin=subprocess.PIPE)
-             time.sleep(1) 
+            script = 'test_HP3ParMockServer_flask.py'
+            path = "%s/%s" % (cwd, script)
+            self.mockServer = subprocess.Popen([sys.executable, 
+                                               path], 
+                                               stdout=subprocess.PIPE, 
+                                               stderr=subprocess.PIPE, 
+                                               stdin=subprocess.PIPE)
+            time.sleep(1) 
          
-         self.cl.login("user", "hp")
+         self.cl.login("3paradm", "3pardata")
 
     def tearDown(self):
         self.cl.logout()
@@ -64,4 +65,9 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
 
     def printFooter(self, name):
         print "##Compeleted testing '%s\n" % name
+        
+    def findInDict(self, dic, key, value):
+        for i in dic :
+            if key in i and i[key] == value :
+                return True
 
