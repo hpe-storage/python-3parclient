@@ -379,3 +379,22 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.fail('Failed with unexpected exception.')
 
         self.fail('No exception occurred.')
+
+    def test_4_modify_host_pathOperationOnly(self):
+        self.printHeader('modify_host_pathOperationOnly')
+
+        mod_request = {'pathOperation': 1}
+
+        try:
+            self.cl.modifyHost(HOST_NAME2, mod_request)
+
+        except exceptions.HTTPBadRequest:
+            print 'Expected exception'
+            self.printFooter('modify_host_pathOperationOnly')
+            return
+
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception.')
+
+        self.fail('No exception occurred.')

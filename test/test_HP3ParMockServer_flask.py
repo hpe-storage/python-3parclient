@@ -289,6 +289,11 @@ def modify_host(host_name):
             if char in data['newName']:
                 throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
                             'Error parsing host-name or domain-name')
+    if 'pathOperation' in data.keys():
+        if 'iSCSINames' not in data.keys() and\
+        'FCWWNs' not in data.keys():
+            throw_error(400, 'INV_INPUT_ONE_REQUIRED',
+                        'pathOperation specified and no WWNs or iSCSNames specified.')
 
     for host in hosts['members']:
         if host['name'] == host_name:
