@@ -398,3 +398,52 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.fail('Failed with unexpected exception.')
 
         self.fail('No exception occurred.')
+
+    def test_4_modify_host_too_long(self):
+        self.printHeader('modify_host_too_long')
+
+        optional = {'domain': DOMAIN}
+        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        self.cl.createHost(HOST_NAME1, None, fc, optional)
+        mod_request = {'newName': 'ThisHostNameIsWayTooLongToMakeAnyRealSenseAndIsDeliberatelySo'}
+
+        try:
+            self.cl.modifyHost(HOST_NAME1, mod_request)
+
+        except exceptions.HTTPBadRequest:
+            print 'Expected exception'
+            self.printFooter('modify_host_too_long')
+            self.cl.deleteHost(HOST_NAME1)
+            return
+
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception')
+
+        self.fail('No exception occurred.')
+
+    def test_4_modify_host_dup_newName(self):
+        self.printHeader('modify_host_dup_newName')
+
+        optional = {'domain': DOMAIN}
+        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        self.cl.createHost(HOST_NAME1, None, fc, optional)
+
+        iscsi = ['iqn.1993-08.org.debian:01:00000000000', 'iqn.bogus.org.debian:01:0000000000']
+        self.cl.createHost(HOST_NAME2, iscsi, None, optional)
+        mod_request = {'newName': HOST_NAME1}
+        try:
+            self.cl.modifyHost(HOST_NAME2, mod_request)
+
+        except exceptions.HTTPConflict:
+            print 'Expected exception'
+            self.cl.deleteHost(HOST_NAME1)
+            self.cl.deleteHost(HOST_NAME2)
+            self.printFooter('modify_host_dup_newName')
+            return
+
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception.')
+
+        self.fail('No exception occurred.')

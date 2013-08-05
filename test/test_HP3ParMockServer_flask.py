@@ -289,6 +289,14 @@ def modify_host(host_name):
             if char in data['newName']:
                 throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
                             'Error parsing host-name or domain-name')
+        if len(data['newName']) > 32:
+            throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH',
+                        'New host name is too long.')
+        for host in hosts['members']:
+            if host['name'] == data['newName']:
+                throw_error(409, 'EXISTENT_HOST',
+                            'New host name is already used.')
+
     if 'pathOperation' in data.keys():
         if 'iSCSINames' not in data.keys() and\
         'FCWWNs' not in data.keys():
