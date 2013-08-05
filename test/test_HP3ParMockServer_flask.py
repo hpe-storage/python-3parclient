@@ -281,7 +281,7 @@ def create_hosts():
     for host in hosts['members'] :
         if data['name'] == host['name'] :
             throw_error(409, 'EXISTENT_HOST', "HOST '%s' already exist." % data['name'])
-    
+
     hosts['members'].append(data)
     hosts['total'] = cpgs['total'] +1
 
@@ -292,22 +292,20 @@ def create_hosts():
 def modify_host(host_name):
     debugRequest(request)  
     data = json.loads(request.data)
-    
+
+    if host_name == 'None':
+        throw_error (404, 'INV_INPUT', 'Missing host name.')
+
     for host in hosts['members']:
         if host['name'] == host_name:
             for member_key in data.keys() :
-                host[member_key] = data[member_key]            
-            
+                if member_key == 'newName':
+                    host['name'] = data['newName']
+                else:
+                    host[member_key] = data[member_key]            
+
     resp = make_response(json.dumps(host), 200)
     return resp 
-    
-    
-#UNDER CONSTRUCTION
-    print host_name
-    data = json.loads(request.data)
-    print data
-    print "------------FLASK---------------------"
-    return make_response("", 200)
 
 @app.route('/api/v1/hosts/<host_name>', methods=['DELETE'])
 def delete_host(host_name):

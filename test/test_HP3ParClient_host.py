@@ -256,28 +256,46 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
     def test_4_modify_host(self):
         self.printHeader('modify_host')
-        
+
         self.assertRaises(exceptions.HTTPNotFound, self.cl.getHost, HOST_NAME1)
         self.assertRaises(exceptions.HTTPNotFound, self.cl.getHost, HOST_NAME2)
-        
+
         optional = {'domain': DOMAIN}
         fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
         self.cl.createHost(HOST_NAME1, None, fc, optional)
-        
+
         # validate host was created
         host1 = self.cl.getHost(HOST_NAME1)
         self.assertEquals(host1['name'], HOST_NAME1)
-        
+
         # change host name
         mod_request = {'newName' : HOST_NAME2}
         self.cl.modifyHost(HOST_NAME1, mod_request)
-        
+
         # validate host name was changed
         host2 = self.cl.getHost(HOST_NAME2)
         self.assertEquals(host2['name'], HOST_NAME2)
-        
+
         # host 1 name should be history
         self.assertRaises(exceptions.HTTPNotFound, self.cl.getHost, HOST_NAME1)
-        
+
         self.printFooter('modfiy_host')
+
+    def test_4_modify_host_no_name(self):
+        self.printHeader('modify_host_no_name')
+
+        mod_request = {'newName': HOST_NAME1}
+        try:
+            self.cl.modifyHost(None, mod_request)
+
+        except exceptions.HTTPNotFound:
+            #documentation error
+            print 'Expected exception'
+            self.printFooter('modify_host_no_name')
+            return
         
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception.')
+            
+        self.fail('No exception occurred.')
