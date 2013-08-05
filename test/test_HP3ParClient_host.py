@@ -293,9 +293,89 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             print 'Expected exception'
             self.printFooter('modify_host_no_name')
             return
-        
+
         except Exception as ex:
             print ex
             self.fail('Failed with unexpected exception.')
-            
+
+        self.fail('No exception occurred.')
+
+    def test_4_modify_host_param_conflict(self):
+        self.printHeader('modify_host_param_conflict')
+        
+        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        iscsi = ['iqn.1993-08.org.debian:01:00000000000', 'iqn.bogus.org.debian:01:0000000000']
+        mod_request = {'newName': HOST_NAME1, 'FCWWNs': fc, 'iSCSINames': iscsi}
+
+        try:
+            self.cl.modifyHost(HOST_NAME2, mod_request)
+
+        except exceptions.HTTPBadRequest:
+            print 'Expected exception'
+            self.printFooter('modify_host_param_conflict')
+            return
+
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception.')
+
+        self.fail('No exception occurred.')
+
+    def test_4_modify_host_illegal_char(self):
+        self.printHeader('modify_host_illegal_char')
+
+        mod_request = { 'newName': 'New#O$TN@ME'}
+
+        try:
+            self.cl.modifyHost(HOST_NAME2, mod_request)
+
+        except exceptions.HTTPBadRequest:
+            print 'Expected exception'
+            self.printFooter('modify_host_illegal_char')
+            return
+
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception.')
+
+        self.fail('No exception occurred.')
+
+    def test_4_modify_host_pathOperation_missing1(self):
+        self.printHeader('modify_host_pathOperation_missing1')
+
+        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        mod_request = {'FCWWNs': fc}
+
+        try:
+            self.cl.modifyHost(HOST_NAME1, mod_request)
+
+        except exceptions.HTTPBadRequest:
+            print 'Expected exception'
+            self.printFooter('modify_host_pathOperation_missing1')
+            return
+
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception.')
+
+        self.fail('No exception occurred.')
+
+    def test_4_modify_host_pathOperation_missing2(self):
+        self.printHeader('modify_host_pathOperation_missing2')
+
+        iscsi = ['iqn.1993-08.org.debian:01:00000000000', 'iqn.bogus.org.debian:01:0000000000']
+        mod_request = {'iSCSINames': iscsi}
+
+        try:
+            self.cl.modifyHost(HOST_NAME1, mod_request)
+
+        except exceptions.HTTPBadRequest:
+            print 'Expected exception'
+            self.printFooter('modify_host_pathOperation_missing2')
+            return
+
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception.')
+
         self.fail('No exception occurred.')

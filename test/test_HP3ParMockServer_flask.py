@@ -197,9 +197,9 @@ def delete_cpg(cpg_name):
 def create_hosts():
     debugRequest(request)  
     data = json.loads(request.data)
-    
+
     valid_members = ['FCWWNs', 'descriptors', 'domain', 'iSCSINames', 'id','name']
-    
+
 #     valid_keys = {'FCWWNs':None, 'descriptors':None, 'domain':None, 'iSCSINames':None,
 #                   'id': 0,'name':None}
 # 
@@ -210,20 +210,6 @@ def create_hosts():
     for member_key in data.keys() :
         if member_key not in valid_members :
             throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % member_key)
-            
-        
- 
-    ## do some fake errors here depending on data
-#     for key in data.keys():
-#         if key not in valid_keys.keys():
-#             throw_error(400, 'INV_INPUT',
-#                         "Invalid Parameter '%s'" % key) 
-#         elif 'iSCSINames' in data.keys():
-#             iscsiP = data ['iSCSINames']
-#             for subkey in iscsiP.keys():
-#                 if subkey not in valid_iscsi_keys:
-#                     throw_error(400, 'INV_INPUT',
-#                                 "Invalid Parameter '%s'" % subkey) 
 
     if data['name'] is None:
         throw_error(400,'INV_INPUT_MISSING_REQUIRED', 'Name not specified.')
@@ -265,18 +251,6 @@ def create_hosts():
             if len(wwn.replace(':','')) <> 16 : 
                 throw_error(400, 'INV_INPUT_WRONG_TYPE',
                             'Length of WWN is not 16.')
-            
-#             
-#             if fc['length'] == '1024':
-#                 throw_error(400, 'INV_INPUT_TOO_MANY_WWN_OR_iSCSI',
-#                             'More than 1024 WWNs or iSCSI names are specified.')
-#             elif fc['length'] == 'LessThan16':
-#                 throw_error(400, 'INV_INPUT_WRONG_TYPE',
-#                             'Length of WWN is not 16.')
-#         elif 'path' in fc.keys():
-#             if fc['path'] == 'ExistentPath':
-#                 throw_error(409, 'EXISTENT_PATH',
-#                             'iSCSI name or WWN is already claimed by other host.')
 
     for host in hosts['members'] :
         if data['name'] == host['name'] :
@@ -296,6 +270,26 @@ def modify_host(host_name):
     if host_name == 'None':
         throw_error (404, 'INV_INPUT', 'Missing host name.')
 
+    if 'FCWWNs' in data.keys():
+        if 'iSCSINames' in data.keys():
+            throw_error(400, 'INV_INPUT_PARAM_CONFLICT',
+                        'FCWWNS and iSCSINames are both specified.')
+        elif 'pathOperation' not in data.keys():
+            throw_error(400, 'INV_INPUT_ONE_REQUIRED',
+                        'pathOperation is missing and WWN is specified.')
+
+    if 'iSCSINames' in data.keys():
+        if 'pathOperation' not in data.keys():
+            throw_error(400, 'INV_INPUT_ONE_REQUIRED',
+                        'pathOperation is missing and iSCSI Name is specified.')
+
+    if 'newName' in data.keys():
+        charset = {'!', '@', '#', '$', '%', '&', '^'}
+        for char in charset:
+            if char in data['newName']:
+                throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+                            'Error parsing host-name or domain-name')
+
     for host in hosts['members']:
         if host['name'] == host_name:
             for member_key in data.keys() :
@@ -305,7 +299,7 @@ def modify_host(host_name):
                     host[member_key] = data[member_key]            
 
     resp = make_response(json.dumps(host), 200)
-    return resp 
+    return resp
 
 @app.route('/api/v1/hosts/<host_name>', methods=['DELETE'])
 def delete_host(host_name):
