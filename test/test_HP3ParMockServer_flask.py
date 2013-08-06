@@ -277,10 +277,10 @@ def modify_host(host_name):
         elif 'pathOperation' not in data.keys():
             throw_error(400, 'INV_INPUT_ONE_REQUIRED',
                         'pathOperation is missing and WWN is specified.')
-        for host in hosts['members']:
-            if 'FCWWNs' in host.keys():
-                if host['FCWWNs'] == data['FCWWNs']:
-                    throw_error(409, 'EXISTENT_PATH', 'WWN is already claimed by other host.')
+#        for host in hosts['members']:
+#            if 'FCWWNs' in host.keys():
+#                if host['FCWWNs'] == data['FCWWNs']:
+#                    throw_error(409, 'EXISTENT_PATH', 'WWN is already claimed by other host.')
 
     if 'iSCSINames' in data.keys():
         if 'pathOperation' not in data.keys():
@@ -306,8 +306,47 @@ def modify_host(host_name):
                             'New host name is already used.')
 
     if 'pathOperation' in data.keys():
-        if 'iSCSINames' not in data.keys() and\
-        'FCWWNs' not in data.keys():
+        if 'iSCSINames' in data.keys():
+            for host in hosts['members']:
+                if host['name'] == host_name:
+                    if data['pathOperation'] == 1:
+                        host['iSCSINames'].append(data['iSCSINames'])
+                        resp = make_response(json.dumps(host), 200)
+                        return resp
+                    elif data['pathOperation'] == 2:
+                        if data['iSCSINames'] in host['iSCSINames']:
+                            host['iSCSINames'].remove(data['iSCSINames'])
+                            resp = make_response(json.dumps(host), 200)
+                            return resp
+                        else:
+                            throw_error(404, 'NON_EXISTENT_PATH',
+                                        'Removing a non-existent path.')
+                    else:
+                        throw_error(400, 'INV_INPUT_BAD_ENUM_VALUE',
+                                    'pathOperation: Invalid enum value.')
+            throw_error(404, 'NON_EXISTENT_HOST',
+                        'Host to be modified does not exist.')
+        elif 'FCWWNs' in data.keys():
+            for host in hosts['members']:
+                if host['name'] == host_name:
+                    if data['pathOperation'] == 1:
+                        host['FCWWNs'].append(data['FCWWNs'])
+                        resp = make_response(json.dumps(host), 200)
+                        return resp
+                    elif data['pathOperation'] == 2:
+                        if data['FCWWNs'] in host['FCWWNs']:
+                            host['FCWWNs'].remove(data['FCWWNs'])
+                            resp = make_response(json.dumps(host), 200)
+                            return resp
+                        else:
+                            throw_error(404, 'NON_EXISTENT_PATH',
+                                        'Removing a non-existent path.')
+                    else:
+                        throw_error(400, 'INV_INPUT_BAD_ENUM_VALUE',
+                                    'pathOperation: Invalid enum value.')
+            throw_error(404, 'NON_EXISTENT_HOST',
+                        'Host to be modified does not exist.')
+        else:
             throw_error(400, 'INV_INPUT_ONE_REQUIRED',
                         'pathOperation specified and no WWNs or iSCSNames specified.')
 
