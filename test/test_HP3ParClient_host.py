@@ -447,3 +447,25 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.fail('Failed with unexpected exception.')
 
         self.fail('No exception occurred.')
+
+    def test_4_modify_host_nonExist(self):
+        self.printHeader('modify_host_nonExist')
+        try:
+            self.cl.deleteHost(HOST_NAME1)
+        except:
+            pass
+        
+        try:
+            mod_request = {'newName': HOST_NAME2}
+            self.cl.modifyHost(HOST_NAME1, mod_request)
+
+        except exceptions.HTTPNotFound:
+            print 'Expected exception'
+            self.printFooter('modify_host_nonExist')
+            return
+
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception.')
+
+        self.fail('No exception occurred.')

@@ -310,9 +310,11 @@ def modify_host(host_name):
                     host['name'] = data['newName']
                 else:
                     host[member_key] = data[member_key]            
+            resp = make_response(json.dumps(host), 200)
+            return resp
 
-    resp = make_response(json.dumps(host), 200)
-    return resp
+    throw_error(404, 'NON_EXISTENT_HOST',
+                'Host to be modified does not exist.')
 
 @app.route('/api/v1/hosts/<host_name>', methods=['DELETE'])
 def delete_host(host_name):
