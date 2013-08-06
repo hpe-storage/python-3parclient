@@ -277,11 +277,19 @@ def modify_host(host_name):
         elif 'pathOperation' not in data.keys():
             throw_error(400, 'INV_INPUT_ONE_REQUIRED',
                         'pathOperation is missing and WWN is specified.')
+        for host in hosts['members']:
+            if 'FCWWNs' in host.keys():
+                if host['FCWWNs'] == data['FCWWNs']:
+                    throw_error(409, 'EXISTENT_PATH', 'WWN is already claimed by other host.')
 
     if 'iSCSINames' in data.keys():
         if 'pathOperation' not in data.keys():
             throw_error(400, 'INV_INPUT_ONE_REQUIRED',
                         'pathOperation is missing and iSCSI Name is specified.')
+        for host in hosts['members']:
+            if 'iSCSINames' in host.keys():
+                if host['iSCSINames'] == data['iSCSINames']:
+                    throw_error(409, 'EXISTENT_PATH', 'iSCSI name is already claimed by other host.')
 
     if 'newName' in data.keys():
         charset = {'!', '@', '#', '$', '%', '&', '^'}
