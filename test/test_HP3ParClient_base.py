@@ -19,29 +19,36 @@ import sys, os
 sys.path.insert(0,os.path.realpath(os.path.abspath('../')))
 
 from hp3parclient import client, exceptions
+import argparse
 import unittest
 import subprocess
 import time
 import pprint
 import inspect
+from testconfig import config
 
-class HP3ParClientBaseTestCase(unittest.TestCase):    
+# pip install nose-testconfig
 
+
+class HP3ParClientBaseTestCase(unittest.TestCase):     
+  
+    #if have debug as second argument for the test
+    #for example, pythong test_HP3ParClient_CPG.py debug
+    #need to manaully start test_HP3ParMockServer_flask.py before run 
+    #test
+    user = config['3PAR']['user']
+    password = config['3PAR']['pass']
+    debug = config['3PAR']['debug']
+    unitTest = config['3PAR']['unit']
+    flask_url = config['3PAR']['flask_url']
+    url_3par = config['3PAR']['3par_url']
+        
     def setUp(self):
-         #if have debug as second argument for the test
-         #for example, pythong test_HP3ParClient_CPG.py debug
-         #need to manaully start test_HP3ParMockServer_flask.py before run 
-         #test
-         if len(sys.argv) >= 2:
-             self.debug = 'debug' #sys.argv[1]
-
-         cwd = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-
-         self.cl = client.HP3ParClient("http://localhost:5001/api/v1")
-         self.cl = client.HP3ParClient("http://10.10.22.241:8008/api/v1")
-         if self.debug == 'debug':
-            self.cl.debug_rest(True)
-         else: 
+            
+        cwd = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+            
+        if self.unitTest :
+            self.cl = client.HP3ParClient(self.flask_url)
             script = 'test_HP3ParMockServer_flask.py'
             path = "%s/%s" % (cwd, script)
             self.mockServer = subprocess.Popen([sys.executable, 
@@ -50,12 +57,17 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
                                                stderr=subprocess.PIPE, 
                                                stdin=subprocess.PIPE)
             time.sleep(1) 
+        else :
+            self.cl = client.HP3ParClient(self.url_3par)
+            
+        if self.debug :
+            self.cl.debug_rest(True)
          
-         self.cl.login("3paradm", "3pardata")
+        self.cl.login(self.user, self.password)
 
     def tearDown(self):
         self.cl.logout()
-        if self.debug != 'debug':
+        if self.unitTest :
             #TODO: it seems to kill all the process except the last one...
             #don't know why 
             self.mockServer.kill()

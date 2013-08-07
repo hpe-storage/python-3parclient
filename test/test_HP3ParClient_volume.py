@@ -22,37 +22,74 @@ from hp3parclient import client, exceptions
 import unittest
 import test_HP3ParClient_base
 
+CPG_NAME1 = 'CPG1_UNIT_TEST'
+CPG_NAME2 = 'CPG2_UNIT_TEST'
+VOLUME_NAME1 = 'VOLUME1_UNIT_TEST'
+VOLUME_NAME2 = 'VOLUME2_UNIT_TEST'
+
 class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
+    
+    def setUp(self):
+        super(HP3ParClientVolumeTestCase, self).setUp()
+        
+        try :
+            self.cl.createCPG(CPG_NAME1)
+        except :
+            pass
+        try :
+            self.cl.createCPG(CPG_NAME2)
+        except :
+            pass
+        
+        
+    def tearDown(self):
+
+        try :
+            self.cl.deleteVolume(VOLUME_NAME1)
+        except :
+            pass
+        try :
+            self.cl.deleteVolume(VOLUME_NAME2)
+        except :
+            pass   
+        try :
+            self.cl.deleteCPG(CPG_NAME1)
+        except :
+            pass
+        try :
+            self.cl.deleteCPG(CPG_NAME2)
+        except :
+            pass              
+        
+        # very last, tear down base class
+        super(HP3ParClientVolumeTestCase, self).tearDown()    
 
     def test_1_create_volume(self):
         self.printHeader('create_volume')
 
         try:
             #add one
-            name = 'UnitTestVolume'
-            cpgName = 'UnitTestCPG'
             optional = {'id': 1, 'comment': 'test volume', 'tpvv': True}
-            self.cl.createVolume(name, cpgName, 1024, optional)
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
             
             #check
-            vol1 = self.cl.getVolume(name)
+            vol1 = self.cl.getVolume(VOLUME_NAME1)
             self.assertIsNotNone(vol1)
             volName = vol1['name']
             volId = vol1['id']
-            self.assertEqual(name, volName)
+            self.assertEqual(VOLUME_NAME1, volName)
             self.assertEqual(1, volId)
 
             #add another
-	    name = 'UnitTestVolume2'
             optional = {'id': 2, 'comment': 'test volume2', 'tpvv': True}
-            self.cl.createVolume(name, cpgName, 1024, optional)
+            self.cl.createVolume(VOLUME_NAME2, CPG_NAME2, 1024, optional)
 
             #check
-            vol2 = self.cl.getVolume(name)
+            vol2 = self.cl.getVolume(VOLUME_NAME2)
             self.assertIsNotNone(vol2)
             volName = vol2['name']
             volId = vol2['id']
-            self.assertEqual(name, volName)
+            self.assertEqual(VOLUME_NAME2, volName)
             self.assertEqual(2, volId)
         except Exception as ex:
             print ex
