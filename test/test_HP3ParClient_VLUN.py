@@ -22,224 +22,215 @@ from hp3parclient import client, exceptions
 import unittest
 import test_HP3ParClient_base
 
+CPG_NAME1 = 'CPG1_VLUN_UNIT_TEST'
+CPG_NAME2 = 'CPG2_VLUN_UNIT_TEST'
+VOLUME_NAME1 = 'VOLUME1_VLUN_UNIT_TEST'
+VOLUME_NAME2 = 'VOLUME2_VLUN_UNIT_TEST'
+DOMAIN = 'UNIT_TEST_DOMAIN'
+HOST_NAME1 = 'HOST1_VLUN_UNIT_TEST'
+HOST_NAME2 = 'HOST2_VLUN_UNIT_TEST'
+LUN_1 = 1
+LUN_2 = 2
+PORT_1 = {'node':1, 'cardPort':1, 'slot':2}
+
+
 class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
+    
+    def setUp(self):
+        super(HP3ParClientVLUNTestCase, self).setUp()
+        
+        try :
+            optional = {'domain': DOMAIN}
+            self.cl.createCPG(CPG_NAME1, optional)
+        except :
+            pass
+        try :
+            optional = {'domain': DOMAIN}
+            self.cl.createCPG(CPG_NAME2, optional)
+        except :
+            pass
+        try :
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024)
+        except :
+            pass
+        try :
+            self.cl.createVolume(VOLUME_NAME2, CPG_NAME2, 1024)
+        except :
+            pass  
+        try :
+            optional = {'domain': DOMAIN}
+            self.cl.createHost(HOST_NAME1, None, None, optional)
+        except :
+            pass
+        try :
+            optional = {'domain': DOMAIN}
+            self.cl.createHost(HOST_NAME2, None, None, optional)
+        except :
+            pass                
+        
+    def tearDown(self):
+        
+        try :
+            self.cl.deleteVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
+        except Exception as e :
+            pass
+        try :
+            self.cl.deleteVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2)
+        except :
+            pass 
+        try :
+            self.cl.deleteVolume(VOLUME_NAME1)
+        except :
+            pass
+        try :
+            self.cl.deleteVolume(VOLUME_NAME2)
+        except :
+            pass   
+        try :
+            self.cl.deleteCPG(CPG_NAME1)
+        except :
+            pass
+        try :
+            self.cl.deleteCPG(CPG_NAME2)
+        except :
+            pass              
+        try :
+            self.cl.deleteHost(HOST_NAME1)
+        except :
+            pass
+        try :
+            self.cl.deleteHost(HOST_NAME2)
+        except :
+            pass   
+                
+        # very last, tear down base class
+        super(HP3ParClientVLUNTestCase, self).tearDown()    
 
     def test_1_create_VLUN(self):
         self.printHeader('create_VLUN')
 
-        try:
-            #add one
-            lun = 1 
-            volumeName = 'UnitTestVolume'
-            hostname = 'UnitTestHost'
-            noVcn =  False
-            overrideLowerPriority = True
-            portPos = {'node':1, 'cardPort':1, 'slot':2}
-            self.cl.createVLUN(volumeName, lun, hostname,portPos,noVcn,overrideLowerPriority)
+        #add one
+        noVcn =  False
+        overrideLowerPriority = True
+        self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1,PORT_1,noVcn,overrideLowerPriority)
 
-            #check
-            vlun1 = self.cl.getVLUN(volumeName)
-            self.assertIsNotNone(vlun1)
-            volName = vlun1['volumeName']
-            self.assertEqual(volumeName, volName)
+        #check
+        vlun1 = self.cl.getVLUN(VOLUME_NAME1)
+        self.assertIsNotNone(vlun1)
+        volName = vlun1['volumeName']
+        self.assertEqual(VOLUME_NAME1, volName)
 
-            #add another
-	    volumeName = 'UnitTestVolume2'
-            lun = 2
-            hostname = 'UnitTestHost2'
-            self.cl.createVLUN(volumeName, lun, hostname)
+        #add another
+        self.cl.createVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2)
 
-            #check
-            vlun2 = self.cl.getVLUN(volumeName)
-            self.assertIsNotNone(vlun2)
-            volName = vlun2['volumeName']
-            self.assertEqual(volumeName, volName)
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
+        #check
+        vlun2 = self.cl.getVLUN(VOLUME_NAME2)
+        self.assertIsNotNone(vlun2)
+        volName = vlun2['volumeName']
+        self.assertEqual(VOLUME_NAME2, volName)
 
         self.printFooter('create_VLUN')
     
     def test_1_create_VLUN_tooLarge(self):
         self.printHeader('create_VLUN_tooLarge')
-
-        #add one
-        try:
-            volumeName = 'UnitTestLunTooLarge'
-            lun = 100000
-            hostname = 'UnitTestHost'
-            noVcn =  False
-            overrideLowerPriority = True
-            portPos = {'node':1, 'cardPort':1, 'slot':2}
-            self.cl.createVLUN(volumeName, lun, hostname,
-                               portPos, noVcn, overrideLowerPriority)
-        except exceptions.HTTPBadRequest:
-            print "Expected exception"
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
+        
+        lun = 100000
+        self.assertRaises(exceptions.HTTPBadRequest, self.cl.createVLUN, VOLUME_NAME1, lun, HOST_NAME1, PORT_1)
 
         self.printFooter('create_VLUN_tooLarge')
 
   
     def test_1_create_VLUN_volulmeNonExist(self):
         self.printHeader('create_VLUN_volumeNonExist')
-
-        #add one and check
-        try:
-            volumeName = 'UnitTestNonExistVolume'
-            lun = 100
-            hostname = 'UnitTestHost'
-            noVcn =  False
-            overrideLowerPriority = True
-            portPos = {'node':1, 'cardPort':1, 'slot':2}
-            self.cl.createVLUN(volumeName, lun, hostname,
-                               portPos, noVcn, overrideLowerPriority)
-        except exceptions.HTTPNotFound:
-            print "Expected exception"
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
+        
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.createVLUN, 'UnitTestNonExistVolume', LUN_1, HOST_NAME1, PORT_1)
 
         self.printFooter('create_VLUN_volumeNonExist')
 
     def test_1_create_VLUN_badParams(self):
         self.printHeader('create_VLUN_badParams')
-
-        #add one and check
-        try:
-            volumeName = 'UnitTestVolume'
-            lun = 100
-            hostname = 'UnitTestHost'
-            noVcn =  False
-            overrideLowerPriority = True
-            portPos = {'badNode':1, 'cardPort':1, 'slot':2}
-            self.cl.createVLUN(volumeName, lun, hostname,
-                               portPos, noVcn, overrideLowerPriority)
-        except exceptions.HTTPBadRequest:
-            print "Expected exception"
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
+        
+        portPos = {'badNode':1, 'cardPort':1, 'slot':2}
+        self.assertRaises(exceptions.HTTPBadRequest, self.cl.createVLUN, VOLUME_NAME1, LUN_1, HOST_NAME1, portPos)
 
         self.printFooter('create_VLUN_badParams')
   
     def test_2_get_VLUN_bad(self):
         self.printHeader('get_VLUN_bad')
         
-        try:
-            name = 'badName'
-            vlun = self.cl.getVLUN(name)
-        except exceptions.HTTPNotFound:
-            print "Expected exception"
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.getVLUN, 'badName')
 
         self.printFooter('get_VLUN_bad')
 
     def test_2_get_VLUNs(self):
         self.printHeader('get_VLUNs')
 
-        try:
-            vluns = self.cl.getVLUNs()
+        # add 2
+        noVcn =  False
+        overrideLowerPriority = True
+        self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1,
+                           PORT_1,noVcn,overrideLowerPriority)
+        self.cl.createVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2)            
+            
+        # get all
+        vluns = self.cl.getVLUNs()
 
-            #check
-            volumeName = 'UnitTestVolume'
-            v1 = self.cl.getVLUN(volumeName)
-	    volumeName = 'UnitTestVolume2'
-            v2 = self.cl.getVLUN(volumeName)
-            self.assertIn(v1, vluns['members'])
-            self.assertIn(v2, vluns['members'])
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
+        v1 = self.cl.getVLUN(VOLUME_NAME1)
+        v2 = self.cl.getVLUN(VOLUME_NAME2)
+            
+        self.assertTrue(self.findInDict(vluns['members'], 'lun', v1['lun']))
+        self.assertTrue(self.findInDict(vluns['members'], 'volumeName', v1['volumeName']))
+        self.assertTrue(self.findInDict(vluns['members'], 'lun', v2['lun']))
+        self.assertTrue(self.findInDict(vluns['members'], 'volumeName', v2['volumeName']))
 
         self.printFooter('get_VLUNs')
 
     def test_3_delete_VLUN_volumeNonExist(self):
         self.printHeader('delete_VLUN_volumeNonExist')
-
-        try:
-            name = 'NonExistVolume'
-            lun = 1
-            host = 'UnitTestHost'
-            self.cl.deleteVLUN(name,lun,host)
-        except exceptions.HTTPNotFound:
-            print "Expected exception"
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
+        
+        self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
+        self.cl.getVLUN(VOLUME_NAME1)
+        
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.deleteVLUN, 
+                          'UnitTestVolume', LUN_1, HOST_NAME1, PORT_1)
 
         self.printFooter('delete_VLUN_volumeNonExist')
 
     def test_3_delete_VLUN_hostNonExist(self):
         self.printHeader('delete_VLUN_hostNonExist')
-
-        try:
-            name = 'UnitTestVolume'
-            lun = 1
-            host = 'NonExistHost'
-            self.cl.deleteVLUN(name,lun,host)
-        except exceptions.HTTPNotFound:
-            print "Expected exception"
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
+        
+        self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
+        self.cl.getVLUN(VOLUME_NAME1)
+        
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.deleteVLUN, 
+                          VOLUME_NAME1, LUN_1, 'BoggusHost', PORT_1) 
 
         self.printFooter('delete_VLUN_hostNonExist')
   
     def test_3_delete_VLUN_portNonExist(self):
-      self.printHeader('delete_VLUN_portNonExist')
+        self.printHeader('delete_VLUN_portNonExist')
+        
+        self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1,PORT_1)
+        
+        port = {'node':8, 'cardPort':8,'slot':8}
+        self.assertRaises(exceptions.HTTPBadRequest, self.cl.deleteVLUN, 
+                          VOLUME_NAME1, LUN_1, HOST_NAME1, port)
 
-      try:
-	  name = 'UnitTestVolume'
-	  lun = 1
-	  host = 'UnitTestHost'
-          port = {'node':8, 'cardPort':8,'slot':8}
-	  self.cl.deleteVLUN(name,lun,host,port)
-      except exceptions.HTTPNotFound:
-	  print "Expected exception"
-      except Exception as ex:
-	  print ex
-	  self.fail("Failed with unexpected exception")
-
-      self.printFooter('delete_VLUN_portNonExist')
+        self.printFooter('delete_VLUN_portNonExist')
   
     def test_3_delete_VLUNs(self):
         self.printHeader('delete_VLUNs')
-
-        try:
-            vluns = self.cl.getVLUNs()
-            if vluns and vluns['total'] > 0:
-                for vl in vluns['members']:
-                    if vl['volumeName'].startswith('UnitTestVolume'):
-                        self.cl.deleteVLUN(vl['volumeName'],vl['lun'], vl['hostname'])
-            #check
-            try:
-                name = 'UnitTestVolume'
-                vl = self.cl.getVLUN(name)
-            except exceptions.HTTPNotFound:
-                print "Expected exception"
-            except Exception as ex:
-                print ex
-                self.fail("Failed with unexpected exception")
-
-            try:
-                name = 'UnitTestVolume2'
-                vl = self.cl.getVLUN(name)
-            except exceptions.HTTPNotFound:
-                print "Expected exception"
-            except Exception as ex:
-                print ex
-                self.fail ("Failed with unexpected exception")
-
-        except Exception as ex:
-            print ex
-            self.fail ("Failed with unexpected exception")
+        
+        self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
+        self.cl.getVLUN(VOLUME_NAME1)
+        
+        self.cl.deleteVLUN(VOLUME_NAME1 ,LUN_1, HOST_NAME1, PORT_1)
+        
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.deleteVLUN, 
+                          VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
 
         self.printFooter('delete_VLUNs')
    
 #testing
-suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVLUNTestCase)
-unittest.TextTestRunner(verbosity=2).run(suite)
+#suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVLUNTestCase)
+#unittest.TextTestRunner(verbosity=2).run(suite)

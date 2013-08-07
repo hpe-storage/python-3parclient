@@ -26,6 +26,7 @@ CPG_NAME1 = 'CPG1_UNIT_TEST'
 CPG_NAME2 = 'CPG2_UNIT_TEST'
 VOLUME_NAME1 = 'VOLUME1_UNIT_TEST'
 VOLUME_NAME2 = 'VOLUME2_UNIT_TEST'
+SNAP_NAME1 = 'SNAP_UNIT_TEST'
 
 class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
     
@@ -227,19 +228,18 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         self.printHeader('create_snapshot')
 
         try:
-            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024)
+            optional = {'snapCPG': CPG_NAME1}
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
             
             
             #add one
-            name = 'UnitTestSnapshot'
-#            optional = {'id': 1, 'comment': 'test snapshot', 
-#                        'readOnly': True, 'expirationHours': 300}
-            self.cl.createSnapshot(name, VOLUME_NAME1)
+            self.cl.createSnapshot(SNAP_NAME1, VOLUME_NAME1)
             #no API to get and check 
         except Exception as ex:
             print ex
             self.fail("Failed with unexpected exception")
 
+        self.cl.deleteVolume(SNAP_NAME1)
         self.printFooter('create_snapshot')
    
     def test_4_create_snapshot_badParams(self):
