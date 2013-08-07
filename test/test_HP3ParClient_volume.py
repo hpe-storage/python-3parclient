@@ -103,10 +103,8 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
 
         #add one and check
         try:
-            name = 'UnitTestVolume3'
-            cpgName = 'UnitTestCPG'
             optional = {'id': 3, 'comment': 'test volume', 'tpvv': True}
-            self.cl.createVolume(name, cpgName, 10241024, optional)
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 10241024, optional)
         except exceptions.HTTPBadRequest:
             print "Expected exception"
         except Exception as ex:
@@ -120,10 +118,9 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
 
         #add one and check
         try:
-            name = 'UnitTestExistingVolume'
-            cpgName = 'UnitTestCPG'
             optional = {'id': 4, 'comment': 'test volume', 'tpvv': True}
-            self.cl.createVolume(name, cpgName, 1024, optional)
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
         except exceptions.HTTPConflict:
             print "Expected exception"
         except Exception as ex:
@@ -165,19 +162,17 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
     def test_2_get_volumes(self):
         self.printHeader('get_volumes')
 
-        try:
-            vols = self.cl.getVolumes()
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024)
+        self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024)
+            
+            
+        vol1 = self.cl.getVolume(VOLUME_NAME1)            
+        vol2 = self.cl.getVolume(VOLUME_NAME2)   
+            
+        vols = self.cl.getVolumes() 
 
-            #check
-            name = 'UnitTestVolume'
-            vol1 = self.cl.getVolume(name)
-	    name = 'UnitTestVolume2'
-            vol2 = self.cl.getVolume(name)
-            self.assertIn(vol1, vols['members'])
-            self.assertIn(vol2, vols['members'])
-        except Exception as ex:
-            print ex
-            self.fail("Failed with unexpected exception")
+        self.assertTrue(self.findInDict(vols['members'], 'name', vol1['name']))
+        self.assertTrue(self.findInDict(vols['members'], 'name', vol2['name']))          
 
         self.printFooter('get_volumes')
     
@@ -232,12 +227,14 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         self.printHeader('create_snapshot')
 
         try:
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024)
+            
+            
             #add one
             name = 'UnitTestSnapshot'
-            volName = 'UnitTestVolume'
-            optional = {'id': 1, 'comment': 'test snapshot', 
-                        'readOnly': True, 'expirationHours': 300}
-            self.cl.createSnapshot(name, volName, optional)
+#            optional = {'id': 1, 'comment': 'test snapshot', 
+#                        'readOnly': True, 'expirationHours': 300}
+            self.cl.createSnapshot(name, VOLUME_NAME1)
             #no API to get and check 
         except Exception as ex:
             print ex
@@ -281,5 +278,5 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
 
         self.printFooter('create_snapshot_nonExistVolume')
 #testing
-suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVolumeTestCase)
-unittest.TextTestRunner(verbosity=2).run(suite)
+#suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVolumeTestCase)
+#unittest.TextTestRunner(verbosity=2).run(suite)

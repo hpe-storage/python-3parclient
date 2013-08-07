@@ -28,6 +28,9 @@ from testconfig import config
 
 # pip install nose-testconfig
 
+# e.g.
+# nosetests test_HP3ParClient_host.py -v --tc-file config.ini
+
 
 class HP3ParClientBaseTestCase(unittest.TestCase):     
   
@@ -37,16 +40,17 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
     #test
     user = config['3PAR']['user']
     password = config['3PAR']['pass']
-    debug = config['3PAR']['debug']
-    unitTest = config['3PAR']['unit']
     flask_url = config['3PAR']['flask_url']
     url_3par = config['3PAR']['3par_url']
+    debug = config['3PAR']['debug'].lower() == 'true'
+    unitTest = config['3PAR']['unit'].lower() == 'true'
         
     def setUp(self):
             
         cwd = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
             
         if self.unitTest :
+            self.printHeader('Using flask ' + self.flask_url)
             self.cl = client.HP3ParClient(self.flask_url)
             script = 'test_HP3ParMockServer_flask.py'
             path = "%s/%s" % (cwd, script)
@@ -57,6 +61,7 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
                                                stdin=subprocess.PIPE)
             time.sleep(1) 
         else :
+            self.printHeader('Using 3PAR ' + self.url_3par)
             self.cl = client.HP3ParClient(self.url_3par)
             
         if self.debug :

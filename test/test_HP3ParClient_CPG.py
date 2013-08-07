@@ -162,5 +162,5 @@ class HP3ParClientCPGTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
    
 #testing
-suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientCPGTestCase)
-unittest.TextTestRunner(verbosity=2).run(suite)
+#suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientCPGTestCase)
+#unittest.TextTestRunner(verbosity=2).run(suite)
