@@ -490,8 +490,6 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         except exceptions.HTTPConflict:
             print 'Expected exception'
             self.printFooter('modify_host_existent_path')
-            self.cl.deleteHost(HOST_NAME1)
-            self.cl.deleteHost(HOST_NAME2)
             return
 
         except Exception as ex:
@@ -502,10 +500,6 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
     def test_4_modify_host_nonExistent_path_iSCSI(self):
         self.printHeader('modify_host_nonExistent_path_iSCSI')
-        try:
-            self.cl.deleteHost(HOST_NAME1)
-        except:
-            pass
 
         optional = {'domain': DOMAIN}
         iscsi = ['iqn.1993-08.org.debian:01:00000000000']
@@ -520,7 +514,6 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         except exceptions.HTTPNotFound:
             print 'Expected exception'
             self.printFooter('modify_host_nonExistent_path_iSCSI')
-            self.cl.deleteHost(HOST_NAME1)
             return
 
         except Exception as ex:
@@ -531,11 +524,6 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
     def test_4_modify_host_nonExistent_path_fc(self):
         self.printHeader('modify_host_nonExistent_path_fc')
-        try:
-            self.cl.deleteHost(HOST_NAME1)
-        except:
-            pass
-
         optional = {'domain': DOMAIN}
         fc = ['00:00:00:00:00:00:00:00']
         self.cl.createHost(HOST_NAME1, None, fc, optional)
@@ -549,7 +537,6 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         except exceptions.HTTPNotFound:
             print 'Expected exception'
             self.printFooter('modify_host_nonExistent_path_fc')
-            self.cl.deleteHost(HOST_NAME1)
             return
 
         except Exception as ex:
