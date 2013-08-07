@@ -19,7 +19,6 @@ import sys, os
 sys.path.insert(0,os.path.realpath(os.path.abspath('../')))
 
 from hp3parclient import client, exceptions
-import argparse
 import unittest
 import subprocess
 import time
