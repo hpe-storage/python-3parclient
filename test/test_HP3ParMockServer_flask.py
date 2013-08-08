@@ -9,7 +9,12 @@ from werkzeug.exceptions import HTTPException
 parser = argparse.ArgumentParser()
 parser.add_argument("-debug", help="Turn on http debugging", 
                     default=False, action="store_true")
+parser.add_argument("-user", help="User name")
+parser.add_argument("-password", help="User password")
+parser.add_argument("-port", help="Port to listen on", type=int, default=5000)
 args = parser.parse_args()
+user_name = args.user
+user_pass = args.password
 debugRequests = False
 if "debug" in args and args.debug == True:
     debugRequests = True
@@ -102,7 +107,7 @@ def credentials():
     elif request.method == 'POST':
 	data = json.loads(request.data)
 
-        if data['user'] == '3paradm' and data['password'] == '3pardata':
+        if data['user'] == user_name and data['password'] == user_pass:
             #do something good here
             try:
                 resp = make_response(json.dumps({'key':session_key}), 201)
@@ -394,6 +399,7 @@ def get_host(host_name):
 
     for host in hosts['members']:
         if host['name'] == host_name:
+            
             resp = make_response(json.dumps(host), 200)
             return resp
 
@@ -807,6 +813,6 @@ if __name__ == "__main__":
                                'vendor': 'HP'}],
                'id': 12,
                'name': 'UnitTestHost2'}],
-            'total': 2} 
+            'total': 2}     
     
-    app.run(port=5001)
+    app.run(port=args.port, debug=debugRequests)

@@ -544,3 +544,101 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.fail('Failed with unexpected exception.')
 
         self.fail('No exception occurred.')
+
+    def test_4_modify_host_add_fc(self):
+        self.printHeader('modify_host_fc')
+
+        optional = {'domain': DOMAIN}
+        fc = ['00:00:00:00:00:00:00:00']
+        self.cl.createHost(HOST_NAME1, None, fc, optional)
+
+        fc2 = ['11:11:11:11:11:11:11:11']
+        mod_request = {'pathOperation': 1,
+                       'FCWWNs': fc2}
+        try:
+            self.cl.modifyHost(HOST_NAME1, mod_request)
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception.')
+
+        newHost = self.cl.getHost(HOST_NAME1)
+        fc_paths = newHost['FCPaths']
+        for path in fc_paths:
+            if path['wwn'] == '1111111111111111':
+                self.printFooter('modify_host_add_fc')
+                return
+        self.fail('Failed to add FCWWN')
+
+    def test_4_modify_host_remove_fc(self):
+        self.printHeader('modify_host_remove_fc')
+
+        optional = {'domain': DOMAIN}
+        fc = ['00:00:00:00:00:00:00:00']
+        self.cl.createHost(HOST_NAME1, None, fc, optional)
+
+        mod_request = {'pathOperation': 2,
+                       'FCWWNs': fc}
+
+        try:
+            self.cl.modifyHost(HOST_NAME1, mod_request)
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception.')
+
+        newHost = self.cl.getHost(HOST_NAME1)
+        fc_paths = newHost['FCPaths']
+        for path in fc_paths:
+            if path['wwn'] == '0000000000000000':
+                self.fail('Failed to remove FCWWN')
+                return
+
+        self.printFooter('modify_host_remove_fc')
+
+    def test_4_modify_host_add_iscsi(self):
+        self.printHeader('modify_host_add_iscsi')
+
+        optional = {'domain': DOMAIN}
+        iscsi = ['iqn.1993-08.org.debian:01:00000000000']
+        self.cl.createHost(HOST_NAME1, iscsi, None, optional)
+
+        iscsi2 = ['iqn.bogus.org.debian:01:0000000000']
+        mod_request = {'pathOperation': 1,
+                       'iSCSINames': iscsi2}
+        try:
+            self.cl.modifyHost(HOST_NAME1, mod_request)
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception')
+
+        newHost = self.cl.getHost(HOST_NAME1)
+        iscsi_paths = newHost['iSCSIPaths']
+        for path in iscsi_paths:
+            if path['name'] == 'iqn.bogus.org.debian:01:0000000000':
+                self.printFooter('modify_host_add_iscsi')
+                return
+
+        self.fail('Failed to add iSCSI')
+
+    def test_4_modify_host_remove_iscsi(self):
+        self.printHeader('modify_host_remove_iscsi')
+
+        optional = {'domain': DOMAIN}
+        iscsi = ['iqn.1993-08.org.debian:01:00000000000']
+        self.cl.createHost(HOST_NAME1, iscsi, None, optional)
+
+        mod_request = {'pathOperation': 2,
+                       'iSCSINames': iscsi}
+        try:
+            self.cl.modifyHost(HOST_NAME1, mod_request)
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception')
+
+        newHost = self.cl.getHost(HOST_NAME1)
+        iscsi_paths = newHost['iSCSIPaths']
+        for path in iscsi_paths:
+            if path['name'] == 'iqn.bogus.org.debian:01:0000000000':
+                self.fail('Failed to remove iSCSI')
+                return
+
+        self.printFooter('modify_host_remove_iscsi')

@@ -37,8 +37,8 @@ PORT_1 = {'node':1, 'cardPort':1, 'slot':2}
 class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
     
     def setUp(self):
-        super(HP3ParClientVLUNTestCase, self).setUp()
-        
+        super(HP3ParClientVLUNTestCase, self).setUp()        
+       
         try :
             optional = {'domain': DOMAIN}
             self.cl.createCPG(CPG_NAME1, optional)

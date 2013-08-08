@@ -25,6 +25,7 @@ import time
 import pprint
 import inspect
 from testconfig import config
+from urlparse import urlparse
 
 # pip install nose-testconfig
 
@@ -52,13 +53,27 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
         if self.unitTest :
             self.printHeader('Using flask ' + self.flask_url)
             self.cl = client.HP3ParClient(self.flask_url)
+            parsed_url = urlparse(self.flask_url)
+            userArg = '-user=%s' % self.user
+            passwordArg = '-password=%s' % self.password
+            portArg = '-port=%s' % parsed_url.port
+            args = '-user %s -password %s -port %s' % (self.user, 
+                                                       self.password, 
+                                                       parsed_url.port)
             script = 'test_HP3ParMockServer_flask.py'
             path = "%s/%s" % (cwd, script)
-            self.mockServer = subprocess.Popen([sys.executable, 
-                                               path], 
-                                               stdout=subprocess.PIPE, 
-                                               stderr=subprocess.PIPE, 
-                                               stdin=subprocess.PIPE)
+            try :
+                self.mockServer = subprocess.Popen([sys.executable, 
+                                                    path, 
+                                                    userArg,
+                                                    passwordArg,
+                                                    portArg], 
+                                               #stdout=subprocess.PIPE, 
+                                               #stderr=subprocess.PIPE, 
+                                               #stdin=subprocess.PIPE
+                                               )
+            except Exception as e:
+                pass
             time.sleep(1) 
         else :
             self.printHeader('Using 3PAR ' + self.url_3par)
