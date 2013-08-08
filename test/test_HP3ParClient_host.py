@@ -596,7 +596,10 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
     def test_4_modify_host_add_iscsi(self):
         self.printHeader('modify_host_add_iscsi')
-
+        try:
+            self.cl.deleteHost(HOST_NAME1)
+        except:
+            pass
         optional = {'domain': DOMAIN}
         iscsi = ['iqn.1993-08.org.debian:01:00000000000']
         self.cl.createHost(HOST_NAME1, iscsi, None, optional)
@@ -613,7 +616,8 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         newHost = self.cl.getHost(HOST_NAME1)
         iscsi_paths = newHost['iSCSIPaths']
         for path in iscsi_paths:
-            if path['name'] == 'iqn.bogus.org.debian:01:0000000000':
+            print path
+            if path['name'] == "iqn.bogus.org.debian:01:0000000000":
                 self.printFooter('modify_host_add_iscsi')
                 return
 

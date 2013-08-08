@@ -282,19 +282,11 @@ def modify_host(host_name):
         elif 'pathOperation' not in data.keys():
             throw_error(400, 'INV_INPUT_ONE_REQUIRED',
                         'pathOperation is missing and WWN is specified.')
-#        for host in hosts['members']:
-#            if 'FCWWNs' in host.keys():
-#                if host['FCWWNs'] == data['FCWWNs']:
-#                    throw_error(409, 'EXISTENT_PATH', 'WWN is already claimed by other host.')
 
     if 'iSCSINames' in data.keys():
         if 'pathOperation' not in data.keys():
             throw_error(400, 'INV_INPUT_ONE_REQUIRED',
                         'pathOperation is missing and iSCSI Name is specified.')
-        for host in hosts['members']:
-            if 'iSCSINames' in host.keys():
-                if host['iSCSINames'] == data['iSCSINames']:
-                    throw_error(409, 'EXISTENT_PATH', 'iSCSI name is already claimed by other host.')
 
     if 'newName' in data.keys():
         charset = {'!', '@', '#', '$', '%', '&', '^'}
@@ -315,15 +307,24 @@ def modify_host(host_name):
             for host in hosts['members']:
                 if host['name'] == host_name:
                     if data['pathOperation'] == 1:
-                        host['iSCSINames'].append(data['iSCSINames'])
+                        for host in hosts['members']:
+                            if 'iSCSINames' in host.keys():
+                                for path in data['iSCSINames']:
+                                    for h_paths in host['iSCSINames']:
+                                        if path == h_paths:
+                                            throw_error(409, 'EXISTENT_PATH',
+                                                        'iSCSI name is already claimed by other host.')
+                        for path in data['iSCSINames']:
+                            host['iSCSINames'].append(path)
                         resp = make_response(json.dumps(host), 200)
                         return resp
                     elif data['pathOperation'] == 2:
-                        if data['iSCSINames'] in host['iSCSINames']:
-                            host['iSCSINames'].remove(data['iSCSINames'])
-                            resp = make_response(json.dumps(host), 200)
-                            return resp
-                        else:
+                        for path in data['iSCSINames']:
+                            for h_paths in host['iSCSINames']:
+                                if path == h_paths:
+                                    host['iSCSINames'].remove(h_paths)
+                                    resp = make_response(json.dumps(host), 200)
+                                    return resp
                             throw_error(404, 'NON_EXISTENT_PATH',
                                         'Removing a non-existent path.')
                     else:
@@ -335,15 +336,24 @@ def modify_host(host_name):
             for host in hosts['members']:
                 if host['name'] == host_name:
                     if data['pathOperation'] == 1:
-                        host['FCWWNs'].append(data['FCWWNs'])
+                        for host in hosts['members']:
+                            if 'FCWWNs' in host.keys():
+                                for path in data['FCWWNs']:
+                                    for h_paths in host['FCWWNs']:
+                                        if path == h_paths:
+                                            throw_error(409, 'EXISTENT_PATH',
+                                                        'WWN is already claimed by other host.')
+                        for path in data['FCWWNs']:
+                            host['FCWWNs'].append(path)
                         resp = make_response(json.dumps(host), 200)
                         return resp
                     elif data['pathOperation'] == 2:
-                        if data['FCWWNs'] in host['FCWWNs']:
-                            host['FCWWNs'].remove(data['FCWWNs'])
-                            resp = make_response(json.dumps(host), 200)
-                            return resp
-                        else:
+                        for path in data['FCWWNs']:
+                            for h_paths in host['FCWWNs']:
+                                if path == h_paths:
+                                    host['FCWWNs'].remove(h_paths)
+                                    resp = make_response(json.dumps(host), 200)
+                                    return resp
                             throw_error(404, 'NON_EXISTENT_PATH',
                                         'Removing a non-existent path.')
                     else:
@@ -400,6 +410,18 @@ def get_host(host_name):
     for host in hosts['members']:
         if host['name'] == host_name:
             
+            if 'iSCSINames' in host.keys():
+                iscsi_paths = []
+                for path in host['iSCSINames']:
+                    iscsi_paths.append({'name': path})
+                host['iSCSIPaths'] = iscsi_paths
+
+            elif 'FCWWNs' in host.keys():
+                fc_paths = []
+                for path in host['FCWWNs']:
+                    fc_paths.append({'wwn': path.replace(':', '')})
+                host['FCPaths'] = fc_paths
+
             resp = make_response(json.dumps(host), 200)
             return resp
 
