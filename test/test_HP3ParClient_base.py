@@ -68,9 +68,9 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
                                                     userArg,
                                                     passwordArg,
                                                     portArg], 
-                                               #stdout=subprocess.PIPE, 
-                                               #stderr=subprocess.PIPE, 
-                                               #stdin=subprocess.PIPE
+                                               stdout=subprocess.PIPE, 
+                                               stderr=subprocess.PIPE, 
+                                               stdin=subprocess.PIPE
                                                )
             except Exception as e:
                 pass
