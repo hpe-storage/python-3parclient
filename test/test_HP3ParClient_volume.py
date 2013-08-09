@@ -204,36 +204,38 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.fail('Failed with unexpected exception')
 
         self.fail('No exception occurred.')
-#     def test_2_get_volume_bad(self):
-#         self.printHeader('get_volume_bad')
-# 
-#         try:
-#             cpg = self.cl.getVolume('BadName')
-#         except exceptions.HTTPNotFound:
-#             print "Expected exception"
-#         except Exception as ex:
-#             print ex
-#             self.fail("Failed with unexpected exception")
-# 
-#         self.printFooter('get_volume_bad')
-#    
-#     def test_2_get_volumes(self):
-#         self.printHeader('get_volumes')
-# 
-#         self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024)
-#         self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024)
-#             
-#             
-#         vol1 = self.cl.getVolume(VOLUME_NAME1)            
-#         vol2 = self.cl.getVolume(VOLUME_NAME2)   
-#             
-#         vols = self.cl.getVolumes() 
-# 
-#         self.assertTrue(self.findInDict(vols['members'], 'name', vol1['name']))
-#         self.assertTrue(self.findInDict(vols['members'], 'name', vol2['name']))          
-# 
-#         self.printFooter('get_volumes')
-#     
+
+    def test_2_get_volume_bad(self):
+        self.printHeader('get_volume_bad')
+ 
+        try:
+            self.cl.getVolume('NoSuchVolume')
+        except exceptions.HTTPNotFound:
+            print "Expected exception"
+            self.printFooter('get_volume_bad')
+            return
+        except Exception as ex:
+            print ex
+            self.fail("Failed with unexpected exception")
+
+        self.fail("No exception occurred")
+
+    def test_2_get_volumes(self):
+        self.printHeader('get_volumes')
+ 
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024)
+        self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024)
+
+        vol1 = self.cl.getVolume(VOLUME_NAME1)            
+        vol2 = self.cl.getVolume(VOLUME_NAME2)   
+
+        vols = self.cl.getVolumes() 
+
+        self.assertTrue(self.findInDict(vols['members'], 'name', vol1['name']))
+        self.assertTrue(self.findInDict(vols['members'], 'name', vol2['name']))          
+ 
+        self.printFooter('get_volumes')
+
 #     def test_3_delete_volume_nonExist(self):
 #         self.printHeader('delete_volume_nonExist')
 # 

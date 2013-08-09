@@ -614,6 +614,7 @@ def create_volumes():
         elif data['sizeMiB'] > 16777216:
             throw_error(400, 'TOO_LARGE',
                         'Volume size is above architectural limit : 16TiB')
+
     if 'id' in data.keys():
         for vol in volumes['members']:
             if vol['id'] == data['id']:
@@ -654,7 +655,13 @@ def get_volumes():
 @app.route('/api/v1/volumes/<volume_name>', methods=['GET'])
 def get_volume(volume_name):
     debugRequest(request)
-    
+
+    charset = {'!', '@', '#', '$', '%', '&', '^'}
+    for char in charset:
+        if char in volume_name:
+            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+                        'Invalid character for volume name.')
+
     for volume in volumes['members']:
         if volume['name'] == volume_name:
             resp = make_response(json.dumps(volume), 200)
