@@ -592,104 +592,34 @@ def create_volumes():
                   'copyOfName':None, 'copyRO':None, 'expirationHours': None,
                   'retentionHours':None}
 
-    ## do some fake errors here depending on data
     for key in data.keys():
         if key not in valid_keys.keys():
-           throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key) 
+            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
 
+    if 'name' in data.keys():
+        for vol in volumes['members']:
+            if vol['name'] == data['name']:
+                throw_error(409, 'EXISTENT_VOL',
+                            'The volume already exists.')
+        if len(data['name']) > 31:
+            throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH', 'Invalid Input: String length exceeds limit : Name')
+    else:
+        throw_error(400, 'INV_INPUT',
+                    'No volume name provided.')
 
-    if data['name'] == 'UnitTestVolumeExists':
-	throw_error(409, 'EXISTENT_SV', "The volume '%s' already exists" % data['name'])
-    elif data['sizeMiB'] == 10241024:
-	throw_error(400, 'TOO_LARGE', 
-                    "Volume size '%s' above architectural limit" % data['sizeMiB'])
-    elif data['sizeMiB'] == 9999:
-	throw_error(400, 'NO_SPACE', "Not enough space currently available")
-    
-    #fake  volumes
-    global volumes
-  
-    volumes = {'members': 
-               [{'additionalStates': [],
-                 'adminSpace': {'freeMiB': 0,
-                                'rawReservedMiB': 384,
-                                'reservedMiB': 128,
-                                'usedMiB': 128},
-                 'baseId': 1,
-                 'copyType': 1,
-                 'creationTime8601': u'2012-09-24T15:12:13-07:00',
-                 'creationTimeSec': 1348524733,
-                 'degradedStates': [],
-                 'domain': 'UNIT_TEST',
-                 'failedStates': [],
-                 'id': 1,
-                 'name': 'UnitTestVolume',
-                 'policies': {'caching': True,
-                              'oneHost': False,
-                              'staleSS': True,
-                              'system': False,
-                              'zeroDetect': False},
-                 'provisioningType': 1,
-                 'readOnly': False,
-                 'sizeMiB': 102400,
-                 'snapCPG': 'UnitTestCPG',
-                 'snapshotSpace': {'freeMiB': 0,
-                                   'rawReservedMiB': 1024,
-                                   'reservedMiB': 512,
-                                   'usedMiB': 512},
-                 'ssSpcAllocLimitPct': 0,
-                 'ssSpcAllocWarningPct': 95,
-                 'state': 1,
-                 'userCPG': 'UnitTestCPG',
-                 'userSpace': {'freeMiB': 0,
-                               'rawReservedMiB': 204800,
-                                'reservedMiB': 102400,
-                 'usedMiB': 102400},
-                 'usrSpcAllocLimitPct': 0,
-                 'usrSpcAllocWarningPct': 0,
-                 'uuid': '8bc9394e-f87a-4c1a-8777-11cba75af94c',
-                 'wwn': '50002AC00001383D'},
-                {'additionalStates': [],
-                 'adminSpace': {'freeMiB': 0,
-                                'rawReservedMiB': 384,
-                                'reservedMiB': 128,
-                                'usedMiB': 128},
-                 'baseId': 41,
-                 'comment': 'test volume',
-                 'copyType': 1,
-                 'creationTime8601': '2012-09-27T14:11:56-07:00',
-                 'creationTimeSec': 1348780316,
-                 'degradedStates': [],
-                 'domain': 'UNIT_TEST',
-                 'failedStates': [],
-                 'id': 2,
-                 'name': 'UnitTestVolume2',
-                 'policies': {'caching': True,
-                              'oneHost': False,
-                              'staleSS': True,
-                              'system': False,
-                              'zeroDetect': False},
-                 'provisioningType': 1,
-                 'readOnly': False,
-                 'sizeMiB': 10240,
-                 'snapCPG': 'UnitTestCPG',
-                 'snapshotSpace': {'freeMiB': 0,
-                                   'rawReservedMiB': 1024,
-                                   'reservedMiB': 512,
-                                   'usedMiB': 512},
-                 'ssSpcAllocLimitPct': 0,
-                 'ssSpcAllocWarningPct': 0,
-                 'state': 1,
-                 'userCPG': 'UnitTestCPG',
-                 'userSpace': {'freeMiB': 0,
-                               'rawReservedMiB': 20480,
-                               'reservedMiB': 10240,
-                               'usedMiB': 10240},
-                 'usrSpcAllocLimitPct': 0,
-                 'usrSpcAllocWarningPct': 0,
-                 'uuid': '6d5542b2-f06a-4788-879e-853ad0a3be42',
-                 'wwn': '50002AC00029383D'}],
-              'total': 26}
+    if 'sizeMiB' in data.keys():
+        if data['sizeMiB'] < 256:
+            throw_error(400, 'TOO_SMALL',
+                        'Minimum volume size is 256 MiB')
+        elif data['sizeMiB'] > 16777216:
+            throw_error(400, 'TOO_LARGE',
+                        'Volume size is above architectural limit : 16TiB')
+    if 'id' in data.keys():
+        for vol in volumes['members']:
+            if vol['id'] == data['id']:
+                throw_error(409, 'EXISTENT_ID', 'Specified volume ID already exists.')
+
+    volumes['members'].append(data)
     return  make_response("", 200)
 
 
@@ -802,8 +732,92 @@ if __name__ == "__main__":
              'numTPVVs': 0,
              'state': 1,
              'uuid': 'f9b018cc-7cb6-4358-a0bf-93243f853d97'}],
-      'total': 2}   
-    
+      'total': 2}
+
+    #fake  volumes
+    global volumes
+    volumes = {'members':
+               [{'additionalStates': [],
+                 'adminSpace': {'freeMiB': 0,
+                                'rawReservedMiB': 384,
+                                'reservedMiB': 128,
+                                'usedMiB': 128},
+                 'baseId': 1,
+                 'copyType': 1,
+                 'creationTime8601': u'2012-09-24T15:12:13-07:00',
+                 'creationTimeSec': 1348524733,
+                 'degradedStates': [],
+                 'domain': 'UNIT_TEST',
+                 'failedStates': [],
+                 'id': 91,
+                 'name': 'UnitTestVolume',
+                 'policies': {'caching': True,
+                              'oneHost': False,
+                              'staleSS': True,
+                              'system': False,
+                              'zeroDetect': False},
+                 'provisioningType': 1,
+                 'readOnly': False,
+                 'sizeMiB': 102400,
+                 'snapCPG': 'UnitTestCPG',
+                 'snapshotSpace': {'freeMiB': 0,
+                                   'rawReservedMiB': 1024,
+                                   'reservedMiB': 512,
+                                   'usedMiB': 512},
+                 'ssSpcAllocLimitPct': 0,
+                 'ssSpcAllocWarningPct': 95,
+                 'state': 1,
+                 'userCPG': 'UnitTestCPG',
+                 'userSpace': {'freeMiB': 0,
+                               'rawReservedMiB': 204800,
+                                'reservedMiB': 102400,
+                 'usedMiB': 102400},
+                 'usrSpcAllocLimitPct': 0,
+                 'usrSpcAllocWarningPct': 0,
+                 'uuid': '8bc9394e-f87a-4c1a-8777-11cba75af94c',
+                 'wwn': '50002AC00001383D'},
+                {'additionalStates': [],
+                 'adminSpace': {'freeMiB': 0,
+                                'rawReservedMiB': 384,
+                                'reservedMiB': 128,
+                                'usedMiB': 128},
+                 'baseId': 41,
+                 'comment': 'test volume',
+                 'copyType': 1,
+                 'creationTime8601': '2012-09-27T14:11:56-07:00',
+                 'creationTimeSec': 1348780316,
+                 'degradedStates': [],
+                 'domain': 'UNIT_TEST',
+                 'failedStates': [],
+                 'id': 92,
+                 'name': 'UnitTestVolume2',
+                 'policies': {'caching': True,
+                              'oneHost': False,
+                              'staleSS': True,
+                              'system': False,
+                              'zeroDetect': False},
+                 'provisioningType': 1,
+                 'readOnly': False,
+                 'sizeMiB': 10240,
+                 'snapCPG': 'UnitTestCPG',
+                 'snapshotSpace': {'freeMiB': 0,
+                                   'rawReservedMiB': 1024,
+                                   'reservedMiB': 512,
+                                   'usedMiB': 512},
+                 'ssSpcAllocLimitPct': 0,
+                 'ssSpcAllocWarningPct': 0,
+                 'state': 1,
+                 'userCPG': 'UnitTestCPG',
+                 'userSpace': {'freeMiB': 0,
+                               'rawReservedMiB': 20480,
+                               'reservedMiB': 10240,
+                               'usedMiB': 10240},
+                 'usrSpcAllocLimitPct': 0,
+                 'usrSpcAllocWarningPct': 0,
+                 'uuid': '6d5542b2-f06a-4788-879e-853ad0a3be42',
+                 'wwn': '50002AC00029383D'}],
+              'total': 26}
+
     #fake hosts
     global hosts 
     hosts = {'members': 
