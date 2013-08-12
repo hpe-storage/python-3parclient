@@ -39,12 +39,12 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
     #for example, pythong test_HP3ParClient_CPG.py debug
     #need to manaully start test_HP3ParMockServer_flask.py before run 
     #test
-    user = config['3PAR']['user']
-    password = config['3PAR']['pass']
-    flask_url = config['3PAR']['flask_url']
-    url_3par = config['3PAR']['3par_url']
-    debug = config['3PAR']['debug'].lower() == 'true'
-    unitTest = config['3PAR']['unit'].lower() == 'true'
+    user = config['TEST']['user']
+    password = config['TEST']['pass']
+    flask_url = config['TEST']['flask_url']
+    url_3par = config['TEST']['3par_url']
+    debug = config['TEST']['debug'].lower() == 'true'
+    unitTest = config['TEST']['unit'].lower() == 'true'
         
     def setUp(self):
             

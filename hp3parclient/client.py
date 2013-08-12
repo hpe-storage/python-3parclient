@@ -557,12 +557,13 @@ class HP3ParClient:
 
         raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_VLUN', 'desc': "VLUN '%s' was not found" % volumeName})
 
-    def createVLUN(self, volumeName, lun, hostname=None, portPos=None, noVcn=None,
-                   overrideLowerPriority=None):
+    def createVLUN(self, volumeName, lun=None, hostname=None, portPos=None, noVcn=None,
+                   overrideLowerPriority=None, auto=False):
         """ 
         Create a new VLUN
 
-        When creating a VLUN, the volumeName and lun members are required.
+        When creating a VLUN, the volumeName is required. The lun member is
+        not required if auto is set to True.
         Either hostname or portPos (or both in the case of matched sets) is
         also required.  The noVcn and overrideLowerPriority members are
         optional.
@@ -585,7 +586,10 @@ class HP3ParClient:
         :returns: the location of the VLUN
 
         """
-        info = {'volumeName': volumeName, 'lun': lun}
+        info = {'volumeName': volumeName}
+        
+        if lun:
+            info['lun'] = lun
 
         if hostname:
             info['hostname'] = hostname
@@ -598,6 +602,9 @@ class HP3ParClient:
 
         if overrideLowerPriority:
             info['overrideLowerPriority'] = overrideLowerPriority
+            
+        if auto:
+            info['autoLun'] = True
 
         headers, body = self.http.post('/vluns', body=info)
         if headers:
