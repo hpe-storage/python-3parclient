@@ -567,18 +567,21 @@ def create_snapshot(volume_name):
     ## do some fake errors here depending on data
     for key in data.keys():
         if key not in valid_keys.keys():
-           throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
+            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
         elif 'parameters' in data.keys():
-           parm = data ['parameters']
-           for subkey in parm.keys():
-               if subkey not in valid_parm_keys:
-                   throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey) 
+            parm = data ['parameters']
+            for subkey in parm.keys():
+                if subkey not in valid_parm_keys:
+                    throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey)
 
-    if volume_name == "NonExistVolume":
-	throw_error(404, 'NON_EXISTENT_VOLUME', "The volume '%s' doesn't exist" % volume_name)
+    for volume in volumes['members']:
+        if volume['name'] == volume_name:
+            volumes['members'].append({'name': data['parameters'].get('name')})
+            resp = make_response(json.dumps(volume), 200)
+            return resp
 
-    return  make_response("", 200)
- 
+    throw_error(404, 'NON_EXISTENT_VOL', "volume doesn't exist")
+
 @app.route('/api/v1/volumes', methods=['POST'])
 def create_volumes():
     debugRequest(request)
@@ -623,28 +626,16 @@ def create_volumes():
     volumes['members'].append(data)
     return  make_response("", 200)
 
-
 @app.route('/api/v1/volumes/<volume_name>', methods=['DELETE'])
 def delete_volumes(volume_name):
     debugRequest(request)
 
-    if volume_name == "NonExistVolume":
-	throw_error(404, 'NON_EXISTENT_SV', 
-                   "The volume '%s' doesn't exist" % volume_name)
-    elif volume_name == "forbidden":
-	throw_error(403, "PERM_DENIED", 
-                   "Insufficient privileges to delete '%s'" % volume_name)
-    elif volume_name == "retained":
-	throw_error(403, "RETAINED", 
-                   "Volume Retention for '%s' has not timed out" % volume_name)
-    elif volume_name == "readonlychild":
-	throw_error(403, "HAS_RO_CHILD", 
-                   "Volume '%s' has a read only child" % volume_name)
+    for volume in volumes['members']:
+        if volume['name'] == volume_name:
+            volumes['members'].remove(volume)
+            return make_response("", 200)
 
-    #fake delete 
-    volumes  = {'members':[], 'total':0} 
-    return make_response("", 200)
-
+    throw_error(404, 'NON_EXISTENT_VOL', "The volume '%s' does not exists." % volume_name)
 
 @app.route('/api/v1/volumes', methods=['GET'])
 def get_volumes():
@@ -679,7 +670,7 @@ def get_version():
     return resp
 
 if __name__ == "__main__":
-    
+
     #fake 2 CPGs
     global cpgs    
     cpgs = {'members': 
@@ -857,5 +848,5 @@ if __name__ == "__main__":
                'id': 12,
                'name': 'UnitTestHost2'}],
             'total': 2}     
-    
+
     app.run(port=args.port, debug=debugRequests)

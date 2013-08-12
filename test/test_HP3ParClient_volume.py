@@ -41,8 +41,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.cl.createCPG(CPG_NAME2)
         except :
             pass
-        
-        
+
     def tearDown(self):
 
         try :
@@ -151,7 +150,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             print ex
             self.fail("Failed with unexpected exception")
         self.fail('No exception occurred.')
- 
+
     def test_1_create_volume_tooLarge(self):
         self.printHeader('create_volume_tooLarge')
         try:
@@ -188,7 +187,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.fail('Failed with unexpected exception')
 
         self.fail('No exception occurred')
- 
+
     def test_1_create_volume_longName(self):
         self.printHeader('create_volume_longName')
         try:
@@ -207,7 +206,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
 
     def test_2_get_volume_bad(self):
         self.printHeader('get_volume_bad')
- 
+
         try:
             self.cl.getVolume('NoSuchVolume')
         except exceptions.HTTPNotFound:
@@ -222,7 +221,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
 
     def test_2_get_volumes(self):
         self.printHeader('get_volumes')
- 
+
         self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024)
         self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024)
 
@@ -233,109 +232,111 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
 
         self.assertTrue(self.findInDict(vols['members'], 'name', vol1['name']))
         self.assertTrue(self.findInDict(vols['members'], 'name', vol2['name']))          
- 
+
         self.printFooter('get_volumes')
 
-#     def test_3_delete_volume_nonExist(self):
-#         self.printHeader('delete_volume_nonExist')
-# 
-#         try:
-#             self.cl.deleteVolume('NonExistVolume')
-#         except exceptions.HTTPNotFound:
-#             print "Expected exception"
-#         except Exception as ex:
-#             print ex
-#             self.fail("Failed with unexpected exception")
-# 
-#         self.printFooter('delete_volume_nonExist')
-#     
-#     def test_3_delete_volumes(self):
-#         self.printHeader('delete_volumes')
-# 
-#         try:
-#             volumes = self.cl.getVolumes()
-#             if volumes and volumes['total'] > 0:
-#                 for vol in volumes['members']:
-#                     if vol['name'].startswith('UnitTestVolume'):
-#                         self.cl.deleteVolume(vol['name'])
-#             #check
-#             try:
-#                 name = 'UnitTestVolume'
-#                 vol = self.cl.getVolume(name)
-#             except exceptions.HTTPNotFound:
-#                 print "Expected exception"
-#             except Exception as ex:
-#                 print ex
-#                 self.fail("Failed with unexpected exception")
-# 
-#             try:
-#                 name = 'UnitTestVolume2'
-#                 vol = self.cl.getVolume(name)
-#             except exceptions.HTTPNotFound:
-#                 print "Expected exception"
-#             except Exception as ex:
-#                 print ex
-#                 self.fail ("Failed with unexpected exception")
-# 
-#         except Exception as ex:
-#             print ex
-#             self.fail ("Failed with unexpected exception")
-# 
-#         self.printFooter('delete_volumes')
-# 
-#     def test_4_create_snapshot(self):
-#         self.printHeader('create_snapshot')
-# 
-#         try:
-#             optional = {'snapCPG': CPG_NAME1}
-#             self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
-#             
-#             
-#             #add one
-#             self.cl.createSnapshot(SNAP_NAME1, VOLUME_NAME1)
-#             #no API to get and check 
-#         except Exception as ex:
-#             print ex
-#             self.fail("Failed with unexpected exception")
-# 
-#         self.cl.deleteVolume(SNAP_NAME1)
-#         self.printFooter('create_snapshot')
-#    
-#     def test_4_create_snapshot_badParams(self):
-#         self.printHeader('create_snapshot_badParams')
-# 
-#         #add one
-#         try:
-#             name = 'UnitTestSnapshot'
-#             volName = 'UnitTestVolume'
-#             optional = {'id': 1, 'comment': 'test snapshot', 
-#                         'Bad': True, 'expirationHours': 300}
-#             self.cl.createSnapshot(name, volName, optional)
-#         except exceptions.HTTPBadRequest:
-#             print "Expected exception"
-#         except Exception as ex:
-#             print ex
-#             self.fail("Failed with unexpected exception")
-# 
-#         self.printFooter('create_snapshot_badParams')
-# 
-#     def test_4_create_snapshot_nonExistVolume(self):
-#         self.printHeader('create_snapshot_nonExistVolume')
-# 
-#         #add one
-#         try:
-#             name = 'UnitTestSnapshot'
-#             volName = 'NonExistVolume'
-#             optional = {'id': 1, 'comment': 'test snapshot', 
-#                         'readOnly': True, 'expirationHours': 300}
-#             self.cl.createSnapshot(name, volName, optional)
-#         except exceptions.HTTPNotFound:
-#             print "Expected exception"
-#         except Exception as ex:
-#             print ex
-#             self.fail("Failed with unexpected exception")
-# 
-#         self.printFooter('create_snapshot_nonExistVolume')
+    def test_3_delete_volume_nonExist(self):
+        self.printHeader('delete_volume_nonExist')
+        try:
+            self.cl.deleteVolume(VOLUME_NAME1)
+        except exceptions.HTTPNotFound:
+            print "Expected exception"
+            self.printFooter('delete_volume_nonExist')
+            return
+        except Exception as ex:
+            print ex
+            self.fail("Failed with unexpected exception")
+
+        self.fail('No exception occurred.')
+
+    def test_3_delete_volumes(self):
+        self.printHeader('delete_volumes')
+
+        try:
+            volumes = self.cl.getVolumes()
+            if volumes and volumes['total'] > 0:
+                for vol in volumes['members']:
+                    if vol['name'].startswith('VOLUME'):
+                        self.cl.deleteVolume(vol['name'])
+            #check
+            try:
+                name = VOLUME_NAME1
+                vol = self.cl.getVolume(name)
+            except exceptions.HTTPNotFound:
+                print "Expected exception"
+            except Exception as ex:
+                print ex
+                self.fail("Failed with unexpected exception")
+
+            try:
+                name = VOLUME_NAME2
+                vol = self.cl.getVolume(name)
+            except exceptions.HTTPNotFound:
+                print "Expected exception"
+            except Exception as ex:
+                print ex
+                self.fail ("Failed with unexpected exception")
+
+        except Exception as ex:
+            print ex
+            self.fail ("Failed with unexpected exception")
+
+        self.printFooter('delete_volumes')
+
+    def test_4_create_snapshot(self):
+        self.printHeader('create_snapshot')
+
+        try:
+            optional = {'snapCPG': CPG_NAME1}
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+            #add one
+            optional = {'expirationHours': 300}
+            self.cl.createSnapshot(SNAP_NAME1, VOLUME_NAME1, optional)
+            #no API to get and check
+        except Exception as ex:
+            print ex
+            self.fail("Failed with unexpected exception")
+
+        self.cl.deleteVolume(SNAP_NAME1)
+        self.printFooter('create_snapshot')
+
+    def test_4_create_snapshot_badParams(self):
+        self.printHeader('create_snapshot_badParams')
+        #add one
+        optional = {'snapCPG': CPG_NAME1}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        try:
+            optional = {'Bad': True, 'expirationHours': 300}
+            self.cl.createSnapshot(SNAP_NAME1, VOLUME_NAME1, optional)
+        except exceptions.HTTPBadRequest:
+            print "Expected exception"
+            self.printFooter('create_snapshot_badParams')
+            return
+        except Exception as ex:
+            print ex
+            self.fail("Failed with unexpected exception")
+
+        self.fail("No exception occurred.")
+
+    def test_4_create_snapshot_nonExistVolume(self):
+        self.printHeader('create_snapshot_nonExistVolume')
+
+        #add one
+        try:
+            name = 'UnitTestSnapshot'
+            volName = 'NonExistVolume'
+            optional = {'id': 1, 'comment': 'test snapshot', 
+                        'readOnly': True, 'expirationHours': 300}
+            self.cl.createSnapshot(name, volName, optional)
+        except exceptions.HTTPNotFound:
+            print "Expected exception"
+            self.printFooter('create_snapshot_nonExistVolume')
+            return
+        except Exception as ex:
+            print ex
+            self.fail("Failed with unexpected exception")
+
+        self.fail("No exception occurred.")
 #testing
 #suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVolumeTestCase)
 #unittest.TextTestRunner(verbosity=2).run(suite)
