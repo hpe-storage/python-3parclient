@@ -113,6 +113,6 @@ def delete_VLUNs():
 
 
 cl.login(username, password)
-#get_VLUNs()
+vluns = get_VLUNs()
 create_VLUNs()
 delete_VLUNs()
