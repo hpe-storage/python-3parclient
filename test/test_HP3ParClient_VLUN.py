@@ -112,7 +112,7 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         #add one
         noVcn =  False
         overrideLowerPriority = True
-        self.cl.createVLUN(VOLUME_NAME1, LUN_1, 'foo',PORT_1,noVcn,overrideLowerPriority)
+        self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1,PORT_1,noVcn,overrideLowerPriority)
 
         #check
         vlun1 = self.cl.getVLUN(VOLUME_NAME1)
