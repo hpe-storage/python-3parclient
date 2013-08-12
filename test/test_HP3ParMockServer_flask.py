@@ -462,69 +462,28 @@ def create_vluns():
 
     valid_keys = {'volumeName':None, 'lun':0, 'hostname':None, 'portPos':None,
                   'noVcn': False, 'overrideLowerPriority':False}
-   
-    
+
     valid_port_keys = {'node':1, 'slot':1, 'cardPort':0}
- 
+
     ## do some fake errors here depending on data
     for key in data.keys():
         if key not in valid_keys.keys():
-           throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key) 
+            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key) 
         elif 'portPos' in data.keys():
-           portP = data ['portPos']
-           for subkey in portP.keys():
-               if subkey not in valid_port_keys:
-                   throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey) 
+            portP = data ['portPos']
+            for subkey in portP.keys():
+                if subkey not in valid_port_keys:
+                    throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey) 
 
-    if data['volumeName'] == 'UnitTestNonExistVolume':
-        throw_error(404, 'NON_EXISTENT_VOL', 
-                    "The vlun does not have volume '%s' exists" % data['volumeName'])
-    elif data['hostname'] == 'UnitTestNonExistHost':
-        throw_error(404, 'NON_EXISTENT_HOST', 
-                   "The vlun does not have host '%s' exists" % data['hotname'])
-    elif 'portPos' in data.keys() and  data['portPos'] == '{\'node\':-1,\'slot\':-1,\'cardPort\':-1}':
-        throw_error(404, 'NON_EXISTENT_PORT', 
-                    "The vlun does not have port '%s' exists" % data['portPos'])
-    elif data['volumeName'] == 'UnitTestLunTooLarge':
-        throw_error(400, 'TOO_LARGE', "The VLUN size '%s' is too large" % data['lun'])
-    elif data['lun'] == '10241024':
-        throw_error(400, 'TOO_LARGE', "The VLUN '%s' is a existent lun" % data['volumeName'])
-
-    #fake create vluns
-    global vluns
-  
-    vluns = {'members': 
-             [{'active': True,
-               'failedPathInterval': 0,
-               'failedPathPol': 1,
-               'hostname': 'UnitTestHost',
-               'lun': 1,
-               'multipathing': 1,
-               'portPos': {'cardPort': 1, 'node': 1, 'slot': 2},
-               'remoteName': '100010604B0174F1',
-               'type': 4,
-               'volumeName': 'UnitTestVolume',
-               'volumeWWN': '50002AC00001383D'}, 
-              {'active': False,
-               'failedPathInterval': 0,
-               'failedPathPol': 1,
-               'hostname': u'UnitTestHost2',
-               'lun': 2,
-               'multipathing': 1,
-               'portPos': {'cardPort': 2, 'node': 2, 'slot': 3},
-               'type': 3,
-               'volumeName': u'UnitTestVolume2',
-               'volumeWWN': u'50002AC00029383D'}],
-            'total': 2}
- 
+    vluns['members'].append(data)
     resp = make_response("", 201)
-    if data['volumeName'] == 'UnitTestVolume':
-       ret = 'UnitTestVolume,1,UnitTestHost,1:2:1' 
-    elif data['volumeName'] == 'UnitTestVolume2':
-       ret = 'UnitTestVolume,2,UnitTestHost' 
-    
-    resp.headers['location'] = '/api/v1/vluns/%s' % ret
+#     if data['volumeName'] == 'UnitTestVolume':
+#        ret = 'UnitTestVolume,1,UnitTestHost,1:2:1' 
+#     elif data['volumeName'] == 'UnitTestVolume2':
+#        ret = 'UnitTestVolume,2,UnitTestHost' 
 
+    #resp.headers['location'] = '/api/v1/vluns/%s' % data['name']
+    resp.headers['location'] = '/api/v1/vluns/'
     return resp 
 
 
@@ -849,4 +808,30 @@ if __name__ == "__main__":
                'name': 'UnitTestHost2'}],
             'total': 2}     
 
+    #fake create vluns
+    global vluns
+  
+    vluns = {'members': 
+             [{'active': True,
+               'failedPathInterval': 0,
+               'failedPathPol': 1,
+               'hostname': 'UnitTestHost',
+               'lun': 1,
+               'multipathing': 1,
+               'portPos': {'cardPort': 1, 'node': 1, 'slot': 2},
+               'remoteName': '100010604B0174F1',
+               'type': 4,
+               'volumeName': 'UnitTestVolume',
+               'volumeWWN': '50002AC00001383D'}, 
+              {'active': False,
+               'failedPathInterval': 0,
+               'failedPathPol': 1,
+               'hostname': u'UnitTestHost2',
+               'lun': 2,
+               'multipathing': 1,
+               'portPos': {'cardPort': 2, 'node': 2, 'slot': 3},
+               'type': 3,
+               'volumeName': u'UnitTestVolume2',
+               'volumeWWN': u'50002AC00029383D'}],
+            'total': 2}
     app.run(port=args.port, debug=debugRequests)
