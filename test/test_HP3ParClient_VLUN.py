@@ -72,7 +72,7 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         
         try :
             self.cl.deleteVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
-        except Exception as e :
+        except Exception:
             pass
         try :
             self.cl.deleteVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2)
@@ -101,83 +101,73 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         try :
             self.cl.deleteHost(HOST_NAME2)
         except :
-            pass   
-                
+            pass
+
         # very last, tear down base class
         super(HP3ParClientVLUNTestCase, self).tearDown()    
 
     def test_1_create_VLUN(self):
         self.printHeader('create_VLUN')
-
         #add one
         noVcn =  False
         overrideLowerPriority = True
         self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1,PORT_1,noVcn,overrideLowerPriority)
-
         #check
         vlun1 = self.cl.getVLUN(VOLUME_NAME1)
         self.assertIsNotNone(vlun1)
         volName = vlun1['volumeName']
         self.assertEqual(VOLUME_NAME1, volName)
-
         #add another
         self.cl.createVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2)
-
         #check
         vlun2 = self.cl.getVLUN(VOLUME_NAME2)
         self.assertIsNotNone(vlun2)
         volName = vlun2['volumeName']
         self.assertEqual(VOLUME_NAME2, volName)
-
         self.printFooter('create_VLUN')
-    
+
     def test_1_create_VLUN_tooLarge(self):
         self.printHeader('create_VLUN_tooLarge')
-        
+
         lun = 100000
         self.assertRaises(exceptions.HTTPBadRequest, self.cl.createVLUN, VOLUME_NAME1, lun, HOST_NAME1, PORT_1)
 
         self.printFooter('create_VLUN_tooLarge')
-
-  
+   
     def test_1_create_VLUN_volulmeNonExist(self):
         self.printHeader('create_VLUN_volumeNonExist')
-        
-        self.assertRaises(exceptions.HTTPNotFound, self.cl.createVLUN, 'UnitTestNonExistVolume', LUN_1, HOST_NAME1, PORT_1)
+
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.createVLUN, 'Some_Volume', LUN_1, HOST_NAME1, PORT_1)
 
         self.printFooter('create_VLUN_volumeNonExist')
 
     def test_1_create_VLUN_badParams(self):
         self.printHeader('create_VLUN_badParams')
-        
+
         portPos = {'badNode':1, 'cardPort':1, 'slot':2}
         self.assertRaises(exceptions.HTTPBadRequest, self.cl.createVLUN, VOLUME_NAME1, LUN_1, HOST_NAME1, portPos)
 
         self.printFooter('create_VLUN_badParams')
-  
+
     def test_2_get_VLUN_bad(self):
         self.printHeader('get_VLUN_bad')
-        
         self.assertRaises(exceptions.HTTPNotFound, self.cl.getVLUN, 'badName')
-
         self.printFooter('get_VLUN_bad')
 
     def test_2_get_VLUNs(self):
         self.printHeader('get_VLUNs')
-
         # add 2
         noVcn =  False
         overrideLowerPriority = True
         self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1,
                            PORT_1,noVcn,overrideLowerPriority)
         self.cl.createVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2)            
-            
         # get all
         vluns = self.cl.getVLUNs()
 
         v1 = self.cl.getVLUN(VOLUME_NAME1)
         v2 = self.cl.getVLUN(VOLUME_NAME2)
-            
+
         self.assertTrue(self.findInDict(vluns['members'], 'lun', v1['lun']))
         self.assertTrue(self.findInDict(vluns['members'], 'volumeName', v1['volumeName']))
         self.assertTrue(self.findInDict(vluns['members'], 'lun', v2['lun']))
@@ -187,10 +177,10 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
     def test_3_delete_VLUN_volumeNonExist(self):
         self.printHeader('delete_VLUN_volumeNonExist')
-        
+
         self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
         self.cl.getVLUN(VOLUME_NAME1)
-        
+
         self.assertRaises(exceptions.HTTPNotFound, self.cl.deleteVLUN, 
                           'UnitTestVolume', LUN_1, HOST_NAME1, PORT_1)
 
@@ -198,39 +188,39 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
     def test_3_delete_VLUN_hostNonExist(self):
         self.printHeader('delete_VLUN_hostNonExist')
-        
+
         self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
         self.cl.getVLUN(VOLUME_NAME1)
-        
+
         self.assertRaises(exceptions.HTTPNotFound, self.cl.deleteVLUN, 
                           VOLUME_NAME1, LUN_1, 'BoggusHost', PORT_1) 
 
         self.printFooter('delete_VLUN_hostNonExist')
-  
+
     def test_3_delete_VLUN_portNonExist(self):
         self.printHeader('delete_VLUN_portNonExist')
-        
+
         self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1,PORT_1)
-        
+
         port = {'node':8, 'cardPort':8,'slot':8}
         self.assertRaises(exceptions.HTTPBadRequest, self.cl.deleteVLUN, 
                           VOLUME_NAME1, LUN_1, HOST_NAME1, port)
 
         self.printFooter('delete_VLUN_portNonExist')
-  
+
     def test_3_delete_VLUNs(self):
         self.printHeader('delete_VLUNs')
-        
+
         self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
         self.cl.getVLUN(VOLUME_NAME1)
-        
+
         self.cl.deleteVLUN(VOLUME_NAME1 ,LUN_1, HOST_NAME1, PORT_1)
-        
+
         self.assertRaises(exceptions.HTTPNotFound, self.cl.deleteVLUN, 
                           VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
 
         self.printFooter('delete_VLUNs')
-   
+
 #testing
 #suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVLUNTestCase)
 #unittest.TextTestRunner(verbosity=2).run(suite)

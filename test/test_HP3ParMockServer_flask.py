@@ -473,19 +473,27 @@ def create_vluns():
             portP = data ['portPos']
             for subkey in portP.keys():
                 if subkey not in valid_port_keys:
-                    throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey) 
+                    throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey)
 
-    vluns['members'].append(data)
-    resp = make_response("", 201)
+    if 'lun' in data:
+        if data['lun'] > 16384:
+            throw_error(400, 'TOO_LARGE', 'LUN is greater than 16384.')
+
+    if 'volumeName' not in data:
+        throw_error(400, 'INV_INPUT_MISSING_REQUIRED', 'Missing volumeName.')
+    else:
+        for volume in volumes['members']:
+            if volume['name'] == data['volumeName']:
+                vluns['members'].append(data)
+                resp = make_response("", 201)
 #     if data['volumeName'] == 'UnitTestVolume':
 #        ret = 'UnitTestVolume,1,UnitTestHost,1:2:1' 
 #     elif data['volumeName'] == 'UnitTestVolume2':
 #        ret = 'UnitTestVolume,2,UnitTestHost' 
-
-    #resp.headers['location'] = '/api/v1/vluns/%s' % data['name']
-    resp.headers['location'] = '/api/v1/vluns/'
-    return resp 
-
+#resp.headers['location'] = '/api/v1/vluns/%s' % data['name']
+                resp.headers['location'] = '/api/v1/vluns/'
+                return resp
+        throw_error(404, 'NON_EXISTENT_VOL', 'Specified volume does not exist.')
 
 @app.route('/api/v1/vluns/<vlun_str>', methods=['DELETE'])
 def delete_vluns(vlun_str):
