@@ -205,13 +205,6 @@ def create_hosts():
 
     valid_members = ['FCWWNs', 'descriptors', 'domain', 'iSCSINames', 'id','name']
 
-#     valid_keys = {'FCWWNs':None, 'descriptors':None, 'domain':None, 'iSCSINames':None,
-#                   'id': 0,'name':None}
-# 
-#     valid_iscsi_keys = {'driverVersion': None, 'firmwareVersion':None, 'hostSpeed':None, 
-#                         'ipAddr': None, 'model':None, 'name': None, 'portPos': None,
-#                         'vendor': None}
-    
     for member_key in data.keys() :
         if member_key not in valid_members :
             throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % member_key)
@@ -432,24 +425,6 @@ def get_host(host_name):
 @app.route('/api/v1/ports', methods=['GET'])
 def get_ports():
     debugRequest(request)
-
-    #fake ports 
-    ports = {'members': 
-             [{'linkState': 4,
-               'mode': 2,
-               'nodeWwn': None,
-               'portPos': {'cardPort': 1, 'node': 1, 'slot': 7},
-               'portWwn': '2C27D75375D5',
-               'protocol': 2,
-               'type': 7},
-              {'linkState': 4,
-               'mode': 2,
-               'nodeWwn': None,
-               'portPos': {'cardPort': 2, 'node': 2, 'slot': 8},
-               'portWwn': '2C27D75375D6',
-               'protocol': 2,
-               'type': 7}],
-            'total': 2}
     resp = make_response(json.dumps(ports), 200)
     return resp
 
@@ -499,24 +474,30 @@ def delete_vluns(vlun_str):
 
     params = vlun_str.split(',')
     for vlun in vluns['members']:
-        if vlun['volumeName'] == params[0]:
-            if vlun['lun'] == params[1]:
-#             if len(params) == 4:
-#                 if not params[2] == vlun['hostname']:
-#                     throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % params[2])
-#                 if not params[3] == vlun['portPos']:
-#                     throw_error(400, 'NON_EXISTENT_PORT', "The lun '%s' doesn't exist" % params[3])
-#             elif len(params) == 3:
-#                 if ':' in params[2]:
-#                     if not vlun['portPos'] == params[2]:
-#                         throw_error(400, 'NON_EXISTENT_PORT', "The lun '%s' doesn't exist" % params[2])
-#                 else:
-#                     if not vlun['hostname'] == params[2]:
-#                         throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % params[2])
-                vluns['members'].remove(vlun)
-                return make_response(json.dumps(params), 200)
+        if vlun['volumeName'] == params[0] and vlun['lun'] == int(params[1]):
+            if len(params) == 4:
+                if str(params[2]) != vlun['hostname']:
+                    throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % params[2])
 
-    throw_error(404, 'NON_EXISTENT_VLUN', "The volume '%s' doesn't exist" % params[0])            
+#                 print vlun['portPos']
+#                 port = getPort(vlun['portPos'])
+#                 if not port == params[3]:
+#                     throw_error(400, 'INV_INPUT_PORT_SPECIFICATION', "Specified port is invalid %s" % params[3])
+
+            elif len(params) == 3:
+                if ':' not in params[2]:
+                    if str(params[2]) != vlun['hostname']:
+                        throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % params[2])
+
+            vluns['members'].remove(vlun)
+            return make_response(json.dumps(params), 200)
+
+    throw_error(404, 'NON_EXISTENT_VLUN', "The volume '%s' doesn't exist" % vluns)
+
+def getPort(self, portPos):
+    port = "%s:%s:%s" % (portPos['node'], portPos['slot'], portPos['cardPort'])
+    print port
+    return port
 
 @app.route('/api/v1/vluns', methods=['GET'])
 def get_vluns():
@@ -645,8 +626,8 @@ def get_version():
 if __name__ == "__main__":
 
     #fake 2 CPGs
-    global cpgs    
-    cpgs = {'members': 
+    global cpgs
+    cpgs = {'members':
            [{'SAGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
                          'incrementMiB': 8192},
             'SAUsage': {'rawTotalMiB': 24576,
@@ -789,9 +770,42 @@ if __name__ == "__main__":
                  'wwn': '50002AC00029383D'}],
               'total': 26}
 
+    #fake ports
+    global ports
+    ports = {'members':
+             [{'linkState': 4,
+               'mode': 2,
+               'nodeWwn': None,
+               'portPos': {'cardPort': 1, 'node': 1, 'slot': 7},
+               'portWwn': '2C27D75375D5',
+               'protocol': 2,
+               'type': 7},
+              {'linkState': 4,
+               'mode': 2,
+               'nodeWwn': None,
+               'portPos': {'cardPort': 2, 'node': 2, 'slot': 8},
+               'portWwn': '2C27D75375D6',
+               'protocol': 2,
+               'type': 7},
+              {'linkState': 4,
+               'mode': 2,
+               'nodeWwn': None,
+               'portPos': {'cardPort': 3, 'node': 3, 'slot': 5},
+               'portWwn': '2C27D75375D7',
+               'protocol': 1,
+               'type': 7},
+              {'linkState': 4,
+               'mode': 2,
+               'nodeWwn': None,
+               'portPos': {'cardPort': 4, 'node': 4, 'slot': 6},
+               'portWwn': '2C27D75375D8',
+               'protocol': 1,
+               'type': 7}],
+            'total': 4}
+
     #fake hosts
-    global hosts 
-    hosts = {'members': 
+    global hosts
+    hosts = {'members':
              [{'FCWWNs': [],
                'descriptors': None,
                'domain': 'UNIT_TEST',
@@ -824,7 +838,7 @@ if __name__ == "__main__":
 
     #fake create vluns
     global vluns
-    vluns = {'members': 
+    vluns = {'members':
              [{'active': True,
                'failedPathInterval': 0,
                'failedPathPol': 1,
@@ -847,4 +861,5 @@ if __name__ == "__main__":
                'volumeName': 'UnitTestVolume2',
                'volumeWWN': '50002AC00029383D'}],
             'total': 2}
+
     app.run(port=args.port, debug=debugRequests)
