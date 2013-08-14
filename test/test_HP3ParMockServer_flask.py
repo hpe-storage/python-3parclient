@@ -381,12 +381,12 @@ def modify_host(host_name):
 @app.route('/api/v1/hosts/<host_name>', methods=['DELETE'])
 def delete_host(host_name):
     debugRequest(request)
-    
+
     for host in hosts['members']:
         if host['name'] == host_name:
             hosts['members'].remove(host)
             return make_response("", 200)    
-    
+
     throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % host_name)
 
 @app.route('/api/v1/hosts', methods=['GET'])
@@ -462,88 +462,61 @@ def create_vluns():
 
     valid_keys = {'volumeName':None, 'lun':0, 'hostname':None, 'portPos':None,
                   'noVcn': False, 'overrideLowerPriority':False}
-   
-    
+
     valid_port_keys = {'node':1, 'slot':1, 'cardPort':0}
- 
+
     ## do some fake errors here depending on data
     for key in data.keys():
         if key not in valid_keys.keys():
-           throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key) 
+            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key) 
         elif 'portPos' in data.keys():
-           portP = data ['portPos']
-           for subkey in portP.keys():
-               if subkey not in valid_port_keys:
-                   throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey) 
+            portP = data ['portPos']
+            for subkey in portP.keys():
+                if subkey not in valid_port_keys:
+                    throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey)
 
-    if data['volumeName'] == 'UnitTestNonExistVolume':
-        throw_error(404, 'NON_EXISTENT_VOL', 
-                    "The vlun does not have volume '%s' exists" % data['volumeName'])
-    elif data['hostname'] == 'UnitTestNonExistHost':
-        throw_error(404, 'NON_EXISTENT_HOST', 
-                   "The vlun does not have host '%s' exists" % data['hotname'])
-    elif 'portPos' in data.keys() and  data['portPos'] == '{\'node\':-1,\'slot\':-1,\'cardPort\':-1}':
-        throw_error(404, 'NON_EXISTENT_PORT', 
-                    "The vlun does not have port '%s' exists" % data['portPos'])
-    elif data['volumeName'] == 'UnitTestLunTooLarge':
-        throw_error(400, 'TOO_LARGE', "The VLUN size '%s' is too large" % data['lun'])
-    elif data['lun'] == '10241024':
-        throw_error(400, 'TOO_LARGE', "The VLUN '%s' is a existent lun" % data['volumeName'])
+    if 'lun' in data:
+        if data['lun'] > 16384:
+            throw_error(400, 'TOO_LARGE', 'LUN is greater than 16384.')
+    else:
+        throw_error(400, 'INV_INPUT', 'Missing LUN.')
 
-    #fake create vluns
-    global vluns
-  
-    vluns = {'members': 
-             [{'active': True,
-               'failedPathInterval': 0,
-               'failedPathPol': 1,
-               'hostname': 'UnitTestHost',
-               'lun': 1,
-               'multipathing': 1,
-               'portPos': {'cardPort': 1, 'node': 1, 'slot': 2},
-               'remoteName': '100010604B0174F1',
-               'type': 4,
-               'volumeName': 'UnitTestVolume',
-               'volumeWWN': '50002AC00001383D'}, 
-              {'active': False,
-               'failedPathInterval': 0,
-               'failedPathPol': 1,
-               'hostname': u'UnitTestHost2',
-               'lun': 2,
-               'multipathing': 1,
-               'portPos': {'cardPort': 2, 'node': 2, 'slot': 3},
-               'type': 3,
-               'volumeName': u'UnitTestVolume2',
-               'volumeWWN': u'50002AC00029383D'}],
-            'total': 2}
- 
-    resp = make_response("", 201)
-    if data['volumeName'] == 'UnitTestVolume':
-       ret = 'UnitTestVolume,1,UnitTestHost,1:2:1' 
-    elif data['volumeName'] == 'UnitTestVolume2':
-       ret = 'UnitTestVolume,2,UnitTestHost' 
-    
-    resp.headers['location'] = '/api/v1/vluns/%s' % ret
-
-    return resp 
-
+    if 'volumeName' not in data:
+        throw_error(400, 'INV_INPUT_MISSING_REQUIRED', 'Missing volumeName.')
+    else:
+        for volume in volumes['members']:
+            if volume['name'] == data['volumeName']:
+                vluns['members'].append(data)
+                resp = make_response(json.dumps(vluns), 201)
+                resp.headers['location'] = '/api/v1/vluns/'
+                return resp
+        throw_error(404, 'NON_EXISTENT_VOL', 'Specified volume does not exist.')
 
 @app.route('/api/v1/vluns/<vlun_str>', methods=['DELETE'])
 def delete_vluns(vlun_str):
     #<vlun_str> is like volumeName,lun,host,node:slot:port
     debugRequest(request)
 
-    if vlun_str == "NonExistVolume,1,UnitTestHost":
-	throw_error(404, 'NON_EXISTENT_VLUN', "The volume '%s' doesn't exist" % vlun_str)
-    elif vlun_str == "UnitTestVolume,1,NonExistHost":
-	throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % vlun_str)
-    elif vlun_str == "UnitTestVolume,UnitTestHost,8:8:8":
-	throw_error(404, 'NON_EXISTENT_PORT', "The lun '%s' doesn't exist" % vlun_str)
+    params = vlun_str.split(',')
+    for vlun in vluns['members']:
+        if vlun['volumeName'] == params[0]:
+            if vlun['lun'] == params[1]:
+#             if len(params) == 4:
+#                 if not params[2] == vlun['hostname']:
+#                     throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % params[2])
+#                 if not params[3] == vlun['portPos']:
+#                     throw_error(400, 'NON_EXISTENT_PORT', "The lun '%s' doesn't exist" % params[3])
+#             elif len(params) == 3:
+#                 if ':' in params[2]:
+#                     if not vlun['portPos'] == params[2]:
+#                         throw_error(400, 'NON_EXISTENT_PORT', "The lun '%s' doesn't exist" % params[2])
+#                 else:
+#                     if not vlun['hostname'] == params[2]:
+#                         throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % params[2])
+                vluns['members'].remove(vlun)
+                return make_response(json.dumps(params), 200)
 
-    #fake delete 
-    vluns  = {'members':[], 'total':0} 
-    return make_response("", 200)
-
+    throw_error(404, 'NON_EXISTENT_VLUN', "The volume '%s' doesn't exist" % params[0])            
 
 @app.route('/api/v1/vluns', methods=['GET'])
 def get_vluns():
@@ -849,4 +822,29 @@ if __name__ == "__main__":
                'name': 'UnitTestHost2'}],
             'total': 2}     
 
+    #fake create vluns
+    global vluns
+    vluns = {'members': 
+             [{'active': True,
+               'failedPathInterval': 0,
+               'failedPathPol': 1,
+               'hostname': 'UnitTestHost',
+               'lun': 31,
+               'multipathing': 1,
+               'portPos': {'cardPort': 1, 'node': 1, 'slot': 2},
+               'remoteName': '100010604B0174F1',
+               'type': 4,
+               'volumeName': 'UnitTestVolume',
+               'volumeWWN': '50002AC00001383D'}, 
+              {'active': False,
+               'failedPathInterval': 0,
+               'failedPathPol': 1,
+               'hostname': 'UnitTestHost2',
+               'lun': 32,
+               'multipathing': 1,
+               'portPos': {'cardPort': 2, 'node': 2, 'slot': 3},
+               'type': 3,
+               'volumeName': 'UnitTestVolume2',
+               'volumeWWN': '50002AC00029383D'}],
+            'total': 2}
     app.run(port=args.port, debug=debugRequests)
