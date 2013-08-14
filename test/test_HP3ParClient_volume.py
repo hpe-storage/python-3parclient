@@ -177,7 +177,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
 
         try:
             optional2 = {'id': 1, 'comment': 'volume with duplicate ID'}
-            self.cl.createVolume(VOLUME_NAME2, CPG_NAME2, 1024, optional)
+            self.cl.createVolume(VOLUME_NAME2, CPG_NAME2, 1024, optional2)
         except exceptions.HTTPConflict:
             print 'Expected exception'
             self.printFooter('create_volume_duplicate_ID')
@@ -253,35 +253,50 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         self.printHeader('delete_volumes')
 
         try:
-            volumes = self.cl.getVolumes()
-            if volumes and volumes['total'] > 0:
-                for vol in volumes['members']:
-                    if vol['name'].startswith('VOLUME'):
-                        self.cl.deleteVolume(vol['name'])
-            #check
-            try:
-                name = VOLUME_NAME1
-                vol = self.cl.getVolume(name)
-            except exceptions.HTTPNotFound:
-                print "Expected exception"
-            except Exception as ex:
-                print ex
-                self.fail("Failed with unexpected exception")
-
-            try:
-                name = VOLUME_NAME2
-                vol = self.cl.getVolume(name)
-            except exceptions.HTTPNotFound:
-                print "Expected exception"
-            except Exception as ex:
-                print ex
-                self.fail ("Failed with unexpected exception")
-
+            optional = {'comment': 'Made by flask.'}
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+            self.cl.getVolume(VOLUME_NAME1)
         except Exception as ex:
             print ex
-            self.fail ("Failed with unexpected exception")
+            self.fail('Failed to create volume')
 
-        self.printFooter('delete_volumes')
+        try:
+            optional = {'comment': 'Made by flask.'}
+            self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024, optional)
+            self.cl.getVolume(VOLUME_NAME2)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create volume')
+
+        try:
+            self.cl.deleteVolume(VOLUME_NAME1)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to delete %s' % (VOLUME_NAME1))
+
+        try:
+            self.cl.getVolume(VOLUME_NAME1)
+        except exceptions.HTTPNotFound:
+            print 'Expected exception'
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception')
+
+        try:
+            self.cl.deleteVolume(VOLUME_NAME2)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to delete %s' % (VOLUME_NAME2))
+
+        try:
+            self.cl.getVolume(VOLUME_NAME2)
+        except exceptions.HTTPNotFound:
+            print 'Expected exception'
+            self.printFooter('delete_volumes')
+            return
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception')
 
     def test_4_create_snapshot(self):
         self.printHeader('create_snapshot')
