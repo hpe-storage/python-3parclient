@@ -21,7 +21,10 @@ HP3Par REST Client
 .. moduleauthor: Walter A. Boring IV
 
 :Author: Walter A. Boring IV
-:Description: This is the 3PAR Client that talks to 3PAR's REST WSAPI Service.  It provides the ability to provision 3PAR volumes, VLUNs, CPGs.
+:Description: This is the 3PAR Client that talks to 3PAR's REST WSAPI Service.  
+It provides the ability to provision 3PAR volumes, VLUNs, CPGs.
+
+This client requires and works with 3Par InForm 3.1.2-mu2 firmware
 
 """
 
@@ -39,7 +42,8 @@ class HP3ParClient:
     """
     The 3PAR REST API Client
 
-    :param api_url: The url to the WSAPI service on 3PAR ie. http://<3par server>:8008
+    :param api_url: The url to the WSAPI service on 3PAR 
+                    ie. http://<3par server>:8080/api/v1
     :type api_url: str
 
     """

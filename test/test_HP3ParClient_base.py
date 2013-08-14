@@ -34,11 +34,7 @@ from urlparse import urlparse
 
 
 class HP3ParClientBaseTestCase(unittest.TestCase):     
-  
-    #if have debug as second argument for the test
-    #for example, pythong test_HP3ParClient_CPG.py debug
-    #need to manaully start test_HP3ParMockServer_flask.py before run 
-    #test
+
     user = config['TEST']['user']
     password = config['TEST']['pass']
     flask_url = config['TEST']['flask_url']
@@ -57,9 +53,7 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
             userArg = '-user=%s' % self.user
             passwordArg = '-password=%s' % self.password
             portArg = '-port=%s' % parsed_url.port
-            args = '-user %s -password %s -port %s' % (self.user, 
-                                                       self.password, 
-                                                       parsed_url.port)
+
             script = 'test_HP3ParMockServer_flask.py'
             path = "%s/%s" % (cwd, script)
             try :

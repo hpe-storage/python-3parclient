@@ -2,9 +2,6 @@ Installing / Upgrading
 ======================
 .. highlight:: bash
 
-DO NOT FOLLOW THIS RIGHT NOW.....IT IS NOT ACURATE.
-This document is a placeholder for when we get the driver opensourced.
-DO NOT FOLLOW THIS RIGHT NOW.....IT IS NOT ACURATE.
 
 **HP3ParClient** is in the `Python Package Index
 <http://pypi.python.org/pypi/hp3parclient/>`_.
@@ -38,10 +35,10 @@ Installing from source
 ----------------------
 
 If you'd rather install directly from the source (i.e. to stay on the
-bleeding edge), install the C extension dependencies then check out the
-latest source from github and install the driver from the resulting tree::
+bleeding edge), then check out the latest source from github and 
+install the driver from the resulting tree::
 
-  $ git clone git://github.com/mongodb/mongo-python-driver.git pymongo
-  $ cd pymongo/
+  $ git clone -b 3.1.2-mu2 https://github.com/WaltHP/python-3parclient.git
+  $ cd python-3parclient
   $ python setup.py install
 

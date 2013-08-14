@@ -7,7 +7,7 @@ Overview
 HTTP REST calls to talk with an HP 3PAR drive array.
 distribution containing tools for working with
 `3PAR Storage Arrays <http://www.3par.com>`_. 
-work with MongoDB from Python. This documentation attempts to explain
+. This documentation attempts to explain
 everything you need to know to use **HP3PARClient**.
 
 :doc:`installation`
@@ -28,8 +28,8 @@ to the 3PAR WSAPI not supporting hosts in the REST API.
 .. todo:: create the bug tracker
 
 All issues should be reported (and can be tracked / voted for /
-commented on) at the main `HP3PARClient  JIRA bug tracker
-<http://jira.mongodb.org/browse/PYTHON>`_, in the "3PAR Python Driver"
+commented on) at the main `github issues
+<https://github.com/WaltHP/python-3parclient/issues>`_, in the "3PAR Python Driver"
 project.
 
 Changes
