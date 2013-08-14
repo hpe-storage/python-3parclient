@@ -6,6 +6,7 @@
 
    .. autoclass:: hp3parclient.client.HP3ParClient(api_url)
 
+      .. automethod:: getWsApiVersion
       .. automethod:: debug_rest
       .. automethod:: login
       .. automethod:: logout
@@ -23,6 +24,7 @@
       .. automethod:: createVLUN
       .. automethod:: deleteVLUN
       .. automethod:: createHost
+      .. automethod:: modifyHost
       .. automethod:: getHosts
       .. automethod:: getHost
       .. automethod:: deleteHost

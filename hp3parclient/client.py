@@ -65,17 +65,20 @@ class HP3ParClient:
     PORT_STATE_READY=4
     PORT_STATE_SYNC=5
     PORT_STATE_OFFLINE=10
-    
+
     HOST_EDIT_ADD=1
     HOST_EDIT_REMOVE=2
 
     def __init__(self, api_url):
         self.api_url = api_url
         self.http = http.HTTPJSONRESTClient(self.api_url)
-        
+
     def getWsApiVersion(self):
         """
         Get the 3PAR WS API version
+
+        :returns: None
+
         """
         try :
             host_url = self.api_url.split('/api')

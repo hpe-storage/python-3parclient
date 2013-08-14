@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Changes in Version 1.1.0
+----------------------
+
+- Added support for hosts and ports
+
 Changes in Version 1.0.1
 ----------------------
 

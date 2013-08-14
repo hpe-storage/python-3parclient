@@ -32,6 +32,11 @@ Capabilities
 * Get all Hosts
 * Get a host
 
+* Get all Ports
+* Get iSCSI Ports
+* Get FC Ports
+* Get IP Ports
+
 
 Installation
 ============
