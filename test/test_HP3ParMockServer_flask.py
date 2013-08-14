@@ -205,13 +205,6 @@ def create_hosts():
 
     valid_members = ['FCWWNs', 'descriptors', 'domain', 'iSCSINames', 'id','name']
 
-#     valid_keys = {'FCWWNs':None, 'descriptors':None, 'domain':None, 'iSCSINames':None,
-#                   'id': 0,'name':None}
-# 
-#     valid_iscsi_keys = {'driverVersion': None, 'firmwareVersion':None, 'hostSpeed':None, 
-#                         'ipAddr': None, 'model':None, 'name': None, 'portPos': None,
-#                         'vendor': None}
-    
     for member_key in data.keys() :
         if member_key not in valid_members :
             throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % member_key)
@@ -481,24 +474,30 @@ def delete_vluns(vlun_str):
 
     params = vlun_str.split(',')
     for vlun in vluns['members']:
-        if vlun['volumeName'] == params[0]:
-            if vlun['lun'] == params[1]:
-#             if len(params) == 4:
-#                 if not params[2] == vlun['hostname']:
-#                     throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % params[2])
-#                 if not params[3] == vlun['portPos']:
-#                     throw_error(400, 'NON_EXISTENT_PORT', "The lun '%s' doesn't exist" % params[3])
-#             elif len(params) == 3:
-#                 if ':' in params[2]:
-#                     if not vlun['portPos'] == params[2]:
-#                         throw_error(400, 'NON_EXISTENT_PORT', "The lun '%s' doesn't exist" % params[2])
-#                 else:
-#                     if not vlun['hostname'] == params[2]:
-#                         throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % params[2])
-                vluns['members'].remove(vlun)
-                return make_response(json.dumps(params), 200)
+        if vlun['volumeName'] == params[0] and vlun['lun'] == int(params[1]):
+            if len(params) == 4:
+                if str(params[2]) != vlun['hostname']:
+                    throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % params[2])
 
-    throw_error(404, 'NON_EXISTENT_VLUN', "The volume '%s' doesn't exist" % params[0])            
+#                 print vlun['portPos']
+#                 port = getPort(vlun['portPos'])
+#                 if not port == params[3]:
+#                     throw_error(400, 'INV_INPUT_PORT_SPECIFICATION', "Specified port is invalid %s" % params[3])
+
+            elif len(params) == 3:
+                if ':' not in params[2]:
+                    if str(params[2]) != vlun['hostname']:
+                        throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % params[2])
+
+            vluns['members'].remove(vlun)
+            return make_response(json.dumps(params), 200)
+
+    throw_error(404, 'NON_EXISTENT_VLUN', "The volume '%s' doesn't exist" % vluns)
+
+def getPort(self, portPos):
+    port = "%s:%s:%s" % (portPos['node'], portPos['slot'], portPos['cardPort'])
+    print port
+    return port
 
 @app.route('/api/v1/vluns', methods=['GET'])
 def get_vluns():
