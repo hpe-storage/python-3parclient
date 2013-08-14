@@ -200,26 +200,39 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
     def test_3_delete_VLUN_portNonExist(self):
         self.printHeader('delete_VLUN_portNonExist')
 
-        self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1,PORT_1)
+        self.cl.createVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2,PORT_1)
+        self.cl.getVLUN(VOLUME_NAME2)
 
         port = {'node':8, 'cardPort':8,'slot':8}
-        self.assertRaises(exceptions.HTTPBadRequest, self.cl.deleteVLUN, 
-                          VOLUME_NAME1, LUN_1, HOST_NAME1, port)
+        try:
+            self.cl.deleteVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2, port)
+        except exceptions.HTTPBadRequest:
+            print 'Expected exception'
+            self.printFooter('delete_VLUN_portNonExist')
+            return
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception')
 
-        self.printFooter('delete_VLUN_portNonExist')
+        self.fail('No exception occurred.')
 
     def test_3_delete_VLUNs(self):
         self.printHeader('delete_VLUNs')
 
         self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
         self.cl.getVLUN(VOLUME_NAME1)
-
         self.cl.deleteVLUN(VOLUME_NAME1 ,LUN_1, HOST_NAME1, PORT_1)
+        try:
+            self.cl.deleteVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
+        except exceptions.HTTPNotFound:
+            print 'Expected exception'
+            self.printFooter('delete_VLUNs')
+            return
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception')
 
-        self.assertRaises(exceptions.HTTPNotFound, self.cl.deleteVLUN, 
-                          VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
-
-        self.printFooter('delete_VLUNs')
+        self.fail('No exception occurred.')
 
 #testing
 #suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVLUNTestCase)
