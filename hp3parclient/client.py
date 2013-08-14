@@ -605,6 +605,8 @@ class HP3ParClient:
             
         if auto:
             info['autoLun'] = True
+            info['maxAutoLun'] = 0
+            info['lun'] = 0
 
         headers, body = self.http.post('/vluns', body=info)
         if headers:

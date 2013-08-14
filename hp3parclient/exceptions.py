@@ -53,7 +53,7 @@ class ClientException(Exception):
     _debug1 = None
     _debug2 = None
 
-    def __init__(self, error={}):
+    def __init__(self, error=None):
         if 'code' in error:
             self._error_code = error['code']
         if 'desc' in error:
