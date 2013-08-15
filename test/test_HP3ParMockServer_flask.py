@@ -479,22 +479,27 @@ def delete_vluns(vlun_str):
                 if str(params[2]) != vlun['hostname']:
                     throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % params[2])
 
-#                 print vlun['portPos']
-#                 port = getPort(vlun['portPos'])
-#                 if not port == params[3]:
-#                     throw_error(400, 'INV_INPUT_PORT_SPECIFICATION', "Specified port is invalid %s" % params[3])
+                print vlun['portPos']
+                port = getPort(vlun['portPos'])
+                if not port == params[3]:
+                    throw_error(400, 'INV_INPUT_PORT_SPECIFICATION', "Specified port is invalid %s" % params[3])
 
             elif len(params) == 3:
                 if ':' not in params[2]:
                     if str(params[2]) != vlun['hostname']:
                         throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % params[2])
 
+                elif ':' in params[2]:
+                    port = getPort(vlun['portPos'])
+                    if port != params[2]:
+                        throw_error(400, 'INV_INPUT_PORT_SPECIFICATION', "Specified port is invalid %s" % params[2])
+
             vluns['members'].remove(vlun)
             return make_response(json.dumps(params), 200)
 
     throw_error(404, 'NON_EXISTENT_VLUN', "The volume '%s' doesn't exist" % vluns)
 
-def getPort(self, portPos):
+def getPort(portPos):
     port = "%s:%s:%s" % (portPos['node'], portPos['slot'], portPos['cardPort'])
     print port
     return port
