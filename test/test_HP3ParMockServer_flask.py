@@ -212,19 +212,12 @@ def create_hosts():
     if data['name'] is None:
         throw_error(400,'INV_INPUT_MISSING_REQUIRED', 'Name not specified.')
 
-    elif data['name'] == "PermissionDeniedHost":
-        throw_error(403, 'PERM_DENIED', "Permission denied.")
+    elif len(data['name']) > 31:
+        throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH', 'Host name is too long.')
 
-    elif data['name'] == 'ExistentHost':
-        throw_error(409, 'EXISTENT_HOST', 'Host name is already used.')
+    elif 'domain' in data and len(data['domain']) > 31:
+        throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH', 'Domain name is too long.')
 
-    elif 'domain' in data and data['domain'] == 'NoSpace':
-        throw_error(400, 'NO_SPACE', 'No space to create host.')
-        
-    elif 'domain' in data and data['domain'] == 'ThisDomainNameIsWayTooLongToMakeAnySense':
-        throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH',
-                    'Host name, domain name or iSCSI name is too long.')
-        
     elif 'domain' in data and data['domain'] == '':
         throw_error(400,'INV_INPUT_EMPTY_STR',
                     'Input string (for domain, iSCSI etc.) is empty.')        
@@ -234,6 +227,7 @@ def create_hosts():
         if char in data['name']:
             throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
                         'Error parsing host-name or domain-name')
+
         elif 'domain' in data and char in data['domain']:
             throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
                         'Error parsing host-name or domain-name')
@@ -249,6 +243,20 @@ def create_hosts():
             if len(wwn.replace(':','')) <> 16 : 
                 throw_error(400, 'INV_INPUT_WRONG_TYPE',
                             'Length of WWN is not 16.')
+
+    if 'FCWWNs' in data:
+        for host in hosts:
+            if 'FCWWNs' in host:
+                for fc_path in data['FCWWNs']:
+                    if fc_path in host['FCWWNs']:
+                        throw_error(409, 'EXISTENT_PATH', 'WWN already claimed by other host.')
+
+    if 'iSCSINames' in data:
+        for host in hosts:
+            if 'iSCSINames' in host:
+                for iqn in data['iSCSINames']:
+                    if iqn in host['iSCSINames']:
+                        throw_error(409, 'EXISTENT_PATH', 'iSCSI name already claimed by other host.')
 
     for host in hosts['members'] :
         if data['name'] == host['name'] :
@@ -485,14 +493,14 @@ def delete_vluns(vlun_str):
                     throw_error(400, 'INV_INPUT_PORT_SPECIFICATION', "Specified port is invalid %s" % params[3])
 
             elif len(params) == 3:
-                if ':' not in params[2]:
+                if ':' in params[2]:
+                    port = getPort(vlun['portPos'])
+                    if not port == params[2]:
+                        throw_error(400, 'INV_INPUT_PORT_SPECIFICATION', "Specified port is invalid %s" % params[2])
+
+                else:
                     if str(params[2]) != vlun['hostname']:
                         throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % params[2])
-
-                elif ':' in params[2]:
-                    port = getPort(vlun['portPos'])
-                    if port != params[2]:
-                        throw_error(400, 'INV_INPUT_PORT_SPECIFICATION', "Specified port is invalid %s" % params[2])
 
             vluns['members'].remove(vlun)
             return make_response(json.dumps(params), 200)
