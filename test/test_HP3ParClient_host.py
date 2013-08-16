@@ -149,7 +149,7 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         self.cl.createHost(HOST_NAME1, None, fc, optional)
         self.assertRaises(exceptions.HTTPConflict, 
                           self.cl.createHost, 
-                          HOST_NAME1,
+                          HOST_NAME2,
                           None, 
                           fc, 
                           optional)   
