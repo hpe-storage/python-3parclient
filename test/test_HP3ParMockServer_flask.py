@@ -245,7 +245,7 @@ def create_hosts():
                             'Length of WWN is not 16.')
 
     if 'FCWWNs' in data:
-        for host in hosts:
+        for host in hosts ['members']:
             if 'FCWWNs' in host:
                 for fc_path in data['FCWWNs']:
                     if fc_path in host['FCWWNs']:
@@ -263,7 +263,7 @@ def create_hosts():
             throw_error(409, 'EXISTENT_HOST', "HOST '%s' already exist." % data['name'])
 
     hosts['members'].append(data)
-    hosts['total'] = cpgs['total'] +1
+    hosts['total'] = hosts['total'] +1
 
     resp = make_response("", 201)
     return resp
