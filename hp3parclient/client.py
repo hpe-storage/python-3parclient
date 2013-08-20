@@ -68,10 +68,23 @@ class HP3ParClient:
 
     HOST_EDIT_ADD=1
     HOST_EDIT_REMOVE=2
+    # build contains major minor mj=3 min=01 build=422
+    HP3PAR_WS_MIN_BUILD_VERSION = 30102422
 
     def __init__(self, api_url):
         self.api_url = api_url
         self.http = http.HTTPJSONRESTClient(self.api_url)
+        api_version = None
+        try :
+            api_version = self.getWsApiVersion()
+        except Exception as e:
+            raise exceptions.UnsupportedVersion('Either, the 3PAR WS is not running or the version of the WS is invalid.')
+
+        # Note the build contains major, minor and build
+        # e.g. 30102422 is 3 01 02 422
+        # therefore all we need to compare is the build
+        if (api_version is None or api_version['build'] < self.HP3PAR_WS_MIN_BUILD_VERSION):
+            raise exceptions.UnsupportedVersion('Invalid 3PAR WS API, requires version, 3.1.2 MU2')
 
     def getWsApiVersion(self):
         """
