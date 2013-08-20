@@ -21,9 +21,6 @@ everything you need to know to use **HP3PARClient**.
 
 Issues
 ------
-The Client currently doesn't support host creation/management.  This is due
-to the 3PAR WSAPI not supporting hosts in the REST API.
-
 .. todo:: create the open source website 
 .. todo:: create the bug tracker
 

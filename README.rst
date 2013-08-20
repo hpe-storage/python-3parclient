@@ -7,8 +7,7 @@ interface using the python httplib2 http library.
 
 Requirements
 ============
-This branch requires 3.1.2 MUS2 version of the 3par firmware.  This 
-version of the firmware is yet to be released.
+This branch requires 3.1.2 MU2 version of the 3par firmware.
 
 Capabilities
 ============
@@ -52,8 +51,9 @@ Unit Tests
 ::
 
  $ pip install nose
+ $ nose-testconfig
  $ cd test
- $ nosetests
+ $ nosetests --tc-file config.ini
 
 
 Folders
