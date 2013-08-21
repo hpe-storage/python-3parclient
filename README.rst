@@ -51,7 +51,7 @@ Unit Tests
 ::
 
  $ pip install nose
- $ nose-testconfig
+ $ pip install nose-testconfig
  $ cd test
  $ nosetests --tc-file config.ini
 

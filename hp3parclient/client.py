@@ -90,15 +90,17 @@ class HP3ParClient:
         """
         Get the 3PAR WS API version
 
-        :returns: None
-
+        :returns: Version dict
         """
         try :
+            # remove everything down to host:port
             host_url = self.api_url.split('/api')
             self.http.set_url(host_url[0])
+            # get the api version
             response, body = self.http.get('/api')
             return body
         finally:
+            # reset the url
             self.http.set_url(self.api_url)
 
     def debug_rest(self,flag):
