@@ -143,6 +143,11 @@ class HP3ParClient:
         """
         self.http.unauthenticate()
 
+    def setHighConnections(self):
+        """
+        Set the number of REST Sessions to max.
+        """
+        self.ssh.run(['setwsapi', '-sru', 'high'])
 
     ##Volume methods
     def getVolumes(self):
@@ -755,6 +760,35 @@ class HP3ParClient:
 
         response, body = self.http.delete('/vluns/%s' % vlun)
 
+    def setQOSRule(self, set_name, max_io=None, max_bw=None):
+        """
+        Set a QOS Rule on a volume set
+
+        :param set_name: the volume set name for the rule.
+        :type set_name: str
+        :param max_io: the maximum IOPS value
+        :type max_io: int
+        :param max_bw: The maximum Bandwidth
+        :type max_bw:
+        """
+        cmd = ['setqos']
+        if max_io is not None:
+            cmd.extend(['-io', '%s' % max_io])
+        if max_bw is not None:
+            cmd.extend(['-bw', '%sM' % max_bw])
+            cmd.append('vvset:' + set_name)
+        result = self.ssh.run(cmd)
+
+        if result:
+            msg = result[0]
+        else:
+            msg = None
+
+        if msg:
+            if 'no matching QoS target found' in msg:
+                raise exceptions.HTTPNotFound(error={'desc': msg})
+            else:
+                raise exceptions.SetQOSRuleException(message = msg)
 
 
     def _mergeDict(self, dict1, dict2):

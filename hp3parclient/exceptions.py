@@ -357,6 +357,9 @@ class GrowVolumeException(SSHException):
 class CopyVolumeException(SSHException):
     message = "SSH copy volume failed: %(command)s"
 
+class SetQOSRuleException(SSHException):
+    message = "SSH set QOS rule failed: %(command)s"
+
 class ProcessExecutionError(Exception):
     def __init__(self, stdout=None, stderr=None, exit_code=None, cmd=None,
                  description=None):
