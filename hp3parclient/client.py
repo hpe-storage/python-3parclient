@@ -235,7 +235,18 @@ class HP3ParClient:
         :type amount: int
 
         """
-        self.ssh.run(['growvv', '-f', name, '%dg' % amount])
+        result = self.ssh.run(['growvv', '-f', name, '%dg' % amount])
+
+        if result:
+            msg = result[0]
+        else:
+            msg = None
+
+        if msg:
+            if '%s not found' % name in msg:
+                raise exceptions.HTTPNotFound(error={'desc': msg})
+            else:
+                raise exceptions.GrowVolumeException(message = msg)
 
     def copyVolume(self, src_name, dest_name, cpg=None,
                    snap_cpg=None, tpvv=True):
@@ -265,12 +276,29 @@ class HP3ParClient:
         result = self.ssh.run(cmd)
         if result:
             msg = result[1]
+        else:
+            msg = None
         if msg and not msg.startswith('Copy was started.'):
             if '%s not found' % src_name in msg:
                 raise exceptions.HTTPNotFound(error={'desc': msg})
             else:
                 raise exceptions.CopyVolumeException(message=msg)
+    
+    def findVolumeSet(self, name):
+        """
+        Find the Volume Set name for a volume.
 
+        :param name: the volume name
+        :type name: str
+        """
+        cmd = ['showvvset', '-vv', name]
+        out = self.ssh.run(cmd)
+        vvset_name = None 
+        if out and len(out) > 1:
+            info = out[1].split(",")
+            vvset_name = info[1]
+
+        return vvset_name        
 
     def createSnapshot(self, name, copyOfName, optional=None): 
         """ 

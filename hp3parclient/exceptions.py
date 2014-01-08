@@ -351,8 +351,11 @@ class SSHException(Exception):
 class SSHInjectionThreat(SSHException):
     message = "SSH command injection detected: %(command)s"
 
+class GrowVolumeException(SSHException):
+    message = "SSH grow volume failed: %(command)s"
+
 class CopyVolumeException(SSHException):
-    message = "SSH copy Volume failed: %(command)s"
+    message = "SSH copy volume failed: %(command)s"
 
 class ProcessExecutionError(Exception):
     def __init__(self, stdout=None, stderr=None, exit_code=None, cmd=None,
