@@ -20,8 +20,14 @@ Exceptions for the client
 .. module: Exceptions
 
 :Author: Walter A. Boring IV
-:Description: This contains the HTTP exceptions that can come back from the REST calls to 3PAR
+:Description: This contains the HTTP exceptions that can come back from the
+               REST calls to 3PAR
 """
+
+import logging
+import sys
+
+LOG = logging.getLogger(__name__)
 
 class UnsupportedVersion(Exception):
     """
@@ -259,14 +265,16 @@ class HTTPServiceUnavailable(ClientException):
 
 class HTTPGatewayTimeout(ClientException):
     """
-    HTTP 504 - The server was acting as a gateway or proxy and did not receive a timely response from the upstream server.
+    HTTP 504 - The server was acting as a gateway or proxy and did
+               not receive a timely response from the upstream server.
     """
     http_status = 504
     message = "Gateway Timeout"
 
 class HTTPVersionNotSupported(ClientException):
     """
-    HTTP 505 - The server does not support the HTTP protocol version used in the request.
+    HTTP 505 - The server does not support the HTTP protocol version used
+               in the request.
     """
     http_status = 505
     message = "Version Not Supported"
@@ -280,12 +288,12 @@ class HTTPVersionNotSupported(ClientException):
 # Instead, we have to hardcode it:
 _code_map = dict((c.http_status, c) for c in [HTTPBadRequest, HTTPUnauthorized,
                    HTTPForbidden, HTTPNotFound, HTTPMethodNotAllowed,
-                   HTTPNotAcceptable, HTTPProxyAuthRequired, HTTPRequestTimeout, 
-                   HTTPConflict, HTTPGone, HTTPLengthRequired,
-                   HTTPPreconditionFailed, HTTPRequestEntityTooLarge,
-                   HTTPRequestURITooLong, HTTPUnsupportedMediaType,
-                   HTTPRequestedRangeNotSatisfiable, HTTPExpectationFailed,
-                   HTTPTeaPot,
+                   HTTPNotAcceptable, HTTPProxyAuthRequired,
+                   HTTPRequestTimeout, HTTPConflict, HTTPGone,
+                   HTTPLengthRequired, HTTPPreconditionFailed,
+                   HTTPRequestEntityTooLarge, HTTPRequestURITooLong,
+                   HTTPUnsupportedMediaType, HTTPRequestedRangeNotSatisfiable,
+                   HTTPExpectationFailed, HTTPTeaPot,
                    HTTPNotImplemented, HTTPBadGateway,
                    HTTPServiceUnavailable, HTTPGatewayTimeout,
                    HTTPVersionNotSupported])
@@ -305,3 +313,60 @@ def from_response(response, body):
     """
     cls = _code_map.get(response.status, ClientException)
     return cls(body)
+
+
+class SSHException(Exception):
+    """This is the basis for the SSH Exceptions."""
+
+    code = 500
+    message = "An unknown exception occurred."
+
+    def __init__(self, message=None, **kwargs):
+        self.kwargs = kwargs
+        
+        if 'code' not in self.kwargs:
+            try:
+                self.kwargs['code'] = self.code
+            except AttributeError:
+                pass 
+
+        if not message:
+            try:
+                message = self.message % kwargs
+
+            except Exception:
+                exc_info = sys.exc_info()
+                # kwargs doesn't match a variable in the message
+                # log the issue and the kwargs
+                LOG.exception('Exception in string format operation')
+                for name, value in kwargs.iteritems():
+                    LOG.error("%s: %s" % (name, value))
+                # at least get the core message out if something happened
+                message = self.message
+
+        self.msg = message
+        super(SSHException, self).__init__(message)
+    
+
+class SSHInjectionThreat(SSHException):
+    message = "SSH command injection detected: %(command)s"
+
+class CopyVolumeException(SSHException):
+    message = "SSH copy Volume failed: %(command)s"
+
+class ProcessExecutionError(Exception):
+    def __init__(self, stdout=None, stderr=None, exit_code=None, cmd=None,
+                 description=None):
+        self.exit_code = exit_code
+        self.stderr = stderr
+        self.stdout = stdout
+        self.cmd = cmd
+        self.description = description
+
+        if description is None:
+            description = "Unexpected error while running command."
+        if exit_code is None:
+            exit_code = '-'
+        message = ("%s\nCommand: %s\nExit code: %s\nStdout: %r\nStderr: %r"
+                   % (description, cmd, exit_code, stdout, stderr))
+        super(ProcessExecutionError, self).__init__(message)

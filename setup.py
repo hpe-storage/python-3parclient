@@ -15,7 +15,7 @@ setup(
   author_email="walter.boring@hp.com",
   maintainer="Walter A. Boring IV",
   keywords=["hp", "3par", "rest"],
-  requires=['httplib2(>=0.6.0)'],
+  requires=['httplib2(>=0.6.0)', 'paramiko', 'eventlet'],
   install_requires=['httplib2 >= 0.6.0'],
   tests_require=["nose", "werkzeug", "nose-testconfig"],
   license="Apache License, Version 2.0",

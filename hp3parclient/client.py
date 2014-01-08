@@ -28,14 +28,7 @@ This client requires and works with 3Par InForm 3.1.2-mu2 firmware
 
 """
 
-import logging
-import os
-import urlparse
-import httplib2
-import time
-import pprint
-
-from hp3parclient import http,exceptions
+from hp3parclient import exceptions, http, ssh
 
 
 class HP3ParClient:
@@ -48,26 +41,26 @@ class HP3ParClient:
 
     """
 
-    PORT_MODE_TARGET=2
-    PORT_MODE_INITIATOR=3
-    PORT_MODE_PEER=4
+    PORT_MODE_TARGET = 2
+    PORT_MODE_INITIATOR = 3
+    PORT_MODE_PEER = 4
 
-    PORT_TYPE_HOST=1
-    PORT_TYPE_DISK=2
-    PORT_TYPE_FREE=3
-    PORT_TYPE_RCIP=6
-    PORT_TYPE=ISCSI=7
+    PORT_TYPE_HOST = 1
+    PORT_TYPE_DISK = 2
+    PORT_TYPE_FREE = 3
+    PORT_TYPE_RCIP = 6
+    PORT_TYPE_ISCSI = 7
 
-    PORT_PROTO_FC=1
-    PORT_PROTO_ISCSI=2
-    PORT_PROTO_IP=4
+    PORT_PROTO_FC = 1
+    PORT_PROTO_ISCSI = 2
+    PORT_PROTO_IP = 4
 
-    PORT_STATE_READY=4
-    PORT_STATE_SYNC=5
-    PORT_STATE_OFFLINE=10
+    PORT_STATE_READY = 4
+    PORT_STATE_SYNC = 5
+    PORT_STATE_OFFLINE = 10
 
-    HOST_EDIT_ADD=1
-    HOST_EDIT_REMOVE=2
+    HOST_EDIT_ADD = 1
+    HOST_EDIT_REMOVE = 2
     # build contains major minor mj=3 min=01 build=422
     HP3PAR_WS_MIN_BUILD_VERSION = 30102422
 
@@ -75,16 +68,28 @@ class HP3ParClient:
         self.api_url = api_url
         self.http = http.HTTPJSONRESTClient(self.api_url)
         api_version = None
+        self.ssh = None
         try :
             api_version = self.getWsApiVersion()
-        except Exception as e:
-            raise exceptions.UnsupportedVersion('Either, the 3PAR WS is not running or the version of the WS is invalid.')
+        except Exception:
+            msg = ('Either, the 3PAR WS is not running or the'
+                   ' version of the WS is invalid.')
+            raise exceptions.UnsupportedVersion(msg)
 
         # Note the build contains major, minor and build
         # e.g. 30102422 is 3 01 02 422
         # therefore all we need to compare is the build
-        if (api_version is None or api_version['build'] < self.HP3PAR_WS_MIN_BUILD_VERSION):
-            raise exceptions.UnsupportedVersion('Invalid 3PAR WS API, requires version, 3.1.2 MU2')
+        if (api_version is None or 
+            api_version['build'] < self.HP3PAR_WS_MIN_BUILD_VERSION):
+            raise exceptions.UnsupportedVersion('Invalid 3PAR WS API, requires'
+                                                ' version, 3.1.2 MU2')
+
+    def setSSHOptions(self, ip, login, password, port=22, 
+                      conn_timeout=30, privatekey=None):
+        """This is used to set the SSH credentials for calls
+        that use SSH instead of REST HTTP."""
+        self.ssh = ssh.HP3PARSSHClient(ip, login, password, port,
+                                       conn_timeout, privatekey)
 
     def getWsApiVersion(self):
         """
@@ -103,7 +108,7 @@ class HP3ParClient:
             # reset the url
             self.http.set_url(self.api_url)
 
-    def debug_rest(self,flag):
+    def debug_rest(self, flag):
         """
         This is useful for debugging requests to 3PAR
 
@@ -112,6 +117,8 @@ class HP3ParClient:
 
         """
         self.http.set_debug_flag(flag)
+        if self.ssh:
+            self.ssh.set_debug_flag(flag)
 
     def login(self, username, password, optional=None):
         """
@@ -217,6 +224,49 @@ class HP3ParClient:
         """
         response, body = self.http.delete('/volumes/%s' % name)
         return body
+
+    def growVolume(self, name, amount):
+        """
+        Grow an existing volume by 'amount' gigabytes.
+
+        :param name: the name of the volume
+        :type name: str
+        :param amount: the additional size in gigabytes to add
+        :type amount: int
+
+        """
+        self.ssh.run(['growvv', '-f', name, '%dg' % amount])
+
+    def copyVolume(self, src_name, dest_name, cpg=None,
+                   snap_cpg=None, tpvv=True):
+        """
+        Copy/Clone a volume.
+
+        :param src_name: the source volume name
+        :type src_name: str
+        :param dest_name: the destination volume name
+        :type dest_name: str
+        :param cpg: the CPG for the destination volume
+        :type cpg: str
+        :param snap_cpg: the snapshot CPG for the destination
+        :type snap_cpg: str
+        :param tpvv: use thin provisioned space for destination?
+        
+        """
+        # Virtual volume sets are not supported with the -online option
+        cmd = ['createvvcopy', '-p', src_name, '-online']
+        if snap_cpg:
+            cmd.extend(['-snp_cpg', snap_cpg])
+        if tpvv:
+            cmd.append('-tpvv')
+        if cpg:
+            cmd.append(cpg)
+        cmd.append(dest_name)
+        result = self.ssh.run(cmd)
+        if result:
+            msg = result[1]
+        if msg and not msg.startswith('Copy was started.'):
+            raise exceptions.CopyVolumeException(message=msg)
 
 
     def createSnapshot(self, name, copyOfName, optional=None): 
@@ -410,7 +460,8 @@ class HP3ParClient:
                     vluns.append(vlun)
                     
         if len(vluns) < 1 :
-            raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_HOST', 'desc': 'HOST Not Found'})
+            raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_HOST',
+                                           'desc': 'HOST Not Found'})
            
         return vluns
 
@@ -577,7 +628,8 @@ class HP3ParClient:
                 if vlun['volumeName'] == volumeName:
                     return vlun
 
-        raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_VLUN', 'desc': "VLUN '%s' was not found" % volumeName})
+        raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_VLUN',
+                                       'desc': "VLUN '%s' was not found" % volumeName})
 
     def createVLUN(self, volumeName, lun=None, hostname=None, portPos=None, noVcn=None,
                    overrideLowerPriority=None, auto=False):
