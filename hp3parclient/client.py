@@ -266,7 +266,10 @@ class HP3ParClient:
         if result:
             msg = result[1]
         if msg and not msg.startswith('Copy was started.'):
-            raise exceptions.CopyVolumeException(message=msg)
+            if '%s not found' % src_name in msg:
+                raise exceptions.HTTPNotFound(error={'desc': msg})
+            else:
+                raise exceptions.CopyVolumeException(message=msg)
 
 
     def createSnapshot(self, name, copyOfName, optional=None): 
