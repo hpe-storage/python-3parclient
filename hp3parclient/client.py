@@ -789,6 +789,24 @@ class HP3ParClient:
             elif 'Domain %s does not exist' % domain in msg:
                 raise exceptions.HTTPNotFound(error={'desc': msg})
 
+    def deleteVolumeSet(self, set_name):
+        """
+        This removes a volume set.
+
+        :param set_name: the volume set to remove
+        :type set_name: str
+        """
+        #first we have to clear out any QOS rules
+        result = self.ssh.run(['setqos', '-clear', 'vvset:%s' % (set_name)])
+        if result and len(result) == 1:
+            if 'does not exist' in result[0]:
+                raise exceptions.HTTPNotFound(error={'desc':result[0]})
+
+        result = self.ssh.run(['removevvset', '-f', set_name])
+        if result and len(result) == 1:
+            if 'does not exist' in result[0]:
+                raise exceptions.HTTPNotFound(error={'desc':result[0]})
+
     def addVolumeToVolumeSet(self, set_name, name):
         """
         This adds a volume to a volume set
@@ -799,11 +817,27 @@ class HP3ParClient:
         :type name: str
         """
         result = self.ssh.run(['createvvset', '-add', set_name, name])
-        import pprint
-        pprint.pprint(result)
         if result and len(result) == 1:
             if ('does not exist' in result[0] or 'No VV added to set.'
                 in result[0]):
+                raise exceptions.HTTPNotFound(error={'desc':result[0]})
+
+    def removeVolumeFromVolumeSet(self, set_name, name):
+        """
+        Remove a volume from a volume set
+
+        :param set_name: the volume set name
+        :type set_name: str
+        :param name: the volume name to add
+        :type name: str
+        """
+        result = self.ssh.run(['removevvset', '-f', set_name, name])
+        import pprint
+        pprint.pprint(result)
+
+        if result and len(result) == 1:
+            if ('does not exist' in result[0] or
+               'Error: vv %s not found in vv set' % name in result[0]):
                 raise exceptions.HTTPNotFound(error={'desc':result[0]})
 
     def setQOSRule(self, set_name, max_io=None, max_bw=None):
