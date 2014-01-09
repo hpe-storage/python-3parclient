@@ -871,6 +871,40 @@ class HP3ParClient:
                 raise exceptions.SetQOSRuleException(message = msg)
 
 
+    def setVolumeMetaData(self, name, key, value):
+        """
+        This is used to set a key/value pair metadata into a volume.
+
+        :param name: the volume name
+        :type name: str
+        :param key: the metadata key name
+        :type key: str
+        :param value: the metadata value
+        :type value: str
+        """
+        cmd = ['setvv', '-setkv', key + '=' + value, name]
+        result = self.ssh.run(cmd)
+        if result and len(result) == 1:
+            if 'does not exist' in result[0]:
+                raise exceptions.HTTPNotFound(error={'desc':result[0]})
+
+    def removeVolumeMetaData(self, name, key):
+        """
+        This is used to remove a metadata key/value pair from a volume.
+
+        :param name: the volume name
+        :type name: str
+        :param key: the metadata key name
+        :type key: str
+        """
+        cmd = ['setvv', '-clrkey', key, name]
+        result = self.ssh.run(cmd)
+        if result and len(result) == 1:
+            if 'does not exist' in result[0]:
+                raise exceptions.HTTPNotFound(error={'desc':result[0]})
+
+
+
     def _mergeDict(self, dict1, dict2):
         """
         Safely merge 2 dictionaries together
