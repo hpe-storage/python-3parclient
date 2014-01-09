@@ -760,6 +760,52 @@ class HP3ParClient:
 
         response, body = self.http.delete('/vluns/%s' % vlun)
 
+
+    ## QOS/VolumeSet methods
+
+    def createVolumeSet(self, set_name, domain=None):
+        """
+        This creates a new volume set
+
+        :param set_name: the volume set to create
+        :type set_name: str
+        :param domain: the domain where the set lives
+        :type domain: str
+        """
+        cmd = ['createvvset']
+        if domain is not None:
+            cmd.extend(['-domain', '%s' % domain])
+
+        cmd.append('%s' % set_name)
+        result = self.ssh.run(cmd)
+        if result:
+            msg = result[0]
+        else:
+            msg = None
+
+        if msg:
+            if 'A set using that name already exists' in msg:
+                raise exceptions.HTTPConflict(error={'desc': msg})
+            elif 'Domain %s does not exist' % domain in msg:
+                raise exceptions.HTTPNotFound(error={'desc': msg})
+
+    def addVolumeToVolumeSet(self, set_name, name):
+        """
+        This adds a volume to a volume set
+
+        :param set_name: the volume set name
+        :type set_name: str
+        :param name: the volume name to add
+        :type name: str
+        """
+        result = self.ssh.run(['createvvset', '-add', set_name, name])
+        import pprint
+        pprint.pprint(result)
+        if result and len(result) == 1:
+            if ('does not exist' in result[0] or 'No VV added to set.'
+                in result[0]):
+                raise exceptions.HTTPNotFound(error={'desc':result[0]})
+
     def setQOSRule(self, set_name, max_io=None, max_bw=None):
         """
         Set a QOS Rule on a volume set
