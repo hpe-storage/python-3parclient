@@ -27,6 +27,7 @@ It provides the ability to provision 3PAR volumes, VLUNs, CPGs.
 This client requires and works with 3Par InForm 3.1.2-mu2 firmware
 
 """
+import re
 
 from hp3parclient import exceptions, http, ssh
 
@@ -474,6 +475,48 @@ class HP3ParClient:
 
         """
         reponse, body = self.http.delete('/hosts/%s' % name)
+
+    def findHost(self, iqn=None, wwn=None):
+        """
+        Find a host from an iSCSI initiator or FC WWN
+
+        :param iqn: lookup based on iSCSI initiator
+        :type iqn: str
+        :param wwn: lookup based on WWN
+        :type wwn: str
+        """
+        # for now there is no search in the REST API
+        # so we can do a create looking for a specific
+        # error.  If we don't get that error, we nuke the 
+        # fake host.
+
+        cmd = ['createhost']
+        #create a random hostname
+        hostname = 'zxy-delete-vxz'
+        if iqn:
+            cmd.append('-iscsi')
+
+        cmd.append(hostname)
+
+        if iqn:
+            cmd.append(iqn)
+        else:
+            cmd.append(wwn)
+
+        result = self.ssh.run(cmd)
+        test = ' '.join(result)
+        search_str = "already used by host "
+        if search_str in test:
+            # host exists, return name used by 3par
+            hostname_3par = self._get_next_word(test, search_str)
+            return hostname_3par 
+        else:
+            # host creation worked...so we need to remove it.
+            # this means we didn't find an existing host that
+            # is using the iqn or wwn.
+            self.deleteHost(hostname)
+            return None
+
 
     def getHostVLUNs(self, hostName):
         """
@@ -927,3 +970,11 @@ class HP3ParClient:
         dict3.update(dict2)
         return dict3
 
+    def _get_next_word(self, s, search_string):
+        """Return the next word.
+
+        Search 's' for 'search_string', if found return the word preceding
+        'search_string' from 's'.
+        """
+        word = re.search(search_string.strip(' ') + ' ([^ ]*)', s)
+        return word.groups()[0].strip(' ')
