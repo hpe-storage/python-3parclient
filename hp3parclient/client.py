@@ -69,6 +69,8 @@ class HP3ParClient:
     SET_MEM_ADD = 1
     SET_MEM_REMOVE = 2
 
+    GROW_VOLUME = 3
+
     # build contains major minor mj=3 min=01 build=422
     HP3PAR_WS_MIN_BUILD_VERSION = 30102422
 
@@ -156,6 +158,24 @@ class HP3ParClient:
         """
         self.ssh.run(['setwsapi', '-sru', 'high'])
 
+    def getStorageSystemInfo(self):
+        """
+        Get the Storage System Information
+
+        :returns: Dictionary of Storage System Info
+        """
+        response, body = self.http.get('/system')
+        return body
+
+    def getWSAPIConfigurationInfo(self):
+        """
+        Get the WSAPI Configuration Information
+
+        :returns: Dictionary of WSAPI configurations
+        """
+        response, body = self.http.get('/wsapiconfiguration')
+        return body
+
     ##Volume methods
     def getVolumes(self):
         """
@@ -213,7 +233,6 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - NO_SPACE - Not Enough space is available
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
         :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXISTENT_SV - Volume Exists already
-
         """
         info = {'name': name, 'cpg': cpgName, 'sizeMiB': sizeMiB}
         if optional:
@@ -246,22 +265,37 @@ class HP3ParClient:
         :param amount: the additional size in gigabytes to add
         :type amount: int
 
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - VV_NOT_IN_SAME_DOMAIN - The volume is not in the same domain.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VOL - The volume does not exist.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_UNSUPPORTED_VV_TYPE - Invalid operation: Cannot grow this type of volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_TUNE_IN_PROGRESS - Invalid operation: Volume tuning is in progress.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_EXCEEDS_LENGTH - Invalid input: String length exceeds limit.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_VV_GROW_SIZE - Invalid grow size.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - VV_NEW_SIZE_EXCEEDS_CPG_LIMIT - New volume size exceeds CPG limit.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_INTERNAL_VOLUME - This operation is not allowed on an internal volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_VOLUME_CONV_IN_PROGRESS - Invalid operation: VV conversion is in progress.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_VOLUME_COPY_IN_PROGRESS - Invalid operation: online copy is in progress.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_CLEANUP_IN_PROGRESS - Internal volume cleanup is in progress.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - VV_IS_BEING_REMOVED - The volume is being removed.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - VV_IN_INCONSISTENT_STATE - The volume has an internal consistency error.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - VV_SIZE_CANNOT_REDUCE - New volume size is smaller than the current size.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - VV_NEW_SIZE_EXCEEDS_LIMITS - New volume size exceeds the limit.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_SA_SD_SPACE_REMOVED - Invalid operation: Volume SA/SD space is being removed.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_IS_BUSY - Invalid operation: Volume is currently busy.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - VV_NOT_STARTED - Volume is not started.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_IS_PCOPY - Invalid operation: Volume is a physical copy.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_NOT_IN_NORMAL_STATE - Volume state is not normal.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_PROMOTE_IN_PROGRESS - Invalid operation: Volume promotion is in progress.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_PARENT_OF_PCOPY - Invalid operation: Volume is the parent of physical copy.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - NO_SPACE - Insufficent space for requested operation.
         """
-        result = self.ssh.run(['growvv', '-f', name, '%dg' % amount])
+        info = {'action': self.GROW_VOLUME,
+                'sizeMiB': amount}
 
-        if result:
-            msg = result[0]
-        else:
-            msg = None
+        response, body = self.http.put('/volumes/%s' % name, body=info)
+        return body
 
-        if msg:
-            if '%s not found' % name in msg:
-                raise exceptions.HTTPNotFound(error={'desc': msg})
-            else:
-                raise exceptions.GrowVolumeException(message=msg)
-
-    def copyVolume(self, src_name, dest_name, cpg=None,
-                   snap_cpg=None, tpvv=True):
+    def copyVolume(self, src_name, dest_name, optional=None):
         """
         Copy/Clone a volume.
 
@@ -269,32 +303,62 @@ class HP3ParClient:
         :type src_name: str
         :param dest_name: the destination volume name
         :type dest_name: str
-        :param cpg: the CPG for the destination volume
-        :type cpg: str
-        :param snap_cpg: the snapshot CPG for the destination
-        :type snap_cpg: str
-        :param tpvv: use thin provisioned space for destination?
+        :param optional: Dictionary of optional params
+        :type optional: dict
 
+        .. code-block:: python
+
+            optional = {
+                'destCPG': "OpenStack_CPG", # CPG for the destination volume
+                'online': False, # should physical copy be performed online?
+                'tpvv': False, # use thin provisioned space for destination?  (online copy only)
+                'snapCPG' : "OpenStack_SnapCPG, # snapshot CPG for the destination (online copy only)
+                'saveSnapshot': False, # save the snapshot of the source volume after the copy id complete?
+                'priority' : 1 # taskPriorityEnum (does not apply to online copy)
+            }
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Invalid VV name or CPG name.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_CPG - The CPG does not exists.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - CPG_NOT_IN SAME_DOMAIN - The CPG is not in the current domain.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VOL - The volume does not exist
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - VV_NOT_IN_SAME_DOMAIN - The volume is not in the same domain.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BAD_ENUM_VALUE - The priority value in not in the valid range(1-3).
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXISTENT_VOLUME - The volume already exists.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_SYS_VOLUME - The operation is not allowed on a system volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_NON_BASE_VOLUME - The destination volume is not a base volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_IN_REMOTE_COPY - The destination volume is involved in a remote copy.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_EXPORTED - The volume is exported.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_COPY_TO_SELF - The destination volume is the same as the parent.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_READONLY_SNAPSHOT - The parent volume is a read-only snapshot.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_COPY_TO_BASE - The destination volume is the base volume of a parent volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_VOLUME_CONV_IN_PROGRESS  - The volume is in a conversion operation.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_NO_SNAPSHOT_ALLOWED - The parent volume must allow snapshots.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_ONLINE_COPY_IN_PROGRESS  - The volume is the target of an online copy.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_CLEANUP_IN_PROGRESS - Cleanup of internal volume for the volume is in progress.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_CIRCULAR_COPY - The parent volume is a copy of the destination volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_PEER_VOLUME - The operation is not allowed on a peer volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_INTERNAL_VOLUME - The operation is not allowed on an internal volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - VV_IS_BEING_REMOVED - The volume is being removed.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_NOT_IN_NORMAL_STATE - The volume is not in the normal state.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - VV_IN_INCONSISTENT_STATE - The volume has an internal consistency error.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_PCOPY_IN_PROGRESS  - The destination volume has a physical copy in progress.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_FAILED_ONLINE_COPY  - Online copying of the destination volume has failed.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_COPY_PARENT_TOO_BIG - The size of the parent volume is larger than the size of the destination volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_NO_PARENT - The volume has no physical parent.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - IN_USE - The resynchronization snapshot is in a stale state.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - VV_IN_STALE_STATE - The volume is in a stale state.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VVCOPY - Physical copy not found.
         """
         # Virtual volume sets are not supported with the -online option
-        cmd = ['createvvcopy', '-p', src_name, '-online']
-        if snap_cpg:
-            cmd.extend(['-snp_cpg', snap_cpg])
-        if tpvv:
-            cmd.append('-tpvv')
-        if cpg:
-            cmd.append(cpg)
-        cmd.append(dest_name)
-        result = self.ssh.run(cmd)
-        if result:
-            msg = result[1]
-        else:
-            msg = None
-        if msg and not msg.startswith('Copy was started.'):
-            if '%s not found' % src_name in msg:
-                raise exceptions.HTTPNotFound(error={'desc': msg})
-            else:
-                raise exceptions.CopyVolumeException(message=msg)
+        parameters = {'destVolume': dest_name}
+        if optional:
+            parameters = self._mergeDict(parameters, optional)
+
+        info = {'action': 'createPhysicalCopy',
+                'parameters': parameters}
+
+        response, body = self.http.post('/volumes/%s' % src_name, body=info)
+        return body
 
     def findVolumeSet(self, name):
         """
@@ -329,7 +393,7 @@ class HP3ParClient:
                 'id' : 12, # Specifies the ID of the volume, next by default
                 'comment' : "some comment",
                 'readOnly' : True, # Read Only
-                'expirationHours' : 36 # time from now to expire
+                'expirationHours' : 36, # time from now to expire
                 'retentionHours' : 12 # time from now to expire
             }
 
@@ -383,20 +447,19 @@ class HP3ParClient:
         :type name: array
         :param optional: The optional stuff
         :type optional: dict
-        
+
         .. code-block:: python
 
-            optional = { 
+            optional = {
                 'domain' : 'myDomain', # Create the host in the specified domain, or default domain if unspecified.
                 'forceTearDown' : False, # If True, force to tear down low-priority VLUN exports.
                 'iSCSINames' : True, # Read Only
                 'descriptors' : {'location' : 'earth', 'IPAddr' : '10.10.10.10', 'os': 'linux',
                               'model' : 'ex', 'contact': 'Smith', 'comment' : 'Joe's box}
- 
             }
-        
+
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_MISSING_REQUIRED - Name not specified. 
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_MISSING_REQUIRED - Name not specified.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_PARAM_CONFLICT - FCWWNs and iSCSINames are both specified.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_EXCEEDS_LENGTH - Host name, domain name, or iSCSI name is too long.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_EMPTY_STR - Input string (for domain name, iSCSI name, etc.) is empty.
@@ -524,13 +587,15 @@ class HP3ParClient:
         """
         Get all of the VLUNs on a specific Host
 
-        :param name: Host name
-        :type name: str
+        :param hostName: Host name
+        :type hostNane: str
 
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_HOST - HOST Not Found
         """
+        # calling getHost to see if the host exists and raise not found
+        # exception if it's not found.
+        self.getHost(hostName)
 
-        host = self.getHost(hostName)
         allVLUNs = self.getVLUNs()
 
         vluns = []
@@ -636,12 +701,13 @@ class HP3ParClient:
                               'chunkletPosPref' : 2, 'diskPatterns': []}
             }
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT Invalid URI Syntax 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - NON_EXISTENT_DOMAIN - Domain doesn't exist
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT Invalid URI Syntax.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` -
+        NON_EXISTENT_DOMAIN - Domain doesn't exist.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - NO_SPACE - Not Enough space is available.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - BAD_CPG_PATTERN  A Pattern in a CPG specifies illegal values
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - BAD_CPG_PATTERN  A Pattern in a CPG specifies illegal values.
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXISTENT_CPG - CPG Exists already 
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXISTENT_CPG - CPG Exists already
 
         """
         info = {'name': name}
@@ -650,7 +716,7 @@ class HP3ParClient:
 
         reponse, body = self.http.post('/cpgs', body=info)
         return body
-    
+
     def deleteCPG(self, name):
         """
         Delete a CPG
@@ -658,25 +724,20 @@ class HP3ParClient:
         :param name: CPG Name
         :type name: str
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_CPG - CPG Not Found 
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_CPG - CPG Not Found
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` -  IN_USE - The CPG Cannot be removed because it's in use.
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
 
         """
         reponse, body = self.http.delete('/cpgs/%s' % name)
 
-
-
     ## VLUN methods
-
     ## Virtual-LUN, or VLUN, is a pairing between a virtual volume and a
     ## logical unit number (LUN), expressed as either a VLUN template or an active
     ## VLUN
-
     ## A VLUN template sets up an association between a virtual volume and a
     ## LUN-host, LUN-port, or LUN-host-port combination by establishing the export
     ## rule, or the manner in which the Volume is exported.
-
     def getVLUNs(self):
         """
         Get VLUNs
@@ -687,7 +748,7 @@ class HP3ParClient:
         return body
 
     def getVLUN(self, volumeName):
-        """ 
+        """
         Get information about a VLUN
 
         :param volumeName: The volume name of the VLUN to find
@@ -704,12 +765,12 @@ class HP3ParClient:
                 if vlun['volumeName'] == volumeName:
                     return vlun
 
-        raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_VLUN',
+        raise exceptions.HTTPNotFound({'code': 'NON_EXISTENT_VLUN',
                                        'desc': "VLUN '%s' was not found" % volumeName})
 
     def createVLUN(self, volumeName, lun=None, hostname=None, portPos=None, noVcn=None,
-                   overrideObjectivePriority=None, auto=False):
-        """ 
+                   overrideLowerPriority=None, auto=False):
+        """
         Create a new VLUN
 
         When creating a VLUN, the volumeName is required. The lun member is
@@ -728,7 +789,7 @@ class HP3ParClient:
         :type portPos: dict
         :param noVcn: A VLUN change notification (VCN) not be issued after export (-novcn). Default: False.
         :type noVcn: bool
-        :param overrideObjectivePriority: Existing lower priority VLUNs will
+        :param overrideLowerPriority: Existing lower priority VLUNs will
                 be overridden (-ovrd). Use only if hostname member exists. Default:
                 False.
         :type overrideLowerPriority: bool
@@ -750,8 +811,8 @@ class HP3ParClient:
         if noVcn:
             info['noVcn'] = noVcn
 
-        if overrideObjectivePriority:
-            info['overrideLowerPriority'] = overrideObjectivePriority
+        if overrideLowerPriority:
+            info['overrideLowerPriority'] = overrideLowerPriority
 
         if auto:
             info['autoLun'] = True
@@ -951,7 +1012,7 @@ class HP3ParClient:
             if 'no matching QoS target found' in msg:
                 raise exceptions.HTTPNotFound(error={'desc': msg})
             else:
-                raise exceptions.SetQOSRuleException(message = msg)
+                raise exceptions.SetQOSRuleException(message=msg)
 
     #def clearQOSRules
         #first we have to clear out any QOS rules
@@ -975,7 +1036,7 @@ class HP3ParClient:
         result = self.ssh.run(cmd)
         if result and len(result) == 1:
             if 'does not exist' in result[0]:
-                raise exceptions.HTTPNotFound(error={'desc':result[0]})
+                raise exceptions.HTTPNotFound(error={'desc': result[0]})
 
     def removeVolumeMetaData(self, name, key):
         """
@@ -990,14 +1051,12 @@ class HP3ParClient:
         result = self.ssh.run(cmd)
         if result and len(result) == 1:
             if 'does not exist' in result[0]:
-                raise exceptions.HTTPNotFound(error={'desc':result[0]})
-
-
+                raise exceptions.HTTPNotFound(error={'desc': result[0]})
 
     def _mergeDict(self, dict1, dict2):
         """
         Safely merge 2 dictionaries together
-        
+
         :param dict1: The first dictionary
         :type dict1: dict
         :param dict2: The second dictionary
@@ -1011,7 +1070,7 @@ class HP3ParClient:
             raise Exception("dict1 is not a dictionary")
         if type(dict2) is not dict:
             raise Exception("dict2 is not a dictionary")
-        
+
         dict3 = dict1.copy()
         dict3.update(dict2)
         return dict3
