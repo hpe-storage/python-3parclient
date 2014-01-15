@@ -48,7 +48,6 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
             
         if self.unitTest :
             self.printHeader('Using flask ' + self.flask_url)
-            self.cl = client.HP3ParClient(self.flask_url)
             parsed_url = urlparse(self.flask_url)
             userArg = '-user=%s' % self.user
             passwordArg = '-password=%s' % self.password
@@ -69,6 +68,7 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
             except Exception as e:
                 pass
             time.sleep(1) 
+            self.cl = client.HP3ParClient(self.flask_url)
         else :
             self.printHeader('Using 3PAR ' + self.url_3par)
             self.cl = client.HP3ParClient(self.url_3par)

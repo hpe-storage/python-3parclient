@@ -68,7 +68,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
 
         try:
             #add one
-            optional = {'id': 1, 'comment': 'test volume', 'tpvv': True}
+            optional = {'comment': 'test volume', 'tpvv': True}
             self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
         except Exception as ex:
             print ex
@@ -80,9 +80,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             vol1 = self.cl.getVolume(VOLUME_NAME1)
             self.assertIsNotNone(vol1)
             volName = vol1['name']
-            volId = vol1['id']
             self.assertEqual(VOLUME_NAME1, volName)
-            self.assertEqual(1, volId)
 
         except Exception as ex:
             print ex
@@ -91,7 +89,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
 
         try:
             #add another
-            optional = {'id': 2, 'comment': 'test volume2', 'tpvv': True}
+            optional = {'comment': 'test volume2', 'tpvv': True}
             self.cl.createVolume(VOLUME_NAME2, CPG_NAME2, 1024, optional)
         except Exception as ex:
             print ex
@@ -103,9 +101,9 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             vol2 = self.cl.getVolume(VOLUME_NAME2)
             self.assertIsNotNone(vol2)
             volName = vol2['name']
-            volId = vol2['id']
+            comment = vol2['comment']
             self.assertEqual(VOLUME_NAME2, volName)
-            self.assertEqual(2, volId)
+            self.assertEqual("test volume2", comment)
         except Exception as ex:
             print ex
             self.fail("Failed to get volume")
@@ -134,7 +132,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
 
         #add one and check
         try:
-            optional = {'id': 4, 'comment': 'test volume', 'tpvv': True}
+            optional = {'comment': 'test volume', 'tpvv': True}
             self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
         except Exception as ex:
             print ex
@@ -169,14 +167,14 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
     def test_1_create_volume_duplicate_ID(self):
         self.printHeader('create_volume_duplicate_ID')
         try:
-            optional = {'id': 1, 'comment': 'first volume'}
+            optional = {'id': 10000, 'comment': 'first volume'}
             self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
         except Exception as ex:
             print ex
             self.fail('Failed to create volume')
 
         try:
-            optional2 = {'id': 1, 'comment': 'volume with duplicate ID'}
+            optional2 = {'id': 10000, 'comment': 'volume with duplicate ID'}
             self.cl.createVolume(VOLUME_NAME2, CPG_NAME2, 1024, optional2)
         except exceptions.HTTPConflict:
             print 'Expected exception'
