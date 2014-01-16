@@ -7,7 +7,7 @@ interface using the python httplib2 http library.
 
 Requirements
 ============
-This branch requires 3.1.2 MU2 version of the 3par firmware.
+This branch requires 3.1.3 version of the 3par firmware.
 
 Capabilities
 ============
