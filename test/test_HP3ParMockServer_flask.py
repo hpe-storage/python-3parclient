@@ -7,7 +7,7 @@ from werkzeug.exceptions import default_exceptions
 from werkzeug.exceptions import HTTPException
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-debug", help="Turn on http debugging", 
+parser.add_argument("-debug", help="Turn on http debugging",
                     default=False, action="store_true")
 parser.add_argument("-user", help="User name")
 parser.add_argument("-password", help="User password")
@@ -47,7 +47,7 @@ def make_json_app(import_name, **kwargs):
     app = Flask(import_name, **kwargs)
     #app.debug = True
     app.secret_key = id_generator(24)
-    
+
 
     for code in default_exceptions.iterkeys():
         app.error_handler_spec[None][code] = make_json_error
@@ -87,7 +87,7 @@ def index():
 @app.route('/api/v1/throwerror')
 def errtest():
     debugRequest(request)
-    throw_error(405, 'ERR_TEST', 'testing throwing an error', 
+    throw_error(405, 'ERR_TEST', 'testing throwing an error',
                 'debug1 message', 'debug2 message')
 
 
@@ -137,12 +137,12 @@ def logout_credentials(session_key):
 def create_cpgs():
     debugRequest(request)
     data = json.loads(request.data)
-        
-    valid_keys = {'name':None, 'growthIncrementMB':None, 'growthLimitMB':None, 
+
+    valid_keys = {'name':None, 'growthIncrementMB':None, 'growthLimitMB':None,
                   'usedLDWarningAlertMB':None, 'domain':None, 'LDLayout':None}
 
-    valid_LDLayout_keys = {'RAIDType':None, 'setSize':None, 'HA':None, 
-                           'chuckletPosRef':None, 'diskPatterns':None} 
+    valid_LDLayout_keys = {'RAIDType':None, 'setSize':None, 'HA':None,
+                           'chuckletPosRef':None, 'diskPatterns':None}
 
     for key in data.keys():
         if key not in valid_keys.keys():
@@ -151,47 +151,47 @@ def create_cpgs():
            layout = data ['LDLayout']
            for subkey in layout.keys():
                if subkey not in valid_LDLayout_keys:
-                   throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey) 
+                   throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey)
 
-    if data['domain'] == 'BAD_DOMAIN': 
-        throw_error(404, 'NON_EXISTENT_DOMAIN', "Non-existing domain specified.")     
-    
+    if data['domain'] == 'BAD_DOMAIN':
+        throw_error(404, 'NON_EXISTENT_DOMAIN', "Non-existing domain specified.")
+
     for cpg in cpgs['members'] :
         if data['name'] == cpg['name'] :
             throw_error(409, 'EXISTENT_CPG', "CPG '%s' already exist." % data['name'])
-    
+
     cpgs['members'].append(data)
     cpgs['total'] = cpgs['total'] +1
- 
+
     return  make_response("", 200)
 
 @app.route('/api/v1/cpgs', methods=['GET'])
 def get_cpgs():
     debugRequest(request)
-    
-    #should get it from global cpgs 
+
+    #should get it from global cpgs
     resp = make_response(json.dumps(cpgs), 200)
     return resp
 
 @app.route('/api/v1/cpgs/<cpg_name>', methods=['GET'])
 def get_cpg(cpg_name):
     debugRequest(request)
-    
+
     for cpg in cpgs['members']:
         if cpg['name'] == cpg_name:
             resp = make_response(json.dumps(cpg), 200)
             return resp
-        
+
     throw_error(404, 'NON_EXISTENT_CPG', "CPG '%s' doesn't exist" % cpg_name)
 
 @app.route('/api/v1/cpgs/<cpg_name>', methods=['DELETE'])
 def delete_cpg(cpg_name):
     debugRequest(request)
-    
+
     for cpg in cpgs['members']:
         if cpg['name'] == cpg_name:
             cpgs['members'].remove(cpg)
-            return make_response("", 200)            
+            return make_response("", 200)
 
     throw_error(404, 'NON_EXISTENT_CPG', "CPG '%s' doesn't exist" % cpg_name)
 
@@ -200,7 +200,7 @@ def delete_cpg(cpg_name):
 
 @app.route('/api/v1/hosts', methods=['POST'])
 def create_hosts():
-    debugRequest(request)  
+    debugRequest(request)
     data = json.loads(request.data)
 
     valid_members = ['FCWWNs', 'descriptors', 'domain', 'iSCSINames', 'id','name']
@@ -220,7 +220,7 @@ def create_hosts():
 
     elif 'domain' in data and data['domain'] == '':
         throw_error(400,'INV_INPUT_EMPTY_STR',
-                    'Input string (for domain, iSCSI etc.) is empty.')        
+                    'Input string (for domain, iSCSI etc.) is empty.')
 
     charset = {'!', '@', '#', '$', '%', '&', '^'}
     for char in charset:
@@ -240,7 +240,7 @@ def create_hosts():
     if 'FCWWNs' in data.keys():
         fc = data['FCWWNs']
         for wwn in fc :
-            if len(wwn.replace(':','')) <> 16 : 
+            if len(wwn.replace(':','')) <> 16 :
                 throw_error(400, 'INV_INPUT_WRONG_TYPE',
                             'Length of WWN is not 16.')
 
@@ -270,7 +270,7 @@ def create_hosts():
 
 @app.route('/api/v1/hosts/<host_name>', methods=['PUT'])
 def modify_host(host_name):
-    debugRequest(request)  
+    debugRequest(request)
     data = json.loads(request.data)
 
     if host_name == 'None':
@@ -372,7 +372,7 @@ def modify_host(host_name):
                 if member_key == 'newName':
                     host['name'] = data['newName']
                 else:
-                    host[member_key] = data[member_key]            
+                    host[member_key] = data[member_key]
             resp = make_response(json.dumps(host), 200)
             return resp
 
@@ -386,7 +386,7 @@ def delete_host(host_name):
     for host in hosts['members']:
         if host['name'] == host_name:
             hosts['members'].remove(host)
-            return make_response("", 200)    
+            return make_response("", 200)
 
     throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % host_name)
 
@@ -406,11 +406,11 @@ def get_host(host_name):
                         'Host name contains invalid character.')
 
     if host_name == 'InvalidURI':
-        throw_error(400, 'INV_INPUT', 'Invalid URI Syntax.') 
+        throw_error(400, 'INV_INPUT', 'Invalid URI Syntax.')
 
     for host in hosts['members']:
         if host['name'] == host_name:
-            
+
             if 'iSCSINames' in host.keys():
                 iscsi_paths = []
                 for path in host['iSCSINames']:
@@ -451,7 +451,7 @@ def create_vluns():
     ## do some fake errors here depending on data
     for key in data.keys():
         if key not in valid_keys.keys():
-            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key) 
+            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
         elif 'portPos' in data.keys():
             portP = data ['portPos']
             for subkey in portP.keys():
@@ -627,12 +627,42 @@ def get_volume(volume_name):
 
     throw_error(404, 'NON_EXISTENT_VOL', "volume doesn't exist")
 
+
+@app.route('/api/v1/system', methods=['GET'])
+def get_system():
+    debugRequest(request)
+
+    system_info = {"id": 12345,
+                   "name": "Flask",
+                   "systemVersion": "3.1.3.152",
+                   "IPv4Addr": "10.10.10.10",
+                   "model": "HP_3PAR 7400",
+                   "serialNumber": "1234567",
+                   "totalNodes": 2,
+                   "masterNode": 0,
+                   "onlineNodes": [0, 1],
+                   "clusterNodes": [0, 1],
+                   "chunkletSizeMiB": 1024,
+                   "totalCapacityMiB": 35549184.0,
+                   "allocatedCapacityMiB": 4318208.0,
+                   "freeCapacityMiB": 31230976.0,
+                   "failedCapacityMiB": 0.0,
+                   "location": "Flask Test Virtual",
+                   "owner": "Flask Owner",
+                   "contact": "flask@flask.com",
+                   "comment": "flask test env",
+                   "timeZone": "America/Los_Angeles"}
+
+    resp = make_response(json.dumps(system_info), 200)
+    return resp
+
+
 @app.route('/api', methods=['GET'])
 def get_version():
     debugRequest(request)
     version = {'major': 1,
-               'minor': 2,
-               'build': 30102422}
+               'minor': 3,
+               'build': 30103152}
     resp = make_response(json.dumps(version), 200)
     return resp
 
@@ -847,7 +877,7 @@ if __name__ == "__main__":
                                'vendor': 'HP'}],
                'id': 12,
                'name': 'UnitTestHost2'}],
-            'total': 2}     
+            'total': 2}
 
     #fake create vluns
     global vluns
@@ -862,7 +892,7 @@ if __name__ == "__main__":
                'remoteName': '100010604B0174F1',
                'type': 4,
                'volumeName': 'UnitTestVolume',
-               'volumeWWN': '50002AC00001383D'}, 
+               'volumeWWN': '50002AC00001383D'},
               {'active': False,
                'failedPathInterval': 0,
                'failedPathPol': 1,
