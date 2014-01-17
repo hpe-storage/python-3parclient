@@ -35,10 +35,10 @@ PORT_1 = {'node':1, 'cardPort':1, 'slot':1}
 
 
 class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
-    
+
     def setUp(self):
-        super(HP3ParClientVLUNTestCase, self).setUp()        
-       
+        super(HP3ParClientVLUNTestCase, self).setUp()
+
         try :
             optional = {'domain': DOMAIN}
             self.cl.createCPG(CPG_NAME1, optional)
@@ -56,7 +56,7 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         try :
             self.cl.createVolume(VOLUME_NAME2, CPG_NAME2, 1024)
         except :
-            pass  
+            pass
         try :
             optional = {'domain': DOMAIN}
             self.cl.createHost(HOST_NAME1, None, None, optional)
@@ -66,8 +66,8 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             optional = {'domain': DOMAIN}
             self.cl.createHost(HOST_NAME2, None, None, optional)
         except :
-            pass                
-        
+            pass
+
     def tearDown(self):
 
         try:
@@ -133,7 +133,7 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         self.assertRaises(exceptions.HTTPBadRequest, self.cl.createVLUN, VOLUME_NAME1, lun, HOST_NAME1, PORT_1)
 
         self.printFooter('create_VLUN_tooLarge')
-   
+
     def test_1_create_VLUN_volulmeNonExist(self):
         self.printHeader('create_VLUN_volumeNonExist')
 
@@ -200,7 +200,7 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
     def test_3_delete_VLUN_portNonExist(self):
         self.printHeader('delete_VLUN_portNonExist')
 
-        self.cl.createVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2)
+        self.cl.createVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2, PORT_1)
         self.cl.getVLUN(VOLUME_NAME2)
 
         port = {'node': 8, 'cardPort': 8, 'slot': 8}

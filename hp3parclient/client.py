@@ -263,11 +263,11 @@ class HP3ParClient:
 
     def growVolume(self, name, amount):
         """
-        Grow an existing volume by 'amount' gigabytes.
+        Grow an existing volume by 'amount' Mebibytes.
 
         :param name: the name of the volume
         :type name: str
-        :param amount: the additional size in gigabytes to add
+        :param amount: the additional size in MiB to add, rounded up to the next chunklet size (e.g. 256 or 1000 MiB)
         :type amount: int
 
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - VV_NOT_IN_SAME_DOMAIN - The volume is not in the same domain.
