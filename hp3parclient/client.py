@@ -1,6 +1,4 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
-# Copyright 2012 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2012-2014 Hewlett Packard Development Company, L.P.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -71,8 +69,15 @@ class HP3ParClient:
 
     GROW_VOLUME = 3
 
-    # build contains major minor mj=3 min=01 build=422
-    HP3PAR_WS_MIN_BUILD_VERSION = 30102422
+    TARGET_TYPE_VVSET = 1
+    TARGET_TYPE_SYS = 2
+
+    PRIORITY_LOW = 1
+    PRIORITY_NORMAL = 2
+    PRIORITY_HIGH = 3
+
+    # build contains major minor mj=3 min=01 main=03 build=152
+    HP3PAR_WS_MIN_BUILD_VERSION = 30103152
 
     def __init__(self, api_url):
         self.api_url = api_url
@@ -86,13 +91,13 @@ class HP3ParClient:
                    ' version of the WS is invalid.')
             raise exceptions.UnsupportedVersion(msg)
 
-        # Note the build contains major, minor and build
+        # Note the build contains major, minor, maintenance and build
         # e.g. 30102422 is 3 01 02 422
         # therefore all we need to compare is the build
         if (api_version is None or
             api_version['build'] < self.HP3PAR_WS_MIN_BUILD_VERSION):
             raise exceptions.UnsupportedVersion('Invalid 3PAR WS API, requires'
-                                                ' version, 3.1.2 MU2')
+                                                ' version, 3.1.3')
 
     def setSSHOptions(self, ip, login, password, port=22,
                       conn_timeout=30, privatekey=None):
@@ -360,22 +365,6 @@ class HP3ParClient:
         response, body = self.http.post('/volumes/%s' % src_name, body=info)
         return body
 
-    def findVolumeSet(self, name):
-        """
-        Find the Volume Set name for a volume.
-
-        :param name: the volume name
-        :type name: str
-        """
-        cmd = ['showvvset', '-vv', name]
-        out = self.ssh.run(cmd)
-        vvset_name = None
-        if out and len(out) > 1:
-            info = out[1].split(",")
-            vvset_name = info[1]
-
-        return vvset_name
-
     def createSnapshot(self, name, copyOfName, optional=None):
         """
         Create a snapshot of an existing Volume
@@ -411,7 +400,6 @@ class HP3ParClient:
         return body
 
     ##Host methods
-
     def getHosts(self):
         """
         Get information about every Host on the 3Par array
@@ -437,7 +425,7 @@ class HP3ParClient:
     def createHost(self, name, iscsiNames=None, FCWwns=None, optional=None):
         """
         Create a new Host entry
-        TODO: get the list of thrown exceptions 
+        TODO: get the list of thrown exceptions
 
         :param name: The name of the host
         :type name: str
@@ -658,7 +646,7 @@ class HP3ParClient:
         """
         return self._getProtocolPorts(4, state)
 
-    ##CPG methods
+    ## CPG methods
     def getCPGs(self):
         """
         Get entire list of CPGs
@@ -733,11 +721,12 @@ class HP3ParClient:
 
     ## VLUN methods
     ## Virtual-LUN, or VLUN, is a pairing between a virtual volume and a
-    ## logical unit number (LUN), expressed as either a VLUN template or an active
+    ## logical unit number (LUN), expressed as either a VLUN template or
+    ## an active
     ## VLUN
     ## A VLUN template sets up an association between a virtual volume and a
-    ## LUN-host, LUN-port, or LUN-host-port combination by establishing the export
-    ## rule, or the manner in which the Volume is exported.
+    ## LUN-host, LUN-port, or LUN-host-port combination by establishing the
+    ## export rule or the manner in which the Volume is exported.
     def getVLUNs(self):
         """
         Get VLUNs
@@ -766,10 +755,11 @@ class HP3ParClient:
                     return vlun
 
         raise exceptions.HTTPNotFound({'code': 'NON_EXISTENT_VLUN',
-                                       'desc': "VLUN '%s' was not found" % volumeName})
+                                       'desc': "VLUN '%s' was not found" %
+                                       volumeName})
 
-    def createVLUN(self, volumeName, lun=None, hostname=None, portPos=None, noVcn=None,
-                   overrideLowerPriority=None, auto=False):
+    def createVLUN(self, volumeName, lun=None, hostname=None, portPos=None,
+                   noVcn=None, overrideLowerPriority=None, auto=False):
         """
         Create a new VLUN
 
@@ -856,11 +846,29 @@ class HP3ParClient:
             vlun += ",%s" % hostname
 
         if port:
-            vlun += ",%s:%s:%s" % (port['node'], port['slot'], port['cardPort'])
+            vlun += ",%s:%s:%s" % (port['node'],
+                                   port['slot'],
+                                   port['cardPort'])
 
         response, body = self.http.delete('/vluns/%s' % vlun)
 
     ## VolumeSet methods
+    def findVolumeSet(self, name):
+        """
+        Find the Volume Set name for a volume.
+
+        :param name: the volume name
+        :type name: str
+        """
+        cmd = ['showvvset', '-vv', name]
+        out = self.ssh.run(cmd)
+        vvset_name = None
+        if out and len(out) > 1:
+            info = out[1].split(",")
+            vvset_name = info[1]
+
+        return vvset_name
+
     def getVolumeSets(self):
         """
         Get Volume Sets
@@ -884,7 +892,8 @@ class HP3ParClient:
         reponse, body = self.http.get('/volumesets/%s' % name)
         return body
 
-    def createVolumeSet(self, name, comment=None, domain=None, setmembers=None):
+    def createVolumeSet(self, name, comment=None, domain=None,
+                        setmembers=None):
         """
         This creates a new volume set
 
@@ -983,7 +992,7 @@ class HP3ParClient:
 
         response, body = self.http.put('/volumesets/%s' % name, body=info)
 
-    # QOS Priority Optimization methods
+    # QoS Priority Optimization methods
     def setQOSRule(self, set_name, max_io=None, max_bw=None):
         """
         Set a QOS Rule on a volume set
@@ -1014,12 +1023,170 @@ class HP3ParClient:
             else:
                 raise exceptions.SetQOSRuleException(message=msg)
 
-    #def clearQOSRules
-        #first we have to clear out any QOS rules
-     #   result = self.ssh.run(['setqos', '-clear', 'vvset:%s' % (set_name)])
-     #   if result and len(result) == 1:
-     #       if 'does not exist' in result[0]:
-     #           raise exceptions.HTTPNotFound(error={'desc': result[0]})
+    def createQoSRules(self, name, target_type, optional=None):
+        """
+        Create QOS rules
+
+        The QoS rule can be applied to VV sets. By using sys:all_others,
+        you can apply the rule to all volumes in the system for which no
+        QoS rule has been defined.
+
+        ioObjective and ioCap must be used together to set I/O limits.
+        Similarly, bwObjectiveKB and bwCapKB must be used together.
+
+        If ioCapOP is set to 2 (no limit), ioObjectiveOP must also be
+        to set to 2 (zero), and vice versa. They cannot be set to
+        “none” individually. Similarly, if bwCapOP is set to 2 (no
+        limit), then bwObjectiveOP must also be set to 2.
+
+        If ioCapOP is set to 1 (no limit), ioObjectiveOP must also be
+        to set to 1 (zero) and vice versa. Similarly, if bwCapOP is
+        set to 1 (zero), then bwObjectiveOP must also be set to 1.
+
+        The ioObjectiveOP and ioCapOP fields take precedence over
+        the ioObjective and ioCap fields.
+
+        The bwObjectiveOP and bwCapOP fields take precedence over
+        the bwObjectiveKB and bwCapKB fields
+
+        :param name: the name of the target object on which the QoS
+                     rule will be created.
+        :type name: str
+        :param target_name: Type of QoS target, either enum
+                            TARGET_TYPE_VVS or TARGET_TYPE_SYS.
+        :type target_type: enum
+        :param optional: Optional parameters
+        :type optional: dict
+
+        .. code-block:: python
+
+            optional = {
+                'priority': 2,         # priority enum
+                'bwObjectiveKB': 1024, # bandwidth rate objective in kilobytes per second
+                'bwCapKB': 1024,       # bandwidth rate cap in kilobytes per second
+                'ioObjective': 10000,  # I/O-per-second objective
+                'ioCap': 2000000,      # I/0-per-second cap
+                'enable': True,        # QoS rule for target enabled?
+                'bwObjectiveOP': 1,    # zero none operation enum, when set to 1, bandwidth objective is 0
+                                       # when set to 2, the bandwidth objective is none (NoLimit)
+                'bwCapOP': 1,          # zero none operation enum, when set to 1, bandwidth cap is 0
+                                       # when set to 2, the bandwidth cap is none (NoLimit)
+                'ioObjectiveOP': 1,    # zero none operation enum, when set to 1, I/O objective is 0
+                                       # when set to 2, the I/O objective is none (NoLimit)
+                'ioCapOP': 1,          # zero none operation enum, when set to 1, I/O cap is 0
+                                       # when set to 2, the I/O cap is none (NoLimit)
+                'latencyTarget': 5000, # Target latency in milliseconds
+                'defaultLatency': False # Use latencyTarget or defaultLatency?
+            }
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_EXCEEDS_RANGE - Invalid input: number exceeds expected range.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_QOS_RULE - QoS rule does not exists.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Illegal character in the input.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - EXISTENT_QOS_RULE - QoS rule already exists.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_IO_OBJECTIVE_GRT_CAP - I/O-per-second cap should be greater than the objective.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BW_OBJECTIVE_GRT_CAP - Bandwidth cap should be greater than the objective.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BELOW_RANGE - I/O-per-second limit is below range. Bandwidth limit is below range.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - UNLICENSED_FEATURE - The system is not licensed for QoS.
+        """
+        info = {'name': name,
+                'type': target_type}
+
+        if optional:
+            info = self._mergeDict(info, optional)
+
+        reponse, body = self.http.post('/qos', body=info)
+        return body
+
+    def modifyQoSRules(self, name, target_type, optional=None):
+        """
+        Modify an existing QOS rules
+
+        The QoS rule can be applied to VV sets. By using sys:all_others,
+        you can apply the rule to all volumes in the system for which no
+        QoS rule has been defined.
+
+        ioObjective and ioCap must be used together to set I/O limits.
+        Similarly, bwObjectiveKB and bwCapKB must be used together.
+
+        If ioCapOP is set to 2 (no limit), ioObjectiveOP must also be
+        to set to 2 (zero), and vice versa. They cannot be set to
+        “none” individually. Similarly, if bwCapOP is set to 2 (no
+        limit), then bwObjectiveOP must also be set to 2.
+
+        If ioCapOP is set to 1 (no limit), ioObjectiveOP must also be
+        to set to 1 (zero) and vice versa. Similarly, if bwCapOP is
+        set to 1 (zero), then bwObjectiveOP must also be set to 1.
+
+        The ioObjectiveOP and ioCapOP fields take precedence over
+        the ioObjective and ioCap fields.
+
+        The bwObjectiveOP and bwCapOP fields take precedence over
+        the bwObjectiveKB and bwCapKB fields
+
+        :param name: the name of the target object on which the QoS
+                     rule will be created.
+        :type name: str
+        :param target_name: Type of QoS target, either enum
+                            TARGET_TYPE_VVS or TARGET_TYPE_SYS.
+        :type target_type: enum
+        :param optional: Optional parameters
+        :type optional: dict
+
+        .. code-block:: python
+
+            optional = {
+                'priority': 2,         # priority enum
+                'bwObjectiveKB': 1024, # bandwidth rate objective in kilobytes per second
+                'bwCapKB': 1024,       # bandwidth rate cap in kilobytes per second
+                'ioObjective': 10000,  # I/O-per-second objective
+                'ioCap': 2000000,      # I/0-per-second cap
+                'enable': True,        # QoS rule for target enabled?
+                'bwObjectiveOP': 1,    # zero none operation enum, when set to 1, bandwidth objective is 0
+                                       # when set to 2, the bandwidth objective is none (NoLimit)
+                'bwCapOP': 1,          # zero none operation enum, when set to 1, bandwidth cap is 0
+                                       # when set to 2, the bandwidth cap is none (NoLimit)
+                'ioObjectiveOP': 1,    # zero none operation enum, when set to 1, I/O objective is 0
+                                       # when set to 2, the I/O objective is none (NoLimit)
+                'ioCapOP': 1,          # zero none operation enum, when set to 1, I/O cap is 0
+                                       # when set to 2, the I/O cap is none (NoLimit)
+                'latencyTarget': 5000, # Target latency in milliseconds
+                'defaultLatency': False # Use latencyTarget or defaultLatency?
+            }
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_EXCEEDS_RANGE - Invalid input: number exceeds expected range.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_QOS_RULE - QoS rule does not exists.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Illegal character in the input.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - EXISTENT_QOS_RULE - QoS rule already exists.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_IO_OBJECTIVE_GRT_CAP - I/O-per-second cap should be greater than the objective.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BW_OBJECTIVE_GRT_CAP - Bandwidth cap should be greater than the objective.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BELOW_RANGE - I/O-per-second limit is below range. Bandwidth limit is below range.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - UNLICENSED_FEATURE - The system is not licensed for QoS.
+        """
+        info = {'name': name,
+                'type': target_type}
+
+        if optional:
+            info = self._mergeDict(info, optional)
+
+        reponse, body = self.http.put('/qos', body=info)
+        return body
+
+    def deleteQoSRules(self, targetType, targetName):
+        """
+        Clear and Delete QoS rules
+
+        :param targetType: target type is vvset or sys
+        :type targetType: str
+        :param targetName: the name of the target. When targetType is sys,
+                           target name must be sys:all_others.
+        :type targetName: str
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_QOS_RULE - QoS rule does not exist.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Illegal character in the input.
+        """
+        response, body = self.http.delete('/qos/%(targ_type)s:%(targ_name)s' %
+                                          {'targ_type': targetType,
+                                           'targ_name': targetName})
 
     def setVolumeMetaData(self, name, key, value):
         """
