@@ -36,12 +36,13 @@ def make_json_app(import_name, **kwargs):
     """
     def make_json_error(ex):
         pprint.pprint(ex)
-        pprint.pprint(ex.code)
-        #response = jsonify(message=str(ex))
-        response = jsonify(ex)
+        #pprint.pprint(ex.code)
+        response = jsonify(message=str(ex))
+        #response = jsonify(ex)
         response.status_code = (ex.code
                                 if isinstance(ex, HTTPException)
                                 else 500)
+        pprint.pprint(response)
         return response
 
     app = Flask(import_name, **kwargs)
@@ -153,7 +154,7 @@ def create_cpgs():
                if subkey not in valid_LDLayout_keys:
                    throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey)
 
-    if data['domain'] == 'BAD_DOMAIN':
+    if 'domain' in data and data['domain'] == 'BAD_DOMAIN':
         throw_error(404, 'NON_EXISTENT_DOMAIN', "Non-existing domain specified.")
 
     for cpg in cpgs['members'] :
@@ -626,6 +627,26 @@ def get_volume(volume_name):
             return resp
 
     throw_error(404, 'NON_EXISTENT_VOL', "volume doesn't exist")
+
+
+@app.route('/api/v1/volumes/<volume_name>', methods=['PUT'])
+def grow_volume(volume_name):
+    debugRequest(request)
+
+    data = json.loads(request.data)
+    size = data['sizeMiB']
+    if size <= 0:
+        throw_error(400, 'INV_INPUT_VV_GROW_SIZE', 'Invalid grow size')
+
+    for volume in volumes['members']:
+        if volume['name'] == volume_name:
+            cur_size = volume['sizeMiB']
+            new_size = cur_size + size
+            if new_size > 16777216:
+                throw_error(403, 'VV_NEW_SIZE_EXCEED_CPG_LIMIT', 'New volume size exceeds CPG limit.')
+            volume['sizeMiB'] = new_size
+    resp = make_response(json.dumps(volume), 200)
+    return resp
 
 
 @app.route('/api/v1/system', methods=['GET'])

@@ -29,10 +29,10 @@ VOLUME_NAME2 = 'VOLUME2_UNIT_TEST'
 SNAP_NAME1 = 'SNAP_UNIT_TEST'
 
 class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
-    
+
     def setUp(self):
         super(HP3ParClientVolumeTestCase, self).setUp()
-        
+
         try :
             self.cl.createCPG(CPG_NAME1)
         except :
@@ -51,7 +51,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         try :
             self.cl.deleteVolume(VOLUME_NAME2)
         except :
-            pass   
+            pass
         try :
             self.cl.deleteCPG(CPG_NAME1)
         except :
@@ -59,9 +59,9 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         try :
             self.cl.deleteCPG(CPG_NAME2)
         except :
-            pass              
+            pass
 
-        super(HP3ParClientVolumeTestCase, self).tearDown()    
+        super(HP3ParClientVolumeTestCase, self).tearDown()
 
     def test_1_create_volume(self):
         self.printHeader('create_volume')
@@ -223,13 +223,13 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024)
         self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024)
 
-        vol1 = self.cl.getVolume(VOLUME_NAME1)            
-        vol2 = self.cl.getVolume(VOLUME_NAME2)   
+        vol1 = self.cl.getVolume(VOLUME_NAME1)
+        vol2 = self.cl.getVolume(VOLUME_NAME2)
 
-        vols = self.cl.getVolumes() 
+        vols = self.cl.getVolumes()
 
         self.assertTrue(self.findInDict(vols['members'], 'name', vol1['name']))
-        self.assertTrue(self.findInDict(vols['members'], 'name', vol2['name']))          
+        self.assertTrue(self.findInDict(vols['members'], 'name', vol2['name']))
 
         self.printFooter('get_volumes')
 
@@ -338,7 +338,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         try:
             name = 'UnitTestSnapshot'
             volName = 'NonExistVolume'
-            optional = {'id': 1, 'comment': 'test snapshot', 
+            optional = {'id': 1, 'comment': 'test snapshot',
                         'readOnly': True, 'expirationHours': 300}
             self.cl.createSnapshot(name, volName, optional)
         except exceptions.HTTPNotFound:
@@ -350,6 +350,62 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.fail("Failed with unexpected exception")
 
         self.fail("No exception occurred.")
+
+    def test_5_grow_volume(self):
+        self.printHeader('grow_volume')
+        try:
+            #add one
+            optional = {'comment': 'test volume', 'tpvv': True}
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create volume')
+            return
+
+        try:
+            #grow it
+            result = self.cl.growVolume(VOLUME_NAME1, 1)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to grow volume')
+            return
+
+        try:
+            result = self.cl.getVolume(VOLUME_NAME1)
+            size_after = result['sizeMiB']
+            self.assertGreater(size_after, 1024)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to get volume after growth')
+            return
+
+        self.printFooter('grow_volume')
+
+    def test_5_grow_volume_bad(self):
+        self.printHeader('grow_volume_bad')
+
+        try:
+            #add one
+            optional = {'comment': 'test volume', 'tpvv': True}
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create volume')
+            return
+
+        try:
+            #shrink it
+            self.cl.growVolume(VOLUME_NAME1, -1)
+        except exceptions.HTTPBadRequest:
+            print "Expected exception"
+            self.printFooter('grow_volume_bad')
+            return
+        except Exception as ex:
+            print ex
+            self.fail("Failed with unexpected exception")
+
+        self.fail("No exception occurred.")
+
 #testing
 #suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVolumeTestCase)
 #unittest.TextTestRunner(verbosity=2).run(suite)
