@@ -528,27 +528,35 @@ def create_snapshot(volume_name):
     data = json.loads(request.data)
 
     valid_keys = {'action': None, 'parameters': None}
-    valid_parm_keys = {'name':None, 'id':None, 'comment': None,
-                       'readOnly':None, 'expirationHours': None,
-                       'retentionHours':None}
+    valid_parm_keys = {'name': None, 'destVolume': None, 'destCPG': None,
+                       'id': None, 'comment': None, 'online': None,
+                       'readOnly': None, 'expirationHours': None,
+                       'retentionHours': None}
 
     ## do some fake errors here depending on data
     for key in data.keys():
         if key not in valid_keys.keys():
             throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
         elif 'parameters' in data.keys():
-            parm = data ['parameters']
+            parm = data['parameters']
             for subkey in parm.keys():
                 if subkey not in valid_parm_keys:
                     throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey)
 
     for volume in volumes['members']:
         if volume['name'] == volume_name:
-            volumes['members'].append({'name': data['parameters'].get('name')})
+            if data['action'] == "createPhysicalCopy":
+                new_name = data['parameters'].get('destVolume')
+            else:
+                new_name = data['parameters'].get('name')
+
+            volumes['members'].append({'name': new_name})
+
             resp = make_response(json.dumps(volume), 200)
             return resp
 
     throw_error(404, 'NON_EXISTENT_VOL', "volume doesn't exist")
+
 
 @app.route('/api/v1/volumes', methods=['POST'])
 def create_volumes():

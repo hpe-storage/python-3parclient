@@ -1036,7 +1036,7 @@ class HP3ParClient:
 
         If ioCapOP is set to 2 (no limit), ioObjectiveOP must also be
         to set to 2 (zero), and vice versa. They cannot be set to
-        “none” individually. Similarly, if bwCapOP is set to 2 (no
+        'none' individually. Similarly, if bwCapOP is set to 2 (no
         limit), then bwObjectiveOP must also be set to 2.
 
         If ioCapOP is set to 1 (no limit), ioObjectiveOP must also be
@@ -1110,7 +1110,7 @@ class HP3ParClient:
 
         If ioCapOP is set to 2 (no limit), ioObjectiveOP must also be
         to set to 2 (zero), and vice versa. They cannot be set to
-        “none” individually. Similarly, if bwCapOP is set to 2 (no
+        'none' individually. Similarly, if bwCapOP is set to 2 (no
         limit), then bwObjectiveOP must also be set to 2.
 
         If ioCapOP is set to 1 (no limit), ioObjectiveOP must also be
