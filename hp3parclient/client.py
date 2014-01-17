@@ -947,7 +947,7 @@ class HP3ParClient:
         """
         response, body = self.http.delete('/volumesets/%s' % name)
 
-    def modifyVolumeSet(self, action, name, newName=None, comment=None, setmembers=None):
+    def modifyVolumeSet(self, name, action=None, newName=None, comment=None, setmembers=None):
         """
         This modifies a volume set by adding or remove a volume from the volume
         set. It's actions is based on the enums SET_MEM_ADD or SET_MEM_REMOVE.
@@ -978,7 +978,10 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_PARAM_CONFLICT - Invalid input (parameters cannot be present at the same time).
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Invalid contains one or more illegal characters.
         """
-        info = {'action': action}
+        info = {}
+
+        if action:
+            info['action'] = action
 
         if newName:
             info['newName'] = newName

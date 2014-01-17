@@ -656,6 +656,106 @@ def grow_volume(volume_name):
     resp = make_response(json.dumps(volume), 200)
     return resp
 
+@app.route('/api/v1/volumesets', methods=['GET'])
+def get_volume_sets():
+    debugRequest(request)
+    resp = make_response(json.dumps(volume_sets), 200)
+    return resp
+
+
+@app.route('/api/v1/volumesets', methods=['POST'])
+def create_volume_set():
+    debugRequest(request)
+    data = json.loads(request.data)
+
+    valid_keys = {'name': None, 'comment': None,
+                  'domain': None, 'setmembers': None}
+
+    for key in data.keys():
+        if key not in valid_keys.keys():
+            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
+
+    if 'name' in data.keys():
+        for vset in volume_sets['members']:
+            if vset['name'] == data['name']:
+                throw_error(409, 'EXISTENT_SET',
+                            'The set already exists.')
+                #Seems the 3par is throwing a 409 instead of 400
+                # {"code":101,"desc":"Set exists"} error
+                #throw_error(400, 'EXISTENT_SET',
+                #            'The set already exists.')
+        if len(data['name']) > 31:
+            throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH',
+                        'Invalid Input: String length exceeds limit : Name')
+    else:
+        throw_error(400, 'INV_INPUT',
+                    'No volume set name provided.')
+
+    volume_sets['members'].append(data)
+    return make_response("", 200)
+
+
+@app.route('/api/v1/volumesets/<volume_set_name>', methods=['GET'])
+def get_volume_set(volume_set_name):
+    debugRequest(request)
+
+    charset = {'!', '@', '#', '$', '%', '&', '^'}
+    for char in charset:
+        if char in volume_set_name:
+            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+                        'Invalid character for volume set name.')
+
+    for vset in volume_sets['members']:
+        if vset['name'] == volume_set_name:
+            resp = make_response(json.dumps(vset), 200)
+            return resp
+
+    throw_error(404, 'NON_EXISTENT_SET', "volume set doesn't exist")
+
+
+@app.route('/api/v1/volumesets/<volume_set_name>', methods=['PUT'])
+def modify_volume_set(volume_set_name):
+    debugRequest(request)
+    data = json.loads(request.data)
+    for vset in volume_sets['members']:
+        if vset['name'] == volume_set_name:
+            if 'newName' in data:
+                vset['name'] = data['newName']
+            if 'comment' in data:
+                vset['comment'] = data['comment']
+            if 'setmembers' in data and 'action' in data:
+                members = data['setmembers']
+                if 1 == data['action']:
+                    # 1 is memAdd - Adds a member to the set
+                    if 'setmembers' not in vset:
+                        vset['setmembers'] = []
+                    vset['setmembers'].extend(members)
+                elif 2 == data['action']:
+                    # 2 is memRemove- Removes a member from the set
+                    for member in members:
+                        vset['setmembers'].remove(member)
+                else:
+                    # TODO, throw error for now
+                    throw_error(400, 'TODO Action',
+                                'Action not implemented in mock server')
+
+
+        resp = make_response(json.dumps(vset), 200)
+        return resp
+
+    throw_error(404, 'NON_EXISTENT_SET', "volume set doesn't exist")
+
+@app.route('/api/v1/volumesets/<volume_set_name>', methods=['DELETE'])
+def delete_volume_set(volume_set_name):
+    debugRequest(request)
+    for vset in volume_sets['members']:
+        if vset['name'] == volume_set_name:
+            volume_sets['members'].remove(vset)
+            return make_response("", 200)
+
+    throw_error(404, 'NON_EXISTENT_SET',
+                "The volume set '%s' does not exists." % volume_set_name)
+
 
 @app.route('/api/v1/system', methods=['GET'])
 def get_system():
@@ -932,6 +1032,10 @@ if __name__ == "__main__":
                'type': 3,
                'volumeName': 'UnitTestVolume2',
                'volumeWWN': '50002AC00029383D'}],
-            'total': 2}
+             'total': 2}
+
+    global volume_sets
+    volume_sets = {'members': [],
+                   'total': 0}
 
     app.run(port=args.port, debug=debugRequests)
