@@ -76,8 +76,8 @@ class HP3ParClient:
     PRIORITY_NORMAL = 2
     PRIORITY_HIGH = 3
 
-    # build contains major minor mj=3 min=01 main=03 build=152
-    HP3PAR_WS_MIN_BUILD_VERSION = 30103152
+    # build contains major minor mj=3 min=01 main=03 build=168
+    HP3PAR_WS_MIN_BUILD_VERSION = 30103168
 
     def __init__(self, api_url):
         self.api_url = api_url
