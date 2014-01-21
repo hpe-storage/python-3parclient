@@ -22,7 +22,7 @@ HP3PAR REST Client
 :Author: Walter A. Boring IV
 :Author: Kurt Martin
 :Description: This is the 3PAR Client that talks to 3PAR's REST WSAPI Service
-and the to the CLIQ SSH interface.
+and to the CLIQ SSH interface.
 It provides the ability to provision 3PAR volumes, VLUNs, CPGs.
 
 This client requires and works with 3PAR InForm 3.1.3 firmware
@@ -571,6 +571,29 @@ class HP3ParClient:
             self.deleteHost(hostname)
             return None
 
+    def queryHost(self, iqn=None, wwn=None):
+        """
+        Find a host from an iSCSI initiator or FC WWN
+
+        :param iqn: lookup based on iSCSI initiator
+        :type iqn: str
+        :param wwn: lookup based on WWN
+        :type wwn: str
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT - Invalid URI syntax.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_HOST - HOST Not Found
+        :raises: :class:`~hp3parclient.exceptions.HTTPInternalServerError` - INTERNAL_SERVER_ERR - Internal server error.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Host name contains invalid character.
+        """
+        query = ''
+        if iqn:
+            query = 'iSCSIPaths [name==%s]' % iqn
+        if wwn:
+            query = 'FCPaths [wwn==%s]' % wwn
+
+        response, body = self.http.get('/hosts?query="%s"' % query)
+        return body
+
     def getHostVLUNs(self, hostName):
         """
         Get all of the VLUNs on a specific Host
@@ -1031,23 +1054,23 @@ class HP3ParClient:
         you can apply the rule to all volumes in the system for which no
         QoS rule has been defined.
 
-        ioObjective and ioCap must be used together to set I/O limits.
-        Similarly, bwObjectiveKB and bwCapKB must be used together.
+        ioMinGoal and ioMaxLimit must be used together to set I/O limits.
+        Similarly, bwMinGoalKB and bwMaxLimitKB must be used together.
 
-        If ioCapOP is set to 2 (no limit), ioObjectiveOP must also be
+        If ioMaxLimitOP is set to 2 (no limit), ioMinGoalOP must also be
         to set to 2 (zero), and vice versa. They cannot be set to
-        “none” individually. Similarly, if bwCapOP is set to 2 (no
-        limit), then bwObjectiveOP must also be set to 2.
+        “none” individually. Similarly, if bwMaxLimitOP is set to 2 (no
+        limit), then bwMinGoalOP must also be set to 2.
 
-        If ioCapOP is set to 1 (no limit), ioObjectiveOP must also be
-        to set to 1 (zero) and vice versa. Similarly, if bwCapOP is
-        set to 1 (zero), then bwObjectiveOP must also be set to 1.
+        If ioMaxLimitOP is set to 1 (no limit), ioMinGoalOP must also be
+        to set to 1 (zero) and vice versa. Similarly, if bwMaxLimitOP is
+        set to 1 (zero), then bwMinGoalOP must also be set to 1.
 
-        The ioObjectiveOP and ioCapOP fields take precedence over
-        the ioObjective and ioCap fields.
+        The ioMinGoalOP and ioMaxLimitOP fields take precedence over
+        the ioMinGoal and ioMaxLimit fields.
 
-        The bwObjectiveOP and bwCapOP fields take precedence over
-        the bwObjectiveKB and bwCapKB fields
+        The bwMinGoalOP and bwMaxLimitOP fields take precedence over
+        the bwMinGoalKB and bwMaxLimitKB fields
 
         :param name: the name of the target object on which the QoS
                      rule will be created.
@@ -1062,29 +1085,29 @@ class HP3ParClient:
 
             optional = {
                 'priority': 2,         # priority enum
-                'bwObjectiveKB': 1024, # bandwidth rate objective in kilobytes per second
-                'bwCapKB': 1024,       # bandwidth rate cap in kilobytes per second
-                'ioObjective': 10000,  # I/O-per-second objective
-                'ioCap': 2000000,      # I/0-per-second cap
+                'bwMinGoalKB': 1024,   # bandwidth rate minimum goal in kilobytes per second
+                'bwMaxLimitKB': 1024,  # bandwidth rate maximum limit in kilobytes per second
+                'ioMinGoal': 10000,    # I/O-per-second minimum goal
+                'ioMaxLimit': 2000000, # I/0-per-second maximum limit
                 'enable': True,        # QoS rule for target enabled?
-                'bwObjectiveOP': 1,    # zero none operation enum, when set to 1, bandwidth objective is 0
-                                       # when set to 2, the bandwidth objective is none (NoLimit)
-                'bwCapOP': 1,          # zero none operation enum, when set to 1, bandwidth cap is 0
-                                       # when set to 2, the bandwidth cap is none (NoLimit)
-                'ioObjectiveOP': 1,    # zero none operation enum, when set to 1, I/O objective is 0
-                                       # when set to 2, the I/O objective is none (NoLimit)
-                'ioCapOP': 1,          # zero none operation enum, when set to 1, I/O cap is 0
-                                       # when set to 2, the I/O cap is none (NoLimit)
-                'latencyTarget': 5000, # Target latency in milliseconds
-                'defaultLatency': False # Use latencyTarget or defaultLatency?
+                'bwMinGoalOP': 1,      # zero none operation enum, when set to 1, bandwidth minimum goal is 0
+                                       # when set to 2, the bandwidth mimumum goal is none (NoLimit)
+                'bwMaxLimitOP': 1,     # zero none operation enum, when set to 1, bandwidth maximum limit is 0
+                                       # when set to 2, the bandwidth maximum limit is none (NoLimit)
+                'ioMinGoalOP': 1,      # zero none operation enum, when set to 1, I/O minimum goal is 0
+                                       # when set to 2, the I/O minimum goal is none (NoLimit)
+                'ioMaxLimitOP': 1,     # zero none operation enum, when set to 1, I/O maximum limit is 0
+                                       # when set to 2, the I/O maximum limit is none (NoLimit)
+                'latencyGoal': 5000,   # Latency goal in milliseconds
+                'defaultLatency': False # Use latencyGoal or defaultLatency?
             }
 
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_EXCEEDS_RANGE - Invalid input: number exceeds expected range.
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_QOS_RULE - QoS rule does not exists.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Illegal character in the input.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - EXISTENT_QOS_RULE - QoS rule already exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_IO_OBJECTIVE_GRT_CAP - I/O-per-second cap should be greater than the objective.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BW_OBJECTIVE_GRT_CAP - Bandwidth cap should be greater than the objective.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_MIN_GOAL_GRT_MAX_LIMIT - I/O-per-second maximum limit should be greater than the minimum goal.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BW_MIN_GOAL_GRT_MAX_LIMIT - Bandwidth maximum limit should be greater than the mimimum goal.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BELOW_RANGE - I/O-per-second limit is below range. Bandwidth limit is below range.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - UNLICENSED_FEATURE - The system is not licensed for QoS.
         """
@@ -1105,23 +1128,23 @@ class HP3ParClient:
         you can apply the rule to all volumes in the system for which no
         QoS rule has been defined.
 
-        ioObjective and ioCap must be used together to set I/O limits.
-        Similarly, bwObjectiveKB and bwCapKB must be used together.
+        ioMinGoal and ioMaxLimit must be used together to set I/O limits.
+        Similarly, bwMinGoalKB and bwMaxLimitKB must be used together.
 
-        If ioCapOP is set to 2 (no limit), ioObjectiveOP must also be
+        If ioMaxLimitOP is set to 2 (no limit), ioMinGoalOP must also be
         to set to 2 (zero), and vice versa. They cannot be set to
-        “none” individually. Similarly, if bwCapOP is set to 2 (no
-        limit), then bwObjectiveOP must also be set to 2.
+        “none” individually. Similarly, if bwMaxLimitOP is set to 2 (no
+        limit), then bwMinGoalOP must also be set to 2.
 
-        If ioCapOP is set to 1 (no limit), ioObjectiveOP must also be
-        to set to 1 (zero) and vice versa. Similarly, if bwCapOP is
-        set to 1 (zero), then bwObjectiveOP must also be set to 1.
+        If ioMaxLimitOP is set to 1 (no limit), ioMinGoalOP must also be
+        to set to 1 (zero) and vice versa. Similarly, if bwMaxLimitOP is
+        set to 1 (zero), then bwMinGoalOP must also be set to 1.
 
-        The ioObjectiveOP and ioCapOP fields take precedence over
-        the ioObjective and ioCap fields.
+        The ioMinGoalOP and ioMaxLimitOP fields take precedence over
+        the ioMinGoal and ioMaxLimit fields.
 
-        The bwObjectiveOP and bwCapOP fields take precedence over
-        the bwObjectiveKB and bwCapKB fields
+        The bwMinGoalOP and bwMaxLimitOP fields take precedence over
+        the bwMinGoalKB and bwMaxLimitKB fields
 
         :param name: the name of the target object on which the QoS
                      rule will be created.
@@ -1136,29 +1159,29 @@ class HP3ParClient:
 
             optional = {
                 'priority': 2,         # priority enum
-                'bwObjectiveKB': 1024, # bandwidth rate objective in kilobytes per second
-                'bwCapKB': 1024,       # bandwidth rate cap in kilobytes per second
-                'ioObjective': 10000,  # I/O-per-second objective
-                'ioCap': 2000000,      # I/0-per-second cap
+                'bwMinGoalKB': 1024,   # bandwidth rate minimum goal in kilobytes per second
+                'bwMaxLimitKB': 1024,  # bandwidth rate maximum limit in kilobytes per second
+                'ioMinGoal': 10000,    # I/O-per-second minimum goal.
+                'ioMaxLimit': 2000000, # I/0-per-second maximum limit 
                 'enable': True,        # QoS rule for target enabled?
-                'bwObjectiveOP': 1,    # zero none operation enum, when set to 1, bandwidth objective is 0
-                                       # when set to 2, the bandwidth objective is none (NoLimit)
-                'bwCapOP': 1,          # zero none operation enum, when set to 1, bandwidth cap is 0
-                                       # when set to 2, the bandwidth cap is none (NoLimit)
-                'ioObjectiveOP': 1,    # zero none operation enum, when set to 1, I/O objective is 0
-                                       # when set to 2, the I/O objective is none (NoLimit)
-                'ioCapOP': 1,          # zero none operation enum, when set to 1, I/O cap is 0
-                                       # when set to 2, the I/O cap is none (NoLimit)
-                'latencyTarget': 5000, # Target latency in milliseconds
-                'defaultLatency': False # Use latencyTarget or defaultLatency?
+                'bwMinGoalOP': 1,      # zero none operation enum, when set to 1, bandwidth minimum goal is 0
+                                       # when set to 2, the bandwidth minimum goal is none (NoLimit)
+                'bwMaxLimitOP': 1,     # zero none operation enum, when set to 1, bandwidth maximum limit is 0
+                                       # when set to 2, the bandwidth maximum limit is none (NoLimit)
+                'ioMinGoalOP': 1,      # zero none operation enum, when set to 1, I/O minimum goal minimum goal is 0
+                                       # when set to 2, the I/O minimum goal is none (NoLimit)
+                'ioMaxLimitOP': 1,     # zero none operation enum, when set to 1, I/O maximum limit is 0
+                                       # when set to 2, the I/O maximum limit is none (NoLimit)
+                'latencyGoal': 5000,   # Latency goal in milliseconds
+                'defaultLatency': False # Use latencyGoal or defaultLatency?
             }
 
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_EXCEEDS_RANGE - Invalid input: number exceeds expected range.
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_QOS_RULE - QoS rule does not exists.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Illegal character in the input.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - EXISTENT_QOS_RULE - QoS rule already exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_IO_OBJECTIVE_GRT_CAP - I/O-per-second cap should be greater than the objective.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BW_OBJECTIVE_GRT_CAP - Bandwidth cap should be greater than the objective.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_IO_MIN_GOAL_GRT_MAX_LIMIT - I/O-per-second maximum limit should be greater than the minimum goal.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BW_MIN_GOAL_GRT_MAX_LIMIT - Bandwidth maximum limit should be greater than the minimum goal.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BELOW_RANGE - I/O-per-second limit is below range. Bandwidth limit is below range.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - UNLICENSED_FEATURE - The system is not licensed for QoS.
         """
