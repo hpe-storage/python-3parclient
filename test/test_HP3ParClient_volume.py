@@ -406,6 +406,37 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
 
         self.fail("No exception occurred.")
 
+    def test_6_copy_volume(self):
+        self.printHeader('copy_volume')
+
+        try:
+            #add one
+            optional = {'comment': 'test volume', 'tpvv': True,
+                        'snapCPG': CPG_NAME1}
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create volume')
+            return
+
+        try:
+            #copy it
+            optional = {'online': True, 'destCPG': CPG_NAME1}
+            self.cl.copyVolume(VOLUME_NAME1, VOLUME_NAME2, optional)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to copy volume')
+            return
+
+        try:
+            result = self.cl.getVolume(VOLUME_NAME2)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to get cloned volume')
+            return
+
+        self.printFooter('copy_volume')
+
 #testing
 #suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVolumeTestCase)
 #unittest.TextTestRunner(verbosity=2).run(suite)
