@@ -67,6 +67,8 @@ class HP3ParClient:
     SET_MEM_ADD = 1
     SET_MEM_REMOVE = 2
 
+    STOP_PHYSICAL_COPY = 1
+    RESYNC_PHYSICAL_COPY = 2
     GROW_VOLUME = 3
 
     TARGET_TYPE_VVSET = 1
@@ -363,6 +365,50 @@ class HP3ParClient:
                 'parameters': parameters}
 
         response, body = self.http.post('/volumes/%s' % src_name, body=info)
+        return body
+
+    def stopPhysicalCopy(self, name):
+        """
+        Stopping a physical copy operation.
+
+        :param name: the name of the volume
+        :type name: str
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Invalid VV name or CPG name.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_CPG - The CPG does not exists.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - CPG_NOT_IN SAME_DOMAIN - The CPG is not in the current domain.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VOL - The volume does not exist
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - VV_NOT_IN_SAME_DOMAIN - The volume is not in the same domain.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BAD_ENUM_VALUE - The priority value in not in the valid range(1-3).
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXISTENT_VOLUME - The volume already exists.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_SYS_VOLUME - The operation is not allowed on a system volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_NON_BASE_VOLUME - The destination volume is not a base volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_IN_REMOTE_COPY - The destination volume is involved in a remote copy.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_EXPORTED - The volume is exported.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_COPY_TO_SELF - The destination volume is the same as the parent.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_READONLY_SNAPSHOT - The parent volume is a read-only snapshot.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_COPY_TO_BASE - The destination volume is the base volume of a parent volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_VOLUME_CONV_IN_PROGRESS  - The volume is in a conversion operation.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_NO_SNAPSHOT_ALLOWED - The parent volume must allow snapshots.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_ONLINE_COPY_IN_PROGRESS  - The volume is the target of an online copy.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_CLEANUP_IN_PROGRESS - Cleanup of internal volume for the volume is in progress.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_CIRCULAR_COPY - The parent volume is a copy of the destination volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_PEER_VOLUME - The operation is not allowed on a peer volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_INTERNAL_VOLUME - The operation is not allowed on an internal volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - VV_IS_BEING_REMOVED - The volume is being removed.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_NOT_IN_NORMAL_STATE - The volume is not in the normal state.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - VV_IN_INCONSISTENT_STATE - The volume has an internal consistency error.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_PCOPY_IN_PROGRESS  - The destination volume has a physical copy in progress.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_FAILED_ONLINE_COPY  - Online copying of the destination volume has failed.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_COPY_PARENT_TOO_BIG - The size of the parent volume is larger than the size of the destination volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_NO_PARENT - The volume has no physical parent.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - IN_USE - The resynchronization snapshot is in a stale state.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - VV_IN_STALE_STATE - The volume is in a stale state.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VVCOPY - Physical copy not found.
+        """
+        info = {'action': self.STOP_PHYSICAL_COPY}
+
+        response, body = self.http.put('/volumes/%s' % name, body=info)
         return body
 
     def createSnapshot(self, name, copyOfName, optional=None):
