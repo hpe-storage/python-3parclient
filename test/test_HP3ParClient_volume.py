@@ -27,38 +27,51 @@ CPG_NAME2 = 'CPG2_UNIT_TEST'
 VOLUME_NAME1 = 'VOLUME1_UNIT_TEST'
 VOLUME_NAME2 = 'VOLUME2_UNIT_TEST'
 SNAP_NAME1 = 'SNAP_UNIT_TEST'
+DOMAIN = 'UNIT_TEST_DOMAIN'
+VOLUME_SET_NAME1 = 'VOLUME_SET1_UNIT_TEST'
+VOLUME_SET_NAME2 = 'VOLUME_SET2_UNIT_TEST'
+
 
 class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
     def setUp(self):
         super(HP3ParClientVolumeTestCase, self).setUp()
 
-        try :
-            self.cl.createCPG(CPG_NAME1)
-        except :
+        optional = {'domain': DOMAIN}
+        try:
+            self.cl.createCPG(CPG_NAME1, optional)
+        except:
             pass
-        try :
+        try:
             self.cl.createCPG(CPG_NAME2)
-        except :
+        except:
             pass
 
     def tearDown(self):
 
-        try :
+        try:
+            self.cl.deleteVolumeSet(VOLUME_SET_NAME1)
+        except:
+            pass
+        try:
+            self.cl.deleteVolumeSet(VOLUME_SET_NAME2)
+        except:
+            pass
+        try:
             self.cl.deleteVolume(VOLUME_NAME1)
-        except :
+        except:
             pass
-        try :
+        try:
             self.cl.deleteVolume(VOLUME_NAME2)
-        except :
+        except:
             pass
-        try :
+        try:
             self.cl.deleteCPG(CPG_NAME1)
-        except :
+        except:
             pass
-        try :
+        try:
             self.cl.deleteCPG(CPG_NAME2)
-        except :
+        except:
             pass
 
         super(HP3ParClientVolumeTestCase, self).tearDown()
@@ -396,7 +409,12 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         try:
             #shrink it
             self.cl.growVolume(VOLUME_NAME1, -1)
-        except exceptions.HTTPBadRequest:
+        #3par is returning 409 instead of 400
+        except exceptions.HTTPBadRequest as ex:
+            print "Expected exception"
+            self.printFooter('grow_volume_bad')
+            return
+        except exceptions.HTTPConflict as ex:
             print "Expected exception"
             self.printFooter('grow_volume_bad')
             return
@@ -406,36 +424,353 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
 
         self.fail("No exception occurred.")
 
-    def test_6_copy_volume(self):
-        self.printHeader('copy_volume')
+#    def test_6_copy_volume(self):
+#        self.printHeader('copy_volume')
+#
+#        try:
+#            #add one
+#            optional = {'comment': 'test volume', 'tpvv': True,
+#                        'snapCPG': CPG_NAME1}
+#            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+#        except Exception as ex:
+#            print ex
+#            self.fail('Failed to create volume')
+#            return
+#
+#        try:
+#            #copy it
+#            optional = {'online': True, 'destCPG': CPG_NAME1}
+#            self.cl.copyVolume(VOLUME_NAME1, VOLUME_NAME2, optional)
+#        except Exception as ex:
+#            print ex
+#            self.fail('Failed to copy volume')
+#            return
+#
+#        try:
+#            result = self.cl.getVolume(VOLUME_NAME2)
+#        except Exception as ex:
+#            print ex
+#            self.fail('Failed to get cloned volume')
+#            return
+#
+#        try:
+#            self.cl.deleteVolume(VOLUME_NAME2)
+#        except Exception as ex:
+#            print ex
+#            self.fail('Failed to delete cloned volume')
+#            return
+#
+#        self.printFooter('copy_volume')
+
+    def test_7_create_volume_set(self):
+        self.printHeader('create_volume_set')
+        try:
+            self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
+                                    comment="Unit test volume set 1")
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create volume set')
+            return
 
         try:
-            #add one
-            optional = {'comment': 'test volume', 'tpvv': True,
-                        'snapCPG': CPG_NAME1}
+            resp = self.cl.getVolumeSet(VOLUME_SET_NAME1)
+            print resp
+        except Exception as ex:
+            print ex
+            self.fail('Failed to get volume set')
+            return
+
+        self.printFooter('create_volume_set')
+
+    def test_7_create_volume_set_with_volumes(self):
+        self.printHeader('create_volume_set')
+        try:
+            optional = {'comment': 'test volume 1', 'tpvv': True}
             self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+            optional = {'comment': 'test volume 2', 'tpvv': True}
+            self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024, optional)
         except Exception as ex:
             print ex
-            self.fail('Failed to create volume')
+            self.fail('Failed to create volumes')
             return
 
         try:
-            #copy it
-            optional = {'online': True, 'destCPG': CPG_NAME1}
-            self.cl.copyVolume(VOLUME_NAME1, VOLUME_NAME2, optional)
+            members = [VOLUME_NAME1, VOLUME_NAME2]
+            self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
+                                    comment="Unit test volume set 1",
+                                    setmembers=members)
+
         except Exception as ex:
             print ex
-            self.fail('Failed to copy volume')
+            self.fail('Failed to create volume set with members')
+
+        try:
+            resp = self.cl.getVolumeSet(VOLUME_SET_NAME1)
+            self.assertIsNotNone(resp)
+            resp_members = resp['setmembers']
+            self.assertIn(VOLUME_NAME1, resp_members)
+            self.assertIn(VOLUME_NAME2, resp_members)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to get volume set')
+            return
+
+        self.printFooter('create_volume_set')
+
+    def test_7_create_volume_set_dup(self):
+        self.printHeader('create_volume_set_dup')
+
+        try:
+            self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
+                                    comment="Unit test volume set 1")
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create volume set')
             return
 
         try:
-            result = self.cl.getVolume(VOLUME_NAME2)
+            # create it again
+            self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
+                                    comment="Unit test volume set 1")
+        except exceptions.HTTPConflict as ex:
+            print "expected exception"
+            self.printFooter('create_volume_set_dup')
+            return
         except Exception as ex:
             print ex
-            self.fail('Failed to get cloned volume')
+            self.fail("Failed with unexpected exception")
+
+        self.fail("No exception occured")
+
+    def test_8_get_volume_sets(self):
+        self.printHeader('get_volume_sets')
+
+        try:
+            self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
+                                    comment="Unit test volume set 1")
+            self.cl.createVolumeSet(VOLUME_SET_NAME2, domain=DOMAIN)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create volume set')
             return
 
-        self.printFooter('copy_volume')
+        try:
+            sets = self.cl.getVolumeSets()
+            self.assertIsNotNone(sets)
+            set_names = [vset['name'] for vset in sets['members']]
+
+            self.assertIn(VOLUME_SET_NAME1, set_names)
+            self.assertIn(VOLUME_SET_NAME2, set_names)
+
+        except Exception as ex:
+            print ex
+            self.fail('Failed to get volume sets')
+            return
+
+        self.printFooter('get_volume_sets')
+
+    def test_9_del_volume_set_empty(self):
+        self.printHeader('del_volume_set_empty')
+        try:
+            self.cl.createVolumeSet(VOLUME_SET_NAME2, domain=DOMAIN)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create volume set')
+            return
+
+        try:
+            self.cl.deleteVolumeSet(VOLUME_SET_NAME2)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to delete volume set')
+            return
+
+        self.printFooter('del_volume_set_empty')
+
+    def test_9_del_volume_set_with_volumes(self):
+        self.printHeader('delete_volume_set_with_volumes')
+        try:
+            optional = {'comment': 'test volume 1', 'tpvv': True}
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+            optional = {'comment': 'test volume 2', 'tpvv': True}
+            self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024, optional)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create volumes')
+            return
+
+        try:
+            members = [VOLUME_NAME1, VOLUME_NAME2]
+            self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
+                                    comment="Unit test volume set 1",
+                                    setmembers=members)
+
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create volume set with members')
+
+        try:
+            self.cl.deleteVolumeSet(VOLUME_SET_NAME1)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to delete volume set')
+            return
+
+        self.printFooter('delete_volume_set_with_volumes')
+
+    def test_10_modify_volume_set_change_name(self):
+        self.printHeader('modify_volume_set_change_name')
+        try:
+            self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
+                                    comment="First")
+            self.cl.modifyVolumeSet(VOLUME_SET_NAME1,
+                                    newName=VOLUME_SET_NAME2)
+            vset = self.cl.getVolumeSet(VOLUME_SET_NAME2)
+            self.assertEqual("First", vset['comment'])
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create or change name of volume set')
+
+        self.printFooter('modify_volume_set_change_name')
+
+    def test_10_modify_volume_set_change_comment(self):
+        self.printHeader('modify_volume_set_change_comment')
+        try:
+            self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
+                                    comment="First")
+            self.cl.modifyVolumeSet(VOLUME_SET_NAME1,
+                                    comment="Second")
+            vset = self.cl.getVolumeSet(VOLUME_SET_NAME1)
+            self.assertEqual("Second", vset['comment'])
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create or change comment of volume set')
+
+        self.printFooter('modify_volume_set_change_comment')
+        pass
+
+    def test_10_modify_volume_set_add_members_to_empty(self):
+        self.printHeader('modify_volume_set_add_members_to_empty')
+
+        try:
+            optional = {'comment': 'test volume 1', 'tpvv': True}
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+            optional = {'comment': 'test volume 2', 'tpvv': True}
+            self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024, optional)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create volume set')
+        try:
+            self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
+                                    comment="Unit test volume set 1")
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create volume set')
+            return
+
+        try:
+            members = [VOLUME_NAME1, VOLUME_NAME2]
+            self.cl.modifyVolumeSet(VOLUME_SET_NAME1, self.cl.SET_MEM_ADD,
+                                    setmembers=members)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to add volumes')
+            return
+
+        try:
+            resp = self.cl.getVolumeSet(VOLUME_SET_NAME1)
+            print resp
+            self.assertTrue(VOLUME_NAME1 in resp['setmembers'])
+            self.assertTrue(VOLUME_NAME2 in resp['setmembers'])
+        except Exception as ex:
+            print ex
+            self.fail('Failed to add volumes to volume set')
+            return
+
+        self.printFooter('modify_volume_set_add_members_to_empty')
+
+    def test_10_modify_volume_set_add_members(self):
+        self.printHeader('modify_volume_set_add_members')
+
+        try:
+            optional = {'comment': 'test volume 1', 'tpvv': True}
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+            optional = {'comment': 'test volume 2', 'tpvv': True}
+            self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024, optional)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create volume set')
+        try:
+            members = [VOLUME_NAME1]
+            self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
+                                    setmembers=members,
+                                    comment="Unit test volume set 1")
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create volume set')
+            return
+
+        try:
+            members = [VOLUME_NAME2]
+            self.cl.modifyVolumeSet(VOLUME_SET_NAME1, self.cl.SET_MEM_ADD,
+                                    setmembers=members)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to add volumes')
+            return
+
+        try:
+            resp = self.cl.getVolumeSet(VOLUME_SET_NAME1)
+            print resp
+            self.assertTrue(VOLUME_NAME1 in resp['setmembers'])
+            self.assertTrue(VOLUME_NAME2 in resp['setmembers'])
+        except Exception as ex:
+            print ex
+            self.fail('Failed to add volumes to volume set')
+            return
+
+        self.printFooter('modify_volume_set_add_members')
+
+    def test_10_modify_volume_set_del_members(self):
+        self.printHeader('modify_volume_del_members')
+
+        try:
+            optional = {'comment': 'test volume 1', 'tpvv': True}
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+            optional = {'comment': 'test volume 2', 'tpvv': True}
+            self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024, optional)
+            members = [VOLUME_NAME1, VOLUME_NAME2]
+            self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
+                                    comment="Unit test volume set 1",
+                                    setmembers=members)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create volume set')
+            return
+
+        try:
+
+            members = [VOLUME_NAME1]
+            self.cl.modifyVolumeSet(VOLUME_SET_NAME1,
+                                    action=self.cl.SET_MEM_REMOVE,
+                                    setmembers=members)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to remove volumes from set')
+            return
+
+        try:
+            resp = self.cl.getVolumeSet(VOLUME_SET_NAME1)
+            self.assertIsNotNone(resp)
+            resp_members = resp['setmembers']
+            self.assertNotIn(VOLUME_NAME1, resp_members)
+            self.assertIn(VOLUME_NAME2, resp_members)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to get volume set')
+            return
+
+        self.printFooter('modify_volume_del_members')
 
 #testing
 #suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVolumeTestCase)
