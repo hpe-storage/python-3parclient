@@ -1105,7 +1105,7 @@ class HP3ParClient:
 
         If ioMaxLimitOP is set to 2 (no limit), ioMinGoalOP must also be
         to set to 2 (zero), and vice versa. They cannot be set to
-        “none” individually. Similarly, if bwMaxLimitOP is set to 2 (no
+        'none' individually. Similarly, if bwMaxLimitOP is set to 2 (no
         limit), then bwMinGoalOP must also be set to 2.
 
         If ioMaxLimitOP is set to 1 (no limit), ioMinGoalOP must also be
@@ -1179,7 +1179,7 @@ class HP3ParClient:
 
         If ioMaxLimitOP is set to 2 (no limit), ioMinGoalOP must also be
         to set to 2 (zero), and vice versa. They cannot be set to
-        “none” individually. Similarly, if bwMaxLimitOP is set to 2 (no
+        'none' individually. Similarly, if bwMaxLimitOP is set to 2 (no
         limit), then bwMinGoalOP must also be set to 2.
 
         If ioMaxLimitOP is set to 1 (no limit), ioMinGoalOP must also be
