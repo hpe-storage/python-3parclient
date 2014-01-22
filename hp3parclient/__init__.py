@@ -1,6 +1,4 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
-# Copyright 2012 Hewlett Packard Development Company, L.P.
+# Copyright 2012-2014 Hewlett Packard Development Company, L.P.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -15,10 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 """
-HP 3Par REST Client
+HP 3PAR Client
 
 :Author: Walter A. Boring IV
-:Copyright: Copyright 2012, Hewlett Packard Development Company, L.P.
+:Author: Kurt Martin 
+:Copyright: Copyright 2012-2014, Hewlett Packard Development Company, L.P.
 :License: Apache v2.0
  
 """
