@@ -29,7 +29,7 @@ This client requires and works with 3PAR InForm 3.1.3 firmware
 
 """
 import re
-
+import urllib2
 from hp3parclient import exceptions, http, ssh
 
 
@@ -633,11 +633,13 @@ class HP3ParClient:
         """
         query = ''
         if iqn:
-            query = 'iSCSIPaths [name==%s]' % iqn
+            query = 'iSCSIPaths[name==%s]' % iqn
         if wwn:
-            query = 'FCPaths [wwn==%s]' % wwn
+            query = 'FCPaths[wwn==%s]' % wwn
 
-        response, body = self.http.get('/hosts?query="%s"' % query)
+        query = '"%s"' % query
+
+        response, body = self.http.get('/hosts?query=%s' % urllib2.quote(query.encode("utf8")))
         return body
 
     def getHostVLUNs(self, hostName):
@@ -1211,7 +1213,7 @@ class HP3ParClient:
                 'bwMinGoalKB': 1024,   # bandwidth rate minimum goal in kilobytes per second
                 'bwMaxLimitKB': 1024,  # bandwidth rate maximum limit in kilobytes per second
                 'ioMinGoal': 10000,    # I/O-per-second minimum goal.
-                'ioMaxLimit': 2000000, # I/0-per-second maximum limit 
+                'ioMaxLimit': 2000000, # I/0-per-second maximum limit
                 'enable': True,        # QoS rule for target enabled?
                 'bwMinGoalOP': 1,      # zero none operation enum, when set to 1, bandwidth minimum goal is 0
                                        # when set to 2, the bandwidth minimum goal is none (NoLimit)

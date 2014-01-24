@@ -42,7 +42,7 @@ class HP3ParClientSystemTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
     def test_getWSAPIConfigurationInfo(self):
         self.printHeader('getWSAPIConfigurationInfo')
 
-        info = self.cl.getWsApiVersion()
+        info = self.cl.getWSAPIConfigurationInfo()
         self.assertIsNotNone(info)
         self.printFooter('getWSAPIConfigurationInfo')
 

@@ -1,5 +1,6 @@
 #from flask import Flask, request, abort, make_response, session, escape
 from flask import *
+import re
 import pprint
 import json, os, random, string
 import argparse
@@ -394,8 +395,34 @@ def delete_host(host_name):
 @app.route('/api/v1/hosts', methods=['GET'])
 def get_hosts():
     debugRequest(request)
-    resp = make_response(json.dumps(hosts), 200)
+    query = request.args.get('query')
+    matched_hosts = []
+    if query is not None:
+        parsed_query = _parse_query(query)
+        for wwn in parsed_query["wwns"]:
+            for host in hosts['members']:
+                for hostwwn in host['FCWWNs']:
+                    if hostwwn.replace(':', '') == wwn:
+                        matched_hosts.append(host)
+                        break
+
+        for iqn in parsed_query["iqns"]:
+            for host in hosts['members']:
+                if 0 < host['iSCSINames'].count(iqn):
+                    matched_hosts.append(host)
+
+
+        result = {'total': len(matched_hosts), 'members' : matched_hosts}
+        resp = make_response(json.dumps(result), 200)
+    else:
+        resp = make_response(json.dumps(hosts), 200)
     return resp
+
+def _parse_query(query):
+    wwns = re.findall("wwn==([0-9A-Z]*)", query)
+    iqns = re.findall("name==([\w.:-]*)", query)
+    parsed_query = {"wwns" : wwns, "iqns" : iqns}
+    return parsed_query
 
 @app.route('/api/v1/hosts/<host_name>', methods=['GET'])
 def get_host(host_name):
