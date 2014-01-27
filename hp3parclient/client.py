@@ -310,13 +310,14 @@ class HP3ParClient:
         :type src_name: str
         :param dest_name: the destination volume name
         :type dest_name: str
+        :param dest_cpg: the destination CPG
+        :type dest_cpg: str
         :param optional: Dictionary of optional params
         :type optional: dict
 
         .. code-block:: python
 
             optional = {
-                'destCPG': "OpenStack_CPG", # CPG for the destination volume
                 'online': False, # should physical copy be performed online?
                 'tpvv': False, # use thin provisioned space for destination?  (online copy only)
                 'snapCPG' : "OpenStack_SnapCPG, # snapshot CPG for the destination (online copy only)
