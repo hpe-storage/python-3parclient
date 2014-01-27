@@ -302,7 +302,7 @@ class HP3ParClient:
         response, body = self.http.put('/volumes/%s' % name, body=info)
         return body
 
-    def copyVolume(self, src_name, dest_name, optional=None):
+    def copyVolume(self, src_name, dest_name, dest_cpg, optional=None):
         """
         Copy/Clone a volume.
 
@@ -357,7 +357,8 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VVCOPY - Physical copy not found.
         """
         # Virtual volume sets are not supported with the -online option
-        parameters = {'destVolume': dest_name}
+        parameters = {'destVolume': dest_name,
+                      'destCPG': dest_cpg}
         if optional:
             parameters = self._mergeDict(parameters, optional)
 
@@ -1211,7 +1212,7 @@ class HP3ParClient:
                 'bwMinGoalKB': 1024,   # bandwidth rate minimum goal in kilobytes per second
                 'bwMaxLimitKB': 1024,  # bandwidth rate maximum limit in kilobytes per second
                 'ioMinGoal': 10000,    # I/O-per-second minimum goal.
-                'ioMaxLimit': 2000000, # I/0-per-second maximum limit 
+                'ioMaxLimit': 2000000, # I/0-per-second maximum limit
                 'enable': True,        # QoS rule for target enabled?
                 'bwMinGoalOP': 1,      # zero none operation enum, when set to 1, bandwidth minimum goal is 0
                                        # when set to 2, the bandwidth minimum goal is none (NoLimit)
