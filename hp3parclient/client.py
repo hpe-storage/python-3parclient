@@ -302,7 +302,7 @@ class HP3ParClient:
         response, body = self.http.put('/volumes/%s' % name, body=info)
         return body
 
-    def copyVolume(self, src_name, dest_name, optional=None):
+    def copyVolume(self, src_name, dest_name, dest_cpg, optional=None):
         """
         Copy/Clone a volume.
 
@@ -310,13 +310,14 @@ class HP3ParClient:
         :type src_name: str
         :param dest_name: the destination volume name
         :type dest_name: str
+        :param dest_cpg: the destination CPG
+        :type dest_cpg: str
         :param optional: Dictionary of optional params
         :type optional: dict
 
         .. code-block:: python
 
             optional = {
-                'destCPG': "OpenStack_CPG", # CPG for the destination volume
                 'online': False, # should physical copy be performed online?
                 'tpvv': False, # use thin provisioned space for destination?  (online copy only)
                 'snapCPG' : "OpenStack_SnapCPG, # snapshot CPG for the destination (online copy only)
@@ -357,7 +358,8 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VVCOPY - Physical copy not found.
         """
         # Virtual volume sets are not supported with the -online option
-        parameters = {'destVolume': dest_name}
+        parameters = {'destVolume': dest_name,
+                      'destCPG': dest_cpg}
         if optional:
             parameters = self._mergeDict(parameters, optional)
 
