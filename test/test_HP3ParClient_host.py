@@ -28,10 +28,10 @@ HOST_NAME1 = 'HOST1_UNIT_TEST'
 HOST_NAME2 = 'HOST2_UNIT_TEST'
 
 class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
-    
+
     def setUp(self):
         super(HP3ParClientHostTestCase, self).setUp()
-        
+
     def tearDown(self):
         try :
             self.cl.deleteHost(HOST_NAME1)
@@ -40,150 +40,150 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         try :
             self.cl.deleteHost(HOST_NAME2)
         except :
-            pass        
-        
+            pass
+
         # very last, tear down base class
         super(HP3ParClientHostTestCase, self).tearDown()
 
     def test_1_create_host_badParams(self):
-        self.printHeader('create_host_badParams')        
-        
+        self.printHeader('create_host_badParams')
+
         name = 'UnitTestHostBadParams'
         optional = {'iSCSIPaths': 'foo bar'}
-        self.assertRaises(exceptions.HTTPBadRequest, 
-                          self.cl.createHost, 
+        self.assertRaises(exceptions.HTTPBadRequest,
+                          self.cl.createHost,
                           name,
-                          None, 
-                          None, 
+                          None,
+                          None,
                           optional)
-        
+
         self.printFooter('create_host_badParams')
- 
+
 
     def test_1_create_host_no_name(self):
         self.printHeader('create_host_no_name')
-        
+
         optional = {'domain' : 'default'}
-        self.assertRaises(exceptions.HTTPBadRequest, 
-                          self.cl.createHost, 
+        self.assertRaises(exceptions.HTTPBadRequest,
+                          self.cl.createHost,
                           None,
-                          None, 
-                          None, 
+                          None,
+                          None,
                           optional)
-        
-        self.printFooter('create_host_no_name') 
+
+        self.printFooter('create_host_no_name')
 
     def test_1_create_host_exceed_length(self):
         self.printHeader('create_host_exceed_length')
-        
+
         optional = {'domain': 'ThisDomainNameIsWayTooLongToMakeAnySense'}
-        self.assertRaises(exceptions.HTTPBadRequest, 
-                          self.cl.createHost, 
+        self.assertRaises(exceptions.HTTPBadRequest,
+                          self.cl.createHost,
                           HOST_NAME1,
-                          None, 
-                          None, 
-                          optional)        
-        
+                          None,
+                          None,
+                          optional)
+
         self.printFooter('create_host_exceed_length')
-        
- 
+
+
     def test_1_create_host_empty_domain(self):
         self.printHeader('create_host_empty_domain')
-        
+
         optional={'domain': ''}
-        self.assertRaises(exceptions.HTTPBadRequest, 
-                          self.cl.createHost, 
+        self.assertRaises(exceptions.HTTPBadRequest,
+                          self.cl.createHost,
                           HOST_NAME1,
-                          None, 
-                          None, 
-                          optional)                
-        
-        self.printFooter('create_host_empty_domain')        
+                          None,
+                          None,
+                          optional)
+
+        self.printFooter('create_host_empty_domain')
 
     def test_1_create_host_illegal_string(self):
         self.printHeader('create_host_illegal_string')
-        
+
         optional = {'domain' : 'doma&n'}
-        self.assertRaises(exceptions.HTTPBadRequest, 
-                          self.cl.createHost, 
+        self.assertRaises(exceptions.HTTPBadRequest,
+                          self.cl.createHost,
                           HOST_NAME1,
-                          None, 
-                          None, 
-                          optional)     
-        
-        self.printFooter('create_host_illegal_string')     
+                          None,
+                          None,
+                          optional)
+
+        self.printFooter('create_host_illegal_string')
 
     def test_1_create_host_param_conflict(self):
         self.printHeader('create_host_param_conflict')
-        
+
         optional = {'domain': DOMAIN}
         fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
         iscsi = ['iqn.1993-08.org.debian:01:00000000000', 'iqn.bogus.org.debian:01:0000000000']
-        self.assertRaises(exceptions.HTTPBadRequest, 
-                          self.cl.createHost, 
+        self.assertRaises(exceptions.HTTPBadRequest,
+                          self.cl.createHost,
                           HOST_NAME1,
-                          iscsi, 
-                          fc, 
-                          optional)   
-        
+                          iscsi,
+                          fc,
+                          optional)
+
         self.printFooter('create_host_param_conflict')
-        
+
     def test_1_create_host_wrong_type(self):
         self.printHeader('create_host_wrong_type')
-        
+
         optional = {'domain': DOMAIN}
         fc = ['00:00:00:00:00:00:00']
-        self.assertRaises(exceptions.HTTPBadRequest, 
-                          self.cl.createHost, 
+        self.assertRaises(exceptions.HTTPBadRequest,
+                          self.cl.createHost,
                           HOST_NAME1,
-                          None, 
-                          fc, 
-                          optional)       
-        self.printFooter('create_host_wrong_type')            
-        
+                          None,
+                          fc,
+                          optional)
+        self.printFooter('create_host_wrong_type')
+
     def test_1_create_host_existent_path(self):
         self.printHeader('create_host_existent_path')
-        
+
         optional = {'domain':DOMAIN}
         fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
         self.cl.createHost(HOST_NAME1, None, fc, optional)
-        self.assertRaises(exceptions.HTTPConflict, 
-                          self.cl.createHost, 
+        self.assertRaises(exceptions.HTTPConflict,
+                          self.cl.createHost,
                           HOST_NAME2,
-                          None, 
-                          fc, 
-                          optional)   
-        
-        self.printFooter('create_host_existent_path')        
+                          None,
+                          fc,
+                          optional)
+
+        self.printFooter('create_host_existent_path')
 
     def test_1_create_host_duplicate(self):
         self.printHeader('create_host_duplicate')
-        
+
         optional = {'domain' : DOMAIN}
         self.cl.createHost(HOST_NAME1, None, None, optional)
-        self.assertRaises(exceptions.HTTPConflict, 
-                          self.cl.createHost, 
+        self.assertRaises(exceptions.HTTPConflict,
+                          self.cl.createHost,
                           HOST_NAME1,
-                          None, 
-                          None, 
-                          optional)  
-        
+                          None,
+                          None,
+                          optional)
+
         self.printFooter('create_host_duplicate')
 
     def test_1_create_host(self):
-        self.printHeader('create_host')  
- 
+        self.printHeader('create_host')
+
         #add one
-            
+
         optional = {'domain': DOMAIN}
         fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
         self.cl.createHost(HOST_NAME1, None, fc, optional)
-        #check 
+        #check
         host1 = self.cl.getHost(HOST_NAME1)
         self.assertIsNotNone(host1)
         name1 = host1['name']
         self.assertEqual(HOST_NAME1, name1)
-        #add another            
+        #add another
         iscsi = ['iqn.1993-08.org.debian:01:00000000000', 'iqn.bogus.org.debian:01:0000000000']
         self.cl.createHost(HOST_NAME2, iscsi, None, optional)
         #check
@@ -196,61 +196,61 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
     def test_2_delete_host_nonExist(self):
         self.printHeader("delete_host_non_exist")
-        
-        self.assertRaises(exceptions.HTTPNotFound, 
-                          self.cl.deleteHost, 
-                          "UnitTestNonExistHost")  
-        
+
+        self.assertRaises(exceptions.HTTPNotFound,
+                          self.cl.deleteHost,
+                          "UnitTestNonExistHost")
+
         self.printFooter("delete_host_non_exist")
 
     def test_2_delete_host(self):
         self.printHeader("delete_host")
-        
+
         optional = {'domain': DOMAIN}
         fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
         self.cl.createHost(HOST_NAME1, None, fc, optional)
-        
-        #check 
+
+        #check
         host1 = self.cl.getHost(HOST_NAME1)
         self.assertIsNotNone(host1)
-        
+
 
         hosts = self.cl.getHosts()
         if hosts and hosts['total'] > 0:
             for host in hosts['members']:
                 if 'name' in host and host['name'] == HOST_NAME1:
-                    self.cl.deleteHost(host['name'])                
+                    self.cl.deleteHost(host['name'])
 
-        self.assertRaises(exceptions.HTTPNotFound, self.cl.getHost, HOST_NAME1)  
-        
-        self.printFooter("delete_host")                    
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.getHost, HOST_NAME1)
+
+        self.printFooter("delete_host")
 
 
     def test_3_get_host_bad(self):
         self.printHeader("get_host_bad")
-        
+
         self.assertRaises(exceptions.HTTPNotFound, self.cl.getHost, "BadHostName")
-        
+
         self.printFooter("get_host_bad")
 
     def test_3_get_host_illegal(self):
         self.printHeader("get_host_illegal")
-        
+
         self.assertRaises(exceptions.HTTPBadRequest, self.cl.getHost, "B&dHostName")
-        
+
         self.printFooter("get_host_illegal")
- 
+
     def test_3_get_host(self):
         self.printHeader("get_host")
-        
+
         self.assertRaises(exceptions.HTTPNotFound, self.cl.getHost, HOST_NAME1)
-        
+
         optional = {'domain': DOMAIN}
         fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
         self.cl.createHost(HOST_NAME1, None, fc, optional)
-        
+
         host1 = self.cl.getHost(HOST_NAME1)
-        self.assertEquals(host1['name'], HOST_NAME1)        
+        self.assertEquals(host1['name'], HOST_NAME1)
 
         self.printFooter('get_host')
 
@@ -302,7 +302,7 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
     def test_4_modify_host_param_conflict(self):
         self.printHeader('modify_host_param_conflict')
-        
+
         fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
         iscsi = ['iqn.1993-08.org.debian:01:00000000000', 'iqn.bogus.org.debian:01:0000000000']
         mod_request = {'newName': HOST_NAME1, 'FCWWNs': fc, 'iSCSINames': iscsi}
@@ -646,3 +646,30 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
                 return
 
         self.printFooter('modify_host_remove_iscsi')
+
+    def test_5_query_host_iqn(self):
+        self.printHeader('query_host_iqn')
+        optional = {'domain': DOMAIN}
+        iscsi = ['iqn.1993-08.org.debian:01:00000000000']
+        self.cl.createHost(HOST_NAME1, iscsi, None, optional)
+
+        iscsi_host = 'iqn.1993-08.org.debian:01'
+        hosts = self.cl.queryHost(iscsi.pop())
+        self.assertIsNotNone(hosts)
+        self.assertEqual(1, hosts['total'])
+        self.assertEqual(hosts['members'].pop()['name'], HOST_NAME1)
+
+        self.printFooter('query_host_iqn')
+
+    def test_5_query_host_wwn(self):
+        self.printHeader('query_host_wwn')
+        optional = {'domain': DOMAIN}
+        fc = ['00:00:00:00:00:00:00:00']
+        self.cl.createHost(HOST_NAME1, None, fc, optional)
+
+        hosts = self.cl.queryHost(wwn=fc.pop().replace(':', ''))
+        self.assertIsNotNone(hosts)
+        self.assertEqual(1, hosts['total'])
+        self.assertEqual(hosts['members'].pop()['name'], HOST_NAME1)
+
+        self.printFooter('query_host_wwn')

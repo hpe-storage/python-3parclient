@@ -29,7 +29,7 @@ This client requires and works with 3PAR InForm 3.1.3 firmware
 
 """
 import re
-
+import urllib2
 from hp3parclient import exceptions, http, ssh
 
 
@@ -634,11 +634,13 @@ class HP3ParClient:
         """
         query = ''
         if iqn:
-            query = 'iSCSIPaths [name==%s]' % iqn
+            query = 'iSCSIPaths[name==%s]' % iqn
         if wwn:
-            query = 'FCPaths [wwn==%s]' % wwn
+            query = 'FCPaths[wwn==%s]' % wwn
 
-        response, body = self.http.get('/hosts?query="%s"' % query)
+        query = '"%s"' % query
+
+        response, body = self.http.get('/hosts?query=%s' % urllib2.quote(query.encode("utf8")))
         return body
 
     def getHostVLUNs(self, hostName):
