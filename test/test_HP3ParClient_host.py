@@ -240,6 +240,27 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
         self.printFooter("get_host_illegal")
 
+    def test_3_get_hosts(self):
+        self.printHeader("get_hosts")
+
+        optional = {'domain': DOMAIN}
+        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        self.cl.createHost(HOST_NAME1, None, fc, optional)
+
+        iscsi = ['iqn.1993-08.org.debian:01:00000000000',
+                 'iqn.bogus.org.debian:01:0000000000']
+        self.cl.createHost(HOST_NAME2, iscsi, None, optional)
+
+        hosts = self.cl.getHosts()
+        self.assertGreaterEqual(hosts['total'], 2)
+        host_names = []
+        for host in hosts['members']:
+            if 'name' in host:
+                host_names.append(host['name'])
+
+        self.assertIn(HOST_NAME1, host_names)
+        self.assertIn(HOST_NAME2, host_names)
+
     def test_3_get_host(self):
         self.printHeader("get_host")
 
