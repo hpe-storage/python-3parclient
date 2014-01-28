@@ -12,8 +12,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-"""
-HP3PAR REST Client
+""" HP3PAR REST Client.
 
 .. module: HP3ParClient
 .. moduleauthor: Walter A. Boring IV
@@ -30,12 +29,14 @@ This client requires and works with 3PAR InForm 3.1.3 firmware
 """
 import re
 import urllib2
+import time
+
 from hp3parclient import exceptions, http, ssh
 
 
-class HP3ParClient:
-    """
-    The 3PAR REST API Client
+class HP3ParClient(object):
+
+    """ The 3PAR REST API Client.
 
     :param api_url: The url to the WSAPI service on 3PAR
                     ie. http://<3par server>:8080/api/v1
@@ -370,6 +371,62 @@ class HP3ParClient:
         return body
 
     def stopPhysicalCopy(self, name):
+        """
+        Stopping a physical copy operation.
+
+        :param name: the name of the volume
+        :type name: str
+        """
+        # first we have to find the active copy
+        task = self._findTask(name)
+        task_id = None
+        if task is None:
+            # couldn't find the task
+            msg = "Couldn't find the copy task for '%s'" % name
+            raise exceptions.HTTPNotFound(error={'desc': msg})
+        else:
+            task_id = task[0]
+
+        # now stop the copy
+        if task_id is not None:
+            cmd = ['canceltask', '-f', task_id]
+            self.ssh.run(cmd)
+        else:
+            msg = "Couldn't find the copy task for '%s'" % name
+            raise exceptions.HTTPNotFound(error={'desc': msg})
+
+        # we have to make sure the task is cancelled
+        # before moving on. This can sometimes take a while.
+        ready = False
+        while not ready:
+            time.sleep(1)
+            task = self._findTask(name, True)
+            if task is None:
+                ready = True
+
+        # now cleanup the dead snapshots
+        vol = self.getVolume(name)
+        if vol:
+            snap1 = self.getVolume(vol['copyOf'])
+            snap2 = self.getVolume(snap1['copyOf'])
+            self.deleteVolume(name)
+            self.deleteVolume(snap1['name'])
+            self.deleteVolume(snap2['name'])
+
+    def _findTask(self, name, active=True):
+        cmd = ['showtask']
+        if active:
+            cmd.append('-active')
+        cmd.append(name)
+        result = self.ssh.run(cmd)
+        if result and len(result) == 1:
+            if 'No tasks' in result[0]:
+                return None
+        elif len(result) == 2:
+            return result[1].split(',')
+        return result
+
+    def findVolumeSet(self, name):
         """
         Stopping a physical copy operation.
 
