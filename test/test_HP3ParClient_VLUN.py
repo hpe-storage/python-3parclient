@@ -75,6 +75,10 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         except Exception:
             pass
         try:
+            self.cl.deleteVLUN(VOLUME_NAME1, LUN_1, HOST_NAME2)
+        except Exception:
+            pass
+        try:
             self.cl.deleteVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2)
         except:
             pass
@@ -233,6 +237,36 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.fail('Failed with unexpected exception')
 
         self.fail('No exception occurred.')
+
+    def test_4_get_host_VLUNs(self):
+        self.printHeader('get_host_vluns')
+
+        self.cl.createVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2)
+        self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME2)
+
+        host_vluns = self.cl.getHostVLUNs(HOST_NAME2)
+
+        self.assertIn(VOLUME_NAME1,
+                      [vlun['volumeName'] for vlun in host_vluns])
+        self.assertIn(VOLUME_NAME2,
+                      [vlun['volumeName'] for vlun in host_vluns])
+        self.assertIn(LUN_1, [vlun['lun'] for vlun in host_vluns])
+        self.assertIn(LUN_2, [vlun['lun'] for vlun in host_vluns])
+        self.printFooter('get_host_vluns')
+
+    def test_4_get_host_VLUNs_unknown_host(self):
+        self.printHeader('get_host_vluns_unknown_host')
+
+        try:
+            self.cl.getHostVLUNs('bogusHost')
+        except exceptions.HTTPNotFound:
+            self.printFooter('get_host_vluns_unknown_host')
+            return
+        except Exception as ex:
+            print ex
+            self.fail('Failed with unexpected exception')
+
+        self.fail('Expected an exception')
 
 #testing
 #suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVLUNTestCase)

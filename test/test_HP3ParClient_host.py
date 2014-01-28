@@ -170,6 +170,7 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
         self.printFooter('create_host_duplicate')
 
+
     def test_1_create_host(self):
         self.printHeader('create_host')
 
@@ -184,7 +185,8 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         name1 = host1['name']
         self.assertEqual(HOST_NAME1, name1)
         #add another
-        iscsi = ['iqn.1993-08.org.debian:01:00000000000', 'iqn.bogus.org.debian:01:0000000000']
+        iscsi = ['iqn.1993-08.org.debian:01:00000000000',
+                 'iqn.bogus.org.debian:01:0000000000']
         self.cl.createHost(HOST_NAME2, iscsi, None, optional)
         #check
         host2 = self.cl.getHost(HOST_NAME2)
@@ -193,6 +195,20 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         self.assertEqual(HOST_NAME2, name3)
 
         self.printFooter('create_host')
+
+    def test_1_create_host_no_optional(self):
+        self.printHeader('create_host_no_optional')
+
+        #add one
+        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        self.cl.createHost(HOST_NAME1, None, fc)
+        #check
+        host1 = self.cl.getHost(HOST_NAME1)
+        self.assertIsNotNone(host1)
+        name1 = host1['name']
+        self.assertEqual(HOST_NAME1, name1)
+
+        self.printFooter('create_host_no_optional')
 
     def test_2_delete_host_nonExist(self):
         self.printHeader("delete_host_non_exist")

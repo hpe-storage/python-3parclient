@@ -309,6 +309,22 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             print ex
             self.fail('Failed with unexpected exception')
 
+    def test_4_create_snapshot_no_optional(self):
+        self.printHeader('create_snapshot_no_optional')
+
+        try:
+            optional = {'snapCPG': CPG_NAME1}
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+            #add one
+            self.cl.createSnapshot(SNAP_NAME1, VOLUME_NAME1)
+            #no API to get and check
+        except Exception as ex:
+            print ex
+            self.fail("Failed with unexpected exception")
+
+        self.cl.deleteVolume(SNAP_NAME1)
+        self.printFooter('create_snapshot_no_optional')
+
     def test_4_create_snapshot(self):
         self.printHeader('create_snapshot')
 
