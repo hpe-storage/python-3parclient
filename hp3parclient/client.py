@@ -619,25 +619,42 @@ class HP3ParClient:
             self.deleteHost(hostname)
             return None
 
-    def queryHost(self, iqn=None, wwn=None):
+    def queryHost(self, iqns=None, wwns=None):
         """
         Find a host from an iSCSI initiator or FC WWN
 
-        :param iqn: lookup based on iSCSI initiator
-        :type iqn: str
-        :param wwn: lookup based on WWN
-        :type wwn: str
+        :param iqn: lookup based on iSCSI initiator list
+        :type iqns: list
+        :param wwn: lookup based on WWN list
+        :type wwns: list
 
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT - Invalid URI syntax.
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_HOST - HOST Not Found
         :raises: :class:`~hp3parclient.exceptions.HTTPInternalServerError` - INTERNAL_SERVER_ERR - Internal server error.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Host name contains invalid character.
         """
+        wwnsQuery = ''
+        if wwns:
+            tmpQuery = []
+            for wwn in wwns:
+                tmpQuery.append('wwn==%s' % wwn)
+            wwnsQuery = ('FCPaths[%s]' % ' OR '.join(tmpQuery))
+
+        iqnsQuery = ''
+        if iqns:
+            tmpQuery = []
+            for iqn in iqns:
+                tmpQuery.append('name==%s' % iqn)
+            iqnsQuery = ('iSCSIPaths[%s]' % ' OR '.join(tmpQuery))
+
         query = ''
-        if iqn:
-            query = 'iSCSIPaths[name==%s]' % iqn
-        if wwn:
-            query = 'FCPaths[wwn==%s]' % wwn
+        if wwnsQuery and iqnsQuery:
+            query = ('%(wwns)s OR %(iqns)s' % ({'wwns': wwnsQuery,
+                                                'iqns': iqnsQuery}))
+        elif wwnsQuery:
+            query = wwnsQuery
+        elif iqnsQuery:
+            query = iqnsQuery
 
         query = '"%s"' % query
 
