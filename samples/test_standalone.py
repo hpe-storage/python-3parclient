@@ -25,7 +25,7 @@ testSNAPName = testVolName+"SNAP"
 testCPGName = "WALTTESTCPG"
 
 #cl = client.HP3ParClient("https://localhost:8080/api/v1")
-cl = client.HP3ParClient("https://10.10.22.241:8080/api/v1")
+cl = client.HP3ParClient("https://10.10.20.242:8080/api/v1")
 if "debug" in args and args.debug == True:
     cl.debug_rest(True)
 
@@ -156,7 +156,7 @@ def create_volumes():
        cl.createVolume(volName, testCPGName, 300)
        volName = "%s2" % testVolName
        print "Creating Volume '%s'" % volName
-       cl.createVolume(volName, testCPGName, 1024, 
+       cl.createVolume(volName, testCPGName, 1024,
                        {'comment': 'something', 'tpvv': True})
 
     except exceptions.HTTPUnauthorized as ex:
@@ -182,7 +182,7 @@ def create_snapshots():
 
         snapName = "%s1" % testSNAPName
         print "Creating Snapshot '%s'" % snapName
-        cl.createSnapshot(snapName, volName, 
+        cl.createSnapshot(snapName, volName,
                           {'readOnly' : True, 'comment': "Some comment",
 #                          {'comment': "Some comment",
                            'retentionHours' : 1,
@@ -228,10 +228,11 @@ def delete_volumes():
     print "Complete\n"
 
 
-cl.login(username, password, {'InServ':'10.10.22.241'})
+#cl.login(username, password, {'InServ':'10.10.22.241'})
+cl.login(username, password)
 #get_cpgs()
 #create_test_host()
-get_hosts()
+#get_hosts()
 #get_host('manualkvmtest')
 #get_vluns()
 #get_vlun('WALTTESTVOL11')
@@ -244,3 +245,12 @@ get_hosts()
 #create_snapshots()
 #delete_snapshots()
 #delete_test_cpg()
+
+opts = {'online': True}
+ret = cl.copyVolume('osv-FOOBAR', 'walt-vv', 'OpenStackCPG_RAID0_FC', opts)
+pprint.pprint("Return %s" % ret)
+
+
+#cl.stopPhysicalCopy('walt-vv')
+
+
