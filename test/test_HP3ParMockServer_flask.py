@@ -414,17 +414,20 @@ def get_hosts():
     matched_hosts = []
     if query is not None:
         parsed_query = _parse_query(query)
-        for wwn in parsed_query["wwns"]:
-            for host in hosts['members']:
+        for host in hosts['members']:
+            pprint.pprint(host)
+            if 'FCWWNs' in host:
+                pprint.pprint(host['FCWWNs'])
                 for hostwwn in host['FCWWNs']:
-                    if hostwwn.replace(':', '') == wwn:
+                    if hostwwn.replace(':', '') in parsed_query['wwns']:
                         matched_hosts.append(host)
                         break
-
-        for iqn in parsed_query["iqns"]:
-            for host in hosts['members']:
-                if 0 < host['iSCSINames'].count(iqn):
-                    matched_hosts.append(host)
+            elif 'iSCSINames' in host:
+                pprint.pprint(host['iSCSINames'])
+                for iqn in host['iSCSINames']:
+                    if iqn in parsed_query['iqns']:
+                        matched_hosts.append(host)
+                        break
 
         result = {'total': len(matched_hosts), 'members': matched_hosts}
         resp = make_response(json.dumps(result), 200)
