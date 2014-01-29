@@ -269,11 +269,9 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
         hosts = self.cl.getHosts()
         self.assertGreaterEqual(hosts['total'], 2)
-        host_names = []
-        for host in hosts['members']:
-            if 'name' in host:
-                host_names.append(host['name'])
 
+        host_names = [host['name']
+                      for host in hosts['members'] if 'name' in host]
         self.assertIn(HOST_NAME1, host_names)
         self.assertIn(HOST_NAME2, host_names)
 

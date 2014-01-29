@@ -788,6 +788,102 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
 
         self.printFooter('modify_volume_del_members')
 
+    def _create_vv_sets(self):
+        optional = {'comment': 'test volume 1', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        optional = {'comment': 'test volume 2', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024, optional)
+        members = [VOLUME_NAME1, VOLUME_NAME2]
+        self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
+                                comment="Unit test volume set 1",
+                                setmembers=members)
+
+    def test_11_add_qos(self):
+        self.printHeader('add_qos')
+
+        self._create_vv_sets()
+        qos = {'bwMinGoalKB': 1024,
+               'bwMaxLimitKB': 1024}
+        try:
+            self.cl.createQoSRules(VOLUME_SET_NAME1, qos)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to add qos')
+            return
+
+        try:
+            rule = self.cl.queryQoSRule(VOLUME_SET_NAME1)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to query qos')
+
+        self.assertIsNotNone(rule)
+        self.assertEquals(rule['bwMinGoalKB'], qos['bwMinGoalKB'])
+        self.assertEquals(rule['bwMaxLimitKB'], qos['bwMaxLimitKB'])
+        self.printFooter('add_qos')
+
+    def test_12_modify_qos(self):
+        self.printHeader('modify_qos')
+
+        self._create_vv_sets()
+        qos_before = {'bwMinGoalKB': 1024,
+                      'bwMaxLimitKB': 1024}
+        qos_after = {'bwMinGoalKB': 1024,
+                     'bwMaxLimitKB': 2048}
+
+        try:
+            self.cl.createQoSRules(VOLUME_SET_NAME1, qos_before)
+            self.cl.modifyQoSRules(VOLUME_SET_NAME1, qos_after)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to modify qos')
+            return
+
+        try:
+            rule = self.cl.queryQoSRule(VOLUME_SET_NAME1)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to query qos')
+
+        self.assertIsNotNone(rule)
+        self.assertEquals(rule['bwMinGoalKB'], qos_after['bwMinGoalKB'])
+        self.assertEquals(rule['bwMaxLimitKB'], qos_after['bwMaxLimitKB'])
+        self.printFooter('modify_qos')
+
+    def test_13_delete_qos(self):
+        self.printHeader('delete_qos')
+
+        self._create_vv_sets()
+        self.cl.createVolumeSet(VOLUME_SET_NAME2)
+
+        qos1 = {'bwMinGoalKB': 1024,
+               'bwMaxLimitKB': 1024}
+        qos2 = {'bwMinGoalKB': 512,
+               'bwMaxLimitKB': 2048}
+        try:
+            self.cl.createQoSRules(VOLUME_SET_NAME1, qos1)
+            self.cl.createQoSRules(VOLUME_SET_NAME2, qos2)
+            all_qos = self.cl.queryQoSRules()
+            self.assertGreaterEqual(all_qos['total'], 2)
+            self.assertIn(VOLUME_SET_NAME1, [qos['name'] for qos in all_qos['members']])
+            self.assertIn(VOLUME_SET_NAME2, [qos['name'] for qos in all_qos['members']])
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create/query qos')
+            return
+
+        try:
+            self.cl.deleteQoSRules(VOLUME_SET_NAME1)
+            all_qos = self.cl.queryQoSRules()
+        except Exception as ex:
+            print ex
+            self.fail("Failed to delete/query qos")
+            return
+
+        self.assertIsNotNone(all_qos)
+        self.assertNotIn(VOLUME_SET_NAME1, [qos['name'] for qos in all_qos['members']])
+        self.assertIn(VOLUME_SET_NAME2, [qos['name'] for qos in all_qos['members']])
+        self.printFooter('delete_qos')
 #testing
 #suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVolumeTestCase)
 #unittest.TextTestRunner(verbosity=2).run(suite)

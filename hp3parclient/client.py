@@ -576,7 +576,7 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` -  IN_USE - The HOST Cannot be removed because it's in use.
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
         """
-        reponse, body = self.http.delete('/hosts/%s' % name)
+        response, body = self.http.delete('/hosts/%s' % name)
 
     def findHost(self, iqn=None, wwn=None):
         """
@@ -792,7 +792,7 @@ class HP3ParClient:
         if optional:
             info = self._mergeDict(info, optional)
 
-        reponse, body = self.http.post('/cpgs', body=info)
+        response, body = self.http.post('/cpgs', body=info)
         return body
 
     def deleteCPG(self, name):
@@ -807,7 +807,7 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
 
         """
-        reponse, body = self.http.delete('/cpgs/%s' % name)
+        response, body = self.http.delete('/cpgs/%s' % name)
 
     ## VLUN methods
     ## Virtual-LUN, or VLUN, is a pairing between a virtual volume and a
@@ -823,7 +823,7 @@ class HP3ParClient:
 
         :returns: Array of VLUNs
         """
-        reponse, body = self.http.get('/vluns')
+        response, body = self.http.get('/vluns')
         return body
 
     def getVLUN(self, volumeName):
@@ -965,7 +965,7 @@ class HP3ParClient:
 
         :returns: Array of Volume Sets
         """
-        reponse, body = self.http.get('/volumesets')
+        response, body = self.http.get('/volumesets')
         return body
 
     def getVolumeSet(self, name):
@@ -979,7 +979,7 @@ class HP3ParClient:
 
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_SET - The set doesn't exist
         """
-        reponse, body = self.http.get('/volumesets/%s' % name)
+        response, body = self.http.get('/volumesets/%s' % name)
         return body
 
     def createVolumeSet(self, name, comment=None, domain=None,
@@ -1125,7 +1125,7 @@ class HP3ParClient:
         response, body = self.http.get('/qos')
         return body
 
-    def queryQoSRule(self, targetType, targetName):
+    def queryQoSRule(self, targetName, targetType='vvset'):
         """
         Query a QoS rule
 
@@ -1138,11 +1138,12 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_QOS_RULE - QoS rule does not exist.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Illegal character in the input.
         """
-        response, body = self.http.get('/qos/%(targeType)s:%(targetName)s' %
+        response, body = self.http.get('/qos/%(targetType)s:%(targetName)s' %
                                        {'targetType': targetType,
                                         'targetName': targetName})
+        return body
 
-    def createQoSRules(self, target_type, targetName, qosRules):
+    def createQoSRules(self, targetName, qosRules, target_type=TARGET_TYPE_VVSET):
         """
         Create QOS rules
 
@@ -1212,10 +1213,10 @@ class HP3ParClient:
 
         info = self._mergeDict(info, qosRules)
 
-        reponse, body = self.http.post('/qos', body=info)
+        response, body = self.http.post('/qos', body=info)
         return body
 
-    def modifyQoSRules(self, targetType, targetName, qosRules):
+    def modifyQoSRules(self, targetName, qosRules, targetType='vvset'):
         """
         Modify an existing QOS rules
 
@@ -1279,13 +1280,13 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BELOW_RANGE - I/O-per-second limit is below range. Bandwidth limit is below range.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - UNLICENSED_FEATURE - The system is not licensed for QoS.
         """
-        reponse, body = self.http.put('/qos/%(targetType)s:%(targetName)s' %
-                                      {'targetType': targetType,
-                                       'targetName': targetName},
-                                      body=qosRules)
+        response, body = self.http.put('/qos/%(targetType)s:%(targetName)s' %
+                                       {'targetType': targetType,
+                                        'targetName': targetName},
+                                       body=qosRules)
         return body
 
-    def deleteQoSRules(self, targetType, targetName):
+    def deleteQoSRules(self, targetName, targetType='vvset'):
         """
         Clear and Delete QoS rules
 
@@ -1298,9 +1299,10 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_QOS_RULE - QoS rule does not exist.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Illegal character in the input.
         """
-        response, body = self.http.delete('/qos/%(targeType)s:%(targetName)s' %
+        response, body = self.http.delete('/qos/%(targetType)s:%(targetName)s' %
                                           {'targetType': targetType,
                                            'targetName': targetName})
+        return body
 
     def setVolumeMetaData(self, name, key, value):
         """

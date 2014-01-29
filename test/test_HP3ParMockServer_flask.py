@@ -2,8 +2,12 @@
 from flask import *
 import re
 import pprint
-import json, os, random, string
+import json
+import os
+import random
+import string
 import argparse
+import uuid
 from werkzeug.exceptions import default_exceptions
 from werkzeug.exceptions import HTTPException
 
@@ -17,27 +21,30 @@ args = parser.parse_args()
 user_name = args.user
 user_pass = args.password
 debugRequests = False
-if "debug" in args and args.debug == True:
+if "debug" in args and args.debug:
     debugRequests = True
 
 #__all__ = ['make_json_app']
 
+
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
-  return ''.join(random.choice(chars) for x in range(size))
+    return ''.join(random.choice(chars) for x in range(size))
+
 
 def make_json_app(import_name, **kwargs):
     """
-    Creates a JSON-oriented Flask app.
+    Create a JSON-oriented Flask app.
 
     All error responses that you don't specifically
     manage yourself will have application/json content
     type, and will contain JSON like this (just an example):
 
     { "message": "405: Method Not Allowed" }
+
     """
     def make_json_error(ex):
         pprint.pprint(ex)
-        #pprint.pprint(ex.code)
+        # pprint.pprint(ex.code)
         response = jsonify(message=str(ex))
         #response = jsonify(ex)
         response.status_code = (ex.code
@@ -50,7 +57,6 @@ def make_json_app(import_name, **kwargs):
     #app.debug = True
     app.secret_key = id_generator(24)
 
-
     for code in default_exceptions.iterkeys():
         app.error_handler_spec[None][code] = make_json_error
 
@@ -59,6 +65,7 @@ def make_json_app(import_name, **kwargs):
 app = make_json_app(__name__)
 
 session_key = id_generator(24)
+
 
 def debugRequest(request):
     if debugRequests:
@@ -79,12 +86,14 @@ def throw_error(http_code, error_code=None, desc=None, debug1=None, debug2=None)
     else:
         abort(http_code)
 
+
 @app.route('/')
 def index():
     debugRequest(request)
     if 'username' in session:
         return 'Logged in as %s' % escape(session['username'])
     abort(401)
+
 
 @app.route('/api/v1/throwerror')
 def errtest():
@@ -107,12 +116,12 @@ def credentials():
         return 'GET credentials called'
 
     elif request.method == 'POST':
-	data = json.loads(request.data)
+        data = json.loads(request.data)
 
         if data['user'] == user_name and data['password'] == user_pass:
-            #do something good here
+            # do something good here
             try:
-                resp = make_response(json.dumps({'key':session_key}), 201)
+                resp = make_response(json.dumps({'key': session_key}), 201)
                 resp.headers['Location'] = '/api/v1/credentials/%s' % session_key
                 session['username'] = data['user']
                 session['password'] = data['password']
@@ -122,7 +131,7 @@ def credentials():
                 pprint.pprint(ex)
 
         else:
-            #authentication failed!
+            # authentication failed!
             throw_error(401, "HTTP_AUTH_FAIL", "Username and or Password was incorrect")
 
 
@@ -140,40 +149,42 @@ def create_cpgs():
     debugRequest(request)
     data = json.loads(request.data)
 
-    valid_keys = {'name':None, 'growthIncrementMB':None, 'growthLimitMB':None,
-                  'usedLDWarningAlertMB':None, 'domain':None, 'LDLayout':None}
+    valid_keys = {'name': None, 'growthIncrementMB': None, 'growthLimitMB': None,
+                  'usedLDWarningAlertMB': None, 'domain': None, 'LDLayout': None}
 
-    valid_LDLayout_keys = {'RAIDType':None, 'setSize':None, 'HA':None,
-                           'chuckletPosRef':None, 'diskPatterns':None}
+    valid_LDLayout_keys = {'RAIDType': None, 'setSize': None, 'HA': None,
+                           'chuckletPosRef': None, 'diskPatterns': None}
 
     for key in data.keys():
         if key not in valid_keys.keys():
-           throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
+            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
         elif 'LDLayout' in data.keys():
-           layout = data ['LDLayout']
-           for subkey in layout.keys():
-               if subkey not in valid_LDLayout_keys:
-                   throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey)
+            layout = data['LDLayout']
+            for subkey in layout.keys():
+                if subkey not in valid_LDLayout_keys:
+                    throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey)
 
     if 'domain' in data and data['domain'] == 'BAD_DOMAIN':
         throw_error(404, 'NON_EXISTENT_DOMAIN', "Non-existing domain specified.")
 
-    for cpg in cpgs['members'] :
-        if data['name'] == cpg['name'] :
+    for cpg in cpgs['members']:
+        if data['name'] == cpg['name']:
             throw_error(409, 'EXISTENT_CPG', "CPG '%s' already exist." % data['name'])
 
     cpgs['members'].append(data)
-    cpgs['total'] = cpgs['total'] +1
+    cpgs['total'] = cpgs['total'] + 1
 
-    return  make_response("", 200)
+    return make_response("", 200)
+
 
 @app.route('/api/v1/cpgs', methods=['GET'])
 def get_cpgs():
     debugRequest(request)
 
-    #should get it from global cpgs
+    # should get it from global cpgs
     resp = make_response(json.dumps(cpgs), 200)
     return resp
+
 
 @app.route('/api/v1/cpgs/<cpg_name>', methods=['GET'])
 def get_cpg(cpg_name):
@@ -185,6 +196,7 @@ def get_cpg(cpg_name):
             return resp
 
     throw_error(404, 'NON_EXISTENT_CPG', "CPG '%s' doesn't exist" % cpg_name)
+
 
 @app.route('/api/v1/cpgs/<cpg_name>', methods=['DELETE'])
 def delete_cpg(cpg_name):
@@ -205,14 +217,14 @@ def create_hosts():
     debugRequest(request)
     data = json.loads(request.data)
 
-    valid_members = ['FCWWNs', 'descriptors', 'domain', 'iSCSINames', 'id','name']
+    valid_members = ['FCWWNs', 'descriptors', 'domain', 'iSCSINames', 'id', 'name']
 
-    for member_key in data.keys() :
-        if member_key not in valid_members :
+    for member_key in data.keys():
+        if member_key not in valid_members:
             throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % member_key)
 
     if data['name'] is None:
-        throw_error(400,'INV_INPUT_MISSING_REQUIRED', 'Name not specified.')
+        throw_error(400, 'INV_INPUT_MISSING_REQUIRED', 'Name not specified.')
 
     elif len(data['name']) > 31:
         throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH', 'Host name is too long.')
@@ -221,7 +233,7 @@ def create_hosts():
         throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH', 'Domain name is too long.')
 
     elif 'domain' in data and data['domain'] == '':
-        throw_error(400,'INV_INPUT_EMPTY_STR',
+        throw_error(400, 'INV_INPUT_EMPTY_STR',
                     'Input string (for domain, iSCSI etc.) is empty.')
 
     charset = {'!', '@', '#', '$', '%', '&', '^'}
@@ -241,13 +253,13 @@ def create_hosts():
 
     if 'FCWWNs' in data.keys():
         fc = data['FCWWNs']
-        for wwn in fc :
-            if len(wwn.replace(':','')) <> 16 :
+        for wwn in fc:
+            if len(wwn.replace(':', '')) <> 16:
                 throw_error(400, 'INV_INPUT_WRONG_TYPE',
                             'Length of WWN is not 16.')
 
     if 'FCWWNs' in data:
-        for host in hosts ['members']:
+        for host in hosts['members']:
             if 'FCWWNs' in host:
                 for fc_path in data['FCWWNs']:
                     if fc_path in host['FCWWNs']:
@@ -260,15 +272,16 @@ def create_hosts():
                     if iqn in host['iSCSINames']:
                         throw_error(409, 'EXISTENT_PATH', 'iSCSI name already claimed by other host.')
 
-    for host in hosts['members'] :
-        if data['name'] == host['name'] :
+    for host in hosts['members']:
+        if data['name'] == host['name']:
             throw_error(409, 'EXISTENT_HOST', "HOST '%s' already exist." % data['name'])
 
     hosts['members'].append(data)
-    hosts['total'] = hosts['total'] +1
+    hosts['total'] = hosts['total'] + 1
 
     resp = make_response("", 201)
     return resp
+
 
 @app.route('/api/v1/hosts/<host_name>', methods=['PUT'])
 def modify_host(host_name):
@@ -276,7 +289,7 @@ def modify_host(host_name):
     data = json.loads(request.data)
 
     if host_name == 'None':
-        throw_error (404, 'INV_INPUT', 'Missing host name.')
+        throw_error(404, 'INV_INPUT', 'Missing host name.')
 
     if 'FCWWNs' in data.keys():
         if 'iSCSINames' in data.keys():
@@ -370,7 +383,7 @@ def modify_host(host_name):
 
     for host in hosts['members']:
         if host['name'] == host_name:
-            for member_key in data.keys() :
+            for member_key in data.keys():
                 if member_key == 'newName':
                     host['name'] = data['newName']
                 else:
@@ -380,6 +393,7 @@ def modify_host(host_name):
 
     throw_error(404, 'NON_EXISTENT_HOST',
                 'Host to be modified does not exist.')
+
 
 @app.route('/api/v1/hosts/<host_name>', methods=['DELETE'])
 def delete_host(host_name):
@@ -391,6 +405,7 @@ def delete_host(host_name):
             return make_response("", 200)
 
     throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % host_name)
+
 
 @app.route('/api/v1/hosts', methods=['GET'])
 def get_hosts():
@@ -411,18 +426,19 @@ def get_hosts():
                 if 0 < host['iSCSINames'].count(iqn):
                     matched_hosts.append(host)
 
-
-        result = {'total': len(matched_hosts), 'members' : matched_hosts}
+        result = {'total': len(matched_hosts), 'members': matched_hosts}
         resp = make_response(json.dumps(result), 200)
     else:
         resp = make_response(json.dumps(hosts), 200)
     return resp
 
+
 def _parse_query(query):
     wwns = re.findall("wwn==([0-9A-Z]*)", query)
     iqns = re.findall("name==([\w.:-]*)", query)
-    parsed_query = {"wwns" : wwns, "iqns" : iqns}
+    parsed_query = {"wwns": wwns, "iqns": iqns}
     return parsed_query
+
 
 @app.route('/api/v1/hosts/<host_name>', methods=['GET'])
 def get_host(host_name):
@@ -458,6 +474,7 @@ def get_host(host_name):
 
 #### Port ####
 
+
 @app.route('/api/v1/ports', methods=['GET'])
 def get_ports():
     debugRequest(request)
@@ -466,22 +483,23 @@ def get_ports():
 
 #### VLUN ####
 
+
 @app.route('/api/v1/vluns', methods=['POST'])
 def create_vluns():
     debugRequest(request)
     data = json.loads(request.data)
 
-    valid_keys = {'volumeName':None, 'lun':0, 'hostname':None, 'portPos':None,
-                  'noVcn': False, 'overrideLowerPriority':False}
+    valid_keys = {'volumeName': None, 'lun': 0, 'hostname': None, 'portPos': None,
+                  'noVcn': False, 'overrideLowerPriority': False}
 
-    valid_port_keys = {'node':1, 'slot':1, 'cardPort':0}
+    valid_port_keys = {'node': 1, 'slot': 1, 'cardPort': 0}
 
-    ## do some fake errors here depending on data
+    # do some fake errors here depending on data
     for key in data.keys():
         if key not in valid_keys.keys():
             throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
         elif 'portPos' in data.keys():
-            portP = data ['portPos']
+            portP = data['portPos']
             for subkey in portP.keys():
                 if subkey not in valid_port_keys:
                     throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey)
@@ -502,6 +520,7 @@ def create_vluns():
                 resp.headers['location'] = '/api/v1/vluns/'
                 return resp
         throw_error(404, 'NON_EXISTENT_VOL', 'Specified volume does not exist.')
+
 
 @app.route('/api/v1/vluns/<vlun_str>', methods=['DELETE'])
 def delete_vluns(vlun_str):
@@ -535,10 +554,12 @@ def delete_vluns(vlun_str):
 
     throw_error(404, 'NON_EXISTENT_VLUN', "The volume '%s' doesn't exist" % vluns)
 
+
 def getPort(portPos):
     port = "%s:%s:%s" % (portPos['node'], portPos['slot'], portPos['cardPort'])
     print port
     return port
+
 
 @app.route('/api/v1/vluns', methods=['GET'])
 def get_vluns():
@@ -560,7 +581,7 @@ def create_snapshot(volume_name):
                        'readOnly': None, 'expirationHours': None,
                        'retentionHours': None}
 
-    ## do some fake errors here depending on data
+    # do some fake errors here depending on data
     for key in data.keys():
         if key not in valid_keys.keys():
             throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
@@ -590,13 +611,13 @@ def create_volumes():
     debugRequest(request)
     data = json.loads(request.data)
 
-    valid_keys = {'name':None, 'cpg':None, 'sizeMiB':None, 'id':None,
-                  'comment':None, 'policies':None, 'snapCPG':None,
+    valid_keys = {'name': None, 'cpg': None, 'sizeMiB': None, 'id': None,
+                  'comment': None, 'policies': None, 'snapCPG': None,
                   'ssSpcAllocWarningPct': None, 'ssSpcAllocLimitPct': None,
-                  'tpvv':None, 'usrSpcAllocWarningPct':None,
-                  'usrSpcAllocLimitPct': None, 'isCopy':None,
-                  'copyOfName':None, 'copyRO':None, 'expirationHours': None,
-                  'retentionHours':None}
+                  'tpvv': None, 'usrSpcAllocWarningPct': None,
+                  'usrSpcAllocLimitPct': None, 'isCopy': None,
+                  'copyOfName': None, 'copyRO': None, 'expirationHours': None,
+                  'retentionHours': None}
 
     for key in data.keys():
         if key not in valid_keys.keys():
@@ -627,7 +648,8 @@ def create_volumes():
                 throw_error(409, 'EXISTENT_ID', 'Specified volume ID already exists.')
 
     volumes['members'].append(data)
-    return  make_response("", 200)
+    return make_response("", 200)
+
 
 @app.route('/api/v1/volumes/<volume_name>', methods=['DELETE'])
 def delete_volumes(volume_name):
@@ -640,11 +662,13 @@ def delete_volumes(volume_name):
 
     throw_error(404, 'NON_EXISTENT_VOL', "The volume '%s' does not exists." % volume_name)
 
+
 @app.route('/api/v1/volumes', methods=['GET'])
 def get_volumes():
     debugRequest(request)
     resp = make_response(json.dumps(volumes), 200)
     return resp
+
 
 @app.route('/api/v1/volumes/<volume_name>', methods=['GET'])
 def get_volume(volume_name):
@@ -683,6 +707,7 @@ def grow_volume(volume_name):
     resp = make_response(json.dumps(volume), 200)
     return resp
 
+
 @app.route('/api/v1/volumesets', methods=['GET'])
 def get_volume_sets():
     debugRequest(request)
@@ -707,9 +732,9 @@ def create_volume_set():
             if vset['name'] == data['name']:
                 throw_error(409, 'EXISTENT_SET',
                             'The set already exists.')
-                #Seems the 3par is throwing a 409 instead of 400
+                # Seems the 3par is throwing a 409 instead of 400
                 # {"code":101,"desc":"Set exists"} error
-                #throw_error(400, 'EXISTENT_SET',
+                # throw_error(400, 'EXISTENT_SET',
                 #            'The set already exists.')
         if len(data['name']) > 31:
             throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH',
@@ -766,11 +791,11 @@ def modify_volume_set(volume_set_name):
                     throw_error(400, 'TODO Action',
                                 'Action not implemented in mock server')
 
-
         resp = make_response(json.dumps(vset), 200)
         return resp
 
     throw_error(404, 'NON_EXISTENT_SET', "volume set doesn't exist")
+
 
 @app.route('/api/v1/volumesets/<volume_set_name>', methods=['DELETE'])
 def delete_volume_set(volume_set_name):
@@ -778,10 +803,169 @@ def delete_volume_set(volume_set_name):
     for vset in volume_sets['members']:
         if vset['name'] == volume_set_name:
             volume_sets['members'].remove(vset)
+            if 'qos' in vset:
+                try:
+                    _delete_qos_db(vset['qos'])
+                except Exception as ex:
+                    print vars(ex)
             return make_response("", 200)
 
     throw_error(404, 'NON_EXISTENT_SET',
                 "The volume set '%s' does not exists." % volume_set_name)
+
+
+def _validate_qos_input(data):
+    valid_keys = {'name': None, 'type': None,
+                  'priority': None,
+                  'bwMinGoalKB': None,
+                  'bwMaxLimitKB': None,
+                  'ioMinGoal': None,
+                  'ioMaxLimit': None,
+                  'enable': None,
+                  'bwMinGoalOP': None,
+                  'bwMaxLimitOP': None,
+                  'ioMinGoalOP': None,
+                  'ioMaxLimitOP': None,
+                  'latencyGoal': None,
+                  'defaultLatency': None}
+
+    for key in data.keys():
+        if key not in valid_keys.keys():
+            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
+
+
+
+@app.route('/api/v1/qos', methods=['GET'])
+def query_all_qos():
+    debugRequest(request)
+    return make_response(json.dumps(qos_db), 200)
+
+
+@app.route('/api/v1/qos/<target_type>:<target_name>', methods=['GET'])
+def query_qos(target_type, target_name):
+    debugRequest(request)
+    qos = _get_qos_db(target_name)
+    return make_response(json.dumps(qos))
+
+
+def _get_qos_db(name):
+    for qos in qos_db['members']:
+        if qos['name'] == name:
+            return qos
+
+    throw_error(400, "Bad Request", "Could not find qos name '%s'." % name)
+
+
+def debug_qos(title):
+    if debugRequest:
+        print title
+        pprint.pprint(qos_db)
+
+
+def _add_qos_db(qos):
+    debug_qos("_add_qos_db start")
+    qos['id'] = uuid.uuid1().urn
+    qos_db['members'].append(qos)
+    qos_db['total'] = len(qos_db['members'])
+    debug_qos("_add_qos_db end")
+    return qos['id']
+
+
+def _modify_qos_db(qos_id, new_qos):
+    debug_qos("_modify_qos_db start")
+    for qos in qos_db['members']:
+        if qos['id'] == qos_id:
+            qos.update(new_qos)
+            debug_qos("_modify_qos_db end")
+            return
+
+    debug_qos("_modify_qos_db end error")
+    throw_error(500, "Internal error", "could not modify qos id '%s'" % qos_id)
+
+
+def _delete_qos_db(qos_id):
+    debug_qos("_delete_qos_db start")
+    for qos in qos_db['members']:
+        if qos['id'] == qos_id:
+            qos_db['members'].remove(qos)
+
+    debug_qos("_delete_qos_db end")
+
+
+@app.route('/api/v1/qos', methods=['POST'])
+def create_qos():
+    debugRequest(request)
+    qos = json.loads(request.data)
+
+    if 'name' not in qos:
+        throw_error(404, 'INV_INPUT', "Missing required parameter 'name'")
+
+    if 'type' not in qos:
+        throw_error(404, 'INV_INPUT', "Missing required parameter 'type'")
+    elif qos['type'] != 1:
+        throw_error(404, 'INV_INPUT',
+                    "Flask currently only supports type = 1 (VVSET). "
+                    + "Type unsuppored: %s" % qos['type'])
+    _validate_qos_input(qos)
+
+    for vset in volume_sets['members']:
+        if vset['name'] == qos['name']:
+            if 'qos' in vset:
+                throw_error(400, 'BAD_REQUEST', "QoS rule already exists")
+            else:
+                qos_id = _add_qos_db(qos)
+                vset['qos'] = qos_id
+                return make_response("", 201)
+
+    throw_error(400, 'BAD_REQUEST', "Target not found: '%s'" % data['name'])
+
+
+@app.route('/api/v1/qos/<target_type>:<name>', methods=['PUT'])
+def modify_qos(target_type, name):
+    debugRequest(request)
+    qos = json.loads(request.data)
+    _validate_qos_input(qos)
+
+    for vset in volume_sets['members']:
+        if vset['name'] == name:
+            if 'qos' not in vset:
+                throw_error(404, 'NOT_FOUND', "QoS rule does not exists")
+            else:
+                _modify_qos_db(vset['qos'], qos)
+                return make_response("", 200)
+
+    throw_error(400, 'BAD_REQUEST', "Target not found: '%s'" % name)
+
+
+@app.route('/api/v1/qos/<target_type>:<target_name>', methods=['DELETE'])
+def delete_qos(target_type, target_name):
+    debugRequest(request)
+
+    for vset in volume_sets['members']:
+        if vset['name'] == target_name:
+            if 'qos' not in vset:
+                throw_error(404, 'NOT_FOUND', "QoS rule does not exists")
+            else:
+                _delete_qos_db(vset['qos'])
+                return make_response("", 200)
+
+    throw_error(400, 'BAD_REQUEST', "Target not found: '%s'" % target_name)
+
+@app.route('/api/v1/wsapiconfiguration', methods=['GET'])
+def get_wsapi_configuration():
+    debugRequest(request)
+    # TODO: these are copied from the pdf
+    config = {"httpState": "Enabled",
+              "httpPort": 8008,
+              "httpsState": "Enabled",
+              "httpsPort": 8080,
+              "version": "1.3",
+              "sessionsInUse": 0,
+              "systemResourceUsage": 144}
+
+    return make_response(json.dumps(config))
+
+
 
 
 @app.route('/api/v1/system', methods=['GET'])
@@ -824,68 +1008,68 @@ def get_version():
 
 if __name__ == "__main__":
 
-    #fake 2 CPGs
+    # fake 2 CPGs
     global cpgs
     cpgs = {'members':
-           [{'SAGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
-                         'incrementMiB': 8192},
-            'SAUsage': {'rawTotalMiB': 24576,
-                         'rawUsedMiB': 768,
-                         'totalMiB': 8192,
-                         'usedMiB': 256},
-            'SDGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
-                         'incrementMiB': 16384,
-                         'limitMiB': 256000,
-                         'warningMiB': 204800},
-            'SDUsage': {'rawTotalMiB': 32768,
-                        'rawUsedMiB': 2048,
-                        'totalMiB': 16384,
-                        'usedMiB': 1024},
-            'UsrUsage': {'rawTotalMiB': 239616,
-                         'rawUsedMiB': 229376,
-                         'totalMiB': 119808,
-                         'usedMiB': 114688},
-            'additionalStates': [],
-            'degradedStates': [],
-            'domain': 'UNIT_TEST',
-            'failedStates': [],
-            'id': 0,
-            'name': 'UnitTestCPG',
-            'numFPVVs': 12,
-            'numTPVVs': 0,
-            'state': 1,
-            'uuid': 'f9b018cc-7cb6-4358-a0bf-93243f853d96'},
-           {'SAGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
-                          'incrementMiB': 8192},
-             'SAUsage': {'rawTotalMiB': 24576,
-                         'rawUsedMiB': 768,
-                         'totalMiB': 8192,
-                         'usedMiB': 256},
+            [{'SAGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
+                           'incrementMiB': 8192},
+              'SAUsage': {'rawTotalMiB': 24576,
+                          'rawUsedMiB': 768,
+                          'totalMiB': 8192,
+                          'usedMiB': 256},
              'SDGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
                           'incrementMiB': 16384,
                           'limitMiB': 256000,
                           'warningMiB': 204800},
-             'SDUsage': {'rawTotalMiB': 32768,
-                         'rawUsedMiB': 2048,
-                         'totalMiB': 16384,
-                         'usedMiB': 1024},
-             'UsrUsage': {'rawTotalMiB': 239616,
-                          'rawUsedMiB': 229376,
-                          'totalMiB': 119808,
-                          'usedMiB': 114688},
-             'additionalStates': [],
-             'degradedStates': [],
-             'domain': 'UNIT_TEST',
-             'failedStates': [],
-             'id': 0,
-             'name': 'UnitTestCPG2',
-             'numFPVVs': 12,
-             'numTPVVs': 0,
-             'state': 1,
-             'uuid': 'f9b018cc-7cb6-4358-a0bf-93243f853d97'}],
-      'total': 2}
+              'SDUsage': {'rawTotalMiB': 32768,
+                          'rawUsedMiB': 2048,
+                          'totalMiB': 16384,
+                          'usedMiB': 1024},
+              'UsrUsage': {'rawTotalMiB': 239616,
+                           'rawUsedMiB': 229376,
+                           'totalMiB': 119808,
+                           'usedMiB': 114688},
+              'additionalStates': [],
+              'degradedStates': [],
+              'domain': 'UNIT_TEST',
+              'failedStates': [],
+              'id': 0,
+              'name': 'UnitTestCPG',
+              'numFPVVs': 12,
+              'numTPVVs': 0,
+              'state': 1,
+              'uuid': 'f9b018cc-7cb6-4358-a0bf-93243f853d96'},
+             {'SAGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
+                           'incrementMiB': 8192},
+              'SAUsage': {'rawTotalMiB': 24576,
+                          'rawUsedMiB': 768,
+                          'totalMiB': 8192,
+                          'usedMiB': 256},
+              'SDGrowth': {'LDLayout': {'diskPatterns': [{'diskType': 1}]},
+                           'incrementMiB': 16384,
+                           'limitMiB': 256000,
+                           'warningMiB': 204800},
+              'SDUsage': {'rawTotalMiB': 32768,
+                          'rawUsedMiB': 2048,
+                          'totalMiB': 16384,
+                          'usedMiB': 1024},
+              'UsrUsage': {'rawTotalMiB': 239616,
+                           'rawUsedMiB': 229376,
+                           'totalMiB': 119808,
+                           'usedMiB': 114688},
+              'additionalStates': [],
+              'degradedStates': [],
+              'domain': 'UNIT_TEST',
+              'failedStates': [],
+              'id': 0,
+              'name': 'UnitTestCPG2',
+              'numFPVVs': 12,
+              'numTPVVs': 0,
+              'state': 1,
+              'uuid': 'f9b018cc-7cb6-4358-a0bf-93243f853d97'}],
+            'total': 2}
 
-    #fake  volumes
+    # fake  volumes
     global volumes
     volumes = {'members':
                [{'additionalStates': [],
@@ -921,8 +1105,8 @@ if __name__ == "__main__":
                  'userCPG': 'UnitTestCPG',
                  'userSpace': {'freeMiB': 0,
                                'rawReservedMiB': 204800,
-                                'reservedMiB': 102400,
-                 'usedMiB': 102400},
+                               'reservedMiB': 102400,
+                               'usedMiB': 102400},
                  'usrSpcAllocLimitPct': 0,
                  'usrSpcAllocWarningPct': 0,
                  'uuid': '8bc9394e-f87a-4c1a-8777-11cba75af94c',
@@ -967,9 +1151,9 @@ if __name__ == "__main__":
                  'usrSpcAllocWarningPct': 0,
                  'uuid': '6d5542b2-f06a-4788-879e-853ad0a3be42',
                  'wwn': '50002AC00029383D'}],
-              'total': 26}
+               'total': 26}
 
-    #fake ports
+    # fake ports
     global ports
     ports = {'members':
              [{'linkState': 4,
@@ -999,10 +1183,26 @@ if __name__ == "__main__":
                'portPos': {'cardPort': 4, 'node': 4, 'slot': 6},
                'portWwn': '2C27D75375D8',
                'protocol': 1,
+               'type': 7},
+              {'portPos': {'node': 0, 'slot': 3, 'cardPort': 1},
+               'protocol': 4,
+               'linkState': 10,
+               'label': 'RCIP0',
+               'device': [],
+               'mode': 4,
+               'HWAddr': 'B4B52FA76931',
+               'type': 7},
+              {'portPos': {'node': 1, 'slot': 3, 'cardPort': 1},
+               'protocol': 4,
+               'linkState': 10,
+               'label': 'RCIP1',
+               'device': [],
+               'mode': 4,
+               'HWAddr': 'B4B52FA768B1',
                'type': 7}],
-            'total': 4}
+             'total': 6}
 
-    #fake hosts
+    # fake hosts
     global hosts
     hosts = {'members':
              [{'FCWWNs': [],
@@ -1033,9 +1233,9 @@ if __name__ == "__main__":
                                'vendor': 'HP'}],
                'id': 12,
                'name': 'UnitTestHost2'}],
-            'total': 2}
+             'total': 2}
 
-    #fake create vluns
+    # fake create vluns
     global vluns
     vluns = {'members':
              [{'active': True,
@@ -1065,4 +1265,7 @@ if __name__ == "__main__":
     volume_sets = {'members': [],
                    'total': 0}
 
+    global qos_db
+    qos_db = {'members': [],
+           'total': 0}
     app.run(port=args.port, debug=debugRequests)
