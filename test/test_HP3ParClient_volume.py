@@ -84,7 +84,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             optional = {'comment': 'test volume', 'tpvv': True}
             self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume')
             return
 
@@ -96,7 +96,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.assertEqual(VOLUME_NAME1, volName)
 
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to get volume')
             return
 
@@ -105,7 +105,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             optional = {'comment': 'test volume2', 'tpvv': True}
             self.cl.createVolume(VOLUME_NAME2, CPG_NAME2, 1024, optional)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume')
             return
 
@@ -118,7 +118,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.assertEqual(VOLUME_NAME2, volName)
             self.assertEqual("test volume2", comment)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail("Failed to get volume")
 
         self.printFooter('create_volume')
@@ -131,11 +131,11 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             optional = {'id': 4, 'comment': 'test volume', 'badPram': True}
             self.cl.createVolume(name, cpgName, 1024, optional)
         except exceptions.HTTPBadRequest:
-            print "Expected exception"
+            print("Expected exception")
             self.printFooter('create_volume_badParams')
             return
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail("Failed with unexpected exception")
 
         self.fail('No exception occurred.')
@@ -148,17 +148,17 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             optional = {'comment': 'test volume', 'tpvv': True}
             self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail("Failed to create volume")
 
         try:
             self.cl.createVolume(VOLUME_NAME1, CPG_NAME2, 1024, optional)
         except exceptions.HTTPConflict:
-            print "Expected exception"
+            print("Expected exception")
             self.printFooter('create_volume_duplicate_name')
             return
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail("Failed with unexpected exception")
         self.fail('No exception occurred.')
 
@@ -168,11 +168,11 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             optional = {'id': 3, 'comment': 'test volume', 'tpvv': True}
             self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 16777218, optional)
         except exceptions.HTTPBadRequest:
-            print "Expected exception"
+            print("Expected exception")
             self.printFooter('create_volume_tooLarge')
             return
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail("Failed with unexpected exception")
 
         self.fail('No exception occurred')
@@ -183,18 +183,18 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             optional = {'id': 10000, 'comment': 'first volume'}
             self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume')
 
         try:
             optional2 = {'id': 10000, 'comment': 'volume with duplicate ID'}
             self.cl.createVolume(VOLUME_NAME2, CPG_NAME2, 1024, optional2)
         except exceptions.HTTPConflict:
-            print 'Expected exception'
+            print('Expected exception')
             self.printFooter('create_volume_duplicate_ID')
             return
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception')
 
         self.fail('No exception occurred')
@@ -206,11 +206,11 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             LongName = 'ThisVolumeNameIsWayTooLongToMakeAnySenseAndIsDeliberatelySo'
             self.cl.createVolume(LongName, CPG_NAME1, 1024, optional)
         except exceptions.HTTPBadRequest:
-            print 'Expected exception'
+            print('Expected exception')
             self.printFooter('create_volume_longName')
             return
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception')
 
         self.fail('No exception occurred.')
@@ -221,11 +221,11 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         try:
             self.cl.getVolume('NoSuchVolume')
         except exceptions.HTTPNotFound:
-            print "Expected exception"
+            print("Expected exception")
             self.printFooter('get_volume_bad')
             return
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail("Failed with unexpected exception")
 
         self.fail("No exception occurred")
@@ -251,11 +251,11 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         try:
             self.cl.deleteVolume(VOLUME_NAME1)
         except exceptions.HTTPNotFound:
-            print "Expected exception"
+            print("Expected exception")
             self.printFooter('delete_volume_nonExist')
             return
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail("Failed with unexpected exception")
 
         self.fail('No exception occurred.')
@@ -268,7 +268,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
             self.cl.getVolume(VOLUME_NAME1)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume')
 
         try:
@@ -276,37 +276,37 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024, optional)
             self.cl.getVolume(VOLUME_NAME2)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume')
 
         try:
             self.cl.deleteVolume(VOLUME_NAME1)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to delete %s' % (VOLUME_NAME1))
 
         try:
             self.cl.getVolume(VOLUME_NAME1)
         except exceptions.HTTPNotFound:
-            print 'Expected exception'
+            print('Expected exception')
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception')
 
         try:
             self.cl.deleteVolume(VOLUME_NAME2)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to delete %s' % (VOLUME_NAME2))
 
         try:
             self.cl.getVolume(VOLUME_NAME2)
         except exceptions.HTTPNotFound:
-            print 'Expected exception'
+            print('Expected exception')
             self.printFooter('delete_volumes')
             return
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception')
 
     def test_4_create_snapshot_no_optional(self):
@@ -319,7 +319,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.cl.createSnapshot(SNAP_NAME1, VOLUME_NAME1)
             #no API to get and check
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail("Failed with unexpected exception")
 
         self.cl.deleteVolume(SNAP_NAME1)
@@ -336,7 +336,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.cl.createSnapshot(SNAP_NAME1, VOLUME_NAME1, optional)
             #no API to get and check
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail("Failed with unexpected exception")
 
         self.cl.deleteVolume(SNAP_NAME1)
@@ -351,11 +351,11 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             optional = {'Bad': True, 'expirationHours': 300}
             self.cl.createSnapshot(SNAP_NAME1, VOLUME_NAME1, optional)
         except exceptions.HTTPBadRequest:
-            print "Expected exception"
+            print("Expected exception")
             self.printFooter('create_snapshot_badParams')
             return
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail("Failed with unexpected exception")
 
         self.fail("No exception occurred.")
@@ -371,11 +371,11 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
                         'readOnly': True, 'expirationHours': 300}
             self.cl.createSnapshot(name, volName, optional)
         except exceptions.HTTPNotFound:
-            print "Expected exception"
+            print("Expected exception")
             self.printFooter('create_snapshot_nonExistVolume')
             return
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail("Failed with unexpected exception")
 
         self.fail("No exception occurred.")
@@ -387,7 +387,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             optional = {'comment': 'test volume', 'tpvv': True}
             self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume')
             return
 
@@ -395,7 +395,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             #grow it
             result = self.cl.growVolume(VOLUME_NAME1, 1)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to grow volume')
             return
 
@@ -404,7 +404,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             size_after = result['sizeMiB']
             self.assertGreater(size_after, 1024)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to get volume after growth')
             return
 
@@ -418,7 +418,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             optional = {'comment': 'test volume', 'tpvv': True}
             self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume')
             return
 
@@ -427,15 +427,15 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.cl.growVolume(VOLUME_NAME1, -1)
         #3par is returning 409 instead of 400
         except exceptions.HTTPBadRequest as ex:
-            print "Expected exception"
+            print("Expected exception")
             self.printFooter('grow_volume_bad')
             return
         except exceptions.HTTPConflict as ex:
-            print "Expected exception"
+            print("Expected exception")
             self.printFooter('grow_volume_bad')
             return
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail("Failed with unexpected exception")
 
         self.fail("No exception occurred.")
@@ -484,15 +484,15 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
                                     comment="Unit test volume set 1")
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume set')
             return
 
         try:
             resp = self.cl.getVolumeSet(VOLUME_SET_NAME1)
-            print resp
+            print(resp)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to get volume set')
             return
 
@@ -506,7 +506,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             optional = {'comment': 'test volume 2', 'tpvv': True}
             self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024, optional)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volumes')
             return
 
@@ -517,7 +517,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
                                     setmembers=members)
 
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume set with members')
 
         try:
@@ -527,7 +527,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.assertIn(VOLUME_NAME1, resp_members)
             self.assertIn(VOLUME_NAME2, resp_members)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to get volume set')
             return
 
@@ -540,7 +540,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
                                     comment="Unit test volume set 1")
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume set')
             return
 
@@ -549,11 +549,11 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
                                     comment="Unit test volume set 1")
         except exceptions.HTTPConflict as ex:
-            print "expected exception"
+            print("expected exception")
             self.printFooter('create_volume_set_dup')
             return
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail("Failed with unexpected exception")
 
         self.fail("No exception occured")
@@ -566,7 +566,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
                                     comment="Unit test volume set 1")
             self.cl.createVolumeSet(VOLUME_SET_NAME2, domain=DOMAIN)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume set')
             return
 
@@ -579,7 +579,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.assertIn(VOLUME_SET_NAME2, set_names)
 
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to get volume sets')
             return
 
@@ -590,14 +590,14 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         try:
             self.cl.createVolumeSet(VOLUME_SET_NAME2, domain=DOMAIN)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume set')
             return
 
         try:
             self.cl.deleteVolumeSet(VOLUME_SET_NAME2)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to delete volume set')
             return
 
@@ -611,7 +611,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             optional = {'comment': 'test volume 2', 'tpvv': True}
             self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024, optional)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volumes')
             return
 
@@ -622,13 +622,13 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
                                     setmembers=members)
 
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume set with members')
 
         try:
             self.cl.deleteVolumeSet(VOLUME_SET_NAME1)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to delete volume set')
             return
 
@@ -644,7 +644,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             vset = self.cl.getVolumeSet(VOLUME_SET_NAME2)
             self.assertEqual("First", vset['comment'])
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create or change name of volume set')
 
         self.printFooter('modify_volume_set_change_name')
@@ -659,7 +659,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             vset = self.cl.getVolumeSet(VOLUME_SET_NAME1)
             self.assertEqual("Second", vset['comment'])
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create or change comment of volume set')
 
         self.printFooter('modify_volume_set_change_comment')
@@ -674,13 +674,13 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             optional = {'comment': 'test volume 2', 'tpvv': True}
             self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024, optional)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume set')
         try:
             self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
                                     comment="Unit test volume set 1")
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume set')
             return
 
@@ -689,17 +689,17 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.cl.modifyVolumeSet(VOLUME_SET_NAME1, self.cl.SET_MEM_ADD,
                                     setmembers=members)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to add volumes')
             return
 
         try:
             resp = self.cl.getVolumeSet(VOLUME_SET_NAME1)
-            print resp
+            print(resp)
             self.assertTrue(VOLUME_NAME1 in resp['setmembers'])
             self.assertTrue(VOLUME_NAME2 in resp['setmembers'])
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to add volumes to volume set')
             return
 
@@ -714,7 +714,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             optional = {'comment': 'test volume 2', 'tpvv': True}
             self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024, optional)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume set')
         try:
             members = [VOLUME_NAME1]
@@ -722,7 +722,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
                                     setmembers=members,
                                     comment="Unit test volume set 1")
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume set')
             return
 
@@ -731,17 +731,17 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.cl.modifyVolumeSet(VOLUME_SET_NAME1, self.cl.SET_MEM_ADD,
                                     setmembers=members)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to add volumes')
             return
 
         try:
             resp = self.cl.getVolumeSet(VOLUME_SET_NAME1)
-            print resp
+            print(resp)
             self.assertTrue(VOLUME_NAME1 in resp['setmembers'])
             self.assertTrue(VOLUME_NAME2 in resp['setmembers'])
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to add volumes to volume set')
             return
 
@@ -760,7 +760,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
                                     comment="Unit test volume set 1",
                                     setmembers=members)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create volume set')
             return
 
@@ -771,7 +771,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
                                     action=self.cl.SET_MEM_REMOVE,
                                     setmembers=members)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to remove volumes from set')
             return
 
@@ -782,7 +782,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.assertNotIn(VOLUME_NAME1, resp_members)
             self.assertIn(VOLUME_NAME2, resp_members)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to get volume set')
             return
 
@@ -807,14 +807,14 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         try:
             self.cl.createQoSRules(VOLUME_SET_NAME1, qos)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to add qos')
             return
 
         try:
             rule = self.cl.queryQoSRule(VOLUME_SET_NAME1)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to query qos')
 
         self.assertIsNotNone(rule)
@@ -835,14 +835,14 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.cl.createQoSRules(VOLUME_SET_NAME1, qos_before)
             self.cl.modifyQoSRules(VOLUME_SET_NAME1, qos_after)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to modify qos')
             return
 
         try:
             rule = self.cl.queryQoSRule(VOLUME_SET_NAME1)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to query qos')
 
         self.assertIsNotNone(rule)
@@ -868,7 +868,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.assertIn(VOLUME_SET_NAME1, [qos['name'] for qos in all_qos['members']])
             self.assertIn(VOLUME_SET_NAME2, [qos['name'] for qos in all_qos['members']])
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed to create/query qos')
             return
 
@@ -876,7 +876,7 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             self.cl.deleteQoSRules(VOLUME_SET_NAME1)
             all_qos = self.cl.queryQoSRules()
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail("Failed to delete/query qos")
             return
 

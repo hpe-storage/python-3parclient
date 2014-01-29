@@ -24,7 +24,7 @@ HP3Par HTTP Client
 
 import logging
 import os
-import urlparse
+import urllib.parse
 import httplib2
 import time
 import pprint
@@ -209,7 +209,7 @@ class HTTPJSONRESTClient(httplib2.Http):
 
 
     def _do_reauth(self, url, method, ex, **kwargs):
-        print "_do_reauth called"
+        print("_do_reauth called")
         try:
             if self.auth_try != 1:
                self._reauth()
@@ -230,12 +230,12 @@ class HTTPJSONRESTClient(httplib2.Http):
             resp, body = self._time_request(self.api_url + url, method,
                                             **kwargs)
             return resp, body
-        except exceptions.HTTPUnauthorized, ex:
-            print "_CS_REQUEST HTTPUnauthorized"
+        except exceptions.HTTPUnauthorized as ex:
+            print("_CS_REQUEST HTTPUnauthorized")
             resp, body = self._do_reauth(url, method, ex, **kwargs)
             return resp, body
-        except exceptions.HTTPForbidden, ex:
-            print "_CS_REQUEST HTTPForbidden"
+        except exceptions.HTTPForbidden as ex:
+            print("_CS_REQUEST HTTPForbidden")
             resp, body = self._do_reauth(url, method, ex, **kwargs)
             return resp, body
 

@@ -45,7 +45,7 @@ class HP3ParClientPortTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
     def test_get_ports_fc(self):
         self.printHeader('get_ports_fc')
         fc_ports = self.cl.getFCPorts(4)
-        print fc_ports
+        print(fc_ports)
         if fc_ports:
             for port in fc_ports:
                 if port['protocol'] != 1:

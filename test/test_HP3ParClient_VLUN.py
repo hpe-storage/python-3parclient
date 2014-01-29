@@ -211,11 +211,11 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         try:
             self.cl.deleteVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2, port)
         except exceptions.HTTPBadRequest:
-            print 'Expected exception'
+            print('Expected exception')
             self.printFooter('delete_VLUN_portNonExist')
             return
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception')
 
         self.fail('No exception occurred.')
@@ -229,11 +229,11 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         try:
             self.cl.deleteVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
         except exceptions.HTTPNotFound:
-            print 'Expected exception'
+            print('Expected exception')
             self.printFooter('delete_VLUNs')
             return
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception')
 
         self.fail('No exception occurred.')
@@ -263,7 +263,7 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.printFooter('get_host_vluns_unknown_host')
             return
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception')
 
         self.fail('Expected an exception')

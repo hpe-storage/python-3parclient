@@ -28,7 +28,7 @@ This client requires and works with 3PAR InForm 3.1.3 firmware
 
 """
 import re
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import time
 
 from hp3parclient import exceptions, http, ssh
@@ -715,7 +715,7 @@ class HP3ParClient(object):
 
         query = '"%s"' % query
 
-        response, body = self.http.get('/hosts?query=%s' % urllib2.quote(query.encode("utf8")))
+        response, body = self.http.get('/hosts?query=%s' % urllib.parse.quote(query.encode("utf8")))
         return body
 
     def getHostVLUNs(self, hostName):

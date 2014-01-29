@@ -57,7 +57,7 @@ def make_json_app(import_name, **kwargs):
     #app.debug = True
     app.secret_key = id_generator(24)
 
-    for code in default_exceptions.iterkeys():
+    for code in default_exceptions.keys():
         app.error_handler_spec[None][code] = make_json_error
 
     return app
@@ -69,7 +69,7 @@ session_key = id_generator(24)
 
 def debugRequest(request):
     if debugRequests:
-        print "\n"
+        print("\n")
         pprint.pprint(request)
         pprint.pprint(request.headers)
         pprint.pprint(request.data)
@@ -155,12 +155,12 @@ def create_cpgs():
     valid_LDLayout_keys = {'RAIDType': None, 'setSize': None, 'HA': None,
                            'chuckletPosRef': None, 'diskPatterns': None}
 
-    for key in data.keys():
-        if key not in valid_keys.keys():
+    for key in list(data.keys()):
+        if key not in list(valid_keys.keys()):
             throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
-        elif 'LDLayout' in data.keys():
+        elif 'LDLayout' in list(data.keys()):
             layout = data['LDLayout']
-            for subkey in layout.keys():
+            for subkey in list(layout.keys()):
                 if subkey not in valid_LDLayout_keys:
                     throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey)
 
@@ -219,7 +219,7 @@ def create_hosts():
 
     valid_members = ['FCWWNs', 'descriptors', 'domain', 'iSCSINames', 'id', 'name']
 
-    for member_key in data.keys():
+    for member_key in list(data.keys()):
         if member_key not in valid_members:
             throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % member_key)
 
@@ -246,15 +246,15 @@ def create_hosts():
             throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
                         'Error parsing host-name or domain-name')
 
-    if 'FCWWNs' in data.keys():
-        if 'iSCSINames' in data.keys():
+    if 'FCWWNs' in list(data.keys()):
+        if 'iSCSINames' in list(data.keys()):
             throw_error(400, 'INV_INPUT_PARAM_CONFLICT',
                         'FCWWNS and iSCSINames are both specified.')
 
-    if 'FCWWNs' in data.keys():
+    if 'FCWWNs' in list(data.keys()):
         fc = data['FCWWNs']
         for wwn in fc:
-            if len(wwn.replace(':', '')) <> 16:
+            if len(wwn.replace(':', '')) != 16:
                 throw_error(400, 'INV_INPUT_WRONG_TYPE',
                             'Length of WWN is not 16.')
 
@@ -291,20 +291,20 @@ def modify_host(host_name):
     if host_name == 'None':
         throw_error(404, 'INV_INPUT', 'Missing host name.')
 
-    if 'FCWWNs' in data.keys():
-        if 'iSCSINames' in data.keys():
+    if 'FCWWNs' in list(data.keys()):
+        if 'iSCSINames' in list(data.keys()):
             throw_error(400, 'INV_INPUT_PARAM_CONFLICT',
                         'FCWWNS and iSCSINames are both specified.')
-        elif 'pathOperation' not in data.keys():
+        elif 'pathOperation' not in list(data.keys()):
             throw_error(400, 'INV_INPUT_ONE_REQUIRED',
                         'pathOperation is missing and WWN is specified.')
 
-    if 'iSCSINames' in data.keys():
-        if 'pathOperation' not in data.keys():
+    if 'iSCSINames' in list(data.keys()):
+        if 'pathOperation' not in list(data.keys()):
             throw_error(400, 'INV_INPUT_ONE_REQUIRED',
                         'pathOperation is missing and iSCSI Name is specified.')
 
-    if 'newName' in data.keys():
+    if 'newName' in list(data.keys()):
         charset = {'!', '@', '#', '$', '%', '&', '^'}
         for char in charset:
             if char in data['newName']:
@@ -318,13 +318,13 @@ def modify_host(host_name):
                 throw_error(409, 'EXISTENT_HOST',
                             'New host name is already used.')
 
-    if 'pathOperation' in data.keys():
-        if 'iSCSINames' in data.keys():
+    if 'pathOperation' in list(data.keys()):
+        if 'iSCSINames' in list(data.keys()):
             for host in hosts['members']:
                 if host['name'] == host_name:
                     if data['pathOperation'] == 1:
                         for host in hosts['members']:
-                            if 'iSCSINames' in host.keys():
+                            if 'iSCSINames' in list(host.keys()):
                                 for path in data['iSCSINames']:
                                     for h_paths in host['iSCSINames']:
                                         if path == h_paths:
@@ -348,12 +348,12 @@ def modify_host(host_name):
                                     'pathOperation: Invalid enum value.')
             throw_error(404, 'NON_EXISTENT_HOST',
                         'Host to be modified does not exist.')
-        elif 'FCWWNs' in data.keys():
+        elif 'FCWWNs' in list(data.keys()):
             for host in hosts['members']:
                 if host['name'] == host_name:
                     if data['pathOperation'] == 1:
                         for host in hosts['members']:
-                            if 'FCWWNs' in host.keys():
+                            if 'FCWWNs' in list(host.keys()):
                                 for path in data['FCWWNs']:
                                     for h_paths in host['FCWWNs']:
                                         if path == h_paths:
@@ -383,7 +383,7 @@ def modify_host(host_name):
 
     for host in hosts['members']:
         if host['name'] == host_name:
-            for member_key in data.keys():
+            for member_key in list(data.keys()):
                 if member_key == 'newName':
                     host['name'] = data['newName']
                 else:
@@ -458,13 +458,13 @@ def get_host(host_name):
     for host in hosts['members']:
         if host['name'] == host_name:
 
-            if 'iSCSINames' in host.keys():
+            if 'iSCSINames' in list(host.keys()):
                 iscsi_paths = []
                 for path in host['iSCSINames']:
                     iscsi_paths.append({'name': path})
                 host['iSCSIPaths'] = iscsi_paths
 
-            elif 'FCWWNs' in host.keys():
+            elif 'FCWWNs' in list(host.keys()):
                 fc_paths = []
                 for path in host['FCWWNs']:
                     fc_paths.append({'wwn': path.replace(':', '')})
@@ -498,12 +498,12 @@ def create_vluns():
     valid_port_keys = {'node': 1, 'slot': 1, 'cardPort': 0}
 
     # do some fake errors here depending on data
-    for key in data.keys():
-        if key not in valid_keys.keys():
+    for key in list(data.keys()):
+        if key not in list(valid_keys.keys()):
             throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
-        elif 'portPos' in data.keys():
+        elif 'portPos' in list(data.keys()):
             portP = data['portPos']
-            for subkey in portP.keys():
+            for subkey in list(portP.keys()):
                 if subkey not in valid_port_keys:
                     throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey)
 
@@ -537,7 +537,7 @@ def delete_vluns(vlun_str):
                 if str(params[2]) != vlun['hostname']:
                     throw_error(404, 'NON_EXISTENT_HOST', "The host '%s' doesn't exist" % params[2])
 
-                print vlun['portPos']
+                print(vlun['portPos'])
                 port = getPort(vlun['portPos'])
                 if not port == params[3]:
                     throw_error(400, 'INV_INPUT_PORT_SPECIFICATION', "Specified port is invalid %s" % params[3])
@@ -560,7 +560,7 @@ def delete_vluns(vlun_str):
 
 def getPort(portPos):
     port = "%s:%s:%s" % (portPos['node'], portPos['slot'], portPos['cardPort'])
-    print port
+    print(port)
     return port
 
 
@@ -585,12 +585,12 @@ def create_snapshot(volume_name):
                        'retentionHours': None}
 
     # do some fake errors here depending on data
-    for key in data.keys():
-        if key not in valid_keys.keys():
+    for key in list(data.keys()):
+        if key not in list(valid_keys.keys()):
             throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
-        elif 'parameters' in data.keys():
+        elif 'parameters' in list(data.keys()):
             parm = data['parameters']
-            for subkey in parm.keys():
+            for subkey in list(parm.keys()):
                 if subkey not in valid_parm_keys:
                     throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % subkey)
 
@@ -622,11 +622,11 @@ def create_volumes():
                   'copyOfName': None, 'copyRO': None, 'expirationHours': None,
                   'retentionHours': None}
 
-    for key in data.keys():
-        if key not in valid_keys.keys():
+    for key in list(data.keys()):
+        if key not in list(valid_keys.keys()):
             throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
 
-    if 'name' in data.keys():
+    if 'name' in list(data.keys()):
         for vol in volumes['members']:
             if vol['name'] == data['name']:
                 throw_error(409, 'EXISTENT_VOL',
@@ -637,7 +637,7 @@ def create_volumes():
         throw_error(400, 'INV_INPUT',
                     'No volume name provided.')
 
-    if 'sizeMiB' in data.keys():
+    if 'sizeMiB' in list(data.keys()):
         if data['sizeMiB'] < 256:
             throw_error(400, 'TOO_SMALL',
                         'Minimum volume size is 256 MiB')
@@ -645,7 +645,7 @@ def create_volumes():
             throw_error(400, 'TOO_LARGE',
                         'Volume size is above architectural limit : 16TiB')
 
-    if 'id' in data.keys():
+    if 'id' in list(data.keys()):
         for vol in volumes['members']:
             if vol['id'] == data['id']:
                 throw_error(409, 'EXISTENT_ID', 'Specified volume ID already exists.')
@@ -726,11 +726,11 @@ def create_volume_set():
     valid_keys = {'name': None, 'comment': None,
                   'domain': None, 'setmembers': None}
 
-    for key in data.keys():
-        if key not in valid_keys.keys():
+    for key in list(data.keys()):
+        if key not in list(valid_keys.keys()):
             throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
 
-    if 'name' in data.keys():
+    if 'name' in list(data.keys()):
         for vset in volume_sets['members']:
             if vset['name'] == data['name']:
                 throw_error(409, 'EXISTENT_SET',
@@ -810,7 +810,7 @@ def delete_volume_set(volume_set_name):
                 try:
                     _delete_qos_db(vset['qos'])
                 except Exception as ex:
-                    print vars(ex)
+                    print(vars(ex))
             return make_response("", 200)
 
     throw_error(404, 'NON_EXISTENT_SET',
@@ -832,8 +832,8 @@ def _validate_qos_input(data):
                   'latencyGoal': None,
                   'defaultLatency': None}
 
-    for key in data.keys():
-        if key not in valid_keys.keys():
+    for key in list(data.keys()):
+        if key not in list(valid_keys.keys()):
             throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
 
 
@@ -861,7 +861,7 @@ def _get_qos_db(name):
 
 def debug_qos(title):
     if debugRequest:
-        print title
+        print(title)
         pprint.pprint(qos_db)
 
 
@@ -1082,7 +1082,7 @@ if __name__ == "__main__":
                                 'usedMiB': 128},
                  'baseId': 1,
                  'copyType': 1,
-                 'creationTime8601': u'2012-09-24T15:12:13-07:00',
+                 'creationTime8601': '2012-09-24T15:12:13-07:00',
                  'creationTimeSec': 1348524733,
                  'degradedStates': [],
                  'domain': 'UNIT_TEST',

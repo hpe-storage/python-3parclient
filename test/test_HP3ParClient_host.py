@@ -325,12 +325,12 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
         except exceptions.HTTPNotFound:
             #documentation error
-            print 'Expected exception'
+            print('Expected exception')
             self.printFooter('modify_host_no_name')
             return
 
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception.')
 
         self.fail('No exception occurred.')
@@ -346,12 +346,12 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.cl.modifyHost(HOST_NAME2, mod_request)
 
         except exceptions.HTTPBadRequest:
-            print 'Expected exception'
+            print('Expected exception')
             self.printFooter('modify_host_param_conflict')
             return
 
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception.')
 
         self.fail('No exception occurred.')
@@ -365,12 +365,12 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.cl.modifyHost(HOST_NAME2, mod_request)
 
         except exceptions.HTTPBadRequest:
-            print 'Expected exception'
+            print('Expected exception')
             self.printFooter('modify_host_illegal_char')
             return
 
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception.')
 
         self.fail('No exception occurred.')
@@ -385,12 +385,12 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.cl.modifyHost(HOST_NAME1, mod_request)
 
         except exceptions.HTTPBadRequest:
-            print 'Expected exception'
+            print('Expected exception')
             self.printFooter('modify_host_pathOperation_missing1')
             return
 
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception.')
 
         self.fail('No exception occurred.')
@@ -405,12 +405,12 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.cl.modifyHost(HOST_NAME1, mod_request)
 
         except exceptions.HTTPBadRequest:
-            print 'Expected exception'
+            print('Expected exception')
             self.printFooter('modify_host_pathOperation_missing2')
             return
 
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception.')
 
         self.fail('No exception occurred.')
@@ -424,12 +424,12 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.cl.modifyHost(HOST_NAME2, mod_request)
 
         except exceptions.HTTPBadRequest:
-            print 'Expected exception'
+            print('Expected exception')
             self.printFooter('modify_host_pathOperationOnly')
             return
 
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception.')
 
         self.fail('No exception occurred.')
@@ -446,13 +446,13 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.cl.modifyHost(HOST_NAME1, mod_request)
 
         except exceptions.HTTPBadRequest:
-            print 'Expected exception'
+            print('Expected exception')
             self.printFooter('modify_host_too_long')
             self.cl.deleteHost(HOST_NAME1)
             return
 
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception')
 
         self.fail('No exception occurred.')
@@ -471,14 +471,14 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.cl.modifyHost(HOST_NAME2, mod_request)
 
         except exceptions.HTTPConflict:
-            print 'Expected exception'
+            print('Expected exception')
             self.cl.deleteHost(HOST_NAME1)
             self.cl.deleteHost(HOST_NAME2)
             self.printFooter('modify_host_dup_newName')
             return
 
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception.')
 
         self.fail('No exception occurred.')
@@ -495,12 +495,12 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.cl.modifyHost(HOST_NAME1, mod_request)
 
         except exceptions.HTTPNotFound:
-            print 'Expected exception'
+            print('Expected exception')
             self.printFooter('modify_host_nonExist')
             return
 
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception.')
 
         self.fail('No exception occurred.')
@@ -523,12 +523,12 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.cl.modifyHost(HOST_NAME1, mod_request)
 
         except exceptions.HTTPConflict:
-            print 'Expected exception'
+            print('Expected exception')
             self.printFooter('modify_host_existent_path')
             return
 
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception.')
 
         self.fail('No exception occurred.')
@@ -547,12 +547,12 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.cl.modifyHost(HOST_NAME1, mod_request)
 
         except exceptions.HTTPNotFound:
-            print 'Expected exception'
+            print('Expected exception')
             self.printFooter('modify_host_nonExistent_path_iSCSI')
             return
 
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception.')
 
         self.fail('No exception occurred.')
@@ -570,12 +570,12 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             self.cl.modifyHost(HOST_NAME1, mod_request)
 
         except exceptions.HTTPNotFound:
-            print 'Expected exception'
+            print('Expected exception')
             self.printFooter('modify_host_nonExistent_path_fc')
             return
 
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception.')
 
         self.fail('No exception occurred.')
@@ -593,7 +593,7 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         try:
             self.cl.modifyHost(HOST_NAME1, mod_request)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception.')
 
         newHost = self.cl.getHost(HOST_NAME1)
@@ -617,7 +617,7 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         try:
             self.cl.modifyHost(HOST_NAME1, mod_request)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception.')
 
         newHost = self.cl.getHost(HOST_NAME1)
@@ -645,13 +645,13 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         try:
             self.cl.modifyHost(HOST_NAME1, mod_request)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception')
 
         newHost = self.cl.getHost(HOST_NAME1)
         iscsi_paths = newHost['iSCSIPaths']
         for path in iscsi_paths:
-            print path
+            print(path)
             if path['name'] == "iqn.bogus.org.debian:01:0000000000":
                 self.printFooter('modify_host_add_iscsi')
                 return
@@ -670,7 +670,7 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         try:
             self.cl.modifyHost(HOST_NAME1, mod_request)
         except Exception as ex:
-            print ex
+            print(ex)
             self.fail('Failed with unexpected exception')
 
         newHost = self.cl.getHost(HOST_NAME1)

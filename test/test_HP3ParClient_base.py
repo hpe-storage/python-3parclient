@@ -25,7 +25,7 @@ import time
 import pprint
 import inspect
 from testconfig import config
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 # pip install nose-testconfig
 
@@ -86,10 +86,10 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
             self.mockServer.kill()
 
     def printHeader(self, name):
-        print "\n##Start testing '%s'" % name
+        print("\n##Start testing '%s'" % name)
 
     def printFooter(self, name):
-        print "##Compeleted testing '%s\n" % name
+        print("##Compeleted testing '%s\n" % name)
         
     def findInDict(self, dic, key, value):
         for i in dic :
