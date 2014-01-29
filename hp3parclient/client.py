@@ -1116,7 +1116,33 @@ class HP3ParClient:
             else:
                 raise exceptions.SetQOSRuleException(message=msg)
 
-    def createQoSRules(self, name, target_type, optional=None):
+    def queryQoSRules(self):
+        """
+        Get QoS Rules
+
+        :returns: Array of QoS Rules
+        """
+        response, body = self.http.get('/qos')
+        return body
+
+    def queryQoSRule(self, targetType, targetName):
+        """
+        Query a QoS rule
+
+        :param targetType: target type is vvset or sys
+        :type targetType: str
+        :param targetName: the name of the target. When targetType is sys,
+                           target name must be sys:all_others.
+        :type targetName: str
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_QOS_RULE - QoS rule does not exist.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Illegal character in the input.
+        """
+        response, body = self.http.get('/qos/%(targeType)s:%(targetName)s' %
+                                       {'targetType': targetType,
+                                        'targetName': targetName})
+
+    def createQoSRules(self, target_type, targetName, qosRules):
         """
         Create QOS rules
 
@@ -1142,18 +1168,18 @@ class HP3ParClient:
         The bwMinGoalOP and bwMaxLimitOP fields take precedence over
         the bwMinGoalKB and bwMaxLimitKB fields
 
-        :param name: the name of the target object on which the QoS
-                     rule will be created.
-        :type name: str
-        :param target_name: Type of QoS target, either enum
+        :param target_type: Type of QoS target, either enum
                             TARGET_TYPE_VVS or TARGET_TYPE_SYS.
         :type target_type: enum
-        :param optional: Optional parameters
-        :type optional: dict
+        :param targetName: the name of the target object on which the QoS
+                           rule will be created.
+        :type targetName: str
+        :param qosRules: QoS options
+        :type qosRules: dict
 
         .. code-block:: python
 
-            optional = {
+            qosRules = {
                 'priority': 2,         # priority enum
                 'bwMinGoalKB': 1024,   # bandwidth rate minimum goal in kilobytes per second
                 'bwMaxLimitKB': 1024,  # bandwidth rate maximum limit in kilobytes per second
@@ -1181,16 +1207,15 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BELOW_RANGE - I/O-per-second limit is below range. Bandwidth limit is below range.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - UNLICENSED_FEATURE - The system is not licensed for QoS.
         """
-        info = {'name': name,
+        info = {'name': targetName,
                 'type': target_type}
 
-        if optional:
-            info = self._mergeDict(info, optional)
+        info = self._mergeDict(info, qosRules)
 
         reponse, body = self.http.post('/qos', body=info)
         return body
 
-    def modifyQoSRules(self, name, target_type, optional=None):
+    def modifyQoSRules(self, targetType, targetName, qosRules):
         """
         Modify an existing QOS rules
 
@@ -1216,18 +1241,17 @@ class HP3ParClient:
         The bwMinGoalOP and bwMaxLimitOP fields take precedence over
         the bwMinGoalKB and bwMaxLimitKB fields
 
-        :param name: the name of the target object on which the QoS
-                     rule will be created.
-        :type name: str
-        :param target_name: Type of QoS target, either enum
-                            TARGET_TYPE_VVS or TARGET_TYPE_SYS.
-        :type target_type: enum
-        :param optional: Optional parameters
-        :type optional: dict
+        :param targetName: the name of the target object on which the QoS
+                           rule will be created.
+        :type targetName: str
+        :param targetType: Type of QoS target, either vvset or sys
+        :type targetType: str
+        :param qosRules: QoS options
+        :type qosRules: dict
 
         .. code-block:: python
 
-            optional = {
+            qosRules = {
                 'priority': 2,         # priority enum
                 'bwMinGoalKB': 1024,   # bandwidth rate minimum goal in kilobytes per second
                 'bwMaxLimitKB': 1024,  # bandwidth rate maximum limit in kilobytes per second
@@ -1255,13 +1279,10 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BELOW_RANGE - I/O-per-second limit is below range. Bandwidth limit is below range.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - UNLICENSED_FEATURE - The system is not licensed for QoS.
         """
-        info = {'name': name,
-                'type': target_type}
-
-        if optional:
-            info = self._mergeDict(info, optional)
-
-        reponse, body = self.http.put('/qos', body=info)
+        reponse, body = self.http.put('/qos/%(targetType)s:%(targetName)s' %
+                                      {'targetType': targetType,
+                                       'targetName': targetName},
+                                      body=qosRules)
         return body
 
     def deleteQoSRules(self, targetType, targetName):
@@ -1277,9 +1298,9 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_QOS_RULE - QoS rule does not exist.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Illegal character in the input.
         """
-        response, body = self.http.delete('/qos/%(targ_type)s:%(targ_name)s' %
-                                          {'targ_type': targetType,
-                                           'targ_name': targetName})
+        response, body = self.http.delete('/qos/%(targeType)s:%(targetName)s' %
+                                          {'targetType': targetType,
+                                           'targetName': targetName})
 
     def setVolumeMetaData(self, name, key, value):
         """
