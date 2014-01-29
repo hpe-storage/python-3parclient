@@ -269,11 +269,9 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
         hosts = self.cl.getHosts()
         self.assertGreaterEqual(hosts['total'], 2)
-        host_names = []
-        for host in hosts['members']:
-            if 'name' in host:
-                host_names.append(host['name'])
 
+        host_names = [host['name']
+                      for host in hosts['members'] if 'name' in host]
         self.assertIn(HOST_NAME1, host_names)
         self.assertIn(HOST_NAME2, host_names)
 
@@ -690,13 +688,16 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         iscsi = ['iqn.1993-08.org.debian:01:00000000000']
         self.cl.createHost(HOST_NAME1, iscsi, None, optional)
 
-        iscsi_host = 'iqn.1993-08.org.debian:01'
-        hosts = self.cl.queryHost(iscsi.pop())
+        hosts = self.cl.queryHost(iqns = [iscsi.pop()])
         self.assertIsNotNone(hosts)
         self.assertEqual(1, hosts['total'])
         self.assertEqual(hosts['members'].pop()['name'], HOST_NAME1)
 
         self.printFooter('query_host_iqn')
+
+    def test_5_query_host_iqn2(self):
+        # TODO test multiple iqns in one query
+        pass
 
     def test_5_query_host_wwn(self):
         self.printHeader('query_host_wwn')
@@ -704,9 +705,31 @@ class HP3ParClientHostTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         fc = ['00:00:00:00:00:00:00:00']
         self.cl.createHost(HOST_NAME1, None, fc, optional)
 
-        hosts = self.cl.queryHost(wwn=fc.pop().replace(':', ''))
+        hosts = self.cl.queryHost(wwns=[fc.pop().replace(':', '')])
         self.assertIsNotNone(hosts)
         self.assertEqual(1, hosts['total'])
         self.assertEqual(hosts['members'].pop()['name'], HOST_NAME1)
 
         self.printFooter('query_host_wwn')
+
+    def test_5_query_host_wwn2(self):
+        # TODO test multiple wwns in one query
+        pass
+
+    def test_5_query_host_iqn_and_wwn(self):
+        self.printHeader('query_host_iqn_and_wwn')
+
+        optional = {'domain': DOMAIN}
+        iscsi = ['iqn.1993-08.org.debian:01:00000000000']
+        self.cl.createHost(HOST_NAME1, iscsi, None, optional)
+        fc = ['00:00:00:00:00:00:00:00']
+        self.cl.createHost(HOST_NAME2, None, fc, optional)
+
+        hosts = self.cl.queryHost(iqns=["iqn.1993-08.org.debian:01:00000000000"],
+                                  wwns=["00:00:00:00:00:00:00:00".replace(':', '')])
+
+        self.assertIsNotNone(hosts)
+        self.assertEqual(2, hosts['total'])
+        self.assertIn(HOST_NAME1, [host['name'] for host in hosts['members']])
+        self.assertIn(HOST_NAME2, [host['name'] for host in hosts['members']])
+        self.printFooter('query_host_iqn_and_wwn')
