@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Changes in Version 2.9.0
+------------------------
+- Added SSH interface
+- Added stopPhysicalCopy
+- updated doc string to fix some pylint
+
 Changes in Version 1.1.0
 ----------------------
 

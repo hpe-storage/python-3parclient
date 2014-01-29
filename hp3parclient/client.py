@@ -14,29 +14,29 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-"""
-HP3Par REST Client
+""" HP3Par REST Client.
 
 .. module: HP3ParClient
 .. moduleauthor: Walter A. Boring IV
 
 :Author: Walter A. Boring IV
-:Description: This is the 3PAR Client that talks to 3PAR's REST WSAPI Service.  
+:Description: This is the 3PAR Client that talks to 3PAR's REST WSAPI Service.
 It provides the ability to provision 3PAR volumes, VLUNs, CPGs.
 
 This client requires and works with 3Par InForm 3.1.2-mu2 firmware
 
 """
 import re
+import time
 
 from hp3parclient import exceptions, http, ssh
 
 
-class HP3ParClient:
-    """
-    The 3PAR REST API Client
+class HP3ParClient(object):
 
-    :param api_url: The url to the WSAPI service on 3PAR 
+    """ The 3PAR REST API Client.
+
+    :param api_url: The url to the WSAPI service on 3PAR
                     ie. http://<3par server>:8080/api/v1
     :type api_url: str
 
@@ -70,7 +70,7 @@ class HP3ParClient:
         self.http = http.HTTPJSONRESTClient(self.api_url)
         api_version = None
         self.ssh = None
-        try :
+        try:
             api_version = self.getWsApiVersion()
         except Exception:
             msg = ('Either, the 3PAR WS is not running or the'
@@ -80,25 +80,29 @@ class HP3ParClient:
         # Note the build contains major, minor and build
         # e.g. 30102422 is 3 01 02 422
         # therefore all we need to compare is the build
-        if (api_version is None or 
+        if (api_version is None or
             api_version['build'] < self.HP3PAR_WS_MIN_BUILD_VERSION):
             raise exceptions.UnsupportedVersion('Invalid 3PAR WS API, requires'
                                                 ' version, 3.1.2 MU2')
 
-    def setSSHOptions(self, ip, login, password, port=22, 
+    def setSSHOptions(self, ip, login, password, port=22,
                       conn_timeout=30, privatekey=None):
-        """This is used to set the SSH credentials for calls
-        that use SSH instead of REST HTTP."""
+        """Set SSH Options for ssh calls.
+
+        This is used to set the SSH credentials for calls
+        that use SSH instead of REST HTTP.
+
+        """
         self.ssh = ssh.HP3PARSSHClient(ip, login, password, port,
                                        conn_timeout, privatekey)
 
     def getWsApiVersion(self):
-        """
-        Get the 3PAR WS API version
+        """ Get the 3PAR WS API version.
 
         :returns: Version dict
+
         """
-        try :
+        try:
             # remove everything down to host:port
             host_url = self.api_url.split('/api')
             self.http.set_url(host_url[0])
@@ -110,8 +114,7 @@ class HP3ParClient:
             self.http.set_url(self.api_url)
 
     def debug_rest(self, flag):
-        """
-        This is useful for debugging requests to 3PAR
+        """ This is useful for debugging requests to 3PAR.
 
         :param flag: set to True to enable debugging
         :type flag: bool
@@ -136,8 +139,7 @@ class HP3ParClient:
         self.http.authenticate(username, password, optional)
 
     def logout(self):
-        """
-        This destroys the session and logs out from the 3PAR server
+        """ This destroys the session and logs out from the 3PAR server.
 
         :returns: None
 
@@ -145,23 +147,21 @@ class HP3ParClient:
         self.http.unauthenticate()
 
     def setHighConnections(self):
-        """
-        Set the number of REST Sessions to max.
-        """
+        """ Set the number of REST Sessions to max."""
         self.ssh.run(['setwsapi', '-sru', 'high'])
 
     ##Volume methods
     def getVolumes(self):
-        """ 
-        Get the list of Volumes
+        """ Get the list of Volumes.
 
         :returns: list of Volumes
+
         """
         response, body = self.http.get('/volumes')
         return body
 
     def getVolume(self, name):
-        """ 
+        """
         Get information about a volume
 
         :param name: The name of the volume to find
@@ -178,7 +178,7 @@ class HP3ParClient:
 
         :param name: the name of the volume
         :type name: str
-        :param cpgName: the name of the destination CPG 
+        :param cpgName: the name of the destination CPG
         :type cpgName: str
         :param sizeMiB: size in MiB for the volume
         :type sizeMiB: int
@@ -188,23 +188,23 @@ class HP3ParClient:
         .. code-block:: python
 
             optional = {
-             'id': 12, 
-             'comment': 'some comment', 
-             'snapCPG' :'CPG name', 
+             'id': 12,
+             'comment': 'some comment',
+             'snapCPG' :'CPG name',
              'ssSpcAllocWarningPct' : 12,
              'ssSpcAllocLimitPct': 22,
              'tpvv' : True,
              'usrSpcAllocWarningPct': 22,
              'usrSpcAllocLimitPct': 22,
              'expirationHours': 256,
-             'retentionHours': 256 
+             'retentionHours': 256
             }
 
         :returns: List of Volumes
 
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT - Invalid Parameter
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - TOO_LARGE - Volume size above limit
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - NO_SPACE - Not Enough space is available 
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - NO_SPACE - Not Enough space is available
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
         :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXISTENT_SV - Volume Exists already
 
@@ -217,12 +217,12 @@ class HP3ParClient:
         return body
 
     def deleteVolume(self, name):
-        """ 
+        """
         Delete a volume
-        
+
         :param name: the name of the volume
         :type name: str
-        
+
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VOL - The volume does not exist
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - RETAINED - Volume retention time has not expired
@@ -256,8 +256,7 @@ class HP3ParClient:
 
     def copyVolume(self, src_name, dest_name, cpg=None,
                    snap_cpg=None, tpvv=True):
-        """
-        Copy/Clone a volume.
+        """ Copy/Clone a volume.
 
         :param src_name: the source volume name
         :type src_name: str
@@ -268,7 +267,7 @@ class HP3ParClient:
         :param snap_cpg: the snapshot CPG for the destination
         :type snap_cpg: str
         :param tpvv: use thin provisioned space for destination?
-        
+
         """
         # Virtual volume sets are not supported with the -online option
         cmd = ['createvvcopy', '-p', src_name, '-online']
@@ -289,7 +288,63 @@ class HP3ParClient:
                 raise exceptions.HTTPNotFound(error={'desc': msg})
             else:
                 raise exceptions.CopyVolumeException(message=msg)
-    
+
+    def stopPhysicalCopy(self, name):
+        """
+        Stopping a physical copy operation.
+
+        :param name: the name of the volume
+        :type name: str
+        """
+        # first we have to find the active copy
+        task = self._findTask(name)
+        task_id = None
+        if task is None:
+            # couldn't find the task
+            msg = "Couldn't find the copy task for '%s'" % name
+            raise exceptions.HTTPNotFound(error={'desc': msg})
+        else:
+            task_id = task[0]
+
+        # now stop the copy
+        if task_id is not None:
+            cmd = ['canceltask', '-f', task_id]
+            self.ssh.run(cmd)
+        else:
+            msg = "Couldn't find the copy task for '%s'" % name
+            raise exceptions.HTTPNotFound(error={'desc': msg})
+
+        # we have to make sure the task is cancelled
+        # before moving on. This can sometimes take a while.
+        ready = False
+        while not ready:
+            time.sleep(1)
+            task = self._findTask(name, True)
+            if task is None:
+                ready = True
+
+        # now cleanup the dead snapshots
+        vol = self.getVolume(name)
+        if vol:
+            snap1 = self.getVolume(vol['copyOf'])
+            snap2 = self.getVolume(snap1['copyOf'])
+            self.deleteVolume(name)
+            self.deleteVolume(snap1['name'])
+            self.deleteVolume(snap2['name'])
+
+    def _findTask(self, name, active=True):
+        cmd = ['showtask']
+        if active:
+            cmd.append('-active')
+        cmd.append(name)
+        result = self.ssh.run(cmd)
+        if result and len(result) == 1:
+            if 'No tasks' in result[0]:
+                return None
+        elif len(result) == 2:
+            return result[1].split(',')
+        return result
+
     def findVolumeSet(self, name):
         """
         Find the Volume Set name for a volume.
@@ -299,15 +354,15 @@ class HP3ParClient:
         """
         cmd = ['showvvset', '-vv', name]
         out = self.ssh.run(cmd)
-        vvset_name = None 
+        vvset_name = None
         if out and len(out) > 1:
             info = out[1].split(",")
             vvset_name = info[1]
 
-        return vvset_name        
+        return vvset_name
 
-    def createSnapshot(self, name, copyOfName, optional=None): 
-        """ 
+    def createSnapshot(self, name, copyOfName, optional=None):
+        """
         Create a snapshot of an existing Volume
 
         :param name: Name of the Snapshot
@@ -319,12 +374,12 @@ class HP3ParClient:
 
         .. code-block:: python
 
-            optional = { 
+            optional = {
                 'id' : 12, # Specifies the ID of the volume, next by default
-                'comment' : "some comment", 
+                'comment' : "some comment",
                 'readOnly' : True, # Read Only
                 'expirationHours' : 36 # time from now to expire
-                'retentionHours' : 12 # time from now to expire 
+                'retentionHours' : 12 # time from now to expire
             }
 
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VOL - The volume does not exist
@@ -344,7 +399,7 @@ class HP3ParClient:
     ##Host methods
 
     def getHosts(self):
-        """ 
+        """
         Get information about every Host on the 3Par array
 
         :returns: list of Hosts
@@ -353,7 +408,7 @@ class HP3ParClient:
         return body
 
     def getHost(self, name):
-        """ 
+        """
         Get information about a Host
 
         :param name: The name of the Host to find
@@ -368,7 +423,7 @@ class HP3ParClient:
     def createHost(self, name, iscsiNames=None, FCWwns=None, optional=None):
         """
         Create a new Host entry
-        TODO: get the list of thrown exceptions 
+        TODO: get the list of thrown exceptions
 
         :param name: The name of the host
         :type name: str
@@ -378,20 +433,20 @@ class HP3ParClient:
         :type name: array
         :param optional: The optional stuff
         :type optional: dict
-        
+
         .. code-block:: python
 
-            optional = { 
+            optional = {
                 'domain' : 'myDomain', # Create the host in the specified domain, or default domain if unspecified.
                 'forceTearDown' : False, # If True, force to tear down low-priority VLUN exports.
                 'iSCSINames' : True, # Read Only
                 'descriptors' : {'location' : 'earth', 'IPAddr' : '10.10.10.10', 'os': 'linux',
                               'model' : 'ex', 'contact': 'Smith', 'comment' : 'Joe's box}
- 
+
             }
-        
+
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_MISSING_REQUIRED - Name not specified. 
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_MISSING_REQUIRED - Name not specified.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_PARAM_CONFLICT - FCWWNs and iSCSINames are both specified.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_EXCEEDS_LENGTH - Host name, domain name, or iSCSI name is too long.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_EMPTY_STR - Input string (for domain name, iSCSI name, etc.) is empty.
@@ -417,7 +472,7 @@ class HP3ParClient:
 
         response, body = self.http.post('/hosts', body=info)
         return body
-    
+
     def modifyHost(self, name, mod_request):
         """
         Modify an existing Host entry
@@ -426,17 +481,17 @@ class HP3ParClient:
         :type name: str
         :param mod_request: Objects for Host Modification Request
         :type mod_request: dict
-        
+
         .. code-block:: python
 
-            mod_request = { 
+            mod_request = {
                 'newName' : 'myNewName', # New name of the host
                 'pathOperation' : 1, # If adding, adds the WWN or iSCSI name to the existing host.
                 'FCWWNs' : [], # One or more WWN to set for the host.
                 'iSCSINames' : [], # One or more iSCSI names to set for the host.
- 
+
             }
-        
+
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT - Missing host name.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_PARAM_CONFLICT - Both iSCSINames & FCWWNs are specified. (lot of other possibilities)
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ONE_REQUIRED - iSCSINames or FCWwns missing.
@@ -460,7 +515,7 @@ class HP3ParClient:
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_DUP_PATH - Duplicate path specified.
         """
         response, body = self.http.put('/hosts/%s' % name, body=mod_request)
-        return body    
+        return body
 
     def deleteHost(self, name):
         """
@@ -469,7 +524,7 @@ class HP3ParClient:
         :param name: Host Name
         :type name: str
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_HOST - HOST Not Found 
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_HOST - HOST Not Found
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` -  IN_USE - The HOST Cannot be removed because it's in use.
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
 
@@ -487,7 +542,7 @@ class HP3ParClient:
         """
         # for now there is no search in the REST API
         # so we can do a create looking for a specific
-        # error.  If we don't get that error, we nuke the 
+        # error.  If we don't get that error, we nuke the
         # fake host.
 
         cmd = ['createhost']
@@ -509,7 +564,7 @@ class HP3ParClient:
         if search_str in test:
             # host exists, return name used by 3par
             hostname_3par = self._get_next_word(test, search_str)
-            return hostname_3par 
+            return hostname_3par
         else:
             # host creation worked...so we need to remove it.
             # this means we didn't find an existing host that
@@ -525,7 +580,7 @@ class HP3ParClient:
         :param name: Host name
         :type name: str
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_HOST - HOST Not Found 
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_HOST - HOST Not Found
         """
 
         host = self.getHost(hostName)
@@ -537,11 +592,11 @@ class HP3ParClient:
             for vlun in allVLUNs['members']:
                 if vlun['hostname'] == hostName:
                     vluns.append(vlun)
-                    
+
         if len(vluns) < 1 :
             raise exceptions.HTTPNotFound({'code':'NON_EXISTENT_HOST',
                                            'desc': 'HOST Not Found'})
-           
+
         return vluns
 
 
@@ -566,11 +621,11 @@ class HP3ParClient:
                         return_ports.append(port)
                     elif port['linkState'] == state:
                         return_ports.append(port)
-                        
+
         return return_ports
-            
+
     def getFCPorts(self, state=None):
-        """ 
+        """
         Get a list of Fibre Channel Ports
 
         :returns: list of Fibre Channel Ports
@@ -578,7 +633,7 @@ class HP3ParClient:
         return self._getProtocolPorts(1, state)
 
     def getiSCSIPorts(self, state=None):
-        """ 
+        """
         Get a list of iSCSI Ports
 
         :returns: list of iSCSI Ports
@@ -586,7 +641,7 @@ class HP3ParClient:
         return self._getProtocolPorts(2, state)
 
     def getIPPorts(self, state=None):
-        """ 
+        """
         Get a list of IP Ports
 
         :returns: list of IP Ports
@@ -596,7 +651,7 @@ class HP3ParClient:
 
     ##CPG methods
     def getCPGs(self):
-        """ 
+        """
         Get entire list of CPGs
 
         :returns: list of cpgs
@@ -606,7 +661,7 @@ class HP3ParClient:
 
 
     def getCPG(self, name):
-        """ 
+        """
         Get information about a CPG
 
         :param name: The name of the CPG to find
@@ -619,7 +674,7 @@ class HP3ParClient:
         return body
 
     def createCPG(self, name, optional=None):
-        """ 
+        """
         Create a CPG
 
         :param name: CPG Name
@@ -638,12 +693,12 @@ class HP3ParClient:
                               'chunkletPosPref' : 2, 'diskPatterns': []}
             }
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT Invalid URI Syntax 
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT Invalid URI Syntax
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - NON_EXISTENT_DOMAIN - Domain doesn't exist
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - NO_SPACE - Not Enough space is available.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - BAD_CPG_PATTERN  A Pattern in a CPG specifies illegal values
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXISTENT_CPG - CPG Exists already 
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXISTENT_CPG - CPG Exists already
 
         """
         info = {'name': name}
@@ -652,7 +707,7 @@ class HP3ParClient:
 
         reponse, body = self.http.post('/cpgs', body=info)
         return body
-    
+
     def deleteCPG(self, name):
         """
         Delete a CPG
@@ -660,7 +715,7 @@ class HP3ParClient:
         :param name: CPG Name
         :type name: str
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_CPG - CPG Not Found 
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_CPG - CPG Not Found
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` -  IN_USE - The CPG Cannot be removed because it's in use.
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - PERM_DENIED - Permission denied
 
@@ -677,20 +732,20 @@ class HP3ParClient:
 
     ## A VLUN template sets up an association between a virtual volume and a
     ## LUN-host, LUN-port, or LUN-host-port combination by establishing the export
-    ## rule, or the manner in which the Volume is exported. 
+    ## rule, or the manner in which the Volume is exported.
 
 
     def getVLUNs(self):
-        """ 
+        """
         Get VLUNs
-        
+
         :returns: Array of VLUNs
         """
         reponse, body = self.http.get('/vluns')
         return body
 
     def getVLUN(self, volumeName):
-        """ 
+        """
         Get information about a VLUN
 
         :param volumeName: The volume name of the VLUN to find
@@ -712,7 +767,7 @@ class HP3ParClient:
 
     def createVLUN(self, volumeName, lun=None, hostname=None, portPos=None, noVcn=None,
                    overrideLowerPriority=None, auto=False):
-        """ 
+        """
         Create a new VLUN
 
         When creating a VLUN, the volumeName is required. The lun member is
@@ -740,7 +795,7 @@ class HP3ParClient:
 
         """
         info = {'volumeName': volumeName}
-        
+
         if lun:
             info['lun'] = lun
 
@@ -755,7 +810,7 @@ class HP3ParClient:
 
         if overrideLowerPriority:
             info['overrideLowerPriority'] = overrideLowerPriority
-            
+
         if auto:
             info['autoLun'] = True
             info['maxAutoLun'] = 0
@@ -767,14 +822,14 @@ class HP3ParClient:
             return location
         else:
             return None
-        
+
     def deleteVLUN(self, volumeName, lunID, hostname=None, port=None):
-        """ 
+        """
         Delete a VLUN
-        
+
         :param volumeName: the volume name of the VLUN
         :type name: str
-        :param lunID: The LUN ID 
+        :param lunID: The LUN ID
         :type lunID: int
         :param hostname: Name of the host which the volume is exported. For VLUN of port type,the value is empty
         :type hostname: str
@@ -782,9 +837,9 @@ class HP3ParClient:
         :type port: str
 
 
-        
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_MISSING_REQUIRED - Incomplete VLUN info. Missing volumeName or lun, or both hostname and port. 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_PORT_SELECTION - Specified port is invalid. 
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_MISSING_REQUIRED - Incomplete VLUN info. Missing volumeName or lun, or both hostname and port.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_PORT_SELECTION - Specified port is invalid.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_EXCEEDS_RANGE - The LUN specified exceeds expected range.
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_HOST - The host does not exist
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VLUN - The VLUN does not exist
@@ -951,7 +1006,7 @@ class HP3ParClient:
     def _mergeDict(self, dict1, dict2):
         """
         Safely merge 2 dictionaries together
-        
+
         :param dict1: The first dictionary
         :type dict1: dict
         :param dict2: The second dictionary
@@ -965,7 +1020,7 @@ class HP3ParClient:
             raise Exception("dict1 is not a dictionary")
         if type(dict2) is not dict:
             raise Exception("dict2 is not a dictionary")
-        
+
         dict3 = dict1.copy()
         dict3.update(dict2)
         return dict3
