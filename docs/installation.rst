@@ -38,7 +38,7 @@ If you'd rather install directly from the source (i.e. to stay on the
 bleeding edge), then check out the latest source from github and 
 install the driver from the resulting tree::
 
-  $ git clone -b 3.1.2-mu2 https://github.com/WaltHP/python-3parclient.git
+  $ git clone -b 2.9.0 https://github.com/WaltHP/python-3parclient.git
   $ cd python-3parclient
   $ python setup.py install
 

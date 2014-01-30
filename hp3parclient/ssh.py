@@ -16,6 +16,9 @@
 #    under the License.
 """
 HP3Par SSH Client
+
+.. module: ssh
+
 :Author: Walter A. Boring IV
 :Description: This is the SSH Client that is used to make calls to
  the 3PAR where an existing REST API doesn't exist.
@@ -35,7 +38,7 @@ from hp3parclient import exceptions
 class HP3PARSSHClient(object):
     """This class is used to execute SSH commands on a 3PAR."""
 
-    def __init__(self, ip, login, password, 
+    def __init__(self, ip, login, password,
                  port=22, conn_timeout=30, privatekey=None):
         self.san_ip = ip
         self.san_ssh_port = port

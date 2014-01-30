@@ -16,12 +16,13 @@
 #    under the License.
 """ HP3Par REST Client.
 
-.. module: HP3ParClient
+.. module: client
 .. moduleauthor: Walter A. Boring IV
 
 :Author: Walter A. Boring IV
 :Description: This is the 3PAR Client that talks to 3PAR's REST WSAPI Service.
-It provides the ability to provision 3PAR volumes, VLUNs, CPGs.
+It provides the ability to provision 3PAR volumes, VLUNs, CPGs.  This version
+also supports running actions on the 3PAR that use SSH.
 
 This client requires and works with 3Par InForm 3.1.2-mu2 firmware
 
