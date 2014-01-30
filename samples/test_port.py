@@ -19,8 +19,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-debug", help="Turn on http debugging", default=False, action="store_true")
 args = parser.parse_args()
 
-username = "3paradm"
-password = "3pardata"
+username = "admin"
+password = "hp"
 
 testVolName = "WALTTESTVOL6969"
 testSNAPName = testVolName+"SNAP"
@@ -33,7 +33,7 @@ PORT = {'node': 1, 'slot' : 8, 'cardPort':1}
 cl = client.HP3ParClient("https://10.10.22.241:8080/api/v1")
 if "debug" in args and args.debug == True:
     cl.debug_rest(True)
-cl.login(username, password, {'InServ':'10.10.22.241'})
+cl.login(username, password)
 
 
 ports = cl.getPorts()
