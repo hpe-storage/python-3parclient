@@ -23,8 +23,6 @@ HP3Par HTTP Client
 """
 
 import logging
-import os
-import urllib.parse
 import httplib2
 import time
 import pprint
