@@ -440,44 +440,54 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
 
         self.fail("No exception occurred.")
 
-#    def test_6_copy_volume(self):
-#        self.printHeader('copy_volume')
-#
-#        try:
-#            #add one
-#            optional = {'comment': 'test volume', 'tpvv': True,
-#                        'snapCPG': CPG_NAME1}
-#            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
-#        except Exception as ex:
-#            print ex
-#            self.fail('Failed to create volume')
-#            return
-#
-#        try:
-#            #copy it
-#            optional = {'online': True, 'destCPG': CPG_NAME1}
-#            self.cl.copyVolume(VOLUME_NAME1, VOLUME_NAME2, optional)
-#        except Exception as ex:
-#            print ex
-#            self.fail('Failed to copy volume')
-#            return
-#
-#        try:
-#            result = self.cl.getVolume(VOLUME_NAME2)
-#        except Exception as ex:
-#            print ex
-#            self.fail('Failed to get cloned volume')
-#            return
-#
-#        try:
-#            self.cl.deleteVolume(VOLUME_NAME2)
-#        except Exception as ex:
-#            print ex
-#            self.fail('Failed to delete cloned volume')
-#            return
-#
-#        self.printFooter('copy_volume')
+    def test_6_copy_volume(self):
+        self.printHeader('copy_volume')
 
+        try:
+            #add one
+            optional = {'comment': 'test volume', 'tpvv': True,
+                        'snapCPG': CPG_NAME1}
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to create volume')
+            return
+
+        try:
+            #copy it
+            optional = {'online': True}
+            self.cl.copyVolume(VOLUME_NAME1, VOLUME_NAME2, CPG_NAME1, optional)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to copy volume')
+            return
+
+        try:
+            result = self.cl.getVolume(VOLUME_NAME2)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to get cloned volume')
+            return
+
+        try:
+            self.cl.stopOnlinePhysicalCopy(VOLUME_NAME2)
+        except Exception as ex:
+            print ex
+            self.fail('Failed to stop physical copy. ' +
+                      'This may negatively impact other tests and require manual cleanup!')
+            return
+
+        try:
+            result = self.cl.getVolume(VOLUME_NAME2)
+            self.fail("Expecting exception, but found 'deleted' volume")
+        except exceptions.HTTPNotFound as ex:
+            self.printFooter('copy_volume')
+            return
+        except Exception as ex:
+            print ex
+            self.fail('Unexpected exception')
+
+        self.fail('Expecting HTTPNotFound exception')
     def test_7_create_volume_set(self):
         self.printHeader('create_volume_set')
         try:

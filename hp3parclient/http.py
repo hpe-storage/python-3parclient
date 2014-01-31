@@ -17,7 +17,7 @@
 """
 HP3Par HTTP Client
 :Author: Walter A. Boring IV
-:Description: This is the HTTP Client that is used to make the actual calls. 
+:Description: This is the HTTP Client that is used to make the actual calls.
  It includes the authentication that knows the cookie name for 3PAR.
 
 """
@@ -35,10 +35,10 @@ except ImportError:
 from hp3parclient import exceptions
 
 class HTTPJSONRESTClient(httplib2.Http):
-    """ 
+    """
     An HTTP REST Client that sends and recieves JSON data as the body of the HTTP request
 
-    :param api_url: The url to the WSAPI service on 3PAR 
+    :param api_url: The url to the WSAPI service on 3PAR
                     ie. http://<3par server>:8080
     :type api_url: str
     :param insecure: Use https? requires a local certificate
@@ -62,15 +62,15 @@ class HTTPJSONRESTClient(httplib2.Http):
 
         # httplib2 overrides
         self.force_exception_to_status_code = True
-        #self.disable_ssl_certificate_validation = insecure    
+        #self.disable_ssl_certificate_validation = insecure
 
         self._logger = logging.getLogger(__name__)
-        
+
     def set_url(self, api_url):
         #should be http://<Server:Port>/api/v1
         self.api_url = api_url.rstrip('/')
         self.api_url = self.api_url
-        
+
     def set_debug_flag(self, flag):
         """
         This turns on/off http request/response debugging output to console
@@ -115,13 +115,13 @@ class HTTPJSONRESTClient(httplib2.Http):
 
     def _reauth(self):
         self.authenticate(self.user, self.password, self._auth_optional)
-            
-        
+
+
 
     def unauthenticate(self):
         """
         This clears the authenticated session with the 3PAR server.  It logs out.
-        
+
         """
         #delete the session on the 3Par
         self.delete('/credentials/%s' % self.session_key)
@@ -181,9 +181,9 @@ class HTTPJSONRESTClient(httplib2.Http):
         self._http_log_req(args, kwargs)
         resp, body = super(HTTPJSONRESTClient, self).request(*args, **kwargs)
         self._http_log_resp(resp, body)
-      
+
         # Try and conver the body response to an object
-        # This assumes the body of the reply is JSON 
+        # This assumes the body of the reply is JSON
         if body:
             try:
                 body = json.loads(body)
@@ -243,7 +243,7 @@ class HTTPJSONRESTClient(httplib2.Http):
         Make an HTTP GET request to the server.
 
         .. code-block:: python
-            
+
             #example call
             try {
                 headers, body = http.get('/volumes')
@@ -264,7 +264,7 @@ class HTTPJSONRESTClient(httplib2.Http):
         Make an HTTP POST request to the server.
 
         .. code-block:: python
-            
+
             #example call
             try {
                 info = {'name': 'new volume name', 'cpg': 'MyCPG', 'sizeMiB': 300}
@@ -286,7 +286,7 @@ class HTTPJSONRESTClient(httplib2.Http):
         Make an HTTP PUT request to the server.
 
         .. code-block:: python
-            
+
             #example call
             try {
                 info = {'name': 'something'}
@@ -308,7 +308,7 @@ class HTTPJSONRESTClient(httplib2.Http):
         Make an HTTP DELETE request to the server.
 
         .. code-block:: python
-            
+
             #example call
             try {
                 headers, body = http.delete('/volumes/%s' % name)

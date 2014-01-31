@@ -32,10 +32,10 @@ import time
 
 try:
     # For Python 3.0 and later
-    from urlib.parse import urlopen
+    from urlib.parse import quote
 except ImportError:
     # Fall back to Python 2's urllib2
-    from urllib2 import urlopen
+    from urllib2 import quote
 
 from hp3parclient import exceptions, http, ssh
 
@@ -115,6 +115,12 @@ class HP3ParClient(object):
         self.ssh = ssh.HP3PARSSHClient(ip, login, password, port,
                                        conn_timeout, privatekey)
 
+    def _run(self, cmd):
+        if self.ssh is None:
+            raise exceptions.SSHException('SSH is not initialized. Initialize it by calling "setSSHOptions".')
+        else:
+            return self.ssh.run(cmd)
+
     def getWsApiVersion(self):
         """
         Get the 3PAR WS API version
@@ -165,12 +171,6 @@ class HP3ParClient(object):
         :returns: None
         """
         self.http.unauthenticate()
-
-    def setHighConnections(self):
-        """
-        Set the number of REST Sessions to max.
-        """
-        self.ssh.run(['setwsapi', '-sru', 'high'])
 
     def getStorageSystemInfo(self):
         """
@@ -396,7 +396,7 @@ class HP3ParClient(object):
         # now stop the copy
         if task_id is not None:
             cmd = ['canceltask', '-f', task_id]
-            self.ssh.run(cmd)
+            self._run(cmd)
         else:
             msg = "Couldn't find the copy task for '%s'" % name
             raise exceptions.HTTPNotFound(error={'desc': msg})
@@ -424,7 +424,7 @@ class HP3ParClient(object):
         if active:
             cmd.append('-active')
         cmd.append(name)
-        result = self.ssh.run(cmd)
+        result = self._run(cmd)
         if result and len(result) == 1:
             if 'No tasks' in result[0]:
                 return None
@@ -668,7 +668,7 @@ class HP3ParClient(object):
         else:
             cmd.append(wwn)
 
-        result = self.ssh.run(cmd)
+        result = self._run(cmd)
         test = ' '.join(result)
         search_str = "already used by host "
         if search_str in test:
@@ -721,7 +721,7 @@ class HP3ParClient(object):
 
         query = '"%s"' % query
 
-        response, body = self.http.get('/hosts?query=%s' % urlopen.quote(query.encode("utf8")))
+        response, body = self.http.get('/hosts?query=%s' % quote(query.encode("utf8")))
         return body
 
     def getHostVLUNs(self, hostName):
@@ -1014,7 +1014,7 @@ class HP3ParClient(object):
         :type name: str
         """
         cmd = ['showvvset', '-vv', name]
-        out = self.ssh.run(cmd)
+        out = self._run(cmd)
         vvset_name = None
         if out and len(out) > 1:
             info = out[1].split(",")
@@ -1192,7 +1192,7 @@ class HP3ParClient(object):
         if max_bw is not None:
             cmd.extend(['-bw', '%sM' % max_bw])
             cmd.append('vvset:' + set_name)
-        result = self.ssh.run(cmd)
+        result = self._run(cmd)
 
         if result:
             msg = result[0]
@@ -1405,7 +1405,7 @@ class HP3ParClient(object):
         :type value: str
         """
         cmd = ['setvv', '-setkv', key + '=' + value, name]
-        result = self.ssh.run(cmd)
+        result = self._run(cmd)
         if result and len(result) == 1:
             if 'does not exist' in result[0]:
                 raise exceptions.HTTPNotFound(error={'desc': result[0]})
@@ -1420,7 +1420,7 @@ class HP3ParClient(object):
         :type key: str
         """
         cmd = ['setvv', '-clrkey', key, name]
-        result = self.ssh.run(cmd)
+        result = self._run(cmd)
         if result and len(result) == 1:
             if 'does not exist' in result[0]:
                 raise exceptions.HTTPNotFound(error={'desc': result[0]})
