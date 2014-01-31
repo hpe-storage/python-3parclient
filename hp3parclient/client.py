@@ -931,8 +931,6 @@ class HP3ParClient(object):
         :type name: str
         """
         result = self.ssh.run(['removevvset', '-f', set_name, name])
-        import pprint
-        pprint.pprint(result)
 
         if result and len(result) == 1:
             if ('does not exist' in result[0] or
