@@ -376,9 +376,9 @@ class HP3ParClient(object):
         response, body = self.http.post('/volumes/%s' % src_name, body=info)
         return body
 
-    def stopPhysicalCopy(self, name):
+    def stopOnlinePhysicalCopy(self, name):
         """
-        Stopping a physical copy operation.
+        Stopping a online physical copy operation.
 
         :param name: the name of the volume
         :type name: str
@@ -432,9 +432,9 @@ class HP3ParClient(object):
             return result[1].split(',')
         return result
 
-    def stopPhysicalCopy_TODO(self, name):
+    def stopOfflinePhysicalCopy(self, name):
         """
-        Stopping a physical copy operation.
+        Stopping a offline physical copy operation.
 
         :param name: the name of the volume
         :type name: str
