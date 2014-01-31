@@ -20,10 +20,10 @@ HP 3Par REST Client
 :Author: Walter A. Boring IV
 :Copyright: Copyright 2012, Hewlett Packard Development Company, L.P.
 :License: Apache v2.0
- 
+
 """
 
-version_tuple = (2, 9, 0)
+version_tuple = (2, 9, 1)
 
 def get_version_string():
     if isinstance(version_tuple[-1], basestring):

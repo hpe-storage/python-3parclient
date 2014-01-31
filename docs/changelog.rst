@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Changes in Version 2.9.1
+------------------------
+- Renamed stopPhysicalCopy to stopOnlinePhysicalCopy
+
 Changes in Version 2.9.0
 ------------------------
 - Added SSH interface
