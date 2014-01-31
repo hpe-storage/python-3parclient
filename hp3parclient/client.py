@@ -1045,17 +1045,17 @@ class HP3ParClient(object):
         response, body = self.http.get('/volumesets/%s' % name)
         return body
 
-    def createVolumeSet(self, name, comment=None, domain=None,
+    def createVolumeSet(self, name, domain=None, comment=None,
                         setmembers=None):
         """
         This creates a new volume set
 
         :param name: the volume set to create
         :type set_name: str
-        :param comment: the comment for on the vv set
-        :type comment: str
         :param domain: the domain where the set lives
         :type domain: str
+        :param comment: the comment for on the vv set
+        :type comment: str
         :param setmembers: the vv to add to the set, the existence of the vv
         will not be checked
         :type setmembers: array
@@ -1074,11 +1074,11 @@ class HP3ParClient(object):
         """
         info = {'name': name}
 
-        if comment:
-            info['comment'] = comment
-
         if domain:
             info['domain'] = domain
+
+        if comment:
+            info['comment'] = comment
 
         if setmembers:
             members = {'setmembers': setmembers}
