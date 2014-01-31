@@ -290,9 +290,9 @@ class HP3ParClient(object):
             else:
                 raise exceptions.CopyVolumeException(message=msg)
 
-    def stopPhysicalCopy(self, name):
+    def stopOnlinePhysicalCopy(self, name):
         """
-        Stopping a physical copy operation.
+        Stopping an online physical copy operation.
 
         :param name: the name of the volume
         :type name: str
