@@ -1149,6 +1149,33 @@ class HP3ParClient(object):
         response, body = self.http.put('/volumesets/%s' % name, body=info)
 
     # QoS Priority Optimization methods
+    def addVolumeToVolumeSet(self, set_name, name):
+        """
+        This adds a volume to a volume set
+
+        :param set_name: the volume set name
+        :type set_name: str
+        :param name: the volume name to add
+        :type name: str
+        """
+        response, body = self.modifyVolumeSet(set_name,
+                                              action=self.SET_MEM_ADD,
+                                              setmembers=[name])
+
+    def removeVolumeFromVolumeSet(self, set_name, name):
+        """
+        Remove a volume from a volume set
+
+        :param set_name: the volume set name
+        :type set_name: str
+        :param name: the volume name to add
+        :type name: str
+        """
+        response, body = self.modifyVolumeSet(set_name,
+                                              action=self.SET_MEM_REMOVE,
+                                              setmembers=[name])
+
+    # QoS Priority Optimization methods
     def setQOSRule(self, set_name, max_io=None, max_bw=None):
         """
         Set a QOS Rule on a volume set
