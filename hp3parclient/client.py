@@ -432,7 +432,7 @@ class HP3ParClient(object):
             return result[1].split(',')
         return result
 
-    def findVolumeSet(self, name):
+    def stopPhysicalCopy_TODO(self, name):
         """
         Stopping a physical copy operation.
 
@@ -625,8 +625,8 @@ class HP3ParClient(object):
         :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - LUN_HOSTPERSONA_CONFLICT - LUN number and persona capability conflict.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_DUP_PATH - Duplicate path specified.
         """
-        response, body = self.http.put('/hosts/%s' % name, body=mod_request)
-        return body
+        response = self.http.put('/hosts/%s' % name, body=mod_request)
+        return response
 
     def deleteHost(self, name):
         """
@@ -1146,7 +1146,8 @@ class HP3ParClient(object):
             members = {'setmembers': setmembers}
             info = self._mergeDict(info, members)
 
-        response, body = self.http.put('/volumesets/%s' % name, body=info)
+        response = self.http.put('/volumesets/%s' % name, body=info)
+        return response
 
     # QoS Priority Optimization methods
     def addVolumeToVolumeSet(self, set_name, name):
@@ -1158,9 +1159,8 @@ class HP3ParClient(object):
         :param name: the volume name to add
         :type name: str
         """
-        response, body = self.modifyVolumeSet(set_name,
-                                              action=self.SET_MEM_ADD,
-                                              setmembers=[name])
+        return self.modifyVolumeSet(set_name, action=self.SET_MEM_ADD,
+                                    setmembers=[name])
 
     def removeVolumeFromVolumeSet(self, set_name, name):
         """
@@ -1171,9 +1171,8 @@ class HP3ParClient(object):
         :param name: the volume name to add
         :type name: str
         """
-        response, body = self.modifyVolumeSet(set_name,
-                                              action=self.SET_MEM_REMOVE,
-                                              setmembers=[name])
+        return self.modifyVolumeSet(set_name, action=self.SET_MEM_REMOVE,
+                                    setmembers=[name])
 
     # QoS Priority Optimization methods
     def setQOSRule(self, set_name, max_io=None, max_bw=None):
@@ -1370,11 +1369,11 @@ class HP3ParClient(object):
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BELOW_RANGE - I/O-per-second limit is below range. Bandwidth limit is below range.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - UNLICENSED_FEATURE - The system is not licensed for QoS.
         """
-        response, body = self.http.put('/qos/%(targetType)s:%(targetName)s' %
-                                       {'targetType': targetType,
-                                        'targetName': targetName},
-                                       body=qosRules)
-        return body
+        response = self.http.put('/qos/%(targetType)s:%(targetName)s' %
+                                 {'targetType': targetType,
+                                  'targetName': targetName},
+                                 body=qosRules)
+        return response
 
     def deleteQoSRules(self, targetName, targetType='vvset'):
         """
