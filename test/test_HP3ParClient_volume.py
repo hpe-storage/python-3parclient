@@ -35,7 +35,7 @@ VOLUME_SET_NAME2 = 'VOLUME_SET2_UNIT_TEST'
 class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
     def setUp(self):
-        super(HP3ParClientVolumeTestCase, self).setUp()
+        super(HP3ParClientVolumeTestCase, self).setUp(withSSH=True)
 
         optional = {'domain': DOMAIN}
         try:

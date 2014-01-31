@@ -83,6 +83,10 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         except:
             pass
         try:
+            self.cl.deleteVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2, PORT_1)
+        except:
+            pass
+        try:
             self.cl.deleteVolume(VOLUME_NAME1)
         except:
             pass

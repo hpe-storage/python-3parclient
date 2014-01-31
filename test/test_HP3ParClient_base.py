@@ -47,7 +47,7 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
     debug = config['TEST']['debug'].lower() == 'true'
     unitTest = config['TEST']['unit'].lower() == 'true'
 
-    def setUp(self):
+    def setUp(self, withSSH=False):
 
         cwd = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
@@ -79,21 +79,25 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
         else :
             self.printHeader('Using 3PAR ' + self.url_3par)
             self.cl = client.HP3ParClient(self.url_3par)
-            parsed_3par_url = urlparse(self.url_3par)
-            ip = parsed_3par_url.hostname.split(':').pop()
-            try:
-                # Set the conn_timeout to None so that the ssh connections will
-                # use the default transport values which will allow the test
-                # case process to terminate after completing
-                self.cl.setSSHOptions(ip, self.user, self.password, conn_timeout=None)
-            except Exception as ex:
-                print ex
-                self.fail("failed to start ssh client")
+            if withSSH:
+                # This seems to slow down the test cases, so only use this when
+                # requested
+                parsed_3par_url = urlparse(self.url_3par)
+                ip = parsed_3par_url.hostname.split(':').pop()
+                try:
+                    # Set the conn_timeout to None so that the ssh connections will
+                    # use the default transport values which will allow the test
+                    # case process to terminate after completing
+                    self.cl.setSSHOptions(ip, self.user, self.password, conn_timeout=None)
+                except Exception as ex:
+                    print ex
+                    self.fail("failed to start ssh client")
 
         if self.debug :
             self.cl.debug_rest(True)
 
         self.cl.login(self.user, self.password)
+
 
     def tearDown(self):
         self.cl.logout()
