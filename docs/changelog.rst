@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Changes in Version 2.9.2
+------------------------
+- removed the ssh pooling to fix an issue with timeouts
+
 Changes in Version 2.9.1
 ------------------------
 - Renamed stopPhysicalCopy to stopOnlinePhysicalCopy
