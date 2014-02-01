@@ -87,7 +87,7 @@ class HP3ParClient(object):
                                                 ' version, 3.1.2 MU2')
 
     def setSSHOptions(self, ip, login, password, port=22,
-                      conn_timeout=30, privatekey=None):
+                      conn_timeout=None, privatekey=None):
         """Set SSH Options for ssh calls.
 
         This is used to set the SSH credentials for calls
