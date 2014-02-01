@@ -23,7 +23,7 @@ HP 3Par REST Client
 
 """
 
-version_tuple = (2, 9, 1)
+version_tuple = (2, 9, 2)
 
 def get_version_string():
     if isinstance(version_tuple[-1], basestring):
