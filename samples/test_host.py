@@ -19,8 +19,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-debug", help="Turn on http debugging", default=False, action="store_true")
 args = parser.parse_args()
 
-username = "3paradm"
-password = "3pardata"
+username = "admin"
+password = "hp"
 
 testVolName = "WALTTESTVOL6969"
 testSNAPName = testVolName+"SNAP"
@@ -33,7 +33,7 @@ PORT = {'node': 1, 'slot' : 8, 'cardPort':1}
 cl = client.HP3ParClient("https://10.10.22.241:8080/api/v1")
 if "debug" in args and args.debug == True:
     cl.debug_rest(True)
-cl.login(username, password, {'InServ':'10.10.22.241'})
+cl.login(username, password)
 
 
 def create_test_host():
@@ -45,7 +45,7 @@ def create_test_host():
         fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
         extra = {
 #                 'iSCSINames': ['iqn.1993-08.org.debian:01:00000000000', 'iqn.bogus.org.debian:01:0000000000'],
-#                 'FCWwns': ['00:00:00:00:00:00:00:00', 
+#                 'FCWwns': ['00:00:00:00:00:00:00:00',
 #                            '11:11:11:11:11:11:11:11'],
                  'domain' : DOMAIN,
                  'descriptors': {
@@ -83,7 +83,7 @@ def modify_test_host():
         fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
         extra = {
 #                 'iSCSINames': ['iqn.1993-08.org.debian:01:00000000000', 'iqn.bogus.org.debian:01:0000000000'],
-#                 'FCWwns': ['00:00:00:00:00:00:00:00', 
+#                 'FCWwns': ['00:00:00:00:00:00:00:00',
 #                            '11:11:11:11:11:11:11:11'],
                  'domain' : DOMAIN,
                  'descriptors': {
@@ -96,12 +96,12 @@ def modify_test_host():
                  },
 #                 'portPos': {'cardPort': 1, 'node': 1, 'slot': 8}
                 }
-        
-        mod_request = { 
+
+        mod_request = {
                 'pathOperation' : 1,
                 'iSCSINames' : iscsi, # One or more WWN to set for the host.
         }
-        
+
         cl.modifyHost(TESTHOST, mod_request)
         #cl.createHost(TESTHOST, None, fc, extra)
         #cl.createHost(TESTHOST, None, None, extra)
@@ -110,7 +110,7 @@ def modify_test_host():
         print "You must login"
     except Exception as ex:
         print ex
-        
+
 def get_hosts():
     try:
         hosts = cl.getHosts()

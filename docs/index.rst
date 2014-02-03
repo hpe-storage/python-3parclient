@@ -4,11 +4,13 @@ HP3PARClient |release| Documentation
 Overview
 --------
 **HP3PARClient** is a Python package containing a class that uses 
-HTTP REST calls to talk with an HP 3PAR drive array.
+HTTP REST and SSH calls to talk with an HP 3PAR array.
 distribution containing tools for working with
 `3PAR Storage Arrays <http://www.3par.com>`_. 
 . This documentation attempts to explain
-everything you need to know to use **HP3PARClient**.
+everything you need to know to use **HP3PARClient**.  Some of the 
+API calls use SSH to talk to a 3PAR.  This is done only in the case
+where the REST API on the 3PAR doesn't exist.
 
 :doc:`installation`
   Instructions on how to get the distribution.

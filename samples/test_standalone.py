@@ -17,8 +17,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-debug", help="Turn on http debugging", default=False, action="store_true")
 args = parser.parse_args()
 
-username = "3paradm"
-password = "3pardata"
+username = "admin"
+password = "hp"
 
 testVolName = "WALTTESTVOL"
 testSNAPName = testVolName+"SNAP"

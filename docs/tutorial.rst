@@ -30,6 +30,8 @@ Doing so is easy:
   #this creates the client object and sets the url to the
   #3PAR server with IP 10.10.10.10 on port 8008.
   cl = client.HP3ParClient("http://10.10.10.10:8008/api/v1")
+  # Set the SSH authentication options for the SSH based calls.
+  cl.setSSHOptions(ip_address, username, password)
 
   try:
       cl.login(username, password)

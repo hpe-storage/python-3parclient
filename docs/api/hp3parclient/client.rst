@@ -10,6 +10,7 @@
       .. automethod:: debug_rest
       .. automethod:: login
       .. automethod:: logout
+      .. automethod:: setSSHOptions
       .. automethod:: getVolumes
       .. automethod:: getVolume
       .. automethod:: createVolume

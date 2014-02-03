@@ -15,3 +15,4 @@ Sub-modules:
    client
    exceptions
    http
+   ssh

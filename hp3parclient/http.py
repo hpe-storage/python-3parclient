@@ -14,8 +14,10 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-"""
-HP3Par HTTP Client
+""" HTTPJSONRESTClient.
+
+.. module: HTTPJSONRESTClient
+
 :Author: Walter A. Boring IV
 :Description: This is the HTTP Client that is used to make the actual calls.
  It includes the authentication that knows the cookie name for 3PAR.

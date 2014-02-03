@@ -19,10 +19,9 @@
 .. moduleauthor: Kurt Martin
 
 :Author: Walter A. Boring IV
-:Author: Kurt Martin
-:Description: This is the 3PAR Client that talks to 3PAR's REST WSAPI Service
-and to the CLIQ SSH interface.
-It provides the ability to provision 3PAR volumes, VLUNs, CPGs.
+:Description: This is the 3PAR Client that talks to 3PAR's REST WSAPI Service.
+It provides the ability to provision 3PAR volumes, VLUNs, CPGs.  This version
+also supports running actions on the 3PAR that use SSH.
 
 This client requires and works with 3PAR InForm 3.1.3 firmware
 
@@ -109,9 +108,13 @@ class HP3ParClient(object):
                                                 ' version, 3.1.3')
 
     def setSSHOptions(self, ip, login, password, port=22,
-                      conn_timeout=30, privatekey=None):
-        """This is used to set the SSH credentials for calls
-        that use SSH instead of REST HTTP."""
+                      conn_timeout=None, privatekey=None):
+        """Set SSH Options for ssh calls.
+
+        This is used to set the SSH credentials for calls
+        that use SSH instead of REST HTTP.
+
+        """
         self.ssh = ssh.HP3PARSSHClient(ip, login, password, port,
                                        conn_timeout, privatekey)
 
@@ -122,10 +125,10 @@ class HP3ParClient(object):
             return self.ssh.run(cmd)
 
     def getWsApiVersion(self):
-        """
-        Get the 3PAR WS API version
+        """ Get the 3PAR WS API version.
 
         :returns: Version dict
+
         """
         try:
             # remove everything down to host:port
@@ -139,8 +142,7 @@ class HP3ParClient(object):
             self.http.set_url(self.api_url)
 
     def debug_rest(self, flag):
-        """
-        This is useful for debugging requests to 3PAR
+        """ This is useful for debugging requests to 3PAR.
 
         :param flag: set to True to enable debugging
         :type flag: bool
@@ -165,8 +167,7 @@ class HP3ParClient(object):
         self.http.authenticate(username, password, optional)
 
     def logout(self):
-        """
-        This destroys the session and logs out from the 3PAR server
+        """ This destroys the session and logs out from the 3PAR server.
 
         :returns: None
         """
@@ -196,6 +197,7 @@ class HP3ParClient(object):
         Get the list of Volumes
 
         :returns: list of Volumes
+
         """
         response, body = self.http.get('/volumes')
         return body
@@ -493,7 +495,7 @@ class HP3ParClient(object):
                 'id' : 12, # Specifies the ID of the volume, next by default
                 'comment' : "some comment",
                 'readOnly' : True, # Read Only
-                'expirationHours' : 36, # time from now to expire
+                'expirationHours' : 36 # time from now to expire
                 'retentionHours' : 12 # time from now to expire
             }
 
@@ -749,7 +751,6 @@ class HP3ParClient(object):
         if len(vluns) < 1:
             raise exceptions.HTTPNotFound({'code': 'NON_EXISTENT_HOST',
                                            'desc': 'HOST Not Found'})
-
         return vluns
 
     ## PORT Methods

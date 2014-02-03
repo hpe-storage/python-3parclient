@@ -19,8 +19,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-debug", help="Turn on http debugging", default=False, action="store_true")
 args = parser.parse_args()
 
-username = "3paradm"
-password = "3pardata"
+username = "admin"
+password = "hp"
 
 testVolName = "WALTTESTVOL6969"
 testSNAPName = testVolName+"SNAP"
@@ -102,7 +102,7 @@ def create_volumes():
        cl.createVolume(volName, testCPGName, 300)
        volName = "%s2" % testVolName
        print "Creating Volume '%s'" % volName
-       cl.createVolume(volName, testCPGName, 1024, 
+       cl.createVolume(volName, testCPGName, 1024,
                        {'comment': 'something', 'tpvv': True})
 
     except exceptions.HTTPUnauthorized as ex:

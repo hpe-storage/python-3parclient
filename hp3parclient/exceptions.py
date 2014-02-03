@@ -14,10 +14,10 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-""" 
+"""
 Exceptions for the client
 
-.. module: Exceptions
+.. module: exceptions
 
 :Author: Walter A. Boring IV
 :Description: This contains the HTTP exceptions that can come back from the
@@ -48,7 +48,7 @@ class ClientException(Exception):
     """
     The base exception class for all exceptions this library raises.
 
-    :param error: The error array 
+    :param error: The error array
     :type error: array
 
     """
@@ -96,7 +96,7 @@ class ClientException(Exception):
 
         if self._debug2:
             formatted_string += " (2: '%s')" % self._debug2
-          
+
         return formatted_string
 
 
@@ -139,7 +139,7 @@ class HTTPNotFound(ClientException):
 
 class HTTPMethodNotAllowed(ClientException):
     """
-    HTTP 405 - Method not Allowed 
+    HTTP 405 - Method not Allowed
     """
     http_status = 405
     message = "Method Not Allowed"
@@ -251,7 +251,7 @@ class HTTPNotImplemented(ClientException):
 
 class HTTPBadGateway(ClientException):
     """
-    HTTP 502 - The server was acting as a gateway or proxy and received an invalid response from the upstream server. 
+    HTTP 502 - The server was acting as a gateway or proxy and received an invalid response from the upstream server.
     """
     http_status = 502
     message = "Bad Gateway"
@@ -304,7 +304,7 @@ def from_response(response, body):
     Return an instance of an ClientException or subclass
     based on an httplib2 response.
 
-    Usage:: 
+    Usage::
 
         resp, body = http.request(...)
         if resp.status != 200:
@@ -323,12 +323,12 @@ class SSHException(Exception):
 
     def __init__(self, message=None, **kwargs):
         self.kwargs = kwargs
-        
+
         if 'code' not in self.kwargs:
             try:
                 self.kwargs['code'] = self.code
             except AttributeError:
-                pass 
+                pass
 
         if not message:
             try:
@@ -346,7 +346,7 @@ class SSHException(Exception):
 
         self.msg = message
         super(SSHException, self).__init__(message)
-    
+
 
 class SSHInjectionThreat(SSHException):
     message = "SSH command injection detected: %(command)s"
