@@ -4,7 +4,7 @@
 .. automodule:: hp3parclient.http
    :synopsis: HTTP REST Base Class
 
-   .. autoclass::hp3parclient.http.piss(api_url, insecure=False, http_log_debug=False)
+   .. autoclass::hp3parclient.http.HTTPJSONRESTClient(api_url, insecure=False, http_log_debug=False)
 
       .. automethod:: authenticate
       .. automethod:: unauthenticate
