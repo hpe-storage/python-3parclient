@@ -378,6 +378,21 @@ class HP3ParClient(object):
         response, body = self.http.post('/volumes/%s' % src_name, body=info)
         return body
 
+    def isOnlinePhysicalCopy(self, name):
+        """
+        Is the volume being created by process of online copy?
+
+        :param name: the name of the volume
+        :type name: str
+
+        """
+        task = self._findTask(name, active=True)
+        if task is None:
+            return False
+        else:
+            return True
+
+
     def stopOnlinePhysicalCopy(self, name):
         """
         Stopping a online physical copy operation.
