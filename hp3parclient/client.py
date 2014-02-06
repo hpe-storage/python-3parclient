@@ -84,6 +84,11 @@ class HP3ParClient(object):
     PRIORITY_NORMAL = 2
     PRIORITY_HIGH = 3
 
+    TASK_DONE = 1
+    TASK_ACTIVE = 2
+    TASK_CANCELLED = 3
+    TASK_FAILED = 4
+
     # build contains major minor mj=3 min=01 main=03 build=168
     HP3PAR_WS_MIN_BUILD_VERSION = 30103168
 
@@ -272,6 +277,38 @@ class HP3ParClient(object):
         response, body = self.http.delete('/volumes/%s' % name)
         return body
 
+    def modifyVolume(self, name, volumeMods):
+        """
+        Modify a volume
+
+        :param name: the name of the volume
+        :type name: str
+        :param volumeMods: dictionary of volume attributes to change
+        :type volumeMods: dict
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_WARN_GT_LIMIT - Allocation warning level is higher than the limit.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_USR_ALRT_NON_TPVV - User space allocation alerts are valid only with a TPVV.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_RETAIN_GT_EXPIRE - Retention time is greater than expiration time.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_VV_POLICY - Invalid policy specification (for example, caching or system is set to true).
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_EXCEEDS_LENGTH - Invalid input: string length exceeds limit.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_TIME - Invalid time specified.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_MODIFY_USR_CPG_TPVV - usr_cpg cannot be modified on a TPVV.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - UNLICENSED_FEATURE - Retention time cannot be modified on a system without the Virtual Lock license.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - CPG_NOT_IN_SAME_DOMAIN - Snap CPG is not in the same domain as the user CPG.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_PEER_VOLUME - Cannot modify a peer volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPInternalServerError` - INT_SERV_ERR - Metadata of the VV is corrupted.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_SYS_VOLUME - Cannot modify retention time on a system volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_INTERNAL_VOLUME - Cannot modify an internal volume
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_VOLUME_NOT_DEFINED_ALL_NODES - Cannot modify a volume until the volume is defined on all volumes.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INVALID_OPERATION_VV_ONLINE_COPY_IN_PROGRESS - Cannot modify a volume when an online copy for that volume is in progress.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INVALID_OPERATION_VV_VOLUME_CONV_IN_PROGRESS - Cannot modify a volume in the middle of a conversion operation.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INVALID_OPERATION_VV_SNAPSPACE_NOT_MOVED_TO_CPG - Snapshot space of a volume needs to be moved to a CPG before the user space.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_VOLUME_ACCOUNTING_IN_PROGRESS - The volume cannot be renamed until snapshot accounting has finished.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden` - INV_OPERATION_VV_ZERO_DETECT_TPVV - The zero_detect policy can be used only on TPVVs.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - INV_OPERATION_VV_CPG_ON_SNAPSHOT - CPG cannot be assigned to a snapshot.
+        """
+        response = self.http.put('/volumes/%s' % name, body=volumeMods)
+        return response
+
     def growVolume(self, name, amount):
         """
         Grow an existing volume by 'amount' Mebibytes.
@@ -435,6 +472,23 @@ class HP3ParClient(object):
             self.deleteVolume(name)
             self.deleteVolume(snap1['name'])
             self.deleteVolume(snap2['name'])
+
+    def getTask(self, taskId):
+        """ Get the status of a task.
+
+        :param taskId: the task id
+        :type taskId: int
+
+        :returns: the status of the task
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_BELOW_RANGE - Bad Request Task ID must be a positive value.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_EXCEEDS_RANGE - Bad Request Task ID is too large.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_TASK - Task with the specified task ID does not exist.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_WRONG_TYPE - Task ID is not an integer.
+
+        """
+        response, body = self.http.get('/tasks/%s' % taskId)
+        return body
 
     def _findTask(self, name, active=True):
         cmd = ['showtask']

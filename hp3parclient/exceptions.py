@@ -120,7 +120,6 @@ class HTTPUnauthorized(ClientException):
     http_status = 401
     message = "Unauthorized"
 
-
 class HTTPForbidden(ClientException):
     """
     HTTP 403 - Forbidden: your credentials don't give you access to this
@@ -240,6 +239,13 @@ class HTTPTeaPot(ClientException):
 ##
 ## 500 Errors
 ##
+
+class HTTPInternalServerError(ClientExcpetion):
+    """
+    HTTP 500 - Internal Server Error: an internal error occured.
+    """
+    http_status  = 500
+    message = "Internal Server Error"
 
 # NotImplemented is a python keyword.
 class HTTPNotImplemented(ClientException):
