@@ -899,6 +899,30 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         self.assertNotIn(VOLUME_SET_NAME1, [qos['name'] for qos in all_qos['members']])
         self.assertIn(VOLUME_SET_NAME2, [qos['name'] for qos in all_qos['members']])
         self.printFooter('delete_qos')
+
+    def test_14_modify_volume_rename(self):
+        self.printHeader('modify volume')
+        try:
+            #add one
+            optional = {'comment': 'test volume', 'tpvv': True}
+            self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        except Exception as ex:
+            print(ex)
+            self.fail('Failed to create volume')
+            return
+
+        try:
+            volumeMod = {'newName': VOLUME_NAME2}
+            self.cl.modifyVolume(VOLUME_NAME1, volumeMod)
+            vol2 = self.cl.getVolume(VOLUME_NAME2)
+            self.assertIsNotNone(vol2)
+            self.assertEqual(vol2['comment'], optional['comment'])
+        except Exception as ex:
+            print(ex)
+            self.fail('Failed to modify volume')
+            return
+
+        self.printFooter('modify volume')
 #testing
 #suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVolumeTestCase)
 #unittest.TextTestRunner(verbosity=2).run(suite)

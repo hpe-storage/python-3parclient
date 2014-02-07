@@ -692,24 +692,40 @@ def get_volume(volume_name):
 
 
 @app.route('/api/v1/volumes/<volume_name>', methods=['PUT'])
-def grow_volume(volume_name):
+def modify_volume(volume_name):
     debugRequest(request)
 
-    data = json.loads(request.data)
-    size = data['sizeMiB']
-    if size <= 0:
-        throw_error(400, 'INV_INPUT_VV_GROW_SIZE', 'Invalid grow size')
+    if volume_name not in [volume['name'] for volume in volumes['members']]:
+        throw_error(404, 'NON_EXISTENT_VOL', "The volume does not exist")
 
     for volume in volumes['members']:
         if volume['name'] == volume_name:
-            cur_size = volume['sizeMiB']
-            new_size = cur_size + size
-            if new_size > 16777216:
-                throw_error(403, 'VV_NEW_SIZE_EXCEED_CPG_LIMIT', 'New volume size exceeds CPG limit.')
-            volume['sizeMiB'] = new_size
+            break
+
+    data = json.loads(request.data)
+    _grow_volume(volume, data)
+
+    #do volume renames last
+    if 'newName' in data:
+        volume['name'] = data['newName']
+
     resp = make_response(json.dumps(volume), 200)
     return resp
 
+
+def _grow_volume(volume, data):
+    # Only grow if there is a need
+    if 'sizeMiB' in data:
+        size = data['sizeMiB']
+        if size <= 0:
+            throw_error(400, 'INV_INPUT_VV_GROW_SIZE', 'Invalid grow size')
+
+        cur_size = volume['sizeMiB']
+        new_size = cur_size + size
+        if new_size > 16777216:
+            throw_error(403, 'VV_NEW_SIZE_EXCEED_CPG_LIMIT',
+                        'New volume size exceeds CPG limit.')
+        volume['sizeMiB'] = new_size
 
 @app.route('/api/v1/volumesets', methods=['GET'])
 def get_volume_sets():
