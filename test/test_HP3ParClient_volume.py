@@ -443,6 +443,11 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
     def test_6_copy_volume(self):
         self.printHeader('copy_volume')
 
+        # TODO: Add support for ssh/stopPhysical copy in mock mode
+        if self.unitTest:
+            self.printFooter('copy_volume')
+            return
+
         try:
             #add one
             optional = {'comment': 'test volume', 'tpvv': True,
