@@ -240,7 +240,7 @@ class HTTPTeaPot(ClientException):
 ## 500 Errors
 ##
 
-class HTTPInternalServerError(ClientExcpetion):
+class HTTPInternalServerError(ClientException):
     """
     HTTP 500 - Internal Server Error: an internal error occured.
     """

@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
 # Copyright 2014 Hewlett Packard Development Company, L.P.
 # All Rights Reserved.
 #
@@ -32,8 +30,8 @@ from random import randint
 import re
 
 from eventlet import greenthread
-from eventlet import pools
 from hp3parclient import exceptions
+
 
 class HP3PARSSHClient(object):
     """This class is used to execute SSH commands on a 3PAR."""
@@ -88,7 +86,6 @@ class HP3PARSSHClient(object):
             msg = "Error connecting via ssh: %s" % e
             self._logger.error(msg)
             raise paramiko.SSHException(msg)
-
 
     def close(self):
         if self.ssh:
@@ -187,7 +184,6 @@ exit
         except Exception:
             self._logger.error("Error running ssh command: %s" % command)
 
-
     def check_ssh_injection(self, cmd_list):
         ssh_injection_pattern = ['`', '$', '|', '||', ';', '&', '&&',
                                  '>', '>>', '<']
@@ -223,6 +219,3 @@ exit
                 if not result == -1:
                     if result == 0 or not arg[result - 1] == '\\':
                         raise exceptions.SSHInjectionThreat(command=cmd_list)
-
-
-

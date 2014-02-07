@@ -4,7 +4,6 @@ try:
     from setuptools import setup, find_packages
 except ImportError:
     from distutils.core import setup, find_packages
-import sys
 
 
 setup(
@@ -32,6 +31,6 @@ setup(
      'Programming Language :: Python :: 2.7',
      'Programming Language :: Python :: 3.0',
      'Topic :: Internet :: WWW/HTTP',
-     
+
      ]
   )
