@@ -1025,6 +1025,36 @@ def get_version():
     resp = make_response(json.dumps(version), 200)
     return resp
 
+
+@app.route('/api/v1/tasks/<task_id>', methods=['GET'])
+def get_task(task_id):
+    debugRequest(request)
+
+    try:
+        task_id = int(task_id)
+    except ValueError:
+        throw_error(400, 'INV_INPUT_WRONG_TYPE', "Task ID is not an integer")
+
+    if task_id <= 0:
+        throw_error(400, 'INV_INPUT_BELOW_RANGE', "Task ID must be a positive value")
+    if task_id > 65535:
+        throw_error(400, 'INV_INPUT_EXCEEDS_RANGE', "Task ID is too large")
+
+    for task in tasks['members']:
+        if task['id'] == task_id:
+            return make_response(json.dumps(task), 200)
+
+    throw_error(400, 'BAD_REQUEST', "Task not found: '%s'" % task_id)
+
+
+@app.route('/api/v1/tasks', methods=['GET'])
+def get_tasks():
+    debugRequest(request)
+    resp = make_response(json.dumps(tasks), 200)
+    return resp
+
+
+
 if __name__ == "__main__":
 
     # fake 2 CPGs
@@ -1286,5 +1316,11 @@ if __name__ == "__main__":
 
     global qos_db
     qos_db = {'members': [],
-           'total': 0}
+              'total': 0}
+
+    global tasks
+    tasks = {"total":2,"members":[
+                {"id":8933,"type":15,"name":"check_slow_disk","status":1,"startTime":"2014-02-06 13:07:03 PST","finishTime":"2014-02-06 14:03:04 PST","priority":-1,"user":"3parsvc"},
+                {"id":8934,"type":15,"name":"remove_expired_vvs","status":1,"startTime":"2014-02-06 13:27:03 PST","finishTime":"2014-02-06 13:27:03 PST","priority":-1,"user":"3parsvc"}
+            ]}
     app.run(port=args.port, debug=debugRequests)

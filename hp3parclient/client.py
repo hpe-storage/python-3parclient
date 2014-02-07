@@ -473,6 +473,16 @@ class HP3ParClient(object):
             self.deleteVolume(snap1['name'])
             self.deleteVolume(snap2['name'])
 
+    def getAllTasks(self):
+        """
+        Get the list of all Tasks
+
+        :returns: list of all Tasks
+
+        """
+        response, body = self.http.get('/tasks')
+        return body
+
     def getTask(self, taskId):
         """ Get the status of a task.
 

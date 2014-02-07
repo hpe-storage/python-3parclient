@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
 import unittest
 import test_HP3ParClient_base
 
+from hp3parclient import client, exceptions
 
 class HP3ParClientSystemTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
@@ -45,6 +46,41 @@ class HP3ParClientSystemTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
         info = self.cl.getWSAPIConfigurationInfo()
         self.assertIsNotNone(info)
         self.printFooter('getWSAPIConfigurationInfo')
+
+    def test_query_task(self):
+        self.printHeader("query_task")
+
+        tasks = self.cl.getAllTasks()
+        self.assertIsNotNone(tasks)
+        self.assertGreater(tasks['total'], 0)
+
+        first_task = tasks['members'].pop()
+        self.assertIsNotNone(first_task)
+
+        task = self.cl.getTask(first_task['id'])
+        self.assertEqual(first_task, task)
+        self.printFooter("query_task")
+
+    def test_query_task_negative(self):
+        self.printHeader("query_task_negative")
+
+        try:
+            self.cl.getTask(-1)
+        except exceptions.HTTPBadRequest as ex:
+            return
+
+        self.fail("expected an HTTP Bad Request exception")
+
+    def test_query_task_non_int(self):
+        self.printHeader("query_task_non_int")
+
+        try:
+            self.cl.getTask("nonIntTask")
+        except exceptions.HTTPBadRequest as ex:
+            return
+
+        self.fail("expected an HTTP Bad Request exception")
+
 
 #testing
 #suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientSystemTestCase)
