@@ -120,7 +120,6 @@ class HTTPUnauthorized(ClientException):
     http_status = 401
     message = "Unauthorized"
 
-
 class HTTPForbidden(ClientException):
     """
     HTTP 403 - Forbidden: your credentials don't give you access to this
@@ -241,6 +240,13 @@ class HTTPTeaPot(ClientException):
 ## 500 Errors
 ##
 
+class HTTPInternalServerError(ClientException):
+    """
+    HTTP 500 - Internal Server Error: an internal error occured.
+    """
+    http_status  = 500
+    message = "Internal Server Error"
+
 # NotImplemented is a python keyword.
 class HTTPNotImplemented(ClientException):
     """
@@ -339,7 +345,7 @@ class SSHException(Exception):
                 # kwargs doesn't match a variable in the message
                 # log the issue and the kwargs
                 LOG.exception('Exception in string format operation')
-                for name, value in kwargs.iteritems():
+                for name, value in kwargs.items():
                     LOG.error("%s: %s" % (name, value))
                 # at least get the core message out if something happened
                 message = self.message

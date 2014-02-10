@@ -1,6 +1,4 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
-# Copyright 2012 Hewlett Packard Development Company, L.P.
+# Copyright 2012-2014 Hewlett Packard Development Company, L.P.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -15,18 +13,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 """
-HP 3Par REST Client
+HP 3PAR Client
 
 :Author: Walter A. Boring IV
-:Copyright: Copyright 2012, Hewlett Packard Development Company, L.P.
+:Author: Kurt Martin
+:Copyright: Copyright 2012-2014, Hewlett Packard Development Company, L.P.
 :License: Apache v2.0
 
 """
 
-version_tuple = (2, 9, 2)
+version_tuple = (3, 0, 0)
 
 def get_version_string():
-    if isinstance(version_tuple[-1], basestring):
+    if isinstance(version_tuple[-1], str):
         return '.'.join(map(str, version_tuple[:-1])) + version_tuple[-1]
     return '.'.join(map(str, version_tuple))
 

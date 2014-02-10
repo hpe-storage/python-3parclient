@@ -25,7 +25,12 @@ import time
 import pprint
 import inspect
 from testconfig import config
-from urlparse import urlparse
+try:
+    # For Python 3.0 and later
+    from urllib.parse import urlparse
+except ImportError:
+    # Fall back to Python 2's urllib2
+    from urlparse import urlparse
 
 # pip install nose-testconfig
 
@@ -33,7 +38,7 @@ from urlparse import urlparse
 # nosetests test_HP3ParClient_host.py -v --tc-file config.ini
 
 
-class HP3ParClientBaseTestCase(unittest.TestCase):     
+class HP3ParClientBaseTestCase(unittest.TestCase):
 
     user = config['TEST']['user']
     password = config['TEST']['pass']
@@ -41,14 +46,13 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
     url_3par = config['TEST']['3par_url']
     debug = config['TEST']['debug'].lower() == 'true'
     unitTest = config['TEST']['unit'].lower() == 'true'
-        
-    def setUp(self):
-            
+
+    def setUp(self, withSSH=False):
+
         cwd = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-            
+
         if self.unitTest :
             self.printHeader('Using flask ' + self.flask_url)
-            self.cl = client.HP3ParClient(self.flask_url)
             parsed_url = urlparse(self.flask_url)
             userArg = '-user=%s' % self.user
             passwordArg = '-password=%s' % self.password
@@ -57,40 +61,57 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
             script = 'test_HP3ParMockServer_flask.py'
             path = "%s/%s" % (cwd, script)
             try :
-                self.mockServer = subprocess.Popen([sys.executable, 
-                                                    path, 
+                self.mockServer = subprocess.Popen([sys.executable,
+                                                    path,
                                                     userArg,
                                                     passwordArg,
-                                                    portArg], 
-                                               stdout=subprocess.PIPE, 
-                                               stderr=subprocess.PIPE, 
+                                                    portArg],
+                                               stdout=subprocess.PIPE,
+                                               stderr=subprocess.PIPE,
                                                stdin=subprocess.PIPE
                                                )
             except Exception as e:
                 pass
-            time.sleep(1) 
+            time.sleep(1)
+            self.cl = client.HP3ParClient(self.flask_url)
+            # SSH is not supported in flask, so not initializing
+            # those tests are expected to fail
         else :
             self.printHeader('Using 3PAR ' + self.url_3par)
             self.cl = client.HP3ParClient(self.url_3par)
-            
+            if withSSH:
+                # This seems to slow down the test cases, so only use this when
+                # requested
+                parsed_3par_url = urlparse(self.url_3par)
+                ip = parsed_3par_url.hostname.split(':').pop()
+                try:
+                    # Set the conn_timeout to None so that the ssh connections will
+                    # use the default transport values which will allow the test
+                    # case process to terminate after completing
+                    self.cl.setSSHOptions(ip, self.user, self.password, conn_timeout=None)
+                except Exception as ex:
+                    print ex
+                    self.fail("failed to start ssh client")
+
         if self.debug :
             self.cl.debug_rest(True)
-         
+
         self.cl.login(self.user, self.password)
+
 
     def tearDown(self):
         self.cl.logout()
         if self.unitTest :
             #TODO: it seems to kill all the process except the last one...
-            #don't know why 
+            #don't know why
             self.mockServer.kill()
 
     def printHeader(self, name):
-        print "\n##Start testing '%s'" % name
+        print("\n##Start testing '%s'" % name)
 
     def printFooter(self, name):
-        print "##Compeleted testing '%s\n" % name
-        
+        print("##Compeleted testing '%s\n" % name)
+
     def findInDict(self, dic, key, value):
         for i in dic :
             if key in i and i[key] == value :

@@ -1,6 +1,4 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
-# Copyright 2012 Hewlett Packard Development Company, L.P.
+# Copyright 2014 Hewlett Packard Development Company, L.P.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -32,8 +30,8 @@ from random import randint
 import re
 
 from eventlet import greenthread
-from eventlet import pools
 from hp3parclient import exceptions
+
 
 class HP3PARSSHClient(object):
     """This class is used to execute SSH commands on a 3PAR."""
@@ -89,7 +87,6 @@ class HP3PARSSHClient(object):
             self._logger.error(msg)
             raise paramiko.SSHException(msg)
 
-
     def close(self):
         if self.ssh:
             print("closing ssh")
@@ -120,7 +117,7 @@ class HP3PARSSHClient(object):
         self._logger.debug("OUT = %s" % out)
         return out
 
-    def _ssh_execute(self, ssh, cmd, check_exit_code=True):
+    def _ssh_execute(self, cmd, check_exit_code=True):
         """We have to do this in order to get CSV output from the CLI command.
 
         We first have to issue a command to tell the CLI that we want the
@@ -128,7 +125,7 @@ class HP3PARSSHClient(object):
         """
         self._logger.debug('Running cmd (SSH): %s', cmd)
 
-        channel = ssh.invoke_shell()
+        channel = self.ssh.invoke_shell()
         stdin_stream = channel.makefile('wb')
         stdout_stream = channel.makefile('rb')
         stderr_stream = channel.makefile('rb')
@@ -168,27 +165,24 @@ exit
         self.check_ssh_injection(cmd_list)
         command = ' '. join(cmd_list)
 
-        self._get_ssh_pool()
-
         try:
             total_attempts = attempts
-            with self.ssh as ssh:
-                while attempts > 0:
-                    attempts -= 1
-                    try:
-                        return self._ssh_execute(ssh, command,
-                                                 check_exit_code=check_exit)
-                    except Exception as e:
-                        self._logger.error(e)
-                        greenthread.sleep(randint(20, 500) / 100.0)
-                msg = ("SSH Command failed after '%(total_attempts)r' "
-                       "attempts : '%(command)s'" %
-                       {'total_attempts': total_attempts, 'command': command})
-                self._logger.error(msg)
-                raise exceptions.SSHException(message=msg)
+            while attempts > 0:
+                attempts -= 1
+                try:
+                    return self._ssh_execute(command,
+                                             check_exit_code=check_exit)
+                except Exception as e:
+                    self._logger.error(e)
+                    greenthread.sleep(randint(20, 500) / 100.0)
+
+            msg = ("SSH Command failed after '%(total_attempts)r' "
+                   "attempts : '%(command)s'" %
+                   {'total_attempts': total_attempts, 'command': command})
+            self._logger.error(msg)
+            raise exceptions.SSHException(message=msg)
         except Exception:
             self._logger.error("Error running ssh command: %s" % command)
-
 
     def check_ssh_injection(self, cmd_list):
         ssh_injection_pattern = ['`', '$', '|', '||', ';', '&', '&&',
@@ -225,6 +219,3 @@ exit
                 if not result == -1:
                     if result == 0 or not arg[result - 1] == '\\':
                         raise exceptions.SSHInjectionThreat(command=cmd_list)
-
-
-

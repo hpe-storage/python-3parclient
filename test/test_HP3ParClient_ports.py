@@ -45,7 +45,7 @@ class HP3ParClientPortTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
     def test_get_ports_fc(self):
         self.printHeader('get_ports_fc')
         fc_ports = self.cl.getFCPorts(4)
-        print fc_ports
+        print(fc_ports)
         if fc_ports:
             for port in fc_ports:
                 if port['protocol'] != 1:
@@ -66,3 +66,15 @@ class HP3ParClientPortTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
             return
         else:
             self.fail('Cannot retrieve iSCSI Ports.')
+
+    def test_get_ports_ip(self):
+        self.printHeader('get_ports_ip')
+
+        ip = self.cl.getIPPorts()
+        if ip:
+            for port in ip:
+                if port['protocol'] != 4:
+                    self.fail('non-ip ports detected.')
+            self.printFooter('get_ports_ip')
+        else:
+            self.fail('cannot retrieve ip ports.')
