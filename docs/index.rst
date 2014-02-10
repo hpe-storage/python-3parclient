@@ -42,7 +42,7 @@ This documentation is generated using the `Sphinx
 <http://sphinx.pocoo.org/>`_ documentation generator. The source files
 for the documentation are located in the *doc/* directory of the
 **HP3ParClient** distribution. To generate the docs locally run the
-following command from the root directory of the **HP3ParClient** source:a
+following command from the root directory of the **HP3ParClient** source.
 
 .. code-block:: bash
 

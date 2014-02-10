@@ -3,10 +3,13 @@ Changelog
 
 Changes in Version 3.0.0
 ------------------------
+- Requires the 3.1.3 3PAR Firmware or greater.
+- Added new 3.1.3 firmware APIs.
 - Added support for QOS and Virtual Volume sets
 - Added query host by wwns or iqns
+- Added APIs for getTasks, stopOfflinePhysicalCopy, modifyVolume
 
-  Changes in Version 2.9.2
+Changes in Version 2.9.2
 ------------------------
 - Removed the ssh pooling to fix an issue with timeouts
 
