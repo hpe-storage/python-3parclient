@@ -16,7 +16,7 @@
 #    under the License.
 """ HTTPJSONRESTClient.
 
-.. module: HTTPJSONRESTClient
+.. module: http
 
 :Author: Walter A. Boring IV
 :Description: This is the HTTP Client that is used to make the actual calls.
