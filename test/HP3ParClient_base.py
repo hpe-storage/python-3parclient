@@ -47,6 +47,18 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
     debug = config['TEST']['debug'].lower() == 'true'
     unitTest = config['TEST']['unit'].lower() == 'true'
 
+    if 'domain' in config['TEST']:
+        DOMAIN = config['TEST']['domain']
+    else:
+        DOMAIN = 'UNIT_TEST_DOMAIN'
+
+    if 'cpg_ldlayout_ha' in config['TEST']:
+        CPG_LDLAYOUT_HA = int(config['TEST']['cpg_ldlayout_ha'])
+        CPG_OPTIONS = {'domain': DOMAIN, 'LDLayout': {'HA': CPG_LDLAYOUT_HA}}
+    else:
+        CPG_LDLAYOUT_HA = None
+        CPG_OPTIONS = {'domain': DOMAIN}
+
     def setUp(self, withSSH=False):
 
         cwd = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -58,7 +70,7 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
             passwordArg = '-password=%s' % self.password
             portArg = '-port=%s' % parsed_url.port
 
-            script = 'test_HP3ParMockServer_flask.py'
+            script = 'HP3ParMockServer_flask.py'
             path = "%s/%s" % (cwd, script)
             try :
                 self.mockServer = subprocess.Popen([sys.executable,
@@ -88,7 +100,10 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
                     # Set the conn_timeout to None so that the ssh connections will
                     # use the default transport values which will allow the test
                     # case process to terminate after completing
-                    self.cl.setSSHOptions(ip, self.user, self.password, conn_timeout=None)
+                    self.cl.setSSHOptions(ip,
+                                          self.user,
+                                          self.password,
+                                          conn_timeout=None)
                 except Exception as ex:
                     print ex
                     self.fail("failed to start ssh client")
@@ -101,17 +116,16 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
 
     def tearDown(self):
         self.cl.logout()
-        if self.unitTest :
+        if self.unitTest:
             self.mockServer.kill()
 
     def printHeader(self, name):
         print("\n##Start testing '%s'" % name)
 
     def printFooter(self, name):
-        print("##Compeleted testing '%s\n" % name)
+        print("##Completed testing '%s\n" % name)
 
     def findInDict(self, dic, key, value):
         for i in dic :
             if key in i and i[key] == value :
                 return True
-

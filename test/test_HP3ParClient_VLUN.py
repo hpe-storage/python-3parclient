@@ -20,13 +20,12 @@ sys.path.insert(0,os.path.realpath(os.path.abspath('../')))
 
 from hp3parclient import client, exceptions
 import unittest
-import test_HP3ParClient_base
+import HP3ParClient_base
 
 CPG_NAME1 = 'CPG1_VLUN_UNIT_TEST'
 CPG_NAME2 = 'CPG2_VLUN_UNIT_TEST'
 VOLUME_NAME1 = 'VOLUME1_VLUN_UNIT_TEST'
 VOLUME_NAME2 = 'VOLUME2_VLUN_UNIT_TEST'
-DOMAIN = 'UNIT_TEST_DOMAIN'
 HOST_NAME1 = 'HOST1_VLUN_UNIT_TEST'
 HOST_NAME2 = 'HOST2_VLUN_UNIT_TEST'
 LUN_1 = 1
@@ -34,18 +33,18 @@ LUN_2 = 2
 PORT_1 = {'node':1, 'cardPort':1, 'slot':1}
 
 
-class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
+class HP3ParClientVLUNTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
 
     def setUp(self):
         super(HP3ParClientVLUNTestCase, self).setUp()
 
         try :
-            optional = {'domain': DOMAIN}
+            optional = self.CPG_OPTIONS
             self.cl.createCPG(CPG_NAME1, optional)
         except :
             pass
         try :
-            optional = {'domain': DOMAIN}
+            optional = self.CPG_OPTIONS
             self.cl.createCPG(CPG_NAME2, optional)
         except :
             pass
@@ -58,12 +57,12 @@ class HP3ParClientVLUNTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         except :
             pass
         try :
-            optional = {'domain': DOMAIN}
+            optional = {'domain': self.DOMAIN}
             self.cl.createHost(HOST_NAME1, None, None, optional)
         except :
             pass
         try :
-            optional = {'domain': DOMAIN}
+            optional = {'domain': self.DOMAIN}
             self.cl.createHost(HOST_NAME2, None, None, optional)
         except :
             pass

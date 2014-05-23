@@ -12,8 +12,28 @@ Changes in Version 3.0.1
 - Added two new enumerations for CHAP initiator and target.
 - Converted existing metadata functions to use REST API calls
   instead of SSH.
-- Updated the minimum requierd HP 3PAR build version to be 3.1.3.230.
+- Updated the minimum required HP 3PAR build version to be 3.1.3.230.
 - Added support for volume metadata REST API calls in the flask server.
+
+- Added host set API:
+  - findHostSet
+  - getHostSets
+  - getHostSet
+  - createHostSet
+  - deleteHostSet
+  - modifyHostSet
+  - addHostToHostSet
+  - removeHostFromHostSet
+  - removeHostFromItsHostSet
+
+- Unit tests and flask server
+  - Fixed missing tearDown() to improve flask server shutdown.
+  - Added VLUN and host set check before allowing deleteHost.
+  - Fixed some flask error codes and error messages to match array.
+  - Removed the test_ prefix from classes that don't contain tests.
+  - Reduced volume sizes used in tests.
+  - Made domain, cpg_ldlayout_ha, known_hosts_file and missing_key_policy configurable.
+  - Added more tests.
 
 Changes in Version 3.0.0
 ------------------------

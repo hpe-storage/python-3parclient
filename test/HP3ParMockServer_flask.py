@@ -24,6 +24,13 @@ debugRequests = False
 if "debug" in args and args.debug:
     debugRequests = True
 
+EXPORTED_VLUN = 26
+HOST_IN_SET = 77
+NON_EXISTENT_HOST = 17
+NON_EXISTENT_SET = 77
+INV_INPUT_EXCEEDS_LENGTH = 400
+INV_INPUT_PARAM_CONFLICT = 44
+
 #__all__ = ['make_json_app']
 
 
@@ -208,6 +215,135 @@ def delete_cpg(cpg_name):
             return make_response("", 200)
 
     throw_error(404, 'NON_EXISTENT_CPG', "CPG '%s' doesn't exist" % cpg_name)
+
+
+#### Host Set ####
+
+def get_host_set_for_host(name):
+    for host_set in host_sets['members']:
+        for host_name in host_set['setmembers']:
+            if host_name == name:
+                return host_set['name']
+    return None
+
+
+@app.route('/api/v1/hostsets', methods=['GET'])
+def get_host_sets():
+    debugRequest(request)
+    resp = make_response(json.dumps(host_sets), 200)
+    return resp
+
+
+@app.route('/api/v1/hostsets', methods=['POST'])
+def create_host_set():
+    debugRequest(request)
+    data = json.loads(request.data)
+
+    valid_keys = {'name': None, 'comment': None,
+                  'domain': None, 'setmembers': None}
+
+    for key in list(data.keys()):
+        if key not in list(valid_keys.keys()):
+            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
+
+    if 'name' in list(data.keys()):
+        for host_set in host_sets['members']:
+            if host_set['name'] == data['name']:
+                throw_error(409, 'EXISTENT_SET',
+                            'The set already exists.')
+                # Seems the 3par is throwing a 409 instead of 400
+                # {"code":101,"desc":"Set exists"} error
+                # throw_error(400, 'EXISTENT_SET',
+                #            'The set already exists.')
+        if len(data['name']) > 31:
+            throw_error(400, INV_INPUT_EXCEEDS_LENGTH,
+                        'invalid input: string length exceeds limit')
+    else:
+        throw_error(400, 'INV_INPUT',
+                    'No host set name provided.')
+
+    host_sets['members'].append(data)
+    resp = make_response("", 201,
+                         {'location': '/api/v1/hostsets/' + data['name']})
+    return resp
+
+
+@app.route('/api/v1/hostsets/<host_set_name>', methods=['GET'])
+def get_host_set(host_set_name):
+    debugRequest(request)
+
+    charset = {'!', '@', '#', '$', '%', '&', '^'}
+    for char in charset:
+        if char in host_set_name:
+            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+                        'illegal character in input')
+
+    for host_set in host_sets['members']:
+        if host_set['name'] == host_set_name:
+            resp = make_response(json.dumps(host_set), 200)
+            return resp
+
+    throw_error(404, NON_EXISTENT_SET, "host set doesn't exist")
+
+
+@app.route('/api/v1/hostsets/<host_set_name>', methods=['PUT'])
+def modify_host_set(host_set_name):
+    debugRequest(request)
+
+    if len(host_set_name) > 31:
+            throw_error(400, INV_INPUT_EXCEEDS_LENGTH,
+                        'invalid input: string length exceeds limit')
+
+    data = json.loads(request.data)
+
+    if 'newName' in data:
+        if len(data['newName']) > 32:
+            throw_error(400, INV_INPUT_EXCEEDS_LENGTH,
+                        'host set name is too long.')
+        if 'setmembers' in data:
+            throw_error(400, INV_INPUT_PARAM_CONFLICT, "invalid input: parameters cannot be present at the same time")
+
+    for host_set in host_sets['members']:
+        if host_set['name'] == host_set_name:
+            if 'newName' in data:
+                host_set['name'] = data['newName']
+            if 'comment' in data:
+                host_set['comment'] = data['comment']
+            if 'setmembers' in data and 'action' in data:
+                members = data['setmembers']
+                for member in members:
+                    get_host(member)
+                if 1 == data['action']:
+                    # 1 is memAdd - Adds a member to the set
+                    if 'setmembers' not in host_set:
+                        host_set['setmembers'] = []
+                    host_set['setmembers'].extend(members)
+                elif 2 == data['action']:
+                    # 2 is memRemove- Removes a member from the set
+                    for member in members:
+                        host_set['setmembers'].remove(member)
+                else:
+                    # TODO, throw error for now
+                    throw_error(400, 'TODO Action',
+                                'Action not implemented in mock server')
+
+        resp = make_response(json.dumps(host_set), 200)
+        return resp
+
+    throw_error(404, NON_EXISTENT_SET, "host set doesn't exist")
+
+
+@app.route('/api/v1/hostsets/<host_set_name>', methods=['DELETE'])
+def delete_host_set(host_set_name):
+    debugRequest(request)
+
+    for host_set in host_sets['members']:
+        if host_set['name'] == host_set_name:
+            host_sets['members'].remove(host_set)
+            return make_response("", 200)
+
+    throw_error(404, NON_EXISTENT_SET,
+                "The host set '%s' does not exists." % host_set_name)
 
 
 #### Host ####
@@ -399,6 +535,14 @@ def modify_host(host_name):
 def delete_host(host_name):
     debugRequest(request)
 
+    # Can't delete a host with VLUN
+    if len(get_vluns_for_host(host_name)) > 0:
+        throw_error(409, EXPORTED_VLUN, "has exported VLUN")
+
+    # Can't delete a host in a host set
+    if get_host_set_for_host(host_name) is not None:
+        throw_error(409, HOST_IN_SET, "host is a member of a set")
+
     for host in hosts['members']:
         if host['name'] == host_name:
             hosts['members'].remove(host)
@@ -473,7 +617,7 @@ def get_host(host_name):
             resp = make_response(json.dumps(host), 200)
             return resp
 
-    throw_error(404, 'NON_EXISTENT_HOST', "Host '%s' doesn't exist" % host_name)
+    throw_error(404, NON_EXISTENT_HOST, "host does not exist")
 
 #### Port ####
 
@@ -569,6 +713,14 @@ def get_vluns():
     debugRequest(request)
     resp = make_response(json.dumps(vluns), 200)
     return resp
+
+
+def get_vluns_for_host(host_name):
+    ret = []
+    for vlun in vluns['members']:
+        if vlun['hostname'] == host_name:
+            ret.append(vlun)
+    return ret
 
 
 #### VOLUMES & SNAPSHOTS ####
@@ -781,7 +933,7 @@ def get_volume_set(volume_set_name):
             resp = make_response(json.dumps(vset), 200)
             return resp
 
-    throw_error(404, 'NON_EXISTENT_SET', "volume set doesn't exist")
+    throw_error(404, NON_EXISTENT_SET, "volume set doesn't exist")
 
 
 @app.route('/api/v1/volumesets/<volume_set_name>', methods=['PUT'])
@@ -813,7 +965,7 @@ def modify_volume_set(volume_set_name):
         resp = make_response(json.dumps(vset), 200)
         return resp
 
-    throw_error(404, 'NON_EXISTENT_SET', "volume set doesn't exist")
+    throw_error(404, NON_EXISTENT_SET, "volume set doesn't exist")
 
 
 @app.route('/api/v1/volumesets/<volume_set_name>', methods=['DELETE'])
@@ -829,7 +981,7 @@ def delete_volume_set(volume_set_name):
                     print(vars(ex))
             return make_response("", 200)
 
-    throw_error(404, 'NON_EXISTENT_SET',
+    throw_error(404, NON_EXISTENT_SET,
                 "The volume set '%s' does not exists." % volume_set_name)
 
 
@@ -1437,6 +1589,11 @@ if __name__ == "__main__":
                'HWAddr': 'B4B52FA768B1',
                'type': 7}],
              'total': 6}
+
+    # fake host sets
+    global host_sets
+    host_sets = {'members': [],
+                 'total': 0}
 
     # fake hosts
     global hosts

@@ -20,9 +20,9 @@ sys.path.insert(0,os.path.realpath(os.path.abspath('../')))
 
 from hp3parclient import client, exceptions
 import unittest
-import test_HP3ParClient_base
+import HP3ParClient_base
 
-class HP3ParClientPortTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
+class HP3ParClientPortTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
 
     def setUp(self):
         super(HP3ParClientPortTestCase, self).setUp()

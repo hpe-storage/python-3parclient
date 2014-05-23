@@ -199,7 +199,7 @@ class HP3ParClient(object):
         response, body = self.http.get('/wsapiconfiguration')
         return body
 
-    ##Volume methods
+    # Volume methods
     def getVolumes(self):
         """
         Get the list of Volumes
@@ -714,7 +714,199 @@ class HP3ParClient(object):
         response, body = self.http.post('/volumes/%s' % copyOfName, body=info)
         return body
 
-    ##Host methods
+    # Host Set methods
+    def findHostSet(self, name):
+        """
+        Find the Host Set name for a host.
+
+        :param name: the host name
+        :type name: str
+        """
+
+        host_set_name = None
+
+        # If ssh isn't available search all host sets for this host
+        if self.ssh is None:
+            host_sets = self.getHostSets()
+            if host_sets is not None and 'members' in host_sets:
+                for host_set in host_sets['members']:
+                    if 'setmembers' in host_set:
+                        for host_name in host_set['setmembers']:
+                            if host_name == name:
+                                return host_set['name']
+
+        # Using ssh we can ask for the host set for this host
+        else:
+            cmd = ['showhostset', '-host', name]
+            out = self._run(cmd)
+            host_set_name = None
+            if out and len(out) > 1:
+                info = out[1].split(",")
+                host_set_name = info[1]
+
+        return host_set_name
+
+    def getHostSets(self):
+        """
+        Get information about every Host Set on the 3Par array
+
+        :returns: list of Host Sets
+        """
+        response, body = self.http.get('/hostsets')
+        return body
+
+    def getHostSet(self, name):
+        """
+        Get information about a Host Set
+
+        :param name: The name of the Host Set to find
+        :type name: str
+
+        :returns: host set dict
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_SET - The set does not exist
+        """
+        response, body = self.http.get('/hostsets/%s' % name)
+        return body
+
+    def createHostSet(self, name, domain=None, comment=None, setmembers=None):
+        """
+        This creates a new host set
+
+        :param name: the host set to create
+        :type set_name: str
+        :param domain: the domain where the set lives
+        :type domain: str
+        :param comment: a comment for the host set
+        :type comment: str
+        :param setmembers: the hosts to add to the host set, the existence
+        of the host will not be checked
+        :type setmembers: list of str
+        :returns: id of host set created
+        :rtype: str
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - EXISTENT_SET - The set already exits.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - MEMBER_IN_DOMAINSET - The host is in a domain set.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - MEMBER_IN_SET - The object is already part of the set.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - MEMBER_NOT_IN_SAME_DOMAIN - Objects must be in the same domain to perform this operation.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_HOST - The host does not exists.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_DUP_NAME - Invalid input (duplicate name).
+        """
+        info = {'name': name}
+
+        if domain:
+            info['domain'] = domain
+
+        if comment:
+            info['comment'] = comment
+
+        if setmembers:
+            members = {'setmembers': setmembers}
+            info = self._mergeDict(info, members)
+
+        response, body = self.http.post('/hostsets', body=info)
+        if response is not None and 'location' in response:
+            host_set_id = response['location'].rsplit('/api/v1/hostsets/', 1)[-1]
+            return host_set_id
+        else:
+            return None
+
+    def deleteHostSet(self, name):
+        """
+        This removes a host set.
+
+        :param name: the host set to remove
+        :type name: str
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_SET - The set does not exists.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - EXPORTED_VLUN - The host set has exported VLUNs.
+        """
+        self.http.delete('/hostsets/%s' % name)
+
+    def modifyHostSet(self, name, action=None, newName=None, comment=None, setmembers=None):
+        """
+        This modifies a host set by adding or removing a hosts from the set.
+        It's action is based on the enums SET_MEM_ADD or SET_MEM_REMOVE.
+
+        :param name: the host set name
+        :type name: str
+        :param action: add or remove host(s) from the set
+        :type action: enum
+        :param newName: new name of set
+        :type newName: str
+        :param comment: new comment for the set
+        :type comment: str
+        :param setmembers: the host(s) to add to the set, the existence of the host(s) will not be checked
+        :type setmembers: list str
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - EXISTENT_SET - The set already exits.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_SET - The set does not exists.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - MEMBER_IN_DOMAINSET - The host is in a domain set.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - MEMBER_IN_SET - The object is already part of the set.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - MEMBER_NOT_IN_SET - The object is not part of the set.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - MEMBER_NOT_IN_SAME_DOMAIN - Objects must be in the same domain to perform this operation.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_DUP_NAME - Invalid input (duplicate name).
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_PARAM_CONFLICT - Invalid input (parameters cannot be present at the same time).
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Invalid contains one or more illegal characters.
+        """
+        info = {}
+
+        if action:
+            info['action'] = action
+
+        if newName:
+            info['newName'] = newName
+
+        if comment:
+            info['comment'] = comment
+
+        if setmembers:
+            members = {'setmembers': setmembers}
+            info = self._mergeDict(info, members)
+
+        response = self.http.put('/hostsets/%s' % name, body=info)
+        return response
+
+    def addHostToHostSet(self, set_name, name):
+        """
+        This adds a host to a host set.
+
+        :param set_name: the host set name
+        :type set_name: str
+        :param name: the host name to add
+        :type name: str
+        """
+        return self.modifyHostSet(set_name, action=self.SET_MEM_ADD,
+                                  setmembers=[name])
+
+    def removeHostFromHostSet(self, set_name, name):
+        """
+        Remove a host from a host set.
+
+        :param set_name: the host set name
+        :type set_name: str
+        :param name: the host name to remove
+        :type name: str
+        """
+        return self.modifyHostSet(set_name, action=self.SET_MEM_REMOVE,
+                                  setmembers=[name])
+
+    def removeHostFromItsHostSet(self, name):
+        """
+        Remove a host from its host set if it is a member of one.
+
+        :param name: the host name to remove
+        :type name: str
+
+        :returns None if host has no host set, else response from modify
+        """
+
+        host_set_name = self.findHostSet(name)
+        if host_set_name is None:
+            return None
+
+        return self.removeHostFromHostSet(host_set_name, name)
+
+    # Host methods
     def getHosts(self):
         """
         Get information about every Host on the 3Par array
@@ -955,7 +1147,7 @@ class HP3ParClient(object):
                                            'desc': 'HOST Not Found'})
         return vluns
 
-    ## PORT Methods
+    # PORT Methods
     def getPorts(self):
         """
         Get the list of ports on the 3Par
@@ -1002,7 +1194,7 @@ class HP3ParClient(object):
         """
         return self._getProtocolPorts(4, state)
 
-    ## CPG methods
+    # CPG methods
     def getCPGs(self):
         """
         Get entire list of CPGs
@@ -1074,14 +1266,15 @@ class HP3ParClient(object):
         """
         response, body = self.http.delete('/cpgs/%s' % name)
 
-    ## VLUN methods
-    ## Virtual-LUN, or VLUN, is a pairing between a virtual volume and a
-    ## logical unit number (LUN), expressed as either a VLUN template or
-    ## an active
-    ## VLUN
-    ## A VLUN template sets up an association between a virtual volume and a
-    ## LUN-host, LUN-port, or LUN-host-port combination by establishing the
-    ## export rule or the manner in which the Volume is exported.
+    # VLUN methods
+    #
+    # Virtual-LUN, or VLUN, is a pairing between a virtual volume and a
+    # logical unit number (LUN), expressed as either a VLUN template or
+    # an active VLUN.
+    # A VLUN template sets up an association between a virtual volume and a
+    # LUN-host, LUN-port, or LUN-host-port combination by establishing the
+    # export rule or the manner in which the Volume is exported.
+
     def getVLUNs(self):
         """
         Get VLUNs
@@ -1207,7 +1400,7 @@ class HP3ParClient(object):
 
         response, body = self.http.delete('/vluns/%s' % vlun)
 
-    ## VolumeSet methods
+    # VolumeSet methods
     def findVolumeSet(self, name):
         """
         Find the Volume Set name for a volume.

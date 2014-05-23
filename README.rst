@@ -13,8 +13,8 @@ Capabilities
 ============
 * Create Volume
 * Delete Volume
-* Get all volumes
-* Get a volume
+* Get all Volumes
+* Get a Volume
 
 * Create CPG
 * Delete CPG
@@ -29,7 +29,14 @@ Capabilities
 * Create a Host
 * Delete a Host
 * Get all Hosts
-* Get a host
+* Get a Host
+
+* Find a Host Set for a Host
+* Get all Host Sets
+* Get a Host Set
+* Create a Host Set
+* Delete a Host Set
+* Modify a Host Set
 
 * Get all Ports
 * Get iSCSI Ports

@@ -24,6 +24,15 @@
       .. automethod:: getVLUN
       .. automethod:: createVLUN
       .. automethod:: deleteVLUN
+      .. automethod:: findHostSet
+      .. automethod:: getHostSets
+      .. automethod:: getHostSet
+      .. automethod:: createHostSet
+      .. automethod:: deleteHostSet
+      .. automethod:: modifyHostSet
+      .. automethod:: addHostToHostSet
+      .. automethod:: removeHostFromHostSet
+      .. automethod:: removeHostFromItsHostSet
       .. automethod:: createHost
       .. automethod:: modifyHost
       .. automethod:: getHosts

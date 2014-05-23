@@ -83,7 +83,9 @@ class ClientException(Exception):
 
 
     def __str__(self):
-        formatted_string = "%s (HTTP %s)" % (self.message, self.http_status)
+        formatted_string = self.message
+        if self.http_status:
+            formatted_string += " (HTTP %s)" % self.http_status
         if self._error_code:
             formatted_string += " %s" % self._error_code
         if self._error_desc:
@@ -302,7 +304,7 @@ _code_map = dict((c.http_status, c) for c in [HTTPBadRequest, HTTPUnauthorized,
                    HTTPExpectationFailed, HTTPTeaPot,
                    HTTPNotImplemented, HTTPBadGateway,
                    HTTPServiceUnavailable, HTTPGatewayTimeout,
-                   HTTPVersionNotSupported])
+                   HTTPVersionNotSupported, HTTPInternalServerError])
 
 
 def from_response(response, body):

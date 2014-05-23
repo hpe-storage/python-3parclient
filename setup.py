@@ -22,7 +22,7 @@ setup(
   provides=['hp3parclient'],
   url="http://packages.python.org/hp3parclient",
   classifiers=[
-     'Development Status :: 3 - Alpha',
+     'Development Status :: 5 - Production/Stable',
      'Intended Audience :: Developers',
      'License :: OSI Approved :: Apache Software License',
      'Environment :: Web Environment',
