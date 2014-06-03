@@ -19,6 +19,7 @@ import sys
 import os
 sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
 
+from testconfig import config
 import unittest
 import test_HP3ParClient_base
 
@@ -27,11 +28,58 @@ from hp3parclient import client, exceptions
 class HP3ParClientSystemTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
 
     def setUp(self):
-        super(HP3ParClientSystemTestCase, self).setUp()
+        super(HP3ParClientSystemTestCase, self).setUp(withSSH=True)
 
     def tearDown(self):
         # very last, tear down base class
         super(HP3ParClientSystemTestCase, self).tearDown()
+
+    @unittest.skipIf(config['TEST']['unit'].lower() == 'true', "only works with real array")
+    def test_get_patch(self):
+        """This can work with or without a patch, but you need to manually enter a valid one or use the bogus one."""
+
+        self.printHeader('get_patch')
+
+        # actual patch you might be able to test with somewhere:
+        # patch_id = 'P16'
+        #
+        # bogus patch name that should consistently be not recognized:
+        patch_id = 'P16-BOGUS'
+
+        result = self.cl.getPatch(patch_id)
+        self.assertIsNotNone(result)
+        if len(result) > 1:
+            # found patch test results
+            self.assertGreater(len(result), 1)
+            self.assertTrue("Patch detail info for " + patch_id in result[0])
+        else:
+            # bogus/not-found patch test results
+            self.assertEqual(len(result), 1)
+            self.assertTrue("Patch " + patch_id + " not recognized" in result[0])
+
+        self.printFooter('get_patch')
+
+    @unittest.skipIf(config['TEST']['unit'].lower() == 'true', "only works with real array")
+    def test_get_patches(self):
+        """This test includes history (not just patches), so it should always have results."""
+
+        self.printHeader('get_patches')
+        result = self.cl.getPatches()
+        self.assertIsNotNone(result)
+        self.assertGreater(result['total'], 0)
+        self.assertGreater(len(result['members']), 0)
+        self.printFooter('get_patches')
+
+    @unittest.skipIf(config['TEST']['unit'].lower() == 'true', "only works with real array")
+    def test_get_patches_no_hist(self):
+        """This test expects to find no patches installed (typical in our test environment)."""
+
+        self.printHeader('get_patches')
+        result = self.cl.getPatches(history=False)
+        self.assertIsNotNone(result)
+        self.assertEqual(result['total'], 0)
+        self.assertEqual(len(result['members']), 0)
+        self.printFooter('get_patches')
 
     def test_getStorageSystemInfo(self):
         self.printHeader('getStorageSystemInfo')
