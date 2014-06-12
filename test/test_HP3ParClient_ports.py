@@ -28,7 +28,7 @@ class HP3ParClientPortTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase):
         super(HP3ParClientPortTestCase, self).setUp()
 
     def tearDown(self):
-        pass
+        super(HP3ParClientPortTestCase, self).tearDown()
 
     def test_get_ports_all(self):
         self.printHeader('get_ports_all')

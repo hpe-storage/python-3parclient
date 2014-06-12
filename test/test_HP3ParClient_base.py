@@ -102,8 +102,6 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
     def tearDown(self):
         self.cl.logout()
         if self.unitTest :
-            #TODO: it seems to kill all the process except the last one...
-            #don't know why
             self.mockServer.kill()
 
     def printHeader(self, name):
