@@ -35,6 +35,9 @@ Changes in Version 3.0.1
   - Made domain, cpg_ldlayout_ha, known_hosts_file and missing_key_policy configurable.
   - Added more tests.
 
+- Bug fixes
+  - Fixed an incorrect exception message for getHostVLUNs.
+
 Changes in Version 3.0.0
 ------------------------
 - Requires the 3.1.3 3PAR Firmware or greater.

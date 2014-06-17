@@ -1143,8 +1143,8 @@ class HP3ParClient(object):
                     vluns.append(vlun)
 
         if len(vluns) < 1:
-            raise exceptions.HTTPNotFound({'code': 'NON_EXISTENT_HOST',
-                                           'desc': 'HOST Not Found'})
+            raise exceptions.HTTPNotFound({'code': 'NON_EXISTENT_VLUNS',
+                                           'desc': "No VLUNs for host '%s' found" % hostName})
         return vluns
 
     # PORT Methods
