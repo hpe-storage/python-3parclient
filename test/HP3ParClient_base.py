@@ -63,6 +63,16 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
         CPG_LDLAYOUT_HA = None
         CPG_OPTIONS = {'domain': DOMAIN}
 
+    if 'known_hosts_file' in config['TEST']:
+        known_hosts_file = config['TEST']['known_hosts_file']
+    else:
+        known_hosts_file = None
+
+    if 'missing_key_policy' in config['TEST']:
+        missing_key_policy = config['TEST']['missing_key_policy']
+    else:
+        missing_key_policy = None
+
     def setUp(self, withSSH=False):
 
         cwd = os.path.dirname(os.path.abspath(
@@ -106,8 +116,13 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
                     # Set the conn_timeout to None so that the ssh connections
                     # will use the default transport values which will allow
                     # the test case process to terminate after completing
-                    self.cl.setSSHOptions(ip, self.user, self.password,
-                                          conn_timeout=None)
+                    self.cl.setSSHOptions(
+                        ip,
+                        self.user,
+                        self.password,
+                        conn_timeout=None,
+                        known_hosts_file=self.known_hosts_file,
+                        missing_key_policy=self.missing_key_policy)
                 except Exception as ex:
                     print ex
                     self.fail("failed to start ssh client")

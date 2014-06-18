@@ -3,7 +3,9 @@ Changelog
 
 Changes in Version 3.1.1
 ------------------------
-
+* Added known_host_file and missing_key_policy parameters to:
+  - HP3ParClient.setSSHOptions
+  - HP3PARSSHClient
 * Fixed an issue with building the ClientException when body of the response
   was empty.
 * Fixed spelling error in urllib import for Python 3.0 or greater

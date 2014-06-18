@@ -2,3 +2,4 @@ nose
 nose-testconfig
 flask
 flake8
+mock

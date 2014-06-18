@@ -186,7 +186,8 @@ class HP3ParClient(object):
                                                 ' version, 3.1.3 MU1')
 
     def setSSHOptions(self, ip, login, password, port=22,
-                      conn_timeout=None, privatekey=None):
+                      conn_timeout=None, privatekey=None,
+                      **kwargs):
         """Set SSH Options for ssh calls.
 
         This is used to set the SSH credentials for calls
@@ -194,7 +195,8 @@ class HP3ParClient(object):
 
         """
         self.ssh = ssh.HP3PARSSHClient(ip, login, password, port,
-                                       conn_timeout, privatekey)
+                                       conn_timeout, privatekey,
+                                       **kwargs)
 
     def _run(self, cmd):
         if self.ssh is None:
