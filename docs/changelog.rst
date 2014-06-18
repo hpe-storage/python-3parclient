@@ -26,6 +26,10 @@ Changes in Version 3.0.1
   - removeHostFromHostSet
   - removeHostFromItsHostSet
 
+- Added showpatch API:
+  - getPatch
+  - getPatches
+
 - Unit tests and flask server
   - Fixed missing tearDown() to improve flask server shutdown.
   - Added VLUN and host set check before allowing deleteHost.
