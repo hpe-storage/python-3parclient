@@ -19,6 +19,7 @@ import sys, os
 sys.path.insert(0,os.path.realpath(os.path.abspath('../')))
 
 from hp3parclient import client, exceptions
+from testconfig import config
 import unittest
 import test_HP3ParClient_base
 
@@ -923,6 +924,233 @@ class HP3ParClientVolumeTestCase(test_HP3ParClient_base.HP3ParClientBaseTestCase
             return
 
         self.printFooter('modify volume')
+
+    def test_15_set_volume_metadata(self):
+        self.printHeader('set volume metadata')
+
+        optional = {'comment': 'test volume', 'tpvv': True}
+        expected_value = 'test_val'
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        self.cl.setVolumeMetaData(VOLUME_NAME1, 'test_key', expected_value)
+        result = self.cl.getVolumeMetaData(VOLUME_NAME1, 'test_key')
+        self.assertEqual(result['value'], expected_value)
+
+        self.printFooter('set volume metadata')
+
+    def test_15_set_bad_volume_metadata(self):
+        self.printHeader('set bad volume metadata')
+
+        self.assertRaises(exceptions.HTTPNotFound,
+                          self.cl.setVolumeMetaData,
+                          'Fake_Volume',
+                          'test_key',
+                          'test_val')
+
+        self.printFooter('set bad volume metadata')
+
+    def test_15_set_volume_metadata_existing_key(self):
+        self.printHeader('set volume metadata existing key')
+
+        optional = {'comment': 'test volume', 'tpvv': True}
+        expected = 'new_test_val'
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        self.cl.setVolumeMetaData(VOLUME_NAME1, 'test_key', 'test_val')
+        self.cl.setVolumeMetaData(VOLUME_NAME1, 'test_key', 'new_test_val')
+        contents = self.cl.getVolumeMetaData(VOLUME_NAME1, 'test_key')
+        self.assertEqual(contents['value'], expected)
+
+        self.printFooter('set volume metadata existing key')
+
+    def test_15_set_volume_metadata_invalid_length(self):
+        self.printHeader('set volume metadata invalid length')
+
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        self.assertRaises(exceptions.HTTPBadRequest,
+                          self.cl.setVolumeMetaData,
+                          VOLUME_NAME1,
+                          'this_key_will_cause_an_exception',
+                          'test_val')
+
+        self.printFooter('set volume metadata invalid length')
+
+    def test_15_set_volume_metadata_invalid_data(self):
+        self.printHeader('set volume metadata invalid data')
+
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        self.assertRaises(exceptions.HTTPBadRequest,
+                          self.cl.setVolumeMetaData,
+                          VOLUME_NAME1,
+                          None,
+                          'test_val')
+
+        self.printFooter('set volume metadata invalid data')
+
+    def test_16_get_volume_metadata(self):
+        self.printHeader('get volume metadata')
+
+        optional = {'comment': 'test volume', 'tpvv': True}
+        expected_value = 'test_val'
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        self.cl.setVolumeMetaData(VOLUME_NAME1, 'test_key', expected_value)
+        result = self.cl.getVolumeMetaData(VOLUME_NAME1, 'test_key')
+        self.assertEqual(expected_value, result['value'])
+
+        self.printFooter('get volume metadata')
+
+    def test_16_get_volume_metadata_missing_volume(self):
+        self.printHeader('get volume metadata missing volume')
+
+        self.assertRaises(exceptions.HTTPNotFound,
+                          self.cl.getVolumeMetaData,
+                          'Fake_Volume',
+                          'bad_key')
+
+        self.printFooter('get volume metadata missing volume')
+
+    def test_16_get_volume_metadata_missing_key(self):
+        self.printHeader('get volume metadata missing key')
+
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        self.assertRaises(exceptions.HTTPNotFound,
+                          self.cl.getVolumeMetaData,
+                          VOLUME_NAME1,
+                          'bad_key')
+
+        self.printFooter('get volume metadata missing key')
+
+    def test_16_get_volume_metadata_invalid_input(self):
+        self.printHeader('get volume metadata invalid input')
+
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        self.assertRaises(exceptions.HTTPBadRequest,
+                          self.cl.getVolumeMetaData,
+                          VOLUME_NAME1,
+                          '&')
+
+        self.printFooter('get volume metadata invalid input')
+
+    def test_17_get_all_volume_metadata(self):
+        self.printHeader('get all volume metadata')
+
+        # Keys present in metadata
+        optional = {'comment': 'test volume', 'tpvv': True}
+        expected_value_1 = 'test_val'
+        expected_value_2 = 'test_val2'
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        self.cl.setVolumeMetaData(VOLUME_NAME1,
+                                  'test_key_1',
+                                  expected_value_1)
+        self.cl.setVolumeMetaData(VOLUME_NAME1,
+                                  'test_key_2',
+                                  expected_value_2)
+        result = self.cl.getAllVolumeMetaData(VOLUME_NAME1)
+        self.assertEqual(expected_value_1, result['members'][0]['value'])
+        self.assertEqual(expected_value_2, result['members'][1]['value'])
+
+        # No keys present in metadata
+        optional = {'comment': 'test volume', 'tpvv': True}
+        expected_value = {'total': 0, 'members': []}
+        self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024, optional)
+        result = self.cl.getAllVolumeMetaData(VOLUME_NAME2)
+        self.assertEqual(expected_value, result)
+
+        self.printFooter('get all volume metadata')
+
+    def test_17_get_all_volume_metadata_missing_volume(self):
+        self.printHeader('get all volume metadata missing volume')
+
+        self.assertRaises(exceptions.HTTPNotFound,
+                          self.cl.getAllVolumeMetaData,
+                          'Fake_Volume')
+
+        self.printFooter('get all volume metadata missing volume')
+
+    def test_18_remove_volume_metadata(self):
+        self.printHeader('remove volume metadata')
+
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        self.cl.setVolumeMetaData(VOLUME_NAME1, 'test_key', 'test_val')
+        self.cl.removeVolumeMetaData(VOLUME_NAME1, 'test_key')
+        self.assertRaises(exceptions.HTTPNotFound,
+                          self.cl.getVolumeMetaData,
+                          VOLUME_NAME1,
+                          'test_key')
+
+        self.printFooter('remove volume metadata')
+
+    def test_18_remove_volume_metadata_missing_volume(self):
+        self.printHeader('remove volume metadata missing volume')
+
+        self.assertRaises(exceptions.HTTPNotFound,
+                          self.cl.removeVolumeMetaData,
+                          'Fake_Volume',
+                          'test_key')
+
+        self.printFooter('remove volume metadata missing volume')
+
+    def test_18_remove_volume_metadata_missing_key(self):
+        self.printHeader('remove volume metadata missing key')
+
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        self.assertRaises(exceptions.HTTPNotFound,
+                          self.cl.removeVolumeMetaData,
+                          VOLUME_NAME1,
+                          'test_key')
+
+        self.printFooter('remove volume metadata missing key')
+
+    def test_18_remove_volume_metadata_invalid_input(self):
+        self.printHeader('remove volume metadata invalid input')
+
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        self.assertRaises(exceptions.HTTPBadRequest,
+                          self.cl.removeVolumeMetaData,
+                          VOLUME_NAME1,
+                          '&')
+
+        self.printFooter('remove volume metadata invalid input')
+
+    def test_19_find_volume_metadata(self):
+        self.printHeader('find volume metadata')
+
+        # Volume should be found
+        optional = {'comment': 'test volume', 'tpvv': True}
+        expected = True
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        self.cl.setVolumeMetaData(VOLUME_NAME1, 'test_key', 'test_val')
+        result = self.cl.findVolumeMetaData(VOLUME_NAME1,
+                                            'test_key',
+                                            'test_val')
+        self.assertEqual(result, expected)
+
+        # Volume should not be found
+        optional = {'comment': 'test volume', 'tpvv': True}
+        expected = False
+        result = self.cl.findVolumeMetaData(VOLUME_NAME1,
+                                            'bad_key',
+                                            'test_val')
+        self.assertEqual(result, expected)
+
+        self.printFooter('find volume metadata')
+
+    def test_19_find_volume_metadata_missing_volume(self):
+        self.printHeader('find volume metadata missing volume')
+
+        expected = False
+        result = self.cl.findVolumeMetaData('Fake_Volume',
+                                            'test_key',
+                                            'test_val')
+        self.assertEqual(result, expected)
+
+        self.printFooter('find volume metadata missing volume')
+
 #testing
 #suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVolumeTestCase)
 #unittest.TextTestRunner(verbosity=2).run(suite)

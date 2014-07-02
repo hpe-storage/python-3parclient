@@ -23,7 +23,7 @@
 It provides the ability to provision 3PAR volumes, VLUNs, CPGs.  This version
 also supports running actions on the 3PAR that use SSH.
 
-This client requires and works with 3PAR InForm 3.1.3 firmware
+This client requires and works with 3PAR InForm 3.1.3 MU1 firmware
 
 """
 import re
@@ -48,6 +48,9 @@ class HP3ParClient(object):
     :type api_url: str
 
     """
+
+    CHAP_INITIATOR = 1
+    CHAP_TARGET = 2
 
     PORT_MODE_TARGET = 2
     PORT_MODE_INITIATOR = 3
@@ -89,8 +92,8 @@ class HP3ParClient(object):
     TASK_CANCELLED = 3
     TASK_FAILED = 4
 
-    # build contains major minor mj=3 min=01 main=03 build=168
-    HP3PAR_WS_MIN_BUILD_VERSION = 30103168
+    # build contains major minor mj=3 min=01 main=03 build=230
+    HP3PAR_WS_MIN_BUILD_VERSION = 30103230
 
     def __init__(self, api_url):
         self.api_url = api_url
@@ -1595,6 +1598,7 @@ class HP3ParClient(object):
     def setVolumeMetaData(self, name, key, value):
         """
         This is used to set a key/value pair metadata into a volume.
+        If the key already exists on the volume the value will be updated.
 
         :param name: the volume name
         :type name: str
@@ -1602,12 +1606,100 @@ class HP3ParClient(object):
         :type key: str
         :param value: the metadata value
         :type value: str
+
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_EXCEEDS_LENGTH - Invalid input: string length exceeds limit.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_MISSING_REQUIRED - Required fields missing
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_UNREC_NAME - Unrecognized name
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Illegal character in input
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VOL - The volume does not exist
         """
-        cmd = ['setvv', '-setkv', key + '=' + value, name]
-        result = self._run(cmd)
-        if result and len(result) == 1:
-            if 'does not exist' in result[0]:
-                raise exceptions.HTTPNotFound(error={'desc': result[0]})
+        key_exists = False
+        info = {
+            'key': key,
+            'value': value
+        }
+
+        try:
+            response, body = self.http.post('/volumes/%s/objectKeyValues' % name, body=info)
+        except exceptions.HTTPConflict:
+            key_exists = True
+        except Exception:
+            raise
+
+        if key_exists:
+            info = {
+                'value': value
+            }
+            response, body = self.http.put('/volumes/%(name)s/objectKeyValues/%(key)s' % {'name': name, 'key': key}, body=info)
+
+        return response
+
+    def getVolumeMetaData(self, name, key):
+        """
+        This is used to get a key/value pair metadata from a volume.
+
+        :param name: the volume name
+        :type name: str
+        :param key: the metadata key name
+        :type key: str
+
+        :returns: dict with the requested key's data.
+
+        .. code-block:: python
+
+            data = {
+                'creationTimeSec': 1406074222                   # time of creation in seconds format
+                'date_added': 'Mon Jul 14 16:09:36 PDT 2014',   # the date/time the key was added
+                'value': 'data'                                 # the value associated with the key
+                'key': 'key_name'                               # the key name
+                'creationTime8601': '2014-07-22T17:10:22-07:00' # time of creation in date format
+            }
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Illegal character in input
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VOL - The volume does not exist
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_OBJECT_KEY - Object key does not exist
+        """
+        response, body = self.http.get('/volumes/%(name)s/objectKeyValues/%(key)s' % {'name': name, 'key': key})
+
+        return body
+
+    def getAllVolumeMetaData(self, name):
+        """
+        This is used to get all key/value pair metadata from a volume.
+
+        :param name: the volume name
+        :type name: str
+
+        :returns: dict with all keys and associated data.
+
+        .. code-block:: python
+
+            keys = {
+                'total': 2,
+                'members': [
+                    {
+                        'creationTimeSec': 1406074222                   # time of creation in seconds format
+                        'date_added': 'Mon Jul 14 16:09:36 PDT 2014',   # the date/time the key was added
+                        'value': 'data'                                 # the value associated with the key
+                        'key': 'key_name'                               # the key name
+                        'creationTime8601': '2014-07-22T17:10:22-07:00' # time of creation in date format
+                    },
+                    {
+                        'creationTimeSec': 1406074222                   # time of creation in seconds format
+                        'date_added': 'Mon Jul 14 16:09:36 PDT 2014',   # the date/time the key was added
+                        'value': 'data'                                 # the value associated with the key
+                        'key': 'key_name_2'                             # the key name
+                        'creationTime8601': '2014-07-22T17:10:22-07:00' # time of creation in date format
+                    }
+                ]
+            }
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VOL - The volume does not exist
+        """
+        response, body = self.http.get('/volumes/%s/objectKeyValues' % name)
+
+        return body
 
     def removeVolumeMetaData(self, name, key):
         """
@@ -1617,12 +1709,38 @@ class HP3ParClient(object):
         :type name: str
         :param key: the metadata key name
         :type key: str
+
+        :returns: None
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - INV_INPUT_ILLEGAL_CHAR - Illegal character in input
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_VOL - The volume does not exist
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_OBJECT_KEY - Object key does not exist
         """
-        cmd = ['setvv', '-clrkey', key, name]
-        result = self._run(cmd)
-        if result and len(result) == 1:
-            if 'does not exist' in result[0]:
-                raise exceptions.HTTPNotFound(error={'desc': result[0]})
+        response, body = self.http.delete('/volumes/%(name)s/objectKeyValues/%(key)s' % {'name': name, 'key': key})
+
+        return body
+
+    def findVolumeMetaData(self, name, key, value):
+        """
+        Determines whether a volume contains a specific key/value pair.
+
+        :param name: the volume name
+        :type name: str
+        :param key: the metadata key name
+        :type key: str
+        :param value: the metadata value
+        :type value: str
+
+        :returns: bool
+        """
+        try:
+            contents = self.getVolumeMetaData(name, key)
+            if contents['value'] == value:
+                return True
+        except Exception:
+            pass
+
+        return False
 
     def _mergeDict(self, dict1, dict2):
         """

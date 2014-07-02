@@ -1,6 +1,20 @@
 Changelog
 =========
 
+Changes in Version 3.0.1
+------------------------
+- Added APIs
+  - setVolumeMetaData
+  - getVolumeMetaData
+  - getAllVolumeMetaData
+  - removeVolumeMetaData
+  - findVolumeMetaData
+- Added two new enumerations for CHAP initiator and target.
+- Converted existing metadata functions to use REST API calls
+  instead of SSH.
+- Updated the minimum requierd HP 3PAR build version to be 3.1.3.230.
+- Added support for volume metadata REST API calls in the flask server.
+
 Changes in Version 3.0.0
 ------------------------
 - Requires the 3.1.3 3PAR Firmware or greater.

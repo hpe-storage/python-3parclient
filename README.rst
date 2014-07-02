@@ -36,6 +36,12 @@ Capabilities
 * Get FC Ports
 * Get IP Ports
 
+* Set Volume Metadata
+* Get Volume Metadata
+* Get All Volume Metadata
+* Find Volume Metadata
+* Remove Volume Metadata
+
 
 Installation
 ============

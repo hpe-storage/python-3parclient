@@ -1021,7 +1021,7 @@ def get_version():
     debugRequest(request)
     version = {'major': 1,
                'minor': 3,
-               'build': 30103168}
+               'build': 30103230}
     resp = make_response(json.dumps(version), 200)
     return resp
 
@@ -1052,6 +1052,193 @@ def get_tasks():
     debugRequest(request)
     resp = make_response(json.dumps(tasks), 200)
     return resp
+
+@app.route('/api/v1/volumes/<volume_name>/objectKeyValues', methods=['POST'])
+def create_key_value_pair(volume_name):
+    debugRequest(request)
+    kv_pair = json.loads(request.data)
+    key = kv_pair['key']
+    value = kv_pair['value']
+
+    if key is None:
+        throw_error(400, 'INV_INPUT_MISSING_REQUIRED', 'key not specified.')
+
+    if value is None:
+        throw_error(400, 'INV_INPUT_MISSING_REQUIRED', 'value not specified.')
+
+    if len(key) > 31 or len(value) > 31:
+        throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH', 'invalid input: string length exceeds limit')
+
+    charset = {'!', '@', '#', '$', '%', '&', '^'}
+    for char in charset:
+        if char in key or char in value:
+            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR', 'Error parsing key or value')
+
+    vol_exists = False
+    for member in volumes['members']:
+        if member['name'] == volume_name:
+            vol_exists = True
+
+            if 'metadata' not in member:
+                member['metadata'] = {
+                    'total': 0,
+                    'members': []
+                }
+
+            for kv_pair in member['metadata']['members']:
+                if kv_pair['key'] == key:
+                    throw_error(409, 'EXISTENT_OBJECT_KEY', "Key '%s' already exist." % key)
+
+            member['metadata']['members'].append({'key': key, 'value': value})
+            member['metadata']['total'] += 1
+            break
+
+    if not vol_exists:
+        throw_error(404, 'NON_EXISTENT_VOL', "volume doesn't exist")
+
+    return make_response("Created", 201)
+
+@app.route('/api/v1/volumes/<volume_name>/objectKeyValues/<key>', methods=['PUT'])
+def update_key_value_pair(volume_name, key):
+    debugRequest(request)
+    body = json.loads(request.data)
+    value = body['value']
+
+    if key is None:
+        throw_error(400, 'INV_INPUT_MISSING_REQUIRED', 'key not specified.')
+
+    if value is None:
+        throw_error(400, 'INV_INPUT_MISSING_REQUIRED', 'value not specified.')
+
+    if len(key) > 31 or len(value) > 31:
+        throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH', 'invalid input: string length exceeds limit')
+
+    charset = {'!', '@', '#', '$', '%', '&', '^'}
+    for char in charset:
+        if char in key or char in value:
+            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR', 'Error parsing key or value')
+
+    vol_exists = False
+    for member in volumes['members']:
+        if member['name'] == volume_name:
+            vol_exists = True
+
+            if 'metadata' not in member:
+                throw_error(404, 'NON_EXISTENT_OBJECT_KEY', "Key '%s' does not exist." % key)
+
+            keyFound = False
+            for kv_pair in member['metadata']['members']:
+                if kv_pair['key'] == key:
+                    kv_pair['value'] = value
+                    keyFound = True
+
+            if not keyFound:
+                throw_error(404, 'NON_EXISTENT_OBJECT_KEY', "Key '%s' does not exist." % key)
+
+            break
+
+    if not vol_exists:
+        throw_error(404, 'NON_EXISTENT_VOL', "volume doesn't exist")
+
+    return make_response("OK", 200)
+
+@app.route('/api/v1/volumes/<volume_name>/objectKeyValues/<key>', methods=['GET'])
+def get_key_value_pair(volume_name, key):
+    debugRequest(request)
+
+    if len(key) > 31:
+        throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH', 'invalid input: string length exceeds limit')
+
+    charset = {'!', '@', '#', '$', '%', '&', '^'}
+    for char in charset:
+        if char in key:
+            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR', 'Error parsing key or value')
+
+    vol_exists = False
+    resp = None
+    for member in volumes['members']:
+        if member['name'] == volume_name:
+            vol_exists = True
+
+            if 'metadata' not in member:
+                throw_error(404, 'NON_EXISTENT_OBJECT_KEY', "Key '%s' does not exist." % key)
+
+            keyFound = False
+            for kv_pair in member['metadata']['members']:
+                if kv_pair['key'] == key:
+                    resp = make_response(json.dumps(kv_pair), 200)
+                    keyFound = True
+                    break
+
+            if not keyFound:
+                throw_error(404, 'NON_EXISTENT_OBJECT_KEY', "Key '%s' does not exist." % key)
+
+            break
+
+    if not vol_exists:
+        throw_error(404, 'NON_EXISTENT_VOL', "volume doesn't exist")
+
+    return resp
+
+@app.route('/api/v1/volumes/<volume_name>/objectKeyValues', methods=['GET'])
+def get_all_key_value_pairs(volume_name):
+    debugRequest(request)
+
+    vol_exists = False
+    resp = None
+    for member in volumes['members']:
+        if member['name'] == volume_name:
+            vol_exists = True
+
+            if 'metadata' not in member:
+                member['metadata'] = {'total': 0, 'members': []}
+
+            resp = make_response(json.dumps(member['metadata']), 200)
+            break
+
+    if not vol_exists:
+        throw_error(404, 'NON_EXISTENT_VOL', "volume doesn't exist")
+
+    return resp
+
+@app.route('/api/v1/volumes/<volume_name>/objectKeyValues/<key>', methods=['DELETE'])
+def remove_key_value_pair(volume_name, key):
+    debugRequest(request)
+
+    if key is None:
+        throw_error(404, 'NON_EXISTENT_OBJECT_KEY', "Key '%s' does not exist." % key)
+
+    if len(key) > 31:
+        throw_error(404, 'NON_EXISTENT_OBJECT_KEY', "Key '%s' does not exist." % key)
+
+    charset = {'!', '@', '#', '$', '%', '&', '^'}
+    for char in charset:
+        if char in key:
+            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR', 'Error parsing key or value')
+
+    vol_exists = False
+    for member in volumes['members']:
+        if member['name'] == volume_name:
+            vol_exists = True
+
+            if 'metadata' not in member:
+                throw_error(404, 'NON_EXISTENT_OBJECT_KEY', "Key '%s' does not exist." % key)
+
+            keyFound = False
+            for i, kv_pair in enumerate(member['metadata']['members']):
+                if kv_pair['key'] == key:
+                    member['metadata']['members'].pop(i)
+                    keyFound = True
+
+            if not keyFound:
+                throw_error(404, 'NON_EXISTENT_OBJECT_KEY', "Key '%s' does not exist." % key)
+
+            break
+
+    if not vol_exists:
+        throw_error(404, 'NON_EXISTENT_VOL', "volume doesn't exist")
+
+    return make_response("OK", 200)
 
 
 

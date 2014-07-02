@@ -34,3 +34,8 @@
       .. automethod:: getFCPorts
       .. automethod:: getiSCSIPorts
       .. automethod:: getIPPorts
+      .. automethod:: setVolumeMetaData
+      .. automethod:: getVolumeMetaData
+      .. automethod:: getAllVolumeMetaData
+      .. automethod:: removeVolumeMetaData
+      .. automethod:: findVolumeMetaData
