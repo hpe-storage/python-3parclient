@@ -18,18 +18,24 @@
 import os
 import sys
 sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
-
 from hp3parclient import exceptions
 import HP3ParClient_base as hp3parbase
+import random
 
-CPG_NAME1 = 'CPG1_VLUN_UNIT_TEST'
-CPG_NAME2 = 'CPG2_VLUN_UNIT_TEST'
-VOLUME_NAME1 = 'VOLUME1_VLUN_UNIT_TEST'
-VOLUME_NAME2 = 'VOLUME2_VLUN_UNIT_TEST'
-HOST_NAME1 = 'HOST1_VLUN_UNIT_TEST'
-HOST_NAME2 = 'HOST2_VLUN_UNIT_TEST'
-LUN_1 = 1
-LUN_2 = 2
+CPG_NAME1 = 'CPG1_VLUN_UNIT_TEST' + hp3parbase.TIME
+CPG_NAME2 = 'CPG2_VLUN_UNIT_TEST' + hp3parbase.TIME
+VOLUME_NAME1 = 'VOLUME1_VLUN_UNIT_TEST' + hp3parbase.TIME
+VOLUME_NAME2 = 'VOLUME2_VLUN_UNIT_TEST' + hp3parbase.TIME
+DOMAIN = 'UNIT_TEST_DOMAIN'
+HOST_NAME1 = 'HOST1_VLUN_UNIT_TEST' + hp3parbase.TIME
+HOST_NAME2 = 'HOST2_VLUN_UNIT_TEST' + hp3parbase.TIME
+LUN_1 = random.randint(1, 10)
+LUN_2 = random.randint(1, 10)
+
+# Ensure LUN1 and LUN2 are distinct.
+while LUN_2 == LUN_1:
+    LUN_2 = random.randint(1, 10)
+
 PORT_1 = {'node': 1, 'cardPort': 1, 'slot': 1}
 
 

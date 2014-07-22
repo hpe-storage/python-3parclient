@@ -22,8 +22,9 @@ sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
 from hp3parclient import exceptions
 import HP3ParClient_base as hp3parbase
 
-CPG_NAME1 = 'CPG1_UNIT_TEST'
-CPG_NAME2 = 'CPG2_UNIT_TEST'
+DOMAIN = 'UNIT_TEST_DOMAIN'
+CPG_NAME1 = 'CPG1_UNIT_TEST' + hp3parbase.TIME
+CPG_NAME2 = 'CPG2_UNIT_TEST' + hp3parbase.TIME
 
 
 class HP3ParClientCPGTestCase(hp3parbase.HP3ParClientBaseTestCase):

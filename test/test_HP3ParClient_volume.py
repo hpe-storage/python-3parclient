@@ -18,17 +18,17 @@
 import os
 import sys
 sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
-
 from hp3parclient import exceptions
 import HP3ParClient_base as hp3parbase
 
-CPG_NAME1 = 'CPG1_UNIT_TEST'
-CPG_NAME2 = 'CPG2_UNIT_TEST'
-VOLUME_NAME1 = 'VOLUME1_UNIT_TEST'
-VOLUME_NAME2 = 'VOLUME2_UNIT_TEST'
-SNAP_NAME1 = 'SNAP_UNIT_TEST'
-VOLUME_SET_NAME1 = 'VOLUME_SET1_UNIT_TEST'
-VOLUME_SET_NAME2 = 'VOLUME_SET2_UNIT_TEST'
+CPG_NAME1 = 'CPG1_UNIT_TEST' + hp3parbase.TIME
+CPG_NAME2 = 'CPG2_UNIT_TEST' + hp3parbase.TIME
+VOLUME_NAME1 = 'VOLUME1_UNIT_TEST' + hp3parbase.TIME
+VOLUME_NAME2 = 'VOLUME2_UNIT_TEST' + hp3parbase.TIME
+SNAP_NAME1 = 'SNAP_UNIT_TEST' + hp3parbase.TIME
+DOMAIN = 'UNIT_TEST_DOMAIN'
+VOLUME_SET_NAME1 = 'VOLUME_SET1_UNIT_TEST' + hp3parbase.TIME
+VOLUME_SET_NAME2 = 'VOLUME_SET2_UNIT_TEST' + hp3parbase.TIME
 SIZE = 512
 
 
@@ -40,38 +40,38 @@ class HP3ParClientVolumeTestCase(hp3parbase.HP3ParClientBaseTestCase):
         optional = self.CPG_OPTIONS
         try:
             self.cl.createCPG(CPG_NAME1, optional)
-        except:
+        except Exception:
             pass
         try:
             self.cl.createCPG(CPG_NAME2, optional)
-        except:
+        except Exception:
             pass
 
     def tearDown(self):
 
         try:
             self.cl.deleteVolumeSet(VOLUME_SET_NAME1)
-        except:
+        except Exception:
             pass
         try:
             self.cl.deleteVolumeSet(VOLUME_SET_NAME2)
-        except:
+        except Exception:
             pass
         try:
             self.cl.deleteVolume(VOLUME_NAME1)
-        except:
+        except Exception:
             pass
         try:
             self.cl.deleteVolume(VOLUME_NAME2)
-        except:
+        except Exception:
             pass
         try:
             self.cl.deleteCPG(CPG_NAME1)
-        except:
+        except Exception:
             pass
         try:
             self.cl.deleteCPG(CPG_NAME2)
-        except:
+        except Exception:
             pass
 
         super(HP3ParClientVolumeTestCase, self).tearDown()

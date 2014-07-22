@@ -14,28 +14,34 @@
 #    under the License.
 
 """Test class of 3Par Client handling of Host Sets."""
-import datetime
 import sys
 import os
 sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
-
 from hp3parclient import exceptions
 import unittest
 import HP3ParClient_base
+import random
 
-LUN_1 = 1
-LUN_2 = 2
 PORT_1 = {'node': 1, 'cardPort': 1, 'slot': 1}
 VOLUME_SIZE = 512
 EXPORTED_VLUN = 26
 HOST_IN_SET = 77
 INV_INPUT_PARAM_CONFLICT = 44
+LUN_1 = random.randint(1, 10)
+LUN_2 = random.randint(1, 10)
+
+# Ensure LUN1 and LUN2 are distinct.
+while LUN_1 == LUN_2:
+    LUN_2 = random.randint(1, 10)
 
 host_sets_to_delete = []
 hosts_to_delete = []
 cpgs_to_delete = []
 volumes_to_delete = []
 vluns_to_delete = []
+
+# Additional test names declared in test cases to account for variation
+# in desired name format and aid in manual cleanup.
 
 
 class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
@@ -94,30 +100,26 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         """CRUD test for attach/detach VLUN to host w/o a host set."""
 
         test_prefix = 'UT1_'
-        date_time_string = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-        self.printHeader("%s (%s)" % (unittest.TestCase.shortDescription(self),
-                                      date_time_string))
-
         #
         # CREATE
         #
         # Create Host
-        host_name = test_prefix + "HOST_" + date_time_string
+        host_name = test_prefix + "HOST_" + HP3ParClient_base.TIME
         hosts_to_delete.append(host_name)
 
         optional = {'domain': self.DOMAIN}
         self.cl.createHost(host_name, optional=optional)
 
         # Create CPG
-        cpg_name = test_prefix + "CPG_" + date_time_string
+        cpg_name = test_prefix + "CPG_" + HP3ParClient_base.TIME
         cpgs_to_delete.append(cpg_name)
 
         optional = self.CPG_OPTIONS
         self.cl.createCPG(cpg_name, optional)
 
         # Create Volumes
-        volume_name1 = test_prefix + "VOL1_" + date_time_string
-        volume_name2 = test_prefix + "VOL2_" + date_time_string
+        volume_name1 = test_prefix + "VOL1_" + HP3ParClient_base.TIME
+        volume_name2 = test_prefix + "VOL2_" + HP3ParClient_base.TIME
         volumes_to_delete.extend([volume_name1, volume_name2])
         self.cl.createVolume(volume_name1, cpg_name, VOLUME_SIZE)
         self.cl.createVolume(volume_name2, cpg_name, VOLUME_SIZE)
@@ -186,29 +188,24 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         self.cl.deleteVolume(volume_name2)
         self.cl.deleteCPG(cpg_name)
 
-        self.printFooter(unittest.TestCase.shortDescription(self))
-
     def test_crud_host_with_host_set(self):
         """CRUD test for attach/detach VLUN to host in host set."""
 
         test_prefix = 'UT2_'
-        date_time_string = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-        self.printHeader("%s (%s)" % (unittest.TestCase.shortDescription(self),
-                                      date_time_string))
 
         #
         # CREATE
         #
 
         # Create Host
-        host_name = test_prefix + "HOST_" + date_time_string
+        host_name = test_prefix + "HOST_" + HP3ParClient_base.TIME
         hosts_to_delete.append(host_name)
 
         optional = {'domain': self.DOMAIN}
         self.cl.createHost(host_name, optional=optional)
 
         # Create Host Set
-        host_set_name = test_prefix + "HOST_SET_" + date_time_string
+        host_set_name = test_prefix + "HOST_SET_" + HP3ParClient_base.TIME
         host_sets_to_delete.append(host_set_name)
         host_set_id = self.cl.createHostSet(
             host_set_name, self.DOMAIN,
@@ -216,15 +213,15 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         self.assertEqual(host_set_name, host_set_id)
 
         # Create CPG
-        cpg_name = test_prefix + "CPG_" + date_time_string
+        cpg_name = test_prefix + "CPG_" + HP3ParClient_base.TIME
         cpgs_to_delete.append(cpg_name)
 
         optional = self.CPG_OPTIONS
         self.cl.createCPG(cpg_name, optional)
 
         # Create Volumes
-        volume_name1 = test_prefix + "VOL1_" + date_time_string
-        volume_name2 = test_prefix + "VOL2_" + date_time_string
+        volume_name1 = test_prefix + "VOL1_" + HP3ParClient_base.TIME
+        volume_name2 = test_prefix + "VOL2_" + HP3ParClient_base.TIME
         volumes_to_delete.extend([volume_name1, volume_name2])
         self.cl.createVolume(volume_name1, cpg_name, VOLUME_SIZE)
         self.cl.createVolume(volume_name2, cpg_name, VOLUME_SIZE)
@@ -318,19 +315,14 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         self.cl.deleteVolume(volume_name2)
         self.cl.deleteCPG(cpg_name)
 
-        self.printFooter(unittest.TestCase.shortDescription(self))
-
     def test_host_set_name_too_long(self):
         """Host set name too long."""
 
         test_prefix = 'UT_'
-        date_time_string = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-        self.printHeader("%s (%s)" % (unittest.TestCase.shortDescription(self),
-                                      date_time_string))
 
         # name too long
         host_set_name = (test_prefix + "HOST_SET_NAME_IS_TOOOOOOOOOO_LONG_"
-                         + date_time_string)
+                         + HP3ParClient_base.TIME)
         host_sets_to_delete.append(host_set_name)
 
         pre_count = len(self.cl.getHostSets()['members'])
@@ -375,14 +367,9 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
             raise
         else:
             self.fail("Expected host set not found")
-        self.printFooter(unittest.TestCase.shortDescription(self))
 
     def test_host_set_name_invalid(self):
         """Host set name with invalid characters."""
-
-        date_time_string = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-        self.printHeader("%s (%s)" % (unittest.TestCase.shortDescription(self),
-                                      date_time_string))
 
         # name has invalid characters
         host_set_name = "HostSet-!nval!d"
@@ -395,18 +382,14 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
             raise
         else:
             self.fail("Expected illegal character in host set")
-        self.printFooter(unittest.TestCase.shortDescription(self))
 
     def test_duplicate_host_set_name(self):
         """Host set name already exists."""
 
         test_prefix = 'UT3_'
-        date_time_string = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-        self.printHeader("%s (%s)" % (unittest.TestCase.shortDescription(self),
-                                      date_time_string))
 
         # create same one twice
-        host_set_name = test_prefix + "HS_X_" + date_time_string
+        host_set_name = test_prefix + "HS_X_" + HP3ParClient_base.TIME
         host_sets_to_delete.append(host_set_name)
         pre_count = len(self.cl.getHostSets()['members'])
         original_comment = "original comment"
@@ -427,20 +410,15 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         post_count = len(self.cl.getHostSets()['members'])
         self.assertEqual(pre_count, post_count)
 
-        self.printFooter(unittest.TestCase.shortDescription(self))
-
     def test_modify_param_conflict(self):
         """Test modify of host sets parameter conflict."""
 
         test_prefix = 'UT4_'
-        date_time_string = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-        self.printHeader("%s (%s)" % (unittest.TestCase.shortDescription(self),
-                                      date_time_string))
 
-        host_set_name1 = test_prefix + "HS1_" + date_time_string
+        host_set_name1 = test_prefix + "HS1_" + HP3ParClient_base.TIME
         host_sets_to_delete.append(host_set_name1)
         self.cl.createHostSet(host_set_name1)
-        host_set_name2 = test_prefix + "HS2_" + date_time_string
+        host_set_name2 = test_prefix + "HS2_" + HP3ParClient_base.TIME
         host_sets_to_delete.append(host_set_name2)
         new_comment = "new comment"
         new_member = "bogushost"
@@ -455,17 +433,12 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         else:
             self.fail("expected exception")
 
-        self.printFooter(unittest.TestCase.shortDescription(self))
-
     def test_bogus_host(self):
         """Modify of host set with bogus host."""
 
         test_prefix = 'UT5_'
-        date_time_string = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-        self.printHeader("%s (%s)" % (unittest.TestCase.shortDescription(self),
-                                      date_time_string))
 
-        host_set_name1 = test_prefix + "HS1_" + date_time_string
+        host_set_name1 = test_prefix + "HS1_" + HP3ParClient_base.TIME
         host_sets_to_delete.append(host_set_name1)
         self.cl.createHostSet(host_set_name1)
         new_member = "bogushost"
@@ -478,27 +451,22 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         else:
             self.fail("expected exception")
 
-        self.printFooter(unittest.TestCase.shortDescription(self))
-
     def test_modify(self):
         """Test modify of host sets."""
 
         test_prefix = 'UT6_'
-        date_time_string = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-        self.printHeader("%s (%s)" % (unittest.TestCase.shortDescription(self),
-                                      date_time_string))
 
-        host_set_name1 = test_prefix + "HS1_" + date_time_string
+        host_set_name1 = test_prefix + "HS1_" + HP3ParClient_base.TIME
         host_sets_to_delete.append(host_set_name1)
         self.cl.createHostSet(host_set_name1)
-        host_set_name2 = test_prefix + "HS2_" + date_time_string
+        host_set_name2 = test_prefix + "HS2_" + HP3ParClient_base.TIME
         host_sets_to_delete.append(host_set_name2)
         new_comment = "new comment"
 
         self.cl.modifyHostSet(host_set_name1, newName=host_set_name2)
         self.cl.modifyHostSet(host_set_name2, comment=new_comment)
 
-        created_host1 = test_prefix + "HOST1_" + date_time_string
+        created_host1 = test_prefix + "HOST1_" + HP3ParClient_base.TIME
         hosts_to_delete.append(created_host1)
         self.cl.createHost(created_host1)
         self.cl.modifyHostSet(host_set_name2, 1, setmembers=[created_host1])
@@ -515,12 +483,10 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         self.assertEqual(host2['comment'], new_comment)
         self.assertEqual(host2['setmembers'], [created_host1])
 
-        created_host2 = test_prefix + "HOST2_" + date_time_string
+        created_host2 = test_prefix + "HOST2_" + HP3ParClient_base.TIME
         hosts_to_delete.append(created_host2)
         self.cl.createHost(created_host2)
         self.cl.modifyHostSet(host_set_name2, 1, setmembers=[created_host2])
 
         host2 = self.cl.getHostSet(host_set_name2)
         self.assertEqual(host2['setmembers'], [created_host1, created_host2])
-
-        self.printFooter(unittest.TestCase.shortDescription(self))

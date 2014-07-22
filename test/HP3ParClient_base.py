@@ -25,6 +25,10 @@ import subprocess
 import time
 import inspect
 from testconfig import config
+import datetime
+
+TIME = datetime.datetime.now().strftime('%H%M%S')
+
 try:
     # For Python 3.0 and later
     from urllib.parse import urlparse

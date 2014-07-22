@@ -1,4 +1,3 @@
-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # Copyright 2009-2012 10gen, Inc.
 #
@@ -19,12 +18,25 @@
 import os
 import sys
 sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
-
-from hp3parclient import exceptions
 import HP3ParClient_base as hp3parbase
+from hp3parclient import exceptions
 
-HOST_NAME1 = 'HOST1_UNIT_TEST'
-HOST_NAME2 = 'HOST2_UNIT_TEST'
+# Insert colons into time string to match WWN format.
+TIME2 = ""
+for i in range(6):
+    if i % 2 == 0:
+        TIME2 += ":" + hp3parbase.TIME[i]
+    else:
+        TIME2 += hp3parbase.TIME[i]
+
+
+DOMAIN = 'UNIT_TEST_DOMAIN'
+HOST_NAME1 = 'HOST1_UNIT_TEST' + hp3parbase.TIME
+HOST_NAME2 = 'HOST2_UNIT_TEST' + hp3parbase.TIME
+WWN1 = "00:00:00:00:00" + TIME2
+WWN2 = "11:11:11:11:11" + TIME2
+IQN1 = 'iqn.1993-08.org.debian:01:00000' + hp3parbase.TIME
+IQN2 = 'iqn.bogus.org.debian:01:0000' + hp3parbase.TIME
 
 
 class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
@@ -113,11 +125,9 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
     def test_1_create_host_param_conflict(self):
         self.printHeader('create_host_param_conflict')
-
-        optional = {'domain': self.DOMAIN}
-        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
-        iscsi = ['iqn.1993-08.org.debian:01:00000000000',
-                 'iqn.bogus.org.debian:01:0000000000']
+        optional = {'domain': DOMAIN}
+        fc = [WWN1, WWN2]
+        iscsi = [IQN1, IQN2]
         self.assertRaises(exceptions.HTTPBadRequest,
                           self.cl.createHost,
                           HOST_NAME1,
@@ -142,9 +152,8 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
     def test_1_create_host_existent_path(self):
         self.printHeader('create_host_existent_path')
-
-        optional = {'domain': self.DOMAIN}
-        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        optional = {'domain': DOMAIN}
+        fc = [WWN1, WWN2]
         self.cl.createHost(HOST_NAME1, None, fc, optional)
         self.assertRaises(exceptions.HTTPConflict,
                           self.cl.createHost,
@@ -173,9 +182,8 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
         self.printHeader('create_host')
 
         # add one
-
-        optional = {'domain': self.DOMAIN}
-        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        optional = {'domain': DOMAIN}
+        fc = [WWN1, WWN2]
         self.cl.createHost(HOST_NAME1, None, fc, optional)
         # check
         host1 = self.cl.getHost(HOST_NAME1)
@@ -183,8 +191,8 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
         name1 = host1['name']
         self.assertEqual(HOST_NAME1, name1)
         # add another
-        iscsi = ['iqn.1993-08.org.debian:01:00000000000',
-                 'iqn.bogus.org.debian:01:0000000000']
+        iscsi = [IQN1,
+                 IQN2]
         self.cl.createHost(HOST_NAME2, iscsi, None, optional)
         # check
         host2 = self.cl.getHost(HOST_NAME2)
@@ -198,7 +206,7 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
         self.printHeader('create_host_no_optional')
 
         # add one
-        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        fc = [WWN1, WWN2]
         self.cl.createHost(HOST_NAME1, None, fc)
         # check
         host1 = self.cl.getHost(HOST_NAME1)
@@ -220,8 +228,8 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
     def test_2_delete_host(self):
         self.printHeader("delete_host")
 
-        optional = {'domain': self.DOMAIN}
-        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        optional = {'domain': DOMAIN}
+        fc = [WWN1, WWN2]
         self.cl.createHost(HOST_NAME1, None, fc, optional)
 
         # check
@@ -257,12 +265,12 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
     def test_3_get_hosts(self):
         self.printHeader("get_hosts")
 
-        optional = {'domain': self.DOMAIN}
-        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        optional = {'domain': DOMAIN}
+        fc = [WWN1, WWN2]
         self.cl.createHost(HOST_NAME1, None, fc, optional)
 
-        iscsi = ['iqn.1993-08.org.debian:01:00000000000',
-                 'iqn.bogus.org.debian:01:0000000000']
+        iscsi = [IQN1,
+                 IQN2]
         self.cl.createHost(HOST_NAME2, iscsi, None, optional)
 
         hosts = self.cl.getHosts()
@@ -278,8 +286,8 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
         self.assertRaises(exceptions.HTTPNotFound, self.cl.getHost, HOST_NAME1)
 
-        optional = {'domain': self.DOMAIN}
-        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        optional = {'domain': DOMAIN}
+        fc = [WWN1, WWN2]
         self.cl.createHost(HOST_NAME1, None, fc, optional)
 
         host1 = self.cl.getHost(HOST_NAME1)
@@ -293,8 +301,8 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
         self.assertRaises(exceptions.HTTPNotFound, self.cl.getHost, HOST_NAME1)
         self.assertRaises(exceptions.HTTPNotFound, self.cl.getHost, HOST_NAME2)
 
-        optional = {'domain': self.DOMAIN}
-        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        optional = {'domain': DOMAIN}
+        fc = [WWN1, WWN2]
         self.cl.createHost(HOST_NAME1, None, fc, optional)
 
         # validate host was created
@@ -336,11 +344,10 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
     def test_4_modify_host_param_conflict(self):
         self.printHeader('modify_host_param_conflict')
 
-        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
-        iscsi = ['iqn.1993-08.org.debian:01:00000000000',
-                 'iqn.bogus.org.debian:01:0000000000']
-        mod_request = {'newName': HOST_NAME1, 'FCWWNs': fc,
-                       'iSCSINames': iscsi}
+        fc = [WWN1, WWN2]
+        iscsi = [IQN1, IQN2]
+        mod_request = {'newName': HOST_NAME1,
+                       'FCWWNs': fc, 'iSCSINames': iscsi}
 
         try:
             self.cl.modifyHost(HOST_NAME2, mod_request)
@@ -378,7 +385,7 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
     def test_4_modify_host_pathOperation_missing1(self):
         self.printHeader('modify_host_pathOperation_missing1')
 
-        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        fc = [WWN1, WWN2]
         mod_request = {'FCWWNs': fc}
 
         try:
@@ -398,8 +405,7 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
     def test_4_modify_host_pathOperation_missing2(self):
         self.printHeader('modify_host_pathOperation_missing2')
 
-        iscsi = ['iqn.1993-08.org.debian:01:00000000000',
-                 'iqn.bogus.org.debian:01:0000000000']
+        iscsi = [IQN1, IQN2]
         mod_request = {'iSCSINames': iscsi}
 
         try:
@@ -438,8 +444,8 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
     def test_4_modify_host_too_long(self):
         self.printHeader('modify_host_too_long')
 
-        optional = {'domain': self.DOMAIN}
-        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        optional = {'domain': DOMAIN}
+        fc = [WWN1, WWN2]
         self.cl.createHost(HOST_NAME1, None, fc, optional)
         mod_request = {'newName': 'ThisHostNameIsWayTooLongToMakeAnyRealSense'
                                   'AndIsDeliberatelySo'}
@@ -462,12 +468,11 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
     def test_4_modify_host_dup_newName(self):
         self.printHeader('modify_host_dup_newName')
 
-        optional = {'domain': self.DOMAIN}
-        fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
+        optional = {'domain': DOMAIN}
+        fc = [WWN1, WWN2]
         self.cl.createHost(HOST_NAME1, None, fc, optional)
 
-        iscsi = ['iqn.1993-08.org.debian:01:00000000000',
-                 'iqn.bogus.org.debian:01:0000000000']
+        iscsi = [IQN1, IQN2]
         self.cl.createHost(HOST_NAME2, iscsi, None, optional)
         mod_request = {'newName': HOST_NAME1}
         try:
@@ -511,11 +516,11 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
     def test_4_modify_host_existent_path(self):
         self.printHeader('modify_host_existent_path')
 
-        optional = {'domain': self.DOMAIN}
-        fc = ['00:00:00:00:00:00:00:00',
-              '11:11:11:11:11:11:11:11']
-        iscsi = ['iqn.1993-08.org.debian:01:00000000000',
-                 'iqn.bogus.org.debian:01:0000000000']
+        optional = {'domain': DOMAIN}
+        fc = [WWN1,
+              WWN2]
+        iscsi = [IQN1,
+                 IQN2]
 
         self.cl.createHost(HOST_NAME1, None, fc, optional)
         self.cl.createHost(HOST_NAME2, iscsi, None, optional)
@@ -539,11 +544,11 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
     def test_4_modify_host_nonExistent_path_iSCSI(self):
         self.printHeader('modify_host_nonExistent_path_iSCSI')
 
-        optional = {'domain': self.DOMAIN}
-        iscsi = ['iqn.1993-08.org.debian:01:00000000000']
+        optional = {'domain': DOMAIN}
+        iscsi = [IQN1]
         self.cl.createHost(HOST_NAME1, iscsi, None, optional)
 
-        iscsi2 = ['iqn.bogus.org.debian:01:0000000000']
+        iscsi2 = [IQN2]
         mod_request = {'pathOperation': 2,
                        'iSCSINames': iscsi2}
         try:
@@ -562,11 +567,11 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
     def test_4_modify_host_nonExistent_path_fc(self):
         self.printHeader('modify_host_nonExistent_path_fc')
-        optional = {'domain': self.DOMAIN}
-        fc = ['00:00:00:00:00:00:00:00']
+        optional = {'domain': DOMAIN}
+        fc = [WWN1]
         self.cl.createHost(HOST_NAME1, None, fc, optional)
 
-        fc2 = ['11:11:11:11:11:11:11:11']
+        fc2 = [WWN2]
         mod_request = {'pathOperation': 2,
                        'FCWWNs': fc2}
         try:
@@ -586,11 +591,11 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
     def test_4_modify_host_add_fc(self):
         self.printHeader('modify_host_fc')
 
-        optional = {'domain': self.DOMAIN}
-        fc = ['00:00:00:00:00:00:00:00']
+        optional = {'domain': DOMAIN}
+        fc = [WWN1]
         self.cl.createHost(HOST_NAME1, None, fc, optional)
 
-        fc2 = ['11:11:11:11:11:11:11:11']
+        fc2 = [WWN2]
         mod_request = {'pathOperation': 1,
                        'FCWWNs': fc2}
         try:
@@ -602,7 +607,7 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
         newHost = self.cl.getHost(HOST_NAME1)
         fc_paths = newHost['FCPaths']
         for path in fc_paths:
-            if path['wwn'] == '1111111111111111':
+            if path['wwn'] == WWN2.replace(':', ''):
                 self.printFooter('modify_host_add_fc')
                 return
         self.fail('Failed to add FCWWN')
@@ -610,8 +615,8 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
     def test_4_modify_host_remove_fc(self):
         self.printHeader('modify_host_remove_fc')
 
-        optional = {'domain': self.DOMAIN}
-        fc = ['00:00:00:00:00:00:00:00']
+        optional = {'domain': DOMAIN}
+        fc = [WWN1]
         self.cl.createHost(HOST_NAME1, None, fc, optional)
 
         mod_request = {'pathOperation': 2,
@@ -626,7 +631,7 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
         newHost = self.cl.getHost(HOST_NAME1)
         fc_paths = newHost['FCPaths']
         for path in fc_paths:
-            if path['wwn'] == '0000000000000000':
+            if path['wwn'] == WWN1.replace(':', ''):
                 self.fail('Failed to remove FCWWN')
                 return
 
@@ -638,11 +643,11 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
             self.cl.deleteHost(HOST_NAME1)
         except:
             pass
-        optional = {'domain': self.DOMAIN}
-        iscsi = ['iqn.1993-08.org.debian:01:00000000000']
+        optional = {'domain': DOMAIN}
+        iscsi = [IQN1]
         self.cl.createHost(HOST_NAME1, iscsi, None, optional)
 
-        iscsi2 = ['iqn.bogus.org.debian:01:0000000000']
+        iscsi2 = [IQN2]
         mod_request = {'pathOperation': 1,
                        'iSCSINames': iscsi2}
         try:
@@ -655,7 +660,7 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
         iscsi_paths = newHost['iSCSIPaths']
         for path in iscsi_paths:
             print(path)
-            if path['name'] == "iqn.bogus.org.debian:01:0000000000":
+            if path['name'] == IQN2:
                 self.printFooter('modify_host_add_iscsi')
                 return
 
@@ -664,8 +669,8 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
     def test_4_modify_host_remove_iscsi(self):
         self.printHeader('modify_host_remove_iscsi')
 
-        optional = {'domain': self.DOMAIN}
-        iscsi = ['iqn.1993-08.org.debian:01:00000000000']
+        optional = {'domain': DOMAIN}
+        iscsi = [IQN1]
         self.cl.createHost(HOST_NAME1, iscsi, None, optional)
 
         mod_request = {'pathOperation': 2,
@@ -679,7 +684,7 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
         newHost = self.cl.getHost(HOST_NAME1)
         iscsi_paths = newHost['iSCSIPaths']
         for path in iscsi_paths:
-            if path['name'] == 'iqn.bogus.org.debian:01:0000000000':
+            if path['name'] == IQN2:
                 self.fail('Failed to remove iSCSI')
                 return
 
@@ -687,8 +692,8 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
     def test_5_query_host_iqn(self):
         self.printHeader('query_host_iqn')
-        optional = {'domain': self.DOMAIN}
-        iscsi = ['iqn.1993-08.org.debian:01:00000000000']
+        optional = {'domain': DOMAIN}
+        iscsi = [IQN1]
         self.cl.createHost(HOST_NAME1, iscsi, None, optional)
 
         hosts = self.cl.queryHost(iqns=[iscsi.pop()])
@@ -704,8 +709,8 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
     def test_5_query_host_wwn(self):
         self.printHeader('query_host_wwn')
-        optional = {'domain': self.DOMAIN}
-        fc = ['00:00:00:00:00:00:00:00']
+        optional = {'domain': DOMAIN}
+        fc = [WWN1]
         self.cl.createHost(HOST_NAME1, None, fc, optional)
 
         hosts = self.cl.queryHost(wwns=[fc.pop().replace(':', '')])
@@ -722,15 +727,14 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
     def test_5_query_host_iqn_and_wwn(self):
         self.printHeader('query_host_iqn_and_wwn')
 
-        optional = {'domain': self.DOMAIN}
-        iscsi = ['iqn.1993-08.org.debian:01:00000000000']
+        optional = {'domain': DOMAIN}
+        iscsi = [IQN1]
         self.cl.createHost(HOST_NAME1, iscsi, None, optional)
-        fc = ['00:00:00:00:00:00:00:00']
+        fc = [WWN1]
         self.cl.createHost(HOST_NAME2, None, fc, optional)
 
-        hosts = self.cl.queryHost(
-            iqns=["iqn.1993-08.org.debian:01:00000000000"],
-            wwns=["00:00:00:00:00:00:00:00".replace(':', '')])
+        hosts = self.cl.queryHost(iqns=[IQN1],
+                                  wwns=[WWN1.replace(':', '')])
 
         self.assertIsNotNone(hosts)
         self.assertEqual(2, hosts['total'])
