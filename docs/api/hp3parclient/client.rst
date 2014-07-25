@@ -43,6 +43,20 @@
       .. automethod:: getFCPorts
       .. automethod:: getiSCSIPorts
       .. automethod:: getIPPorts
+      .. automethod:: findVolumeSet
+      .. automethod:: getVolumeSet
+      .. automethod:: getVolumeSets
+      .. automethod:: createVolumeSet
+      .. automethod:: deleteVolumeSet
+      .. automethod:: modifyVolumeSet
+      .. automethod:: addVolumeToVolumeSet
+      .. automethod:: removeVolumeFromVolumeSet
+      .. automethod:: setQOSRule
+      .. automethod:: queryQoSRule
+      .. automethod:: queryQoSRules
+      .. automethod:: createQoSRules
+      .. automethod:: modifyQoSRules
+      .. automethod:: deleteQoSRules
       .. automethod:: setVolumeMetaData
       .. automethod:: getVolumeMetaData
       .. automethod:: getAllVolumeMetaData

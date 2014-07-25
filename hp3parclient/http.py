@@ -36,9 +36,11 @@ except ImportError:
 
 from hp3parclient import exceptions
 
+
 class HTTPJSONRESTClient(httplib2.Http):
     """
-    An HTTP REST Client that sends and recieves JSON data as the body of the HTTP request
+    An HTTP REST Client that sends and recieves JSON data as the body of the
+    HTTP request.
 
     :param api_url: The url to the WSAPI service on 3PAR
                     ie. http://<3par server>:8080
@@ -52,11 +54,12 @@ class HTTPJSONRESTClient(httplib2.Http):
     SESSION_COOKIE_NAME = 'X-Hp3Par-Wsapi-Sessionkey'
 
     def __init__(self, api_url, insecure=False, http_log_debug=False):
-        super(HTTPJSONRESTClient, self).__init__(disable_ssl_certificate_validation=True)
+        super(HTTPJSONRESTClient, self).__init__(
+            disable_ssl_certificate_validation=True)
 
         self.session_key = None
 
-        #should be http://<Server:Port>/api/v1
+        # should be http://<Server:Port>/api/v1
         self.set_url(api_url)
         self.set_debug_flag(http_log_debug)
 
@@ -64,14 +67,13 @@ class HTTPJSONRESTClient(httplib2.Http):
 
         # httplib2 overrides
         self.force_exception_to_status_code = True
-        #self.disable_ssl_certificate_validation = insecure
+        # self.disable_ssl_certificate_validation = insecure
 
         self._logger = logging.getLogger(__name__)
 
     def set_url(self, api_url):
-        #should be http://<Server:Port>/api/v1
+        # should be http://<Server:Port>/api/v1
         self.api_url = api_url.rstrip('/')
-        self.api_url = self.api_url
 
     def set_debug_flag(self, flag):
         """
@@ -97,11 +99,11 @@ class HTTPJSONRESTClient(httplib2.Http):
         :type password: str
 
         """
-        #this prevens re-auth attempt if auth fails
+        # this prevens re-auth attempt if auth fails
         self.auth_try = 1
         self.session_key = None
 
-        info = {'user':user, 'password':password}
+        info = {'user': user, 'password': password}
         self._auth_optional = None
 
         if optional:
@@ -118,14 +120,12 @@ class HTTPJSONRESTClient(httplib2.Http):
     def _reauth(self):
         self.authenticate(self.user, self.password, self._auth_optional)
 
-
-
     def unauthenticate(self):
         """
-        This clears the authenticated session with the 3PAR server.  It logs out.
+        This clears the authenticated session with the 3PAR server.
 
         """
-        #delete the session on the 3Par
+        # delete the session on the 3Par
         self.delete('/credentials/%s' % self.session_key)
         self.session_key = None
 
@@ -168,10 +168,13 @@ class HTTPJSONRESTClient(httplib2.Http):
 
     def request(self, *args, **kwargs):
         """
-        This makes an HTTP Request to the 3Par server.  You should use get, post, delete instead.
+        This makes an HTTP Request to the 3Par server.
+        You should use get, post, delete instead.
+
         """
-        if self.session_key and self.auth_try != 1 :
-            kwargs.setdefault('headers', {})[self.SESSION_COOKIE_NAME] = self.session_key
+        if self.session_key and self.auth_try != 1:
+            kwargs.setdefault('headers', {})[self.SESSION_COOKIE_NAME] = \
+                self.session_key
 
         kwargs.setdefault('headers', kwargs.get('headers', {}))
         kwargs['headers']['User-Agent'] = self.USER_AGENT
@@ -190,7 +193,6 @@ class HTTPJSONRESTClient(httplib2.Http):
             try:
                 body = json.loads(body)
             except ValueError:
-                #pprint.pprint("failed to decode json\n")
                 pass
         else:
             body = None
@@ -207,20 +209,18 @@ class HTTPJSONRESTClient(httplib2.Http):
                            start_time, time.time()))
         return resp, body
 
-
     def _do_reauth(self, url, method, ex, **kwargs):
         print("_do_reauth called")
         try:
             if self.auth_try != 1:
-               self._reauth()
-               resp, body = self._time_request(self.api_url + url, method, **kwargs)
-               return resp, body
+                self._reauth()
+                resp, body = self._time_request(self.api_url + url, method,
+                                                **kwargs)
+                return resp, body
             else:
-               raise ex
+                raise ex
         except exceptions.HTTPUnauthorized:
             raise ex
-
-
 
     def _cs_request(self, url, method, **kwargs):
         # Perform the request once. If we get a 401 back then it
@@ -239,7 +239,6 @@ class HTTPJSONRESTClient(httplib2.Http):
             resp, body = self._do_reauth(url, method, ex, **kwargs)
             return resp, body
 
-
     def get(self, url, **kwargs):
         """
         Make an HTTP GET request to the server.
@@ -257,7 +256,8 @@ class HTTPJSONRESTClient(httplib2.Http):
         :type url: str
 
         :returns: headers - dict of HTTP Response headers
-        :returns: body - the body of the response.  If the body was JSON, it will be an object
+        :returns: body - the body of the response.  If the body was JSON, it
+                         will be an object
         """
         return self._cs_request(url, 'GET', **kwargs)
 
@@ -269,7 +269,8 @@ class HTTPJSONRESTClient(httplib2.Http):
 
             #example call
             try {
-                info = {'name': 'new volume name', 'cpg': 'MyCPG', 'sizeMiB': 300}
+                info = {'name': 'new volume name', 'cpg': 'MyCPG',
+                        'sizeMiB': 300}
                 headers, body = http.post('/volumes', body=info)
             } except exceptions.HTTPUnauthorized as ex:
                 print "Not logged in"
@@ -279,7 +280,8 @@ class HTTPJSONRESTClient(httplib2.Http):
         :type url: str
 
         :returns: headers - dict of HTTP Response headers
-        :returns: body - the body of the response.  If the body was JSON, it will be an object
+        :returns: body - the body of the response.  If the body was JSON, it
+                         will be an object
         """
         return self._cs_request(url, 'POST', **kwargs)
 
@@ -301,7 +303,8 @@ class HTTPJSONRESTClient(httplib2.Http):
         :type url: str
 
         :returns: headers - dict of HTTP Response headers
-        :returns: body - the body of the response.  If the body was JSON, it will be an object
+        :returns: body - the body of the response.  If the body was JSON,
+                         it will be an object
         """
         return self._cs_request(url, 'PUT', **kwargs)
 
@@ -322,6 +325,7 @@ class HTTPJSONRESTClient(httplib2.Http):
         :type url: str
 
         :returns: headers - dict of HTTP Response headers
-        :returns: body - the body of the response.  If the body was JSON, it will be an object
+        :returns: body - the body of the response.  If the body was JSON, it
+                         will be an object
         """
         return self._cs_request(url, 'DELETE', **kwargs)

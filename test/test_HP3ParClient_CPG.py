@@ -13,31 +13,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test class of 3Par Client handling CPG"""
+"""Test class of 3Par Client handling CPG."""
 
-import sys, os
-sys.path.insert(0,os.path.realpath(os.path.abspath('../')))
+import os
+import sys
+sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
 
-from hp3parclient import client, exceptions
-import unittest
-import HP3ParClient_base
+from hp3parclient import exceptions
+import HP3ParClient_base as hp3parbase
 
 CPG_NAME1 = 'CPG1_UNIT_TEST'
 CPG_NAME2 = 'CPG2_UNIT_TEST'
 
-class HP3ParClientCPGTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
+
+class HP3ParClientCPGTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
     def setUp(self):
         super(HP3ParClientCPGTestCase, self).setUp()
 
     def tearDown(self):
-        try :
+        try:
             self.cl.deleteCPG(CPG_NAME1)
-        except :
+        except Exception:
             pass
-        try :
+
+        try:
             self.cl.deleteCPG(CPG_NAME2)
-        except :
+        except Exception:
             pass
 
         # very last, tear down base class
@@ -46,28 +48,29 @@ class HP3ParClientCPGTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
     def test_1_create_CPG(self):
         self.printHeader('create_CPG')
 
-        #add one
+        # add one
         optional = self.CPG_OPTIONS
         name = CPG_NAME1
         self.cl.createCPG(name, optional)
 
-        #check
+        # check
         cpg1 = self.cl.getCPG(name)
         self.assertIsNotNone(cpg1)
         cpgName = cpg1['name']
         self.assertEqual(name, cpgName)
 
-        #add another
+        # add another
         name = CPG_NAME2
         optional2 = optional.copy()
         if self.CPG_LDLAYOUT_HA is None:
-            more_optional = {'LDLayout':{'RAIDType':2}}
+            more_optional = {'LDLayout': {'RAIDType': 2}}
         else:
-            more_optional = {'LDLayout':{'RAIDType':2, 'HA': self.CPG_LDLAYOUT_HA}}
+            more_optional = {'LDLayout': {'RAIDType': 2,
+                                          'HA': self.CPG_LDLAYOUT_HA}}
         optional2.update(more_optional)
         self.cl.createCPG(name, optional2)
 
-        #check
+        # check
         cpg2 = self.cl.getCPG(name)
         self.assertIsNotNone(cpg2)
         cpgName = cpg2['name']
@@ -79,7 +82,8 @@ class HP3ParClientCPGTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         self.printHeader('create_CPG_badDomain')
 
         optional = {'domain': 'BAD_DOMAIN'}
-        self.assertRaises(exceptions.HTTPNotFound, self.cl.createCPG, CPG_NAME1, optional)
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.createCPG,
+                          CPG_NAME1, optional)
 
         self.printFooter('create_CPG_badDomain')
 
@@ -89,7 +93,8 @@ class HP3ParClientCPGTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         optional = self.CPG_OPTIONS
         name = CPG_NAME1
         self.cl.createCPG(name, optional)
-        self.assertRaises(exceptions.HTTPConflict, self.cl.createCPG, CPG_NAME1, optional)
+        self.assertRaises(exceptions.HTTPConflict, self.cl.createCPG,
+                          CPG_NAME1, optional)
 
         self.printFooter('create_CPG_dup')
 
@@ -97,7 +102,8 @@ class HP3ParClientCPGTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         self.printHeader('create_CPG_badParams')
 
         optional = {'domainBad': 'UNIT_TEST'}
-        self.assertRaises(exceptions.HTTPBadRequest, self.cl.createCPG, CPG_NAME1, optional)
+        self.assertRaises(exceptions.HTTPBadRequest, self.cl.createCPG,
+                          CPG_NAME1, optional)
 
         self.printFooter('create_CPG_badParams')
 
@@ -105,9 +111,10 @@ class HP3ParClientCPGTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         self.printHeader('create_CPG_badParams2')
 
         optional = {'domain': 'UNIT_TEST'}
-        more_optional = {'LDLayout':{'RAIDBadType':1}}
+        more_optional = {'LDLayout': {'RAIDBadType': 1}}
         optional.update(more_optional)
-        self.assertRaises(exceptions.HTTPBadRequest, self.cl.createCPG, CPG_NAME1, optional)
+        self.assertRaises(exceptions.HTTPBadRequest, self.cl.createCPG,
+                          CPG_NAME1, optional)
 
         self.printFooter('create_CPG_badParams2')
 
@@ -134,15 +141,15 @@ class HP3ParClientCPGTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
     def test_3_delete_CPG_nonExist(self):
         self.printHeader('delete_CPG_nonExist')
 
-        self.assertRaises(exceptions.HTTPNotFound, self.cl.deleteCPG, 'NonExistCPG')
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.deleteCPG,
+                          'NonExistCPG')
 
         self.printFooter('delete_CPG_nonExist')
 
     def test_3_delete_CPGs(self):
         self.printHeader('delete_CPGs')
 
-
-        #add one
+        # add one
         optional = self.CPG_OPTIONS
         self.cl.createCPG(CPG_NAME1, optional)
 
@@ -153,16 +160,15 @@ class HP3ParClientCPGTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         if cpgs and cpgs['total'] > 0:
             for cpg in cpgs['members']:
                 if cpg['name'] == CPG_NAME1:
-                    #pprint.pprint("Deleting CPG %s " % cpg['name'])
-                        self.cl.deleteCPG(cpg['name'])
+                    # pprint.pprint("Deleting CPG %s " % cpg['name'])
+                    self.cl.deleteCPG(cpg['name'])
 
-
-        #check
+        # check
         self.assertRaises(exceptions.HTTPNotFound, self.cl.getCPG, CPG_NAME1)
 
         self.printFooter('delete_CPGs')
 
 
-#testing
-#suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientCPGTestCase)
-#unittest.TextTestRunner(verbosity=2).run(suite)
+# testing
+# suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientCPGTestCase)
+# unittest.TextTestRunner(verbosity=2).run(suite)

@@ -14,15 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test class of 3Par Client handling Ports"""
-import sys, os
-sys.path.insert(0,os.path.realpath(os.path.abspath('../')))
+"""Test class of 3Par Client handling Ports."""
 
-from hp3parclient import client, exceptions
-import unittest
-import HP3ParClient_base
+import os
+import sys
+sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
 
-class HP3ParClientPortTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
+import HP3ParClient_base as hp3parbase
+
+
+class HP3ParClientPortTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
     def setUp(self):
         super(HP3ParClientPortTestCase, self).setUp()

@@ -1,3 +1,4 @@
 nose
 nose-testconfig
 flask
+flake8

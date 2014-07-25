@@ -19,7 +19,7 @@ import sys
 import os
 sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
 
-from hp3parclient import client, exceptions
+from hp3parclient import exceptions
 import unittest
 import HP3ParClient_base
 
@@ -210,9 +210,9 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         # Create Host Set
         host_set_name = test_prefix + "HOST_SET_" + date_time_string
         host_sets_to_delete.append(host_set_name)
-        host_set_id = self.cl.createHostSet(host_set_name, self.DOMAIN,
-                              unittest.TestCase.shortDescription(self),
-                              [host_name])
+        host_set_id = self.cl.createHostSet(
+            host_set_name, self.DOMAIN,
+            unittest.TestCase.shortDescription(self), [host_name])
         self.assertEqual(host_set_name, host_set_id)
 
         # Create CPG
@@ -329,7 +329,8 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
                                       date_time_string))
 
         # name too long
-        host_set_name = test_prefix + "HOST_SET_NAME_IS_TOOOOOOOOOO_LONG_" + date_time_string
+        host_set_name = (test_prefix + "HOST_SET_NAME_IS_TOOOOOOOOOO_LONG_"
+                         + date_time_string)
         host_sets_to_delete.append(host_set_name)
 
         pre_count = len(self.cl.getHostSets()['members'])
@@ -409,7 +410,8 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         host_sets_to_delete.append(host_set_name)
         pre_count = len(self.cl.getHostSets()['members'])
         original_comment = "original comment"
-        host_set_id = self.cl.createHostSet(host_set_name, comment=original_comment)
+        host_set_id = self.cl.createHostSet(host_set_name,
+                                            comment=original_comment)
         self.assertEqual(host_set_name, host_set_id)
         post_count = len(self.cl.getHostSets()['members'])
         self.assertEqual(pre_count + 1, post_count)
@@ -443,9 +445,12 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         new_comment = "new comment"
         new_member = "bogushost"
         try:
-            self.cl.modifyHostSet(host_set_name1, 1, host_set_name2, new_comment, setmembers=[new_member])
+            self.cl.modifyHostSet(host_set_name1, 1, host_set_name2,
+                                  new_comment, setmembers=[new_member])
         except exceptions.HTTPBadRequest as e:
-            self.assertEqual(e.get_description(), "invalid input: parameters cannot be present at the same time")
+            self.assertEqual(e.get_description(),
+                             "invalid input: parameters cannot be present"
+                             " at the same time")
             self.assertEqual(e.get_code(), INV_INPUT_PARAM_CONFLICT)
         else:
             self.fail("expected exception")

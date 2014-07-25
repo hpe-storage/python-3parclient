@@ -201,8 +201,8 @@ exit
                 if quoted:
                     if (re.match('[\'"]', quoted) or
                             re.search('[^\\\\][\'"]', quoted)):
-                        raise exceptions.SSHInjectionThreat(command=
-                                                            str(cmd_list))
+                        raise exceptions.SSHInjectionThreat(
+                            command=str(cmd_list))
             else:
                 # We only allow spaces within quoted arguments, and that
                 # is the only special character allowed within quotes

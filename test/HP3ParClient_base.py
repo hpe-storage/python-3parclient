@@ -13,16 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test base class of 3Par Client"""
+"""Test base class of 3Par Client."""
 
-import sys, os
-sys.path.insert(0,os.path.realpath(os.path.abspath('../')))
+import os
+import sys
+sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
 
-from hp3parclient import client, exceptions
+from hp3parclient import client
 import unittest
 import subprocess
 import time
-import pprint
 import inspect
 from testconfig import config
 try:
@@ -61,9 +61,10 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
 
     def setUp(self, withSSH=False):
 
-        cwd = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+        cwd = os.path.dirname(os.path.abspath(
+            inspect.getfile(inspect.currentframe())))
 
-        if self.unitTest :
+        if self.unitTest:
             self.printHeader('Using flask ' + self.flask_url)
             parsed_url = urlparse(self.flask_url)
             userArg = '-user=%s' % self.user
@@ -72,23 +73,24 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
 
             script = 'HP3ParMockServer_flask.py'
             path = "%s/%s" % (cwd, script)
-            try :
+            try:
                 self.mockServer = subprocess.Popen([sys.executable,
                                                     path,
                                                     userArg,
                                                     passwordArg,
                                                     portArg],
-                                               stdout=subprocess.PIPE,
-                                               stderr=subprocess.PIPE,
-                                               stdin=subprocess.PIPE
-                                               )
-            except Exception as e:
+                                                   stdout=subprocess.PIPE,
+                                                   stderr=subprocess.PIPE,
+                                                   stdin=subprocess.PIPE
+                                                   )
+            except Exception:
                 pass
+
             time.sleep(1)
             self.cl = client.HP3ParClient(self.flask_url)
             # SSH is not supported in flask, so not initializing
             # those tests are expected to fail
-        else :
+        else:
             self.printHeader('Using 3PAR ' + self.url_3par)
             self.cl = client.HP3ParClient(self.url_3par)
             if withSSH:
@@ -97,22 +99,19 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
                 parsed_3par_url = urlparse(self.url_3par)
                 ip = parsed_3par_url.hostname.split(':').pop()
                 try:
-                    # Set the conn_timeout to None so that the ssh connections will
-                    # use the default transport values which will allow the test
-                    # case process to terminate after completing
-                    self.cl.setSSHOptions(ip,
-                                          self.user,
-                                          self.password,
+                    # Set the conn_timeout to None so that the ssh connections
+                    # will use the default transport values which will allow
+                    # the test case process to terminate after completing
+                    self.cl.setSSHOptions(ip, self.user, self.password,
                                           conn_timeout=None)
                 except Exception as ex:
                     print ex
                     self.fail("failed to start ssh client")
 
-        if self.debug :
+        if self.debug:
             self.cl.debug_rest(True)
 
         self.cl.login(self.user, self.password)
-
 
     def tearDown(self):
         self.cl.logout()
@@ -126,6 +125,6 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
         print("##Completed testing '%s\n" % name)
 
     def findInDict(self, dic, key, value):
-        for i in dic :
-            if key in i and i[key] == value :
+        for i in dic:
+            if key in i and i[key] == value:
                 return True

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test class of 3PAR Client System Level APIS"""
+"""Test class of 3PAR Client System Level APIS."""
 
 import sys
 import os
@@ -21,11 +21,12 @@ sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
 
 from testconfig import config
 import unittest
-import HP3ParClient_base
+import HP3ParClient_base as hp3parbase
 
-from hp3parclient import client, exceptions
+from hp3parclient import exceptions
 
-class HP3ParClientSystemTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
+
+class HP3ParClientSystemTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
     def setUp(self):
         super(HP3ParClientSystemTestCase, self).setUp(withSSH=True)
@@ -34,9 +35,13 @@ class HP3ParClientSystemTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         # very last, tear down base class
         super(HP3ParClientSystemTestCase, self).tearDown()
 
-    @unittest.skipIf(config['TEST']['unit'].lower() == 'true', "only works with real array")
+    @unittest.skipIf(config['TEST']['unit'].lower() == 'true',
+                     "only works with real array")
     def test_get_patch(self):
-        """This can work with or without a patch, but you need to manually enter a valid one or use the bogus one."""
+        """This can work with or without a patch, but you need to manually
+           enter a valid one or use the bogus one.
+
+        """
 
         self.printHeader('get_patch')
 
@@ -55,13 +60,18 @@ class HP3ParClientSystemTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         else:
             # bogus/not-found patch test results
             self.assertEqual(len(result), 1)
-            self.assertTrue("Patch " + patch_id + " not recognized" in result[0])
+            self.assertTrue("Patch " + patch_id + " not recognized"
+                            in result[0])
 
         self.printFooter('get_patch')
 
-    @unittest.skipIf(config['TEST']['unit'].lower() == 'true', "only works with real array")
+    @unittest.skipIf(config['TEST']['unit'].lower() == 'true',
+                     "only works with real array")
     def test_get_patches(self):
-        """This test includes history (not just patches), so it should always have results."""
+        """This test includes history (not just patches),
+           so it should always have results.
+
+        """
 
         self.printHeader('get_patches')
         result = self.cl.getPatches()
@@ -70,9 +80,13 @@ class HP3ParClientSystemTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         self.assertGreater(len(result['members']), 0)
         self.printFooter('get_patches')
 
-    @unittest.skipIf(config['TEST']['unit'].lower() == 'true', "only works with real array")
+    @unittest.skipIf(config['TEST']['unit'].lower() == 'true',
+                     "only works with real array")
     def test_get_patches_no_hist(self):
-        """This test expects to find no patches installed (typical in our test environment)."""
+        """This test expects to find no patches installed
+           (typical in our test environment).
+
+        """
 
         self.printHeader('get_patches')
         result = self.cl.getPatches(history=False)
@@ -114,7 +128,7 @@ class HP3ParClientSystemTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
 
         try:
             self.cl.getTask(-1)
-        except exceptions.HTTPBadRequest as ex:
+        except exceptions.HTTPBadRequest:
             return
 
         self.fail("expected an HTTP Bad Request exception")
@@ -124,12 +138,13 @@ class HP3ParClientSystemTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
 
         try:
             self.cl.getTask("nonIntTask")
-        except exceptions.HTTPBadRequest as ex:
+        except exceptions.HTTPBadRequest:
             return
 
         self.fail("expected an HTTP Bad Request exception")
 
 
-#testing
-#suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientSystemTestCase)
-#unittest.TextTestRunner(verbosity=2).run(suite)
+# testing
+# suite = unittest.TestLoader().
+#     loadTestsFromTestCase(HP3ParClientSystemTestCase)
+# unittest.TextTestRunner(verbosity=2).run(suite)

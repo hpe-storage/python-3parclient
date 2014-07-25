@@ -123,6 +123,6 @@ def get_hosts():
 #delete_test_host()
 
 get_hosts()
-create_test_host()
-modify_test_host()
-delete_test_host()
+#create_test_host()
+#modify_test_host()
+#delete_test_host()

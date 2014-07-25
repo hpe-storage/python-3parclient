@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 """
-HP 3PAR Client
+HP 3PAR Client.
 
 :Author: Walter A. Boring IV
 :Author: Kurt Martin
@@ -24,10 +24,11 @@ HP 3PAR Client
 
 version_tuple = (3, 0, 1)
 
+
 def get_version_string():
+    """Current version of HP3PARClient."""
     if isinstance(version_tuple[-1], str):
         return '.'.join(map(str, version_tuple[:-1])) + version_tuple[-1]
     return '.'.join(map(str, version_tuple))
 
 version = get_version_string()
-"""Current version of HP3PARClient."""

@@ -13,14 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test class of 3Par Client handling VLUN"""
+"""Test class of 3Par Client handling VLUN."""
 
-import sys, os
-sys.path.insert(0,os.path.realpath(os.path.abspath('../')))
+import os
+import sys
+sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
 
-from hp3parclient import client, exceptions
-import unittest
-import HP3ParClient_base
+from hp3parclient import exceptions
+import HP3ParClient_base as hp3parbase
 
 CPG_NAME1 = 'CPG1_VLUN_UNIT_TEST'
 CPG_NAME2 = 'CPG2_VLUN_UNIT_TEST'
@@ -30,41 +30,43 @@ HOST_NAME1 = 'HOST1_VLUN_UNIT_TEST'
 HOST_NAME2 = 'HOST2_VLUN_UNIT_TEST'
 LUN_1 = 1
 LUN_2 = 2
-PORT_1 = {'node':1, 'cardPort':1, 'slot':1}
+PORT_1 = {'node': 1, 'cardPort': 1, 'slot': 1}
 
 
-class HP3ParClientVLUNTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
+class HP3ParClientVLUNTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
     def setUp(self):
         super(HP3ParClientVLUNTestCase, self).setUp()
 
-        try :
+        try:
             optional = self.CPG_OPTIONS
             self.cl.createCPG(CPG_NAME1, optional)
-        except :
+        except Exception:
             pass
-        try :
+        try:
             optional = self.CPG_OPTIONS
             self.cl.createCPG(CPG_NAME2, optional)
-        except :
+        except Exception:
             pass
-        try :
+
+        try:
             self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024)
-        except :
+        except Exception:
             pass
-        try :
+
+        try:
             self.cl.createVolume(VOLUME_NAME2, CPG_NAME2, 1024)
-        except :
+        except Exception:
             pass
-        try :
+        try:
             optional = {'domain': self.DOMAIN}
             self.cl.createHost(HOST_NAME1, None, None, optional)
-        except :
+        except Exception:
             pass
-        try :
+        try:
             optional = {'domain': self.DOMAIN}
             self.cl.createHost(HOST_NAME2, None, None, optional)
-        except :
+        except Exception:
             pass
 
     def tearDown(self):
@@ -87,27 +89,32 @@ class HP3ParClientVLUNTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
             pass
         try:
             self.cl.deleteVolume(VOLUME_NAME1)
-        except:
+        except Exception:
             pass
+
         try:
             self.cl.deleteVolume(VOLUME_NAME2)
-        except:
+        except Exception:
             pass
+
         try:
             self.cl.deleteCPG(CPG_NAME1)
-        except:
+        except Exception:
             pass
+
         try:
             self.cl.deleteCPG(CPG_NAME2)
-        except:
+        except Exception:
             pass
+
         try:
             self.cl.deleteHost(HOST_NAME1)
-        except:
+        except Exception:
             pass
+
         try:
             self.cl.deleteHost(HOST_NAME2)
-        except:
+        except Exception:
             pass
 
         # very last, tear down base class
@@ -115,18 +122,19 @@ class HP3ParClientVLUNTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
 
     def test_1_create_VLUN(self):
         self.printHeader('create_VLUN')
-        #add one
+        # add one
         noVcn = False
         overrideObjectivePriority = True
-        self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1, noVcn, overrideObjectivePriority)
-        #check
+        self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1, noVcn,
+                           overrideObjectivePriority)
+        # check
         vlun1 = self.cl.getVLUN(VOLUME_NAME1)
         self.assertIsNotNone(vlun1)
         volName = vlun1['volumeName']
         self.assertEqual(VOLUME_NAME1, volName)
-        #add another
+        # add another
         self.cl.createVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2)
-        #check
+        # check
         vlun2 = self.cl.getVLUN(VOLUME_NAME2)
         self.assertIsNotNone(vlun2)
         volName = vlun2['volumeName']
@@ -137,22 +145,25 @@ class HP3ParClientVLUNTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         self.printHeader('create_VLUN_tooLarge')
 
         lun = 100000
-        self.assertRaises(exceptions.HTTPBadRequest, self.cl.createVLUN, VOLUME_NAME1, lun, HOST_NAME1, PORT_1)
+        self.assertRaises(exceptions.HTTPBadRequest, self.cl.createVLUN,
+                          VOLUME_NAME1, lun, HOST_NAME1, PORT_1)
 
         self.printFooter('create_VLUN_tooLarge')
 
     def test_1_create_VLUN_volulmeNonExist(self):
         self.printHeader('create_VLUN_volumeNonExist')
 
-        self.assertRaises(exceptions.HTTPNotFound, self.cl.createVLUN, 'Some_Volume', LUN_1, HOST_NAME1, PORT_1)
+        self.assertRaises(exceptions.HTTPNotFound, self.cl.createVLUN,
+                          'Some_Volume', LUN_1, HOST_NAME1, PORT_1)
 
         self.printFooter('create_VLUN_volumeNonExist')
 
     def test_1_create_VLUN_badParams(self):
         self.printHeader('create_VLUN_badParams')
 
-        portPos = {'badNode':1, 'cardPort':1, 'slot':2}
-        self.assertRaises(exceptions.HTTPBadRequest, self.cl.createVLUN, VOLUME_NAME1, LUN_1, HOST_NAME1, portPos)
+        portPos = {'badNode': 1, 'cardPort': 1, 'slot': 2}
+        self.assertRaises(exceptions.HTTPBadRequest, self.cl.createVLUN,
+                          VOLUME_NAME1, LUN_1, HOST_NAME1, portPos)
 
         self.printFooter('create_VLUN_badParams')
 
@@ -176,9 +187,11 @@ class HP3ParClientVLUNTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         v2 = self.cl.getVLUN(VOLUME_NAME2)
 
         self.assertTrue(self.findInDict(vluns['members'], 'lun', v1['lun']))
-        self.assertTrue(self.findInDict(vluns['members'], 'volumeName', v1['volumeName']))
+        self.assertTrue(self.findInDict(vluns['members'], 'volumeName',
+                                        v1['volumeName']))
         self.assertTrue(self.findInDict(vluns['members'], 'lun', v2['lun']))
-        self.assertTrue(self.findInDict(vluns['members'], 'volumeName', v2['volumeName']))
+        self.assertTrue(self.findInDict(vluns['members'], 'volumeName',
+                                        v2['volumeName']))
 
         self.printFooter('get_VLUNs')
 
@@ -228,7 +241,7 @@ class HP3ParClientVLUNTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
 
         self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
         self.cl.getVLUN(VOLUME_NAME1)
-        self.cl.deleteVLUN(VOLUME_NAME1 ,LUN_1, HOST_NAME1, PORT_1)
+        self.cl.deleteVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
         try:
             self.cl.deleteVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
         except exceptions.HTTPNotFound:
@@ -271,6 +284,6 @@ class HP3ParClientVLUNTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
 
         self.fail('Expected an exception')
 
-#testing
-#suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVLUNTestCase)
-#unittest.TextTestRunner(verbosity=2).run(suite)
+# testing
+# suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVLUNTestCase)
+# unittest.TextTestRunner(verbosity=2).run(suite)

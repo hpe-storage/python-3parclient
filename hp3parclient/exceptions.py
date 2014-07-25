@@ -25,9 +25,9 @@ Exceptions for the client
 """
 
 import logging
-import sys
 
 LOG = logging.getLogger(__name__)
+
 
 class UnsupportedVersion(Exception):
     """
@@ -35,14 +35,18 @@ class UnsupportedVersion(Exception):
     """
     pass
 
+
 class CommandError(Exception):
     pass
+
 
 class AuthorizationFailure(Exception):
     pass
 
+
 class NoUniqueMatch(Exception):
     pass
+
 
 class ClientException(Exception):
     """
@@ -81,7 +85,6 @@ class ClientException(Exception):
     def get_ref(self):
         return self._error_ref
 
-
     def __str__(self):
         formatted_string = self.message
         if self.http_status:
@@ -102,9 +105,7 @@ class ClientException(Exception):
         return formatted_string
 
 
-##
-## 400 Errors
-##
+# 400 Errors
 
 
 class HTTPBadRequest(ClientException):
@@ -122,6 +123,7 @@ class HTTPUnauthorized(ClientException):
     http_status = 401
     message = "Unauthorized"
 
+
 class HTTPForbidden(ClientException):
     """
     HTTP 403 - Forbidden: your credentials don't give you access to this
@@ -138,12 +140,14 @@ class HTTPNotFound(ClientException):
     http_status = 404
     message = "Not found"
 
+
 class HTTPMethodNotAllowed(ClientException):
     """
     HTTP 405 - Method not Allowed
     """
     http_status = 405
     message = "Method Not Allowed"
+
 
 class HTTPNotAcceptable(ClientException):
     """
@@ -152,12 +156,14 @@ class HTTPNotAcceptable(ClientException):
     http_status = 406
     message = "Method Not Acceptable"
 
+
 class HTTPProxyAuthRequired(ClientException):
     """
     HTTP 407 - The client must first authenticate itself with the proxy.
     """
     http_status = 407
     message = "Proxy Authentication Required"
+
 
 class HTTPRequestTimeout(ClientException):
     """
@@ -174,33 +180,42 @@ class HTTPConflict(ClientException):
     http_status = 409
     message = "Conflict"
 
+
 class HTTPGone(ClientException):
     """
-    HTTP 410 - Indicates that the resource requested is no longer available and will not be available again.
+    HTTP 410 - Indicates that the resource requested is no longer available and
+               will not be available again.
     """
     http_status = 410
     message = "Gone"
 
+
 class HTTPLengthRequired(ClientException):
     """
-    HTTP 411 - The request did not specify the length of its content, which is required by the requested resource.
+    HTTP 411 - The request did not specify the length of its content, which is
+               required by the requested resource.
     """
     http_status = 411
     message = "Length Required"
 
+
 class HTTPPreconditionFailed(ClientException):
     """
-    HTTP 412 - The server does not meet one of the preconditions that the requester put on the request.
+    HTTP 412 - The server does not meet one of the preconditions that the
+               requester put on the request.
     """
     http_status = 412
     message = "Over limit"
 
+
 class HTTPRequestEntityTooLarge(ClientException):
     """
-    HTTP 413 - The request is larger than the server is willing or able to process
+    HTTP 413 - The request is larger than the server is willing or able to
+               process
     """
     http_status = 413
     message = "Request Entity Too Large"
+
 
 class HTTPRequestURITooLong(ClientException):
     """
@@ -209,26 +224,33 @@ class HTTPRequestURITooLong(ClientException):
     http_status = 414
     message = "Request URI Too Large"
 
+
 class HTTPUnsupportedMediaType(ClientException):
     """
-    HTTP 415 - The request entity has a media type which the server or resource does not support.
+    HTTP 415 - The request entity has a media type which the server or resource
+               does not support.
     """
     http_status = 415
     message = "Unsupported Media Type"
 
+
 class HTTPRequestedRangeNotSatisfiable(ClientException):
     """
-    HTTP 416 - The client has asked for a portion of the file, but the server cannot supply that portion.
+    HTTP 416 - The client has asked for a portion of the file, but the server
+               cannot supply that portion.
     """
     http_status = 416
     message = "Requested Range Not Satisfiable"
 
+
 class HTTPExpectationFailed(ClientException):
     """
-    HTTP 417 - The server cannot meet the requirements of the Expect request-header field.
+    HTTP 417 - The server cannot meet the requirements of the Expect
+               request-header field.
     """
     http_status = 417
     message = "Expectation Failed"
+
 
 class HTTPTeaPot(ClientException):
     """
@@ -238,18 +260,17 @@ class HTTPTeaPot(ClientException):
     message = "I'm A Teapot. (RFC 2324)"
 
 
-##
-## 500 Errors
-##
+# 500 Errors
+
 
 class HTTPInternalServerError(ClientException):
     """
     HTTP 500 - Internal Server Error: an internal error occured.
     """
-    http_status  = 500
+    http_status = 500
     message = "Internal Server Error"
 
-# NotImplemented is a python keyword.
+
 class HTTPNotImplemented(ClientException):
     """
     HTTP 501 - Not Implemented: the server does not support this operation.
@@ -257,12 +278,15 @@ class HTTPNotImplemented(ClientException):
     http_status = 501
     message = "Not Implemented"
 
+
 class HTTPBadGateway(ClientException):
     """
-    HTTP 502 - The server was acting as a gateway or proxy and received an invalid response from the upstream server.
+    HTTP 502 - The server was acting as a gateway or proxy and received an
+               invalid response from the upstream server.
     """
     http_status = 502
     message = "Bad Gateway"
+
 
 class HTTPServiceUnavailable(ClientException):
     """
@@ -271,6 +295,7 @@ class HTTPServiceUnavailable(ClientException):
     http_status = 503
     message = "Service Unavailable"
 
+
 class HTTPGatewayTimeout(ClientException):
     """
     HTTP 504 - The server was acting as a gateway or proxy and did
@@ -278,6 +303,7 @@ class HTTPGatewayTimeout(ClientException):
     """
     http_status = 504
     message = "Gateway Timeout"
+
 
 class HTTPVersionNotSupported(ClientException):
     """
@@ -294,17 +320,18 @@ class HTTPVersionNotSupported(ClientException):
 #                      for c in ClientException.__subclasses__())
 #
 # Instead, we have to hardcode it:
-_code_map = dict((c.http_status, c) for c in [HTTPBadRequest, HTTPUnauthorized,
-                   HTTPForbidden, HTTPNotFound, HTTPMethodNotAllowed,
-                   HTTPNotAcceptable, HTTPProxyAuthRequired,
-                   HTTPRequestTimeout, HTTPConflict, HTTPGone,
-                   HTTPLengthRequired, HTTPPreconditionFailed,
-                   HTTPRequestEntityTooLarge, HTTPRequestURITooLong,
-                   HTTPUnsupportedMediaType, HTTPRequestedRangeNotSatisfiable,
-                   HTTPExpectationFailed, HTTPTeaPot,
-                   HTTPNotImplemented, HTTPBadGateway,
-                   HTTPServiceUnavailable, HTTPGatewayTimeout,
-                   HTTPVersionNotSupported, HTTPInternalServerError])
+_code_map = dict((c.http_status, c) for c in
+                 [HTTPBadRequest, HTTPUnauthorized,
+                  HTTPForbidden, HTTPNotFound, HTTPMethodNotAllowed,
+                  HTTPNotAcceptable, HTTPProxyAuthRequired,
+                  HTTPRequestTimeout, HTTPConflict, HTTPGone,
+                  HTTPLengthRequired, HTTPPreconditionFailed,
+                  HTTPRequestEntityTooLarge, HTTPRequestURITooLong,
+                  HTTPUnsupportedMediaType, HTTPRequestedRangeNotSatisfiable,
+                  HTTPExpectationFailed, HTTPTeaPot,
+                  HTTPNotImplemented, HTTPBadGateway,
+                  HTTPServiceUnavailable, HTTPGatewayTimeout,
+                  HTTPVersionNotSupported])
 
 
 def from_response(response, body):
@@ -343,7 +370,6 @@ class SSHException(Exception):
                 message = self.message % kwargs
 
             except Exception:
-                exc_info = sys.exc_info()
                 # kwargs doesn't match a variable in the message
                 # log the issue and the kwargs
                 LOG.exception('Exception in string format operation')
@@ -359,14 +385,18 @@ class SSHException(Exception):
 class SSHInjectionThreat(SSHException):
     message = "SSH command injection detected: %(command)s"
 
+
 class GrowVolumeException(SSHException):
     message = "SSH grow volume failed: %(command)s"
+
 
 class CopyVolumeException(SSHException):
     message = "SSH copy volume failed: %(command)s"
 
+
 class SetQOSRuleException(SSHException):
     message = "SSH set QOS rule failed: %(command)s"
+
 
 class ProcessExecutionError(Exception):
     def __init__(self, stdout=None, stderr=None, exit_code=None, cmd=None,
