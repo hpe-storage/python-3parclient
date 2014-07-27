@@ -838,6 +838,12 @@ class HP3ParClient(object):
         :param setmembers: the host(s) to add to the set, the existence of the host(s) will not be checked
         :type setmembers: list str
 
+        :returns: headers - dict of HTTP Response headers.  Upon successful
+                  modification of a host set HTTP code 200 OK is returned and
+                  the URI of the updated host set will be returned in the
+                  location portion of the headers.
+        :returns: body - the body of the response.  None if successful.
+
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` - EXISTENT_SET - The set already exits.
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` - NON_EXISTENT_SET - The set does not exists.
         :raises: :class:`~hp3parclient.exceptions.HTTPConflict` - MEMBER_IN_DOMAINSET - The host is in a domain set.
@@ -874,6 +880,12 @@ class HP3ParClient(object):
         :type set_name: str
         :param name: the host name to add
         :type name: str
+
+        :returns: headers - dict of HTTP Response headers.  Upon successful
+                  modification of a host set HTTP code 200 OK is returned and
+                  the URI of the updated host set will be returned in the
+                  location portion of the headers.
+        :returns: body - the body of the response.  None if successful.
         """
         return self.modifyHostSet(set_name, action=self.SET_MEM_ADD,
                                   setmembers=[name])
@@ -886,6 +898,12 @@ class HP3ParClient(object):
         :type set_name: str
         :param name: the host name to remove
         :type name: str
+
+        :returns: headers - dict of HTTP Response headers.  Upon successful
+                  modification of a host set HTTP code 200 OK is returned and
+                  the URI of the updated host set will be returned in the
+                  location portion of the headers.
+        :returns: body - the body of the response.  None if successful.
         """
         return self.modifyHostSet(set_name, action=self.SET_MEM_REMOVE,
                                   setmembers=[name])
@@ -897,7 +915,12 @@ class HP3ParClient(object):
         :param name: the host name to remove
         :type name: str
 
-        :returns None if host has no host set, else response from modify
+        :returns: None if host has no host set, else (headers, body)
+        :returns: headers - dict of HTTP Response headers.  Upon successful
+                  modification of a host set HTTP code 200 OK is returned and
+                  the URI of the updated host set will be returned in the
+                  location portion of the headers.
+        :returns: body - the body of the response.  None if successful.
         """
 
         host_set_name = self.findHostSet(name)
