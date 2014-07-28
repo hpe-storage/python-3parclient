@@ -9,6 +9,45 @@ import uuid
 from werkzeug.exceptions import default_exceptions
 from werkzeug.exceptions import HTTPException
 
+# 3PAR error code constants
+INV_USER_PASS = 5
+INV_INPUT = 12
+EXISTENT_CPG = 14
+NON_EXISTENT_CPG = 15
+EXISTENT_HOST = 16
+NON_EXISTENT_HOST = 17
+NON_EXISTENT_VLUN = 19
+EXISTENT_VOL = 22
+NON_EXISTENT_VOL = 23
+EXPORTED_VLUN = 26
+TOO_LARGE = 28
+NON_EXISTENT_DOMAIN = 38
+INV_INPUT_WRONG_TYPE = 39
+INV_INPUT_MISSING_REQUIRED = 40
+INV_INPUT_EXCEEDS_RANGE = 43
+INV_INPUT_PARAM_CONFLICT = 44
+INV_INPUT_EMPTY_STR = 45
+INV_INPUT_BAD_ENUM_VALUE = 46
+INV_INPUT_PORT_SPECIFICATION = 55
+INV_INPUT_EXCEEDS_LENGTH = 57
+EXISTENT_ID = 59
+INV_INPUT_ILLEGAL_CHAR = 69
+EXISTENT_PATH = 73
+NON_EXISTENT_SET = 77
+HOST_IN_SET = 77
+INV_INPUT_ONE_REQUIRED = 78
+NON_EXISTENT_PATH = 80
+NON_EXISTENT_QOS_RULE = 100
+EXISTENT_SET = 101
+EXISTENT_QOS_RULE = 114
+INV_INPUT_BELOW_RANGE = 115
+INV_INPUT_QOS_TARGET_OBJECT = 117
+NON_EXISTENT_TASK = 145
+INV_INPUT_VV_GROW_SIZE = 152
+VV_NEW_SIZE_EXCEED_CPG_LIMIT = 153
+NON_EXISTENT_OBJECT_KEY = 180
+EXISTENT_OBJECT_KEY = 181
+
 parser = argparse.ArgumentParser()
 parser.add_argument("-debug", help="Turn on http debugging",
                     default=False, action="store_true")
@@ -21,13 +60,6 @@ user_pass = args.password
 debugRequests = False
 if "debug" in args and args.debug:
     debugRequests = True
-
-EXPORTED_VLUN = 26
-HOST_IN_SET = 77
-NON_EXISTENT_HOST = 17
-NON_EXISTENT_SET = 77
-INV_INPUT_EXCEEDS_LENGTH = 400
-INV_INPUT_PARAM_CONFLICT = 44
 
 # __all__ = ['make_json_app']
 
@@ -103,7 +135,7 @@ def index():
 @app.route('/api/v1/throwerror')
 def errtest():
     debugRequest(flask.request)
-    throw_error(405, 'ERR_TEST', 'testing throwing an error',
+    throw_error(405, 123, 'testing throwing an error',
                 'debug1 message', 'debug2 message')
 
 
@@ -140,8 +172,7 @@ def credentials():
 
         else:
             # authentication failed!
-            throw_error(401, "HTTP_AUTH_FAIL",
-                        "Username and or Password was incorrect")
+            throw_error(403, INV_USER_PASS, "invalid username or password")
 
 
 @app.route('/api/v1/credentials/<session_key>', methods=['DELETE'])
@@ -168,21 +199,21 @@ def create_cpgs():
 
     for key in list(data.keys()):
         if key not in list(valid_keys.keys()):
-            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
+            throw_error(400, INV_INPUT, "Invalid Parameter '%s'" % key)
         elif 'LDLayout' in list(data.keys()):
             layout = data['LDLayout']
             for subkey in list(layout.keys()):
                 if subkey not in valid_LDLayout_keys:
-                    throw_error(400, 'INV_INPUT',
+                    throw_error(400, INV_INPUT,
                                 "Invalid Parameter '%s'" % subkey)
 
     if 'domain' in data and data['domain'] == 'BAD_DOMAIN':
-        throw_error(404, 'NON_EXISTENT_DOMAIN',
+        throw_error(404, NON_EXISTENT_DOMAIN,
                     "Non-existing domain specified.")
 
     for cpg in cpgs['members']:
         if data['name'] == cpg['name']:
-            throw_error(409, 'EXISTENT_CPG',
+            throw_error(409, EXISTENT_CPG,
                         "CPG '%s' already exist." % data['name'])
 
     cpgs['members'].append(data)
@@ -209,7 +240,7 @@ def get_cpg(cpg_name):
             resp = flask.make_response(json.dumps(cpg), 200)
             return resp
 
-    throw_error(404, 'NON_EXISTENT_CPG', "CPG '%s' doesn't exist" % cpg_name)
+    throw_error(404, NON_EXISTENT_CPG, "CPG '%s' doesn't exist" % cpg_name)
 
 
 @app.route('/api/v1/cpgs/<cpg_name>', methods=['DELETE'])
@@ -221,7 +252,7 @@ def delete_cpg(cpg_name):
             cpgs['members'].remove(cpg)
             return flask.make_response("", 200)
 
-    throw_error(404, 'NON_EXISTENT_CPG', "CPG '%s' doesn't exist" % cpg_name)
+    throw_error(404, NON_EXISTENT_CPG, "CPG '%s' doesn't exist" % cpg_name)
 
 
 # Host Set
@@ -251,22 +282,17 @@ def create_host_set():
 
     for key in list(data.keys()):
         if key not in list(valid_keys.keys()):
-            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
+            throw_error(400, INV_INPUT, "Invalid Parameter '%s'" % key)
 
     if 'name' in list(data.keys()):
         for host_set in host_sets['members']:
             if host_set['name'] == data['name']:
-                throw_error(409, 'EXISTENT_SET',
-                            'The set already exists.')
-                # Seems the 3par is throwing a 409 instead of 400
-                # {"code":101,"desc":"Set exists"} error
-                # throw_error(400, 'EXISTENT_SET',
-                #            'The set already exists.')
+                throw_error(409, EXISTENT_SET, 'Set exists')
         if len(data['name']) > 31:
             throw_error(400, INV_INPUT_EXCEEDS_LENGTH,
                         'invalid input: string length exceeds limit')
     else:
-        throw_error(400, 'INV_INPUT',
+        throw_error(400, INV_INPUT,
                     'No host set name provided.')
 
     host_sets['members'].append(data)
@@ -282,7 +308,7 @@ def get_host_set(host_set_name):
     charset = {'!', '@', '#', '$', '%', '&', '^'}
     for char in charset:
         if char in host_set_name:
-            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+            throw_error(400, INV_INPUT_ILLEGAL_CHAR,
                         'illegal character in input')
 
     for host_set in host_sets['members']:
@@ -332,9 +358,8 @@ def modify_host_set(host_set_name):
                     for member in members:
                         host_set['setmembers'].remove(member)
                 else:
-                    # TODO, throw error for now
-                    throw_error(400, 'TODO Action',
-                                'Action not implemented in mock server')
+                    throw_error(400, INV_INPUT_BAD_ENUM_VALUE,
+                                desc='invalid input: bad enum value - action')
 
         resp = flask.make_response(json.dumps(host_set), 200)
         return resp
@@ -367,43 +392,43 @@ def create_hosts():
 
     for member_key in list(data.keys()):
         if member_key not in valid_members:
-            throw_error(400, 'INV_INPUT',
+            throw_error(400, INV_INPUT,
                         "Invalid Parameter '%s'" % member_key)
 
     if data['name'] is None:
-        throw_error(400, 'INV_INPUT_MISSING_REQUIRED', 'Name not specified.')
+        throw_error(400, INV_INPUT_MISSING_REQUIRED, 'Name not specified.')
 
     elif len(data['name']) > 31:
-        throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH', 'Host name is too long.')
+        throw_error(400, INV_INPUT_EXCEEDS_LENGTH, 'Host name is too long.')
 
     elif 'domain' in data and len(data['domain']) > 31:
-        throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH',
+        throw_error(400, INV_INPUT_EXCEEDS_LENGTH,
                     'Domain name is too long.')
 
     elif 'domain' in data and data['domain'] == '':
-        throw_error(400, 'INV_INPUT_EMPTY_STR',
+        throw_error(400, INV_INPUT_EMPTY_STR,
                     'Input string (for domain, iSCSI etc.) is empty.')
 
     charset = {'!', '@', '#', '$', '%', '&', '^'}
     for char in charset:
         if char in data['name']:
-            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+            throw_error(400, INV_INPUT_ILLEGAL_CHAR,
                         'Error parsing host-name or domain-name')
 
         elif 'domain' in data and char in data['domain']:
-            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+            throw_error(400, INV_INPUT_ILLEGAL_CHAR,
                         'Error parsing host-name or domain-name')
 
     if 'FCWWNs' in list(data.keys()):
         if 'iSCSINames' in list(data.keys()):
-            throw_error(400, 'INV_INPUT_PARAM_CONFLICT',
+            throw_error(400, INV_INPUT_PARAM_CONFLICT,
                         'FCWWNS and iSCSINames are both specified.')
 
     if 'FCWWNs' in list(data.keys()):
         fc = data['FCWWNs']
         for wwn in fc:
             if len(wwn.replace(':', '')) != 16:
-                throw_error(400, 'INV_INPUT_WRONG_TYPE',
+                throw_error(400, INV_INPUT_WRONG_TYPE,
                             'Length of WWN is not 16.')
 
     if 'FCWWNs' in data:
@@ -411,7 +436,7 @@ def create_hosts():
             if 'FCWWNs' in host:
                 for fc_path in data['FCWWNs']:
                     if fc_path in host['FCWWNs']:
-                        throw_error(409, 'EXISTENT_PATH',
+                        throw_error(409, EXISTENT_PATH,
                                     'WWN already claimed by other host.')
 
     if 'iSCSINames' in data:
@@ -419,13 +444,13 @@ def create_hosts():
             if 'iSCSINames' in host:
                 for iqn in data['iSCSINames']:
                     if iqn in host['iSCSINames']:
-                        throw_error(409, 'EXISTENT_PATH',
+                        throw_error(409, EXISTENT_PATH,
                                     'iSCSI name already claimed by other'
                                     ' host.')
 
     for host in hosts['members']:
         if data['name'] == host['name']:
-            throw_error(409, 'EXISTENT_HOST',
+            throw_error(409, EXISTENT_HOST,
                         "HOST '%s' already exist." % data['name'])
 
     hosts['members'].append(data)
@@ -441,19 +466,19 @@ def modify_host(host_name):
     data = json.loads(flask.request.data)
 
     if host_name == 'None':
-        throw_error(404, 'INV_INPUT', 'Missing host name.')
+        throw_error(404, INV_INPUT, 'Missing host name.')
 
     if 'FCWWNs' in list(data.keys()):
         if 'iSCSINames' in list(data.keys()):
-            throw_error(400, 'INV_INPUT_PARAM_CONFLICT',
+            throw_error(400, INV_INPUT_PARAM_CONFLICT,
                         'FCWWNS and iSCSINames are both specified.')
         elif 'pathOperation' not in list(data.keys()):
-            throw_error(400, 'INV_INPUT_ONE_REQUIRED',
+            throw_error(400, INV_INPUT_ONE_REQUIRED,
                         'pathOperation is missing and WWN is specified.')
 
     if 'iSCSINames' in list(data.keys()):
         if 'pathOperation' not in list(data.keys()):
-            throw_error(400, 'INV_INPUT_ONE_REQUIRED',
+            throw_error(400, INV_INPUT_ONE_REQUIRED,
                         'pathOperation is missing and iSCSI Name is'
                         ' specified.')
 
@@ -461,14 +486,14 @@ def modify_host(host_name):
         charset = {'!', '@', '#', '$', '%', '&', '^'}
         for char in charset:
             if char in data['newName']:
-                throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+                throw_error(400, INV_INPUT_ILLEGAL_CHAR,
                             'Error parsing host-name or domain-name')
         if len(data['newName']) > 32:
-            throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH',
+            throw_error(400, INV_INPUT_EXCEEDS_LENGTH,
                         'New host name is too long.')
         for host in hosts['members']:
             if host['name'] == data['newName']:
-                throw_error(409, 'EXISTENT_HOST',
+                throw_error(409, EXISTENT_HOST,
                             'New host name is already used.')
 
     if 'pathOperation' in list(data.keys()):
@@ -481,7 +506,7 @@ def modify_host(host_name):
                                 for path in data['iSCSINames']:
                                     for h_paths in host['iSCSINames']:
                                         if path == h_paths:
-                                            throw_error(409, 'EXISTENT_PATH',
+                                            throw_error(409, EXISTENT_PATH,
                                                         'iSCSI name is already'
                                                         ' claimed by other '
                                                         'host.')
@@ -497,12 +522,12 @@ def modify_host(host_name):
                                     resp = flask.make_response(
                                         json.dumps(host), 200)
                                     return resp
-                            throw_error(404, 'NON_EXISTENT_PATH',
+                            throw_error(404, NON_EXISTENT_PATH,
                                         'Removing a non-existent path.')
                     else:
-                        throw_error(400, 'INV_INPUT_BAD_ENUM_VALUE',
+                        throw_error(400, INV_INPUT_BAD_ENUM_VALUE,
                                     'pathOperation: Invalid enum value.')
-            throw_error(404, 'NON_EXISTENT_HOST',
+            throw_error(404, NON_EXISTENT_HOST,
                         'Host to be modified does not exist.')
         elif 'FCWWNs' in list(data.keys()):
             for host in hosts['members']:
@@ -513,7 +538,7 @@ def modify_host(host_name):
                                 for path in data['FCWWNs']:
                                     for h_paths in host['FCWWNs']:
                                         if path == h_paths:
-                                            throw_error(409, 'EXISTENT_PATH',
+                                            throw_error(409, EXISTENT_PATH,
                                                         'WWN is already '
                                                         'claimed by other '
                                                         'host.')
@@ -529,15 +554,15 @@ def modify_host(host_name):
                                     resp = flask.make_response(
                                         json.dumps(host), 200)
                                     return resp
-                            throw_error(404, 'NON_EXISTENT_PATH',
+                            throw_error(404, NON_EXISTENT_PATH,
                                         'Removing a non-existent path.')
                     else:
-                        throw_error(400, 'INV_INPUT_BAD_ENUM_VALUE',
+                        throw_error(400, INV_INPUT_BAD_ENUM_VALUE,
                                     'pathOperation: Invalid enum value.')
-            throw_error(404, 'NON_EXISTENT_HOST',
+            throw_error(404, NON_EXISTENT_HOST,
                         'Host to be modified does not exist.')
         else:
-            throw_error(400, 'INV_INPUT_ONE_REQUIRED',
+            throw_error(400, INV_INPUT_ONE_REQUIRED,
                         'pathOperation specified and no WWNs or iSCSNames'
                         ' specified.')
 
@@ -551,7 +576,7 @@ def modify_host(host_name):
             resp = flask.make_response(json.dumps(host), 200)
             return resp
 
-    throw_error(404, 'NON_EXISTENT_HOST',
+    throw_error(404, NON_EXISTENT_HOST,
                 'Host to be modified does not exist.')
 
 
@@ -572,7 +597,7 @@ def delete_host(host_name):
             hosts['members'].remove(host)
             return flask.make_response("", 200)
 
-    throw_error(404, 'NON_EXISTENT_HOST',
+    throw_error(404, NON_EXISTENT_HOST,
                 "The host '%s' doesn't exist" % host_name)
 
 
@@ -618,11 +643,11 @@ def get_host(host_name):
     charset = {'!', '@', '#', '$', '%', '&', '^'}
     for char in charset:
         if char in host_name:
-            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+            throw_error(400, INV_INPUT_ILLEGAL_CHAR,
                         'Host name contains invalid character.')
 
     if host_name == 'InvalidURI':
-        throw_error(400, 'INV_INPUT', 'Invalid URI Syntax.')
+        throw_error(400, INV_INPUT, 'Invalid URI Syntax.')
 
     for host in hosts['members']:
         if host['name'] == host_name:
@@ -670,22 +695,22 @@ def create_vluns():
     # do some fake errors here depending on data
     for key in list(data.keys()):
         if key not in list(valid_keys.keys()):
-            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
+            throw_error(400, INV_INPUT, "Invalid Parameter '%s'" % key)
         elif 'portPos' in list(data.keys()):
             portP = data['portPos']
             for subkey in list(portP.keys()):
                 if subkey not in valid_port_keys:
-                    throw_error(400, 'INV_INPUT',
+                    throw_error(400, INV_INPUT,
                                 "Invalid Parameter '%s'" % subkey)
 
     if 'lun' in data:
         if data['lun'] > 16384:
-            throw_error(400, 'TOO_LARGE', 'LUN is greater than 16384.')
+            throw_error(400, TOO_LARGE, 'LUN is greater than 16384.')
     else:
-        throw_error(400, 'INV_INPUT', 'Missing LUN.')
+        throw_error(400, INV_INPUT, 'Missing LUN.')
 
     if 'volumeName' not in data:
-        throw_error(400, 'INV_INPUT_MISSING_REQUIRED', 'Missing volumeName.')
+        throw_error(400, INV_INPUT_MISSING_REQUIRED, 'Missing volumeName.')
     else:
         for volume in volumes['members']:
             if volume['name'] == data['volumeName']:
@@ -693,7 +718,7 @@ def create_vluns():
                 resp = flask.make_response(json.dumps(vluns), 201)
                 resp.headers['location'] = '/api/v1/vluns/'
                 return resp
-        throw_error(404, 'NON_EXISTENT_VOL',
+        throw_error(404, NON_EXISTENT_VOL,
                     'Specified volume does not exist.')
 
 
@@ -707,31 +732,31 @@ def delete_vluns(vlun_str):
         if vlun['volumeName'] == params[0] and vlun['lun'] == int(params[1]):
             if len(params) == 4:
                 if str(params[2]) != vlun['hostname']:
-                    throw_error(404, 'NON_EXISTENT_HOST',
+                    throw_error(404, NON_EXISTENT_HOST,
                                 "The host '%s' doesn't exist" % params[2])
 
                 print(vlun['portPos'])
                 port = getPort(vlun['portPos'])
                 if not port == params[3]:
-                    throw_error(400, 'INV_INPUT_PORT_SPECIFICATION',
+                    throw_error(400, INV_INPUT_PORT_SPECIFICATION,
                                 "Specified port is invalid %s" % params[3])
 
             elif len(params) == 3:
                 if ':' in params[2]:
                     port = getPort(vlun['portPos'])
                     if not port == params[2]:
-                        throw_error(400, 'INV_INPUT_PORT_SPECIFICATION',
+                        throw_error(400, INV_INPUT_PORT_SPECIFICATION,
                                     "Specified port is invalid %s" % params[2])
 
                 else:
                     if str(params[2]) != vlun['hostname']:
-                        throw_error(404, 'NON_EXISTENT_HOST',
+                        throw_error(404, NON_EXISTENT_HOST,
                                     "The host '%s' doesn't exist" % params[2])
 
             vluns['members'].remove(vlun)
             return flask.make_response(json.dumps(params), 200)
 
-    throw_error(404, 'NON_EXISTENT_VLUN',
+    throw_error(404, NON_EXISTENT_VLUN,
                 "The volume '%s' doesn't exist" % vluns)
 
 
@@ -772,12 +797,12 @@ def create_snapshot(volume_name):
     # do some fake errors here depending on data
     for key in list(data.keys()):
         if key not in list(valid_keys.keys()):
-            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
+            throw_error(400, INV_INPUT, "Invalid Parameter '%s'" % key)
         elif 'parameters' in list(data.keys()):
             parm = data['parameters']
             for subkey in list(parm.keys()):
                 if subkey not in valid_parm_keys:
-                    throw_error(400, 'INV_INPUT',
+                    throw_error(400, INV_INPUT,
                                 "Invalid Parameter '%s'" % subkey)
 
     for volume in volumes['members']:
@@ -792,7 +817,7 @@ def create_snapshot(volume_name):
             resp = flask.make_response(json.dumps(volume), 200)
             return resp
 
-    throw_error(404, 'NON_EXISTENT_VOL', "volume doesn't exist")
+    throw_error(404, NON_EXISTENT_VOL, "volume doesn't exist")
 
 
 @app.route('/api/v1/volumes', methods=['POST'])
@@ -810,32 +835,32 @@ def create_volumes():
 
     for key in list(data.keys()):
         if key not in list(valid_keys.keys()):
-            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
+            throw_error(400, INV_INPUT, "Invalid Parameter '%s'" % key)
 
     if 'name' in list(data.keys()):
         for vol in volumes['members']:
             if vol['name'] == data['name']:
-                throw_error(409, 'EXISTENT_VOL',
+                throw_error(409, EXISTENT_VOL,
                             'The volume already exists.')
         if len(data['name']) > 31:
-            throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH',
+            throw_error(400, INV_INPUT_EXCEEDS_LENGTH,
                         'Invalid Input: String length exceeds limit : Name')
     else:
-        throw_error(400, 'INV_INPUT',
+        throw_error(400, INV_INPUT,
                     'No volume name provided.')
 
     if 'sizeMiB' in list(data.keys()):
         if data['sizeMiB'] < 256:
-            throw_error(400, 'TOO_SMALL',
+            throw_error(400, INV_INPUT_EXCEEDS_RANGE,
                         'Minimum volume size is 256 MiB')
         elif data['sizeMiB'] > 16777216:
-            throw_error(400, 'TOO_LARGE',
+            throw_error(400, TOO_LARGE,
                         'Volume size is above architectural limit : 16TiB')
 
     if 'id' in list(data.keys()):
         for vol in volumes['members']:
             if vol['id'] == data['id']:
-                throw_error(409, 'EXISTENT_ID',
+                throw_error(409, EXISTENT_ID,
                             'Specified volume ID already exists.')
 
     volumes['members'].append(data)
@@ -851,7 +876,7 @@ def delete_volumes(volume_name):
             volumes['members'].remove(volume)
             return flask.make_response("", 200)
 
-    throw_error(404, 'NON_EXISTENT_VOL',
+    throw_error(404, NON_EXISTENT_VOL,
                 "The volume '%s' does not exists." % volume_name)
 
 
@@ -869,7 +894,7 @@ def get_volume(volume_name):
     charset = {'!', '@', '#', '$', '%', '&', '^'}
     for char in charset:
         if char in volume_name:
-            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+            throw_error(400, INV_INPUT_ILLEGAL_CHAR,
                         'Invalid character for volume name.')
 
     for volume in volumes['members']:
@@ -877,7 +902,7 @@ def get_volume(volume_name):
             resp = flask.make_response(json.dumps(volume), 200)
             return resp
 
-    throw_error(404, 'NON_EXISTENT_VOL', "volume doesn't exist")
+    throw_error(404, NON_EXISTENT_VOL, "volume doesn't exist")
 
 
 @app.route('/api/v1/volumes/<volume_name>', methods=['PUT'])
@@ -885,7 +910,7 @@ def modify_volume(volume_name):
     debugRequest(flask.request)
 
     if volume_name not in [volume['name'] for volume in volumes['members']]:
-        throw_error(404, 'NON_EXISTENT_VOL', "The volume does not exist")
+        throw_error(404, NON_EXISTENT_VOL, "The volume does not exist")
 
     for volume in volumes['members']:
         if volume['name'] == volume_name:
@@ -907,12 +932,12 @@ def _grow_volume(volume, data):
     if 'sizeMiB' in data:
         size = data['sizeMiB']
         if size <= 0:
-            throw_error(400, 'INV_INPUT_VV_GROW_SIZE', 'Invalid grow size')
+            throw_error(400, INV_INPUT_VV_GROW_SIZE, 'Invalid grow size')
 
         cur_size = volume['sizeMiB']
         new_size = cur_size + size
         if new_size > 16777216:
-            throw_error(403, 'VV_NEW_SIZE_EXCEED_CPG_LIMIT',
+            throw_error(403, VV_NEW_SIZE_EXCEED_CPG_LIMIT,
                         'New volume size exceeds CPG limit.')
         volume['sizeMiB'] = new_size
 
@@ -934,22 +959,17 @@ def create_volume_set():
 
     for key in list(data.keys()):
         if key not in list(valid_keys.keys()):
-            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
+            throw_error(400, INV_INPUT, "Invalid Parameter '%s'" % key)
 
     if 'name' in list(data.keys()):
         for vset in volume_sets['members']:
             if vset['name'] == data['name']:
-                throw_error(409, 'EXISTENT_SET',
-                            'The set already exists.')
-                # Seems the 3par is throwing a 409 instead of 400
-                # {"code":101,"desc":"Set exists"} error
-                # throw_error(400, 'EXISTENT_SET',
-                #            'The set already exists.')
+                throw_error(409, EXISTENT_SET, "Set exists")
         if len(data['name']) > 31:
-            throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH',
+            throw_error(400, INV_INPUT_EXCEEDS_LENGTH,
                         'Invalid Input: String length exceeds limit : Name')
     else:
-        throw_error(400, 'INV_INPUT',
+        throw_error(400, INV_INPUT,
                     'No volume set name provided.')
 
     volume_sets['members'].append(data)
@@ -963,7 +983,7 @@ def get_volume_set(volume_set_name):
     charset = {'!', '@', '#', '$', '%', '&', '^'}
     for char in charset:
         if char in volume_set_name:
-            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+            throw_error(400, INV_INPUT_ILLEGAL_CHAR,
                         'Invalid character for volume set name.')
 
     for vset in volume_sets['members']:
@@ -996,9 +1016,8 @@ def modify_volume_set(volume_set_name):
                     for member in members:
                         vset['setmembers'].remove(member)
                 else:
-                    # TODO, throw error for now
-                    throw_error(400, 'TODO Action',
-                                'Action not implemented in mock server')
+                    throw_error(400, INV_INPUT_BAD_ENUM_VALUE,
+                                desc='invalid input: bad enum value - action')
 
         resp = flask.make_response(json.dumps(vset), 200)
         return resp
@@ -1040,7 +1059,7 @@ def _validate_qos_input(data):
 
     for key in list(data.keys()):
         if key not in list(valid_keys.keys()):
-            throw_error(400, 'INV_INPUT', "Invalid Parameter '%s'" % key)
+            throw_error(400, INV_INPUT, "Invalid Parameter '%s'" % key)
 
 
 @app.route('/api/v1/qos', methods=['GET'])
@@ -1061,7 +1080,7 @@ def _get_qos_db(name):
         if qos['name'] == name:
             return qos
 
-    throw_error(400, "Bad Request", "Could not find qos name '%s'." % name)
+    throw_error(404, NON_EXISTENT_QOS_RULE, "non-existent QoS rule")
 
 
 def debug_qos(title):
@@ -1088,7 +1107,7 @@ def _modify_qos_db(qos_id, new_qos):
             return
 
     debug_qos("_modify_qos_db end error")
-    throw_error(500, "Internal error", "could not modify qos id '%s'" % qos_id)
+    throw_error(404, NON_EXISTENT_QOS_RULE, "non-existent QoS rule")
 
 
 def _delete_qos_db(qos_id):
@@ -1106,12 +1125,12 @@ def create_qos():
     qos = json.loads(flask.request.data)
 
     if 'name' not in qos:
-        throw_error(404, 'INV_INPUT', "Missing required parameter 'name'")
+        throw_error(404, INV_INPUT, "Missing required parameter 'name'")
 
     if 'type' not in qos:
-        throw_error(404, 'INV_INPUT', "Missing required parameter 'type'")
+        throw_error(404, INV_INPUT, "Missing required parameter 'type'")
     elif qos['type'] != 1:
-        throw_error(404, 'INV_INPUT',
+        throw_error(404, INV_INPUT,
                     "Flask currently only supports type = 1 (VVSET). "
                     + "Type unsuppored: %s" % qos['type'])
     _validate_qos_input(qos)
@@ -1119,13 +1138,13 @@ def create_qos():
     for vset in volume_sets['members']:
         if vset['name'] == qos['name']:
             if 'qos' in vset:
-                throw_error(400, 'BAD_REQUEST', "QoS rule already exists")
+                throw_error(400, EXISTENT_QOS_RULE, "QoS rule exists")
             else:
                 qos_id = _add_qos_db(qos)
                 vset['qos'] = qos_id
                 return flask.make_response("", 201)
 
-    throw_error(400, 'BAD_REQUEST', "Target not found: '%s'" % qos['name'])
+    throw_error(404, INV_INPUT_QOS_TARGET_OBJECT, "Invalid QOS target object")
 
 
 @app.route('/api/v1/qos/<target_type>:<name>', methods=['PUT'])
@@ -1137,12 +1156,13 @@ def modify_qos(target_type, name):
     for vset in volume_sets['members']:
         if vset['name'] == name:
             if 'qos' not in vset:
-                throw_error(404, 'NOT_FOUND', "QoS rule does not exists")
+                throw_error(404, NON_EXISTENT_QOS_RULE,
+                            "non-existent QoS rule")
             else:
                 _modify_qos_db(vset['qos'], qos)
                 return flask.make_response("", 200)
 
-    throw_error(400, 'BAD_REQUEST', "Target not found: '%s'" % name)
+    throw_error(404, INV_INPUT_QOS_TARGET_OBJECT, "Invalid QOS target object")
 
 
 @app.route('/api/v1/qos/<target_type>:<target_name>', methods=['DELETE'])
@@ -1152,12 +1172,12 @@ def delete_qos(target_type, target_name):
     for vset in volume_sets['members']:
         if vset['name'] == target_name:
             if 'qos' not in vset:
-                throw_error(404, 'NOT_FOUND', "QoS rule does not exists")
+                throw_error(404, NON_EXISTENT_SET, "QoS rule does not exists")
             else:
                 _delete_qos_db(vset['qos'])
                 return flask.make_response("", 200)
 
-    throw_error(400, 'BAD_REQUEST', "Target not found: '%s'" % target_name)
+    throw_error(404, INV_INPUT_QOS_TARGET_OBJECT, "Invalid QOS target object")
 
 
 @app.route('/api/v1/wsapiconfiguration', methods=['GET'])
@@ -1221,19 +1241,19 @@ def get_task(task_id):
     try:
         task_id = int(task_id)
     except ValueError:
-        throw_error(400, 'INV_INPUT_WRONG_TYPE', "Task ID is not an integer")
+        throw_error(400, INV_INPUT_WRONG_TYPE, "Task ID is not an integer")
 
     if task_id <= 0:
-        throw_error(400, 'INV_INPUT_BELOW_RANGE',
+        throw_error(400, INV_INPUT_BELOW_RANGE,
                     "Task ID must be a positive value")
     if task_id > 65535:
-        throw_error(400, 'INV_INPUT_EXCEEDS_RANGE', "Task ID is too large")
+        throw_error(400, INV_INPUT_EXCEEDS_RANGE, "Task ID is too large")
 
     for task in tasks['members']:
         if task['id'] == task_id:
             return flask.make_response(json.dumps(task), 200)
 
-    throw_error(400, 'BAD_REQUEST', "Task not found: '%s'" % task_id)
+    throw_error(404, NON_EXISTENT_TASK, "Task not found: '%s'" % task_id)
 
 
 @app.route('/api/v1/tasks', methods=['GET'])
@@ -1251,19 +1271,19 @@ def create_key_value_pair(volume_name):
     value = kv_pair['value']
 
     if key is None:
-        throw_error(400, 'INV_INPUT_MISSING_REQUIRED', 'key not specified.')
+        throw_error(400, INV_INPUT_MISSING_REQUIRED, 'key not specified.')
 
     if value is None:
-        throw_error(400, 'INV_INPUT_MISSING_REQUIRED', 'value not specified.')
+        throw_error(400, INV_INPUT_MISSING_REQUIRED, 'value not specified.')
 
     if len(key) > 31 or len(value) > 31:
-        throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH',
+        throw_error(400, INV_INPUT_EXCEEDS_LENGTH,
                     'invalid input: string length exceeds limit')
 
     charset = {'!', '@', '#', '$', '%', '&', '^'}
     for char in charset:
         if char in key or char in value:
-            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+            throw_error(400, INV_INPUT_ILLEGAL_CHAR,
                         'Error parsing key or value')
 
     vol_exists = False
@@ -1279,7 +1299,7 @@ def create_key_value_pair(volume_name):
 
             for kv_pair in member['metadata']['members']:
                 if kv_pair['key'] == key:
-                    throw_error(409, 'EXISTENT_OBJECT_KEY',
+                    throw_error(409, EXISTENT_OBJECT_KEY,
                                 "Key '%s' already exist." % key)
 
             member['metadata']['members'].append({'key': key, 'value': value})
@@ -1287,7 +1307,7 @@ def create_key_value_pair(volume_name):
             break
 
     if not vol_exists:
-        throw_error(404, 'NON_EXISTENT_VOL', "volume doesn't exist")
+        throw_error(404, NON_EXISTENT_VOL, "volume doesn't exist")
 
     return flask.make_response("Created", 201)
 
@@ -1300,19 +1320,19 @@ def update_key_value_pair(volume_name, key):
     value = body['value']
 
     if key is None:
-        throw_error(400, 'INV_INPUT_MISSING_REQUIRED', 'key not specified.')
+        throw_error(400, INV_INPUT_MISSING_REQUIRED, 'key not specified.')
 
     if value is None:
-        throw_error(400, 'INV_INPUT_MISSING_REQUIRED', 'value not specified.')
+        throw_error(400, INV_INPUT_MISSING_REQUIRED, 'value not specified.')
 
     if len(key) > 31 or len(value) > 31:
-        throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH',
+        throw_error(400, INV_INPUT_EXCEEDS_LENGTH,
                     'invalid input: string length exceeds limit')
 
     charset = {'!', '@', '#', '$', '%', '&', '^'}
     for char in charset:
         if char in key or char in value:
-            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+            throw_error(400, INV_INPUT_ILLEGAL_CHAR,
                         'Error parsing key or value')
 
     vol_exists = False
@@ -1321,7 +1341,7 @@ def update_key_value_pair(volume_name, key):
             vol_exists = True
 
             if 'metadata' not in member:
-                throw_error(404, 'NON_EXISTENT_OBJECT_KEY',
+                throw_error(404, NON_EXISTENT_OBJECT_KEY,
                             "Key '%s' does not exist." % key)
 
             keyFound = False
@@ -1331,13 +1351,13 @@ def update_key_value_pair(volume_name, key):
                     keyFound = True
 
             if not keyFound:
-                throw_error(404, 'NON_EXISTENT_OBJECT_KEY',
+                throw_error(404, NON_EXISTENT_OBJECT_KEY,
                             "Key '%s' does not exist." % key)
 
             break
 
     if not vol_exists:
-        throw_error(404, 'NON_EXISTENT_VOL', "volume doesn't exist")
+        throw_error(404, NON_EXISTENT_VOL, "volume doesn't exist")
 
     return flask.make_response("OK", 200)
 
@@ -1348,13 +1368,13 @@ def get_key_value_pair(volume_name, key):
     debugRequest(flask.request)
 
     if len(key) > 31:
-        throw_error(400, 'INV_INPUT_EXCEEDS_LENGTH',
+        throw_error(400, INV_INPUT_EXCEEDS_LENGTH,
                     'invalid input: string length exceeds limit')
 
     charset = {'!', '@', '#', '$', '%', '&', '^'}
     for char in charset:
         if char in key:
-            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+            throw_error(400, INV_INPUT_ILLEGAL_CHAR,
                         'Error parsing key or value')
 
     vol_exists = False
@@ -1364,7 +1384,7 @@ def get_key_value_pair(volume_name, key):
             vol_exists = True
 
             if 'metadata' not in member:
-                throw_error(404, 'NON_EXISTENT_OBJECT_KEY',
+                throw_error(404, NON_EXISTENT_OBJECT_KEY,
                             "Key '%s' does not exist." % key)
 
             keyFound = False
@@ -1375,13 +1395,13 @@ def get_key_value_pair(volume_name, key):
                     break
 
             if not keyFound:
-                throw_error(404, 'NON_EXISTENT_OBJECT_KEY',
+                throw_error(404, NON_EXISTENT_OBJECT_KEY,
                             "Key '%s' does not exist." % key)
 
             break
 
     if not vol_exists:
-        throw_error(404, 'NON_EXISTENT_VOL', "volume doesn't exist")
+        throw_error(404, NON_EXISTENT_VOL, "volume doesn't exist")
 
     return resp
 
@@ -1403,7 +1423,7 @@ def get_all_key_value_pairs(volume_name):
             break
 
     if not vol_exists:
-        throw_error(404, 'NON_EXISTENT_VOL', "volume doesn't exist")
+        throw_error(404, NON_EXISTENT_VOL, "volume doesn't exist")
 
     return resp
 
@@ -1414,17 +1434,17 @@ def remove_key_value_pair(volume_name, key):
     debugRequest(flask.request)
 
     if key is None:
-        throw_error(404, 'NON_EXISTENT_OBJECT_KEY',
+        throw_error(404, NON_EXISTENT_OBJECT_KEY,
                     "Key '%s' does not exist." % key)
 
     if len(key) > 31:
-        throw_error(404, 'NON_EXISTENT_OBJECT_KEY',
+        throw_error(404, NON_EXISTENT_OBJECT_KEY,
                     "Key '%s' does not exist." % key)
 
     charset = {'!', '@', '#', '$', '%', '&', '^'}
     for char in charset:
         if char in key:
-            throw_error(400, 'INV_INPUT_ILLEGAL_CHAR',
+            throw_error(400, INV_INPUT_ILLEGAL_CHAR,
                         'Error parsing key or value')
 
     vol_exists = False
@@ -1433,7 +1453,7 @@ def remove_key_value_pair(volume_name, key):
             vol_exists = True
 
             if 'metadata' not in member:
-                throw_error(404, 'NON_EXISTENT_OBJECT_KEY',
+                throw_error(404, NON_EXISTENT_OBJECT_KEY,
                             "Key '%s' does not exist." % key)
 
             keyFound = False
@@ -1443,13 +1463,13 @@ def remove_key_value_pair(volume_name, key):
                     keyFound = True
 
             if not keyFound:
-                throw_error(404, 'NON_EXISTENT_OBJECT_KEY',
+                throw_error(404, NON_EXISTENT_OBJECT_KEY,
                             "Key '%s' does not exist." % key)
 
             break
 
     if not vol_exists:
-        throw_error(404, 'NON_EXISTENT_VOL', "volume doesn't exist")
+        throw_error(404, NON_EXISTENT_VOL, "volume doesn't exist")
 
     return flask.make_response("OK", 200)
 
