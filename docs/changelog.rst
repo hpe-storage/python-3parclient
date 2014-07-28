@@ -1,81 +1,77 @@
 Changelog
 =========
 
-Changes in Version 3.0.1
+Changes in Version 3.1.0
 ------------------------
-- Added APIs
-  - setVolumeMetaData
-  - getVolumeMetaData
-  - getAllVolumeMetaData
-  - removeVolumeMetaData
-  - findVolumeMetaData
-- Added two new enumerations for CHAP initiator and target.
-- Converted existing metadata functions to use REST API calls
-  instead of SSH.
-- Updated the minimum required HP 3PAR build version to be 3.1.3.230.
-- Added support for volume metadata REST API calls in the flask server.
 
-- Added host set API:
-  - findHostSet
-  - getHostSets
-  - getHostSet
-  - createHostSet
-  - deleteHostSet
-  - modifyHostSet
-  - addHostToHostSet
-  - removeHostFromHostSet
-  - removeHostFromItsHostSet
-
-- Added showpatch API:
-  - getPatch
-  - getPatches
-
-- Unit tests and flask server
-  - Fixed missing tearDown() to improve flask server shutdown.
-  - Added VLUN and host set check before allowing deleteHost.
-  - Fixed some flask error codes and error messages to match array.
-  - Removed the test_ prefix from classes that don't contain tests.
-  - Reduced volume sizes used in tests.
-  - Made domain, cpg_ldlayout_ha, known_hosts_file and missing_key_policy configurable.
-  - Added more tests.
-
-- Bug fixes
-  - Fixed an incorrect exception message for getHostVLUNs.
+* Added APIs
+   - setVolumeMetaData
+   - getVolumeMetaData
+   - getAllVolumeMetaData
+   - removeVolumeMetaData
+   - findVolumeMetaData
+* Added two new enumerations for CHAP initiator and target.
+* Converted existing metadata functions to use REST API calls instead of SSH.
+* Updated the minimum required HP 3PAR build version to be 3.1.3.230.  This
+  corresponds to 3.1.3 MU1 firmware.
+* Added support for volume metadata REST API calls in the flask server.
+* Added host set API:
+   - findHostSet
+   - getHostSets
+   - getHostSet
+   - createHostSet
+   - deleteHostSet
+   - modifyHostSet
+   - addHostToHostSet
+   - removeHostFromHostSet
+   - removeHostFromItsHostSet
+* Added showpatch API:
+   - getPatch
+   - getPatches
+* Unit tests and flask server
+   - Fixed missing tearDown() to improve flask server shutdown.
+   - Added VLUN and host set check before allowing deleteHost.
+   - Fixed some flask error codes and error messages to match array.
+   - Removed the 'test\_' prefix from classes that don't contain tests.
+   - Reduced volume sizes used in tests.
+   - Made domain and cpg_ldlayout_ha configurable.
+   - Added more tests.
+* Bug fixes
+   - Fixed an incorrect exception message for getHostVLUNs.
 
 Changes in Version 3.0.0
 ------------------------
-- Requires the 3.1.3 3PAR Firmware or greater.
-- Added new 3.1.3 firmware APIs.
-- Added support for QOS and Virtual Volume sets
-- Added query host by wwns or iqns
-- Added APIs for getTasks, stopOfflinePhysicalCopy, modifyVolume
+* Requires the 3.1.3 3PAR Firmware or greater.
+* Added new 3.1.3 firmware APIs.
+* Added support for QOS and Virtual Volume sets
+* Added query host by wwns or iqns
+* Added APIs for getTasks, stopOfflinePhysicalCopy, modifyVolume
 
 Changes in Version 2.9.2
 ------------------------
-- Removed the ssh pooling to fix an issue with timeouts
+* Removed the ssh pooling to fix an issue with timeouts
 
 Changes in Version 2.9.1
 ------------------------
-- Renamed stopPhysicalCopy to stopOnlinePhysicalCopy
+* Renamed stopPhysicalCopy to stopOnlinePhysicalCopy
 
 Changes in Version 2.9.0
 ------------------------
-- Added SSH interface
-- Added stopPhysicalCopy
-- updated doc string to fix some pylint
+* Added SSH interface
+* Added stopPhysicalCopy
+* updated doc string to fix some pylint
 
 Changes in Version 1.1.0
 ------------------------
 
-- Added support for hosts and ports
+* Added support for hosts and ports
 
 Changes in Version 1.0.1
 ------------------------
 
-- The unit tests now work when running nosetest from the top level dir 
+* The unit tests now work when running nosetest from the top level dir
   and from the test dir
 
 Changes in Version 1.0.0
 ------------------------
-
-- First implementation of the REST API Client
+* First implementation of the REST API Client
