@@ -331,7 +331,7 @@ _code_map = dict((c.http_status, c) for c in
                   HTTPExpectationFailed, HTTPTeaPot,
                   HTTPNotImplemented, HTTPBadGateway,
                   HTTPServiceUnavailable, HTTPGatewayTimeout,
-                  HTTPVersionNotSupported])
+                  HTTPVersionNotSupported, HTTPInternalServerError])
 
 
 def from_response(response, body):

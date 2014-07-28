@@ -483,8 +483,8 @@ def modify_host(host_name):
                                         if path == h_paths:
                                             throw_error(409, 'EXISTENT_PATH',
                                                         'iSCSI name is already'
-                                                        'claimed by other host'
-                                                        '.')
+                                                        ' claimed by other '
+                                                        'host.')
                         for path in data['iSCSINames']:
                             host['iSCSINames'].append(path)
                         resp = flask.make_response(json.dumps(host), 200)
@@ -514,9 +514,9 @@ def modify_host(host_name):
                                     for h_paths in host['FCWWNs']:
                                         if path == h_paths:
                                             throw_error(409, 'EXISTENT_PATH',
-                                                        'WWN is already'
-                                                        'claimed by other host'
-                                                        '.')
+                                                        'WWN is already '
+                                                        'claimed by other '
+                                                        'host.')
                         for path in data['FCWWNs']:
                             host['FCWWNs'].append(path)
                         resp = flask.make_response(json.dumps(host), 200)
