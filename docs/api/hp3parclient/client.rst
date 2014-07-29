@@ -7,6 +7,8 @@
    .. autoclass:: hp3parclient.client.HP3ParClient(api_url)
 
       .. automethod:: getWsApiVersion
+      .. automethod:: getStorageSystemInfo
+      .. automethod:: getWSAPIConfigurationInfo
       .. automethod:: debug_rest
       .. automethod:: login
       .. automethod:: logout
@@ -15,6 +17,9 @@
       .. automethod:: getVolume
       .. automethod:: createVolume
       .. automethod:: deleteVolume
+      .. automethod:: modifyVolume
+      .. automethod:: growVolume
+      .. automethod:: copyVolume
       .. automethod:: createSnapshot
       .. automethod:: getCPGs
       .. automethod:: getCPG
@@ -37,6 +42,8 @@
       .. automethod:: modifyHost
       .. automethod:: getHosts
       .. automethod:: getHost
+      .. automethod:: findHost
+      .. automethod:: queryHost
       .. automethod:: deleteHost
       .. automethod:: getHostVLUNs
       .. automethod:: getPorts
@@ -62,3 +69,10 @@
       .. automethod:: getAllVolumeMetaData
       .. automethod:: removeVolumeMetaData
       .. automethod:: findVolumeMetaData
+      .. automethod:: isOnlinePhysicalCopy
+      .. automethod:: stopOnlinePhysicalCopy
+      .. automethod:: stopOfflinePhysicalCopy
+      .. automethod:: getAllTasks
+      .. automethod:: getTask
+      .. automethod:: getPatches
+      .. automethod:: getPatch

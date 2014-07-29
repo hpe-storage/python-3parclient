@@ -15,6 +15,20 @@ Changes in Version 3.1.0
 * Updated the minimum required HP 3PAR build version to be 3.1.3.230.  This
   corresponds to 3.1.3 MU1 firmware.
 * Added support for volume metadata REST API calls in the flask server.
+* Numerous API documentation improvements
+* Fixed 2 enumerations
+   - PORT_TYPE_RCIP changed to 7
+   - PORT_YPTE_ISCSI changed to 8
+* Numerous Enumerations added
+   - Port Type
+   - Port Protocol
+   - Task Type
+   - VLUN Type
+   - CPG RAID
+   - CPG HA
+   - CPG Chunklet
+   - CPG Disk Type
+   - Host Persona
 * Added host set API:
    - findHostSet
    - getHostSets
