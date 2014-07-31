@@ -210,7 +210,7 @@ class HTTPJSONRESTClient(httplib2.Http):
         return resp, body
 
     def _do_reauth(self, url, method, ex, **kwargs):
-        print("_do_reauth called")
+        # print("_do_reauth called")
         try:
             if self.auth_try != 1:
                 self._reauth()
@@ -231,11 +231,11 @@ class HTTPJSONRESTClient(httplib2.Http):
                                             **kwargs)
             return resp, body
         except exceptions.HTTPUnauthorized as ex:
-            print("_CS_REQUEST HTTPUnauthorized")
+            # print("_CS_REQUEST HTTPUnauthorized")
             resp, body = self._do_reauth(url, method, ex, **kwargs)
             return resp, body
         except exceptions.HTTPForbidden as ex:
-            print("_CS_REQUEST HTTPForbidden")
+            # print("_CS_REQUEST HTTPForbidden")
             resp, body = self._do_reauth(url, method, ex, **kwargs)
             return resp, body
 

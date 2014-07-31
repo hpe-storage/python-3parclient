@@ -18,7 +18,7 @@ Changes in Version 3.1.0
 * Numerous API documentation improvements
 * Fixed 2 enumerations
    - PORT_TYPE_RCIP changed to 7
-   - PORT_YPTE_ISCSI changed to 8
+   - PORT_TYPE_ISCSI changed to 8
 * Numerous Enumerations added
    - Port Type
    - Port Protocol
