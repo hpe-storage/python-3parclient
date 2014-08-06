@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Changes in Version 3.1.1
+------------------------
+* Fixed an issue with building the ClientException when body of the response
+  was empty.
+
 Changes in Version 3.1.0
 ------------------------
 
