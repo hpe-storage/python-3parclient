@@ -3,7 +3,7 @@ Installing / Upgrading
 .. highlight:: bash
 
 
-**HP3ParClient** is in the `Python Package Index
+**HP3PARClient** is in the `Python Package Index
 <http://pypi.python.org/pypi/hp3parclient/>`_.
 
 Installing with pip

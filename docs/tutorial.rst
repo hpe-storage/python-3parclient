@@ -2,11 +2,11 @@ Tutorial
 ========
 
 This tutorial is intended as an introduction to working with
-**HP3ParClient**.
+**HP3PARClient**.
 
 Prerequisites
 -------------
-Before we start, make sure that you have the **HP3ParClient** distribution
+Before we start, make sure that you have the **HP3PARClient** distribution
 :doc:`installed <installation>`. In the Python shell, the following
 should run without raising an exception:
 
@@ -19,7 +19,7 @@ WSAPI service is enabled and running.
 
 Create the Client and login
 ---------------------------
-The first step when working with **HP3ParClient** is to create a
+The first step when working with **HP3PARClient** is to create a
 :class:`~hp3parclient.client.HP3ParClient` to the 3PAR drive array 
 and logging in to create the session.   You must :meth:`~hp3parclient.client.HP3ParClient.login` prior to calling the other APIs to do work on the 3PAR.
 Doing so is easy:
