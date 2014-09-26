@@ -126,22 +126,24 @@ class HP3ParClientSystemTestCase(hp3parbase.HP3ParClientBaseTestCase):
     def test_query_task_negative(self):
         self.printHeader("query_task_negative")
 
-        try:
-            self.cl.getTask(-1)
-        except exceptions.HTTPBadRequest:
-            return
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.getTask,
+            -1
+        )
 
-        self.fail("expected an HTTP Bad Request exception")
+        self.printFooter("query_task_negative")
 
     def test_query_task_non_int(self):
         self.printHeader("query_task_non_int")
 
-        try:
-            self.cl.getTask("nonIntTask")
-        except exceptions.HTTPBadRequest:
-            return
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.getTask,
+            "nonIntTask"
+        )
 
-        self.fail("expected an HTTP Bad Request exception")
+        self.printFooter("query_task_non_int")
 
 
 # testing

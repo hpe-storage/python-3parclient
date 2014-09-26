@@ -98,6 +98,7 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
 
     def test_crud_host_without_host_set(self):
         """CRUD test for attach/detach VLUN to host w/o a host set."""
+        self.printHeader("crud_host_without_host_set")
 
         test_prefix = 'UT1_'
         #
@@ -167,16 +168,11 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         self.cl.deleteVLUN(*vlun1)
 
         # Make sure that we cannot delete the host while there is still a vlun
-        try:
+        with self.assertRaises(exceptions.HTTPConflict) as cm:
             self.cl.deleteHost(host_name)
-        except exceptions.HTTPConflict as e:
-            self.assertEqual(e.get_code(), 26)
-            self.assertEqual(e.get_description(), "has exported VLUN")
-            pass
-        except Exception:
-            raise
-        else:
-            self.fail("Expected an exception when deleting a host with a vlun")
+        e = cm.exception
+        self.assertEqual(e.get_code(), 26)
+        self.assertEqual(e.get_description(), "has exported VLUN")
 
         self.cl.deleteVLUN(*vlun2)
 
@@ -188,8 +184,11 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         self.cl.deleteVolume(volume_name2)
         self.cl.deleteCPG(cpg_name)
 
+        self.printFooter("crud_host_without_host_set")
+
     def test_crud_host_with_host_set(self):
         """CRUD test for attach/detach VLUN to host in host set."""
+        self.printHeader("crud_host_with_host_set")
 
         test_prefix = 'UT2_'
 
@@ -278,31 +277,20 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         self.cl.deleteVLUN(*vlun1)
 
         # Make sure that we cannot delete the host while there is still a vlun
-        try:
+        with self.assertRaises(exceptions.HTTPConflict) as cm:
             self.cl.deleteHost(host_name)
-        except exceptions.HTTPConflict as e:
-            self.assertEqual(e.get_code(), EXPORTED_VLUN)
-            self.assertEqual(e.get_description(), "has exported VLUN")
-            pass
-        except Exception:
-            raise
-        else:
-            self.fail("Expected an exception when deleting a host with a vlun")
+        e = cm.exception
+        self.assertEqual(e.get_code(), EXPORTED_VLUN)
+        self.assertEqual(e.get_description(), "has exported VLUN")
 
         self.cl.deleteVLUN(*vlun2)
 
         # Make sure that we cannot delete the host while it is in a host set
-        try:
+        with self.assertRaises(exceptions.HTTPConflict) as cm:
             self.cl.deleteHost(host_name)
-        except exceptions.HTTPConflict as e:
-            self.assertEqual(e.get_code(), HOST_IN_SET)
-            self.assertEqual(e.get_description(), "host is a member of a set")
-            pass
-        except Exception:
-            raise
-        else:
-            self.fail("Expected an exception when deleting a host in a host "
-                      "set")
+        e = cm.exception
+        self.assertEqual(e.get_code(), HOST_IN_SET)
+        self.assertEqual(e.get_description(), "host is a member of a set")
 
         self.cl.removeHostFromItsHostSet(host_name)
 
@@ -315,8 +303,11 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         self.cl.deleteVolume(volume_name2)
         self.cl.deleteCPG(cpg_name)
 
+        self.printFooter("crud_host_with_host_set")
+
     def test_host_set_name_too_long(self):
         """Host set name too long."""
+        self.printHeader("host_set_name_too_long")
 
         test_prefix = 'UT_'
 
@@ -326,65 +317,53 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         host_sets_to_delete.append(host_set_name)
 
         pre_count = len(self.cl.getHostSets()['members'])
-        try:
+        with self.assertRaises(exceptions.HTTPBadRequest) as cm:
             self.cl.createHostSet(host_set_name)
-        except exceptions.HTTPBadRequest as e:
-            self.assertEqual(
-                e.get_description(),
-                "invalid input: string length exceeds limit")
-        except Exception:
-            raise
-        else:
-            self.fail("Expected an exception for host set name too long.")
+        e = cm.exception
+        self.assertEqual(
+            e.get_description(),
+            "invalid input: string length exceeds limit")
 
         post_count = len(self.cl.getHostSets()['members'])
         self.assertEqual(pre_count, post_count)
-        try:
-            self.cl.getHostSet(host_set_name)
-        except exceptions.HTTPNotFound:
-            pass
-        except Exception:
-            raise
-        else:
-            self.fail("Expected not found")
+        self.assertRaises(
+            exceptions.HTTPNotFound,
+            self.cl.getHostSet,
+            host_set_name
+        )
 
-        try:
+        with self.assertRaises(exceptions.HTTPBadRequest) as cm:
             self.cl.modifyHostSet(host_set_name, comment="not gonna happen")
-        except exceptions.HTTPBadRequest as e:
-            self.assertEqual(
-                e.get_description(),
-                "invalid input: string length exceeds limit")
-        except Exception:
-            raise
-        else:
-            self.fail("Expected an exception for host set name too long.")
+        e = cm.exception
+        self.assertEqual(
+            e.get_description(),
+            "invalid input: string length exceeds limit")
 
-        try:
-            self.cl.deleteHostSet(host_set_name)
-        except exceptions.HTTPNotFound:
-            pass
-        except Exception:
-            raise
-        else:
-            self.fail("Expected host set not found")
+        self.assertRaises(
+            exceptions.HTTPNotFound,
+            self.cl.deleteHostSet,
+            host_set_name
+        )
+
+        self.printFooter("host_set_name_too_long")
 
     def test_host_set_name_invalid(self):
         """Host set name with invalid characters."""
+        self.printHeader("host_set_name_invalid")
 
         # name has invalid characters
         host_set_name = "HostSet-!nval!d"
-        try:
+        with self.assertRaises(exceptions.HTTPBadRequest) as cm:
             self.cl.getHostSet(host_set_name)
-        except exceptions.HTTPBadRequest as e:
-            self.assertEqual(e.get_description(),
-                             "illegal character in input")
-        except Exception:
-            raise
-        else:
-            self.fail("Expected illegal character in host set")
+        e = cm.exception
+        self.assertEqual(e.get_description(),
+                         "illegal character in input")
+
+        self.printFooter("host_set_name_invalid")
 
     def test_duplicate_host_set_name(self):
         """Host set name already exists."""
+        self.printHeader("duplicate_host_set_name")
 
         test_prefix = 'UT3_'
 
@@ -399,19 +378,19 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         post_count = len(self.cl.getHostSets()['members'])
         self.assertEqual(pre_count + 1, post_count)
         pre_count = post_count
-        try:
-            self.cl.createHostSet(host_set_name)
-        except exceptions.HTTPConflict:
-            pass
-        except Exception:
-            raise
-        else:
-            self.fail("Expected HttpConflict creating host set twice")
+        self.assertRaises(
+            exceptions.HTTPConflict,
+            self.cl.createHostSet,
+            host_set_name
+        )
         post_count = len(self.cl.getHostSets()['members'])
         self.assertEqual(pre_count, post_count)
 
+        self.printFooter("duplicate_host_set_name")
+
     def test_modify_param_conflict(self):
         """Test modify of host sets parameter conflict."""
+        self.printHeader("modify_param_conflict")
 
         test_prefix = 'UT4_'
 
@@ -422,19 +401,20 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         host_sets_to_delete.append(host_set_name2)
         new_comment = "new comment"
         new_member = "bogushost"
-        try:
+        with self.assertRaises(exceptions.HTTPBadRequest) as cm:
             self.cl.modifyHostSet(host_set_name1, 1, host_set_name2,
                                   new_comment, setmembers=[new_member])
-        except exceptions.HTTPBadRequest as e:
-            self.assertEqual(e.get_description(),
-                             "invalid input: parameters cannot be present"
-                             " at the same time")
-            self.assertEqual(e.get_code(), INV_INPUT_PARAM_CONFLICT)
-        else:
-            self.fail("expected exception")
+        e = cm.exception
+        self.assertEqual(e.get_description(),
+                         "invalid input: parameters cannot be present"
+                         " at the same time")
+        self.assertEqual(e.get_code(), INV_INPUT_PARAM_CONFLICT)
+
+        self.printFooter("modify_param_conflict")
 
     def test_bogus_host(self):
         """Modify of host set with bogus host."""
+        self.printHeader("bogus_host")
 
         test_prefix = 'UT5_'
 
@@ -443,16 +423,17 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         self.cl.createHostSet(host_set_name1)
         new_member = "bogushost"
 
-        try:
+        with self.assertRaises(exceptions.HTTPNotFound) as cm:
             self.cl.modifyHostSet(host_set_name1, 1, setmembers=[new_member])
-        except exceptions.HTTPNotFound as e:
-            self.assertEqual(e.get_description(), "host does not exist")
-            self.assertEqual(e.get_code(), 17)
-        else:
-            self.fail("expected exception")
+        e = cm.exception
+        self.assertEqual(e.get_description(), "host does not exist")
+        self.assertEqual(e.get_code(), 17)
+
+        self.printFooter("bogus_host")
 
     def test_modify(self):
         """Test modify of host sets."""
+        self.printHeader("modify")
 
         test_prefix = 'UT6_'
 
@@ -470,13 +451,11 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         hosts_to_delete.append(created_host1)
         self.cl.createHost(created_host1)
         self.cl.modifyHostSet(host_set_name2, 1, setmembers=[created_host1])
-
-        try:
-            self.cl.getHostSet(host_set_name1)
-        except exceptions.HTTPNotFound:
-            pass
-        else:
-            self.fail("expected exception")
+        self.assertRaises(
+            exceptions.HTTPNotFound,
+            self.cl.getHostSet,
+            host_set_name1
+        )
 
         host2 = self.cl.getHostSet(host_set_name2)
         self.assertEqual(host2['name'], host_set_name2)
@@ -490,3 +469,5 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
 
         host2 = self.cl.getHostSet(host_set_name2)
         self.assertEqual(host2['setmembers'], [created_host1, created_host2])
+
+        self.printFooter("modify")

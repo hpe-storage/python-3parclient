@@ -5,6 +5,7 @@ Changes in Version 3.1.2
 ------------------------
 * Added API
    - findAllVolumeSets
+* Revised unit tests to use asserts instead of try/catch/except blocks.
 
 Changes in Version 3.1.1
 ------------------------

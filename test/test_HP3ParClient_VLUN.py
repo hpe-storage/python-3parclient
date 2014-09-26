@@ -230,17 +230,16 @@ class HP3ParClientVLUNTestCase(hp3parbase.HP3ParClientBaseTestCase):
         self.cl.getVLUN(VOLUME_NAME2)
 
         port = {'node': 8, 'cardPort': 8, 'slot': 8}
-        try:
-            self.cl.deleteVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2, port)
-        except exceptions.HTTPBadRequest:
-            print('Expected exception')
-            self.printFooter('delete_VLUN_portNonExist')
-            return
-        except Exception as ex:
-            print(ex)
-            self.fail('Failed with unexpected exception')
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.deleteVLUN,
+            VOLUME_NAME2,
+            LUN_2,
+            HOST_NAME2,
+            port
+        )
 
-        self.fail('No exception occurred.')
+        self.printFooter("delete_VLUN_portNonExist")
 
     def test_3_delete_VLUNs(self):
         self.printHeader('delete_VLUNs')
@@ -248,17 +247,16 @@ class HP3ParClientVLUNTestCase(hp3parbase.HP3ParClientBaseTestCase):
         self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
         self.cl.getVLUN(VOLUME_NAME1)
         self.cl.deleteVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
-        try:
-            self.cl.deleteVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1, PORT_1)
-        except exceptions.HTTPNotFound:
-            print('Expected exception')
-            self.printFooter('delete_VLUNs')
-            return
-        except Exception as ex:
-            print(ex)
-            self.fail('Failed with unexpected exception')
+        self.assertRaises(
+            exceptions.HTTPNotFound,
+            self.cl.deleteVLUN,
+            VOLUME_NAME1,
+            LUN_1,
+            HOST_NAME1,
+            PORT_1
+        )
 
-        self.fail('No exception occurred.')
+        self.printFooter('delete_VLUNs')
 
     def test_4_get_host_VLUNs(self):
         self.printHeader('get_host_vluns')
@@ -279,16 +277,13 @@ class HP3ParClientVLUNTestCase(hp3parbase.HP3ParClientBaseTestCase):
     def test_4_get_host_VLUNs_unknown_host(self):
         self.printHeader('get_host_vluns_unknown_host')
 
-        try:
-            self.cl.getHostVLUNs('bogusHost')
-        except exceptions.HTTPNotFound:
-            self.printFooter('get_host_vluns_unknown_host')
-            return
-        except Exception as ex:
-            print(ex)
-            self.fail('Failed with unexpected exception')
+        self.assertRaises(
+            exceptions.HTTPNotFound,
+            self.cl.getHostVLUNs,
+            'bogusHost'
+        )
 
-        self.fail('Expected an exception')
+        self.printFooter('get_host_vluns_unknown_host')
 
 # testing
 # suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVLUNTestCase)
