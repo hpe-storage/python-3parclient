@@ -203,6 +203,7 @@ class HP3ParClient(object):
             raise exceptions.SSHException('SSH is not initialized. Initialize'
                                           ' it by calling "setSSHOptions".')
         else:
+            self.ssh.open()
             return self.ssh.run(cmd)
 
     def getWsApiVersion(self):
@@ -249,11 +250,14 @@ class HP3ParClient(object):
 
     def logout(self):
         """This destroys the session and logs out from the 3PAR server.
+           The SSH connection to the 3PAR server is also closed.
 
         :returns: None
 
         """
         self.http.unauthenticate()
+        if self.ssh:
+            self.ssh.close()
 
     def getStorageSystemInfo(self):
         """Get the Storage System Information

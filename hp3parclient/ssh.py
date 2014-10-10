@@ -83,44 +83,50 @@ class HP3PARSSHClient(object):
                     )
 
             ssh.set_missing_host_key_policy(missing_key_policy)
-            if self.san_password:
-                ssh.connect(self.san_ip,
-                            port=self.san_ssh_port,
-                            username=self.san_login,
-                            password=self.san_password,
-                            timeout=self.ssh_conn_timeout)
-            elif self.san_privatekey:
-                pkfile = os.path.expanduser(self.san_privatekey)
-                privatekey = paramiko.RSAKey.from_private_key_file(pkfile)
-                ssh.connect(self.san_ip,
-                            port=self.san_ssh_port,
-                            username=self.san_login,
-                            pkey=privatekey,
-                            timeout=self.ssh_conn_timeout)
-            else:
-                msg = "Specify a password or private_key"
-                raise exceptions.SSHException(msg)
+            self._connect(ssh)
 
-            # Paramiko by default sets the socket timeout to 0.1 seconds,
-            # ignoring what we set through the sshclient. This doesn't help for
-            # keeping long lived connections. Hence we have to bypass it, by
-            # overriding it after the transport is initialized. We are setting
-            # the sockettimeout to None and setting a keepalive packet so that,
-            # the server will keep the connection open. All that does is send
-            # a keepalive packet every ssh_conn_timeout seconds.
-            if self.ssh_conn_timeout:
-                transport = ssh.get_transport()
-                transport.sock.settimeout(None)
-                transport.set_keepalive(self.ssh_conn_timeout)
             self.ssh = ssh
         except Exception as e:
             msg = "Error connecting via ssh: %s" % e
             self._logger.error(msg)
             raise paramiko.SSHException(msg)
 
+    def _connect(self, ssh):
+        if self.san_password:
+            ssh.connect(self.san_ip,
+                        port=self.san_ssh_port,
+                        username=self.san_login,
+                        password=self.san_password,
+                        timeout=self.ssh_conn_timeout)
+        elif self.san_privatekey:
+            pkfile = os.path.expanduser(self.san_privatekey)
+            privatekey = paramiko.RSAKey.from_private_key_file(pkfile)
+            ssh.connect(self.san_ip,
+                        port=self.san_ssh_port,
+                        username=self.san_login,
+                        pkey=privatekey,
+                        timeout=self.ssh_conn_timeout)
+        else:
+            msg = "Specify a password or private_key"
+            raise exceptions.SSHException(msg)
+
+    def open(self):
+        """Opens a new SSH connection if the transport layer is missing.
+
+        This can be called if an active SSH connection is open already.
+
+        """
+        # Create a new SSH connection if the transport layer is missing.
+        if self.ssh and not self.ssh.get_transport():
+            try:
+                self._connect(self.ssh)
+            except Exception as e:
+                msg = "Error connecting via ssh: %s" % e
+                self._logger.error(msg)
+                raise paramiko.SSHException(msg)
+
     def close(self):
         if self.ssh:
-            print("closing ssh")
             self.ssh.close()
 
     def set_debug_flag(self, flag):

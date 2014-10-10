@@ -88,6 +88,10 @@ class HP3ParClientMockSSHTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
             mock_ssh.assert_called_with(missing_key_policy=missing_key_policy,
                                         known_hosts_file=known_hosts_file)
 
+        # Create a mocked ssh object for the client so that it can be
+        # "closed" during a logout.
+        self.cl.ssh = mock.MagicMock()
+
     @mock.patch('hp3parclient.ssh.HP3PARSSHClient')
     def do_mock_ssh(self, known_hosts_file, missing_key_policy,
                     mock_ssh_client):
