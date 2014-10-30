@@ -6,6 +6,7 @@ Changes in Version 3.1.2
 * Added API
    - findAllVolumeSets
 * Revised unit tests to use asserts instead of try/catch/except blocks.
+* Removed SSH call from the findVolumeSet method and replaced it with REST.
 
 Changes in Version 3.1.1
 ------------------------

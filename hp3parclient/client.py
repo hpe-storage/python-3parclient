@@ -1924,17 +1924,16 @@ class HP3ParClient(object):
     # VolumeSet methods
     def findVolumeSet(self, name):
         """
-        Find the Volume Set name for a volume.
+        Find the first Volume Set that contains a volume.
 
         :param name: the volume name
         :type name: str
         """
-        cmd = ['showvvset', '-vv', name]
-        out = self._run(cmd)
+
+        vvset_names = self.findAllVolumeSets(name)
         vvset_name = None
-        if out and len(out) > 1:
-            info = out[1].split(",")
-            vvset_name = info[1]
+        if vvset_names:
+            vvset_name = vvset_names[0]
 
         return vvset_name
 
