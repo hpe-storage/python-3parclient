@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Changes in Version 3.1.2
+------------------------
+* Added API
+   - findAllVolumeSets
+
 Changes in Version 3.1.1
 ------------------------
 * Added known_host_file and missing_key_policy parameters to:

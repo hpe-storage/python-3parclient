@@ -25,10 +25,12 @@ CPG_NAME1 = 'CPG1_UNIT_TEST' + hp3parbase.TIME
 CPG_NAME2 = 'CPG2_UNIT_TEST' + hp3parbase.TIME
 VOLUME_NAME1 = 'VOLUME1_UNIT_TEST' + hp3parbase.TIME
 VOLUME_NAME2 = 'VOLUME2_UNIT_TEST' + hp3parbase.TIME
+VOLUME_NAME3 = 'VOLUME3_UNIT_TEST' + hp3parbase.TIME
 SNAP_NAME1 = 'SNAP_UNIT_TEST' + hp3parbase.TIME
 DOMAIN = 'UNIT_TEST_DOMAIN'
 VOLUME_SET_NAME1 = 'VOLUME_SET1_UNIT_TEST' + hp3parbase.TIME
 VOLUME_SET_NAME2 = 'VOLUME_SET2_UNIT_TEST' + hp3parbase.TIME
+VOLUME_SET_NAME3 = 'VOLUME_SET3_UNIT_TEST' + hp3parbase.TIME
 SIZE = 512
 
 
@@ -58,11 +60,19 @@ class HP3ParClientVolumeTestCase(hp3parbase.HP3ParClientBaseTestCase):
         except Exception:
             pass
         try:
+            self.cl.deleteVolumeSet(VOLUME_SET_NAME3)
+        except Exception:
+            pass
+        try:
             self.cl.deleteVolume(VOLUME_NAME1)
         except Exception:
             pass
         try:
             self.cl.deleteVolume(VOLUME_NAME2)
+        except Exception:
+            pass
+        try:
+            self.cl.deleteVolume(VOLUME_NAME3)
         except Exception:
             pass
         try:
@@ -602,6 +612,41 @@ class HP3ParClientVolumeTestCase(hp3parbase.HP3ParClientBaseTestCase):
             return
 
         self.printFooter('get_volume_sets')
+
+    def test_8_find_all_volume_sets(self):
+        self.printHeader('find_all_volume_sets')
+
+        optional = {'comment': 'test volume 1', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        optional = {'comment': 'test volume 2', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024, optional)
+        optional = {'comment': 'test volume 3', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME3, CPG_NAME1, 1024, optional)
+
+        self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=self.DOMAIN,
+                                comment="Unit test volume set 1")
+        self.cl.createVolumeSet(VOLUME_SET_NAME2,
+                                domain=self.DOMAIN,
+                                comment="Unit test volume set 2",
+                                setmembers=[VOLUME_NAME1])
+        self.cl.createVolumeSet(VOLUME_SET_NAME3,
+                                domain=self.DOMAIN,
+                                comment="Unit test volume set 3",
+                                setmembers=[VOLUME_NAME1, VOLUME_NAME2])
+
+        sets = self.cl.findAllVolumeSets(VOLUME_NAME1)
+        self.assertIsNotNone(sets)
+        set_names = [vset['name'] for vset in sets]
+
+        self.assertIn(VOLUME_SET_NAME2, set_names)
+        self.assertIn(VOLUME_SET_NAME3, set_names)
+        self.assertNotIn(VOLUME_SET_NAME1, set_names)
+
+        sets = self.cl.findAllVolumeSets(VOLUME_NAME3)
+        expected = []
+        self.assertEqual(sets, expected)
+
+        self.printFooter('find_all_volume_sets')
 
     def test_9_del_volume_set_empty(self):
         self.printHeader('del_volume_set_empty')

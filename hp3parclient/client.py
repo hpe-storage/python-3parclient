@@ -1938,6 +1938,34 @@ class HP3ParClient(object):
 
         return vvset_name
 
+    def findAllVolumeSets(self, name):
+        """
+        Return a list of every Volume Set the given volume is a part of.
+        The list can contain zero, one, or multiple items.
+
+        :param name: the volume name
+        :type name: str
+
+        :returns a list of Volume Sets
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - VV_IN_INCONSISTENT_STATE - Internal inconsistency error in vol
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - VV_IS_BEING_REMOVED - The volume is being removed
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_VOLUME - The volume does not exists
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_SYS_VOLUME - Illegal op on system vol
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_INTERNAL_VOLUME - Illegal op on internal vol
+        """
+        vvset_names = []
+        volume_sets = self.getVolumeSets()
+        for volume_set in volume_sets['members']:
+            if 'setmembers' in volume_set and name in volume_set['setmembers']:
+                vvset_names.append(volume_set)
+        return vvset_names
+
     def getVolumeSets(self):
         """
         Get Volume Sets
