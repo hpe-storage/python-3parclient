@@ -83,7 +83,6 @@ class HP3PARSSHClient(object):
                     )
 
             ssh.set_missing_host_key_policy(missing_key_policy)
-            self._connect(ssh)
 
             self.ssh = ssh
         except Exception as e:
@@ -117,13 +116,17 @@ class HP3PARSSHClient(object):
 
         """
         # Create a new SSH connection if the transport layer is missing.
-        if self.ssh and not self.ssh.get_transport():
-            try:
-                self._connect(self.ssh)
-            except Exception as e:
-                msg = "Error connecting via ssh: %s" % e
-                self._logger.error(msg)
-                raise paramiko.SSHException(msg)
+        if self.ssh:
+            transport_active = False
+            if self.ssh.get_transport():
+                transport_active = self.ssh.get_transport().is_active()
+            if not transport_active:
+                try:
+                    self._connect(self.ssh)
+                except Exception as e:
+                    msg = "Error connecting via ssh: %s" % e
+                    self._logger.error(msg)
+                    raise paramiko.SSHException(msg)
 
     def close(self):
         if self.ssh:
