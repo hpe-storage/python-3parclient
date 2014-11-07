@@ -11,6 +11,7 @@ Changes in Version 3.1.2
 * Added closing of SSH connection to logout.
 * Changed SSH connection to no longer stay alive during a timeout.
 * Removed unneeded print statement during the closing of an SSH connection.
+* Improved findVolumeSet and findAllVolumeSets documentation.
 
 Changes in Version 3.1.1
 ------------------------
