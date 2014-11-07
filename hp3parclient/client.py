@@ -1935,7 +1935,7 @@ class HP3ParClient(object):
         :param name: the volume name
         :type name: str
 
-        :returns The name of the first volume set that contains the target
+        :returns: The name of the first volume set that contains the target
         volume, otherwise None.
         """
 
@@ -1954,20 +1954,17 @@ class HP3ParClient(object):
         :param name: the volume name
         :type name: str
 
-        :returns a list of Volume Set dicts
+        :returns: a list of Volume Set dicts
 
         .. code-block:: python
 
             vvset_names = [{
-                # The name of the volume set
-                'name': "volume_set_1",
-                # The volume set's comment
-                'comment': 'Samplet VVSet',
-                # The volume set's domain
-                'domain': 'my_domain',
-                # List of strings containing the volumes that are members
-                # of this volume set
-                'setmembers': ['my_vol_1', 'my_vol_2']
+                'name': "volume_set_1",       # The name of the volume set
+                'comment': 'Samplet VVSet',   # The volume set's comment
+                'domain': 'my_domain',        # The volume set's domain
+                'setmembers': ['V1', 'V2']    # List of strings containing
+                                              # the volumes that are members
+                                              # of this volume set
             },
             ...
             ]

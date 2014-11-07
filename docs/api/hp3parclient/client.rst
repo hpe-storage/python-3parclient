@@ -51,6 +51,7 @@
       .. automethod:: getiSCSIPorts
       .. automethod:: getIPPorts
       .. automethod:: findVolumeSet
+      .. automethod:: findAllVolumeSets
       .. automethod:: getVolumeSet
       .. automethod:: getVolumeSets
       .. automethod:: createVolumeSet

@@ -7,11 +7,13 @@ Changes in Version 3.1.2
    - findAllVolumeSets
 * Revised unit tests to use asserts instead of try/catch/except blocks.
 * Removed SSH call from the findVolumeSet method and replaced it with REST.
-* Added creation of SSH connection to login.
-* Added closing of SSH connection to logout.
-* Changed SSH connection to no longer stay alive during a timeout.
-* Removed unneeded print statement during the closing of an SSH connection.
-* Improved findVolumeSet and findAllVolumeSets documentation.
+* Improved findVolumeSet documentation.
+* Changed SSH connections to now only get created when an SSH command needs
+  to be executed.
+* Added closing of an SSH connection during logout if one is active.
+* Changed SSH connections to no longer use keep-alive packets to stay active.
+* Removed an unneeded print statement output that was occuring when an SSH
+  connection was closed.
 
 Changes in Version 3.1.1
 ------------------------
