@@ -1928,16 +1928,21 @@ class HP3ParClient(object):
     # VolumeSet methods
     def findVolumeSet(self, name):
         """
-        Find the first Volume Set that contains a volume.
+        Find the first Volume Set that contains a target volume.  If a
+        volume set other than the first one found is desired use
+        findAllVolumeSets and search the results.
 
         :param name: the volume name
         :type name: str
+
+        :returns The name of the first volume set that contains the target
+        volume, otherwise None.
         """
 
         vvset_names = self.findAllVolumeSets(name)
         vvset_name = None
         if vvset_names:
-            vvset_name = vvset_names[0]
+            vvset_name = vvset_names[0]['name']
 
         return vvset_name
 
@@ -1949,7 +1954,23 @@ class HP3ParClient(object):
         :param name: the volume name
         :type name: str
 
-        :returns a list of Volume Sets
+        :returns a list of Volume Set dicts
+
+        .. code-block:: python
+
+            vvset_names = [{
+                # The name of the volume set
+                'name': "volume_set_1",
+                # The volume set's comment
+                'comment': 'Samplet VVSet',
+                # The volume set's domain
+                'domain': 'my_domain',
+                # List of strings containing the volumes that are members
+                # of this volume set
+                'setmembers': ['my_vol_1', 'my_vol_2']
+            },
+            ...
+            ]
 
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - VV_IN_INCONSISTENT_STATE - Internal inconsistency error in vol

@@ -486,6 +486,36 @@ class HP3ParClientVolumeTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
         self.printFooter('find_all_volume_sets')
 
+    def test_8_find_volume_set(self):
+        self.printHeader('find_volume_set')
+
+        optional = {'comment': 'test volume 1', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        optional = {'comment': 'test volume 2', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024, optional)
+        optional = {'comment': 'test volume 3', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME3, CPG_NAME1, 1024, optional)
+
+        self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=self.DOMAIN,
+                                comment="Unit test volume set 1")
+        self.cl.createVolumeSet(VOLUME_SET_NAME2,
+                                domain=self.DOMAIN,
+                                comment="Unit test volume set 2",
+                                setmembers=[VOLUME_NAME1])
+        self.cl.createVolumeSet(VOLUME_SET_NAME3,
+                                domain=self.DOMAIN,
+                                comment="Unit test volume set 3",
+                                setmembers=[VOLUME_NAME1, VOLUME_NAME2])
+
+        result = self.cl.findVolumeSet(VOLUME_NAME1)
+        self.assertEqual(result, VOLUME_SET_NAME2)
+
+        # Check that None is returned if no volume sets are found.
+        result = self.cl.findVolumeSet(VOLUME_NAME3)
+        self.assertIsNone(result)
+
+        self.printFooter('find_volumet_set')
+
     def test_9_del_volume_set_empty(self):
         self.printHeader('del_volume_set_empty')
 
