@@ -243,6 +243,23 @@ def get_cpg(cpg_name):
     throw_error(404, NON_EXISTENT_CPG, "CPG '%s' doesn't exist" % cpg_name)
 
 
+@app.route('/api/v1/spacereporter', methods=['POST'])
+def get_cpg_available_space():
+    debugRequest(flask.request)
+    data = json.loads(flask.request.data)
+
+    for cpg in cpgs['members']:
+        if cpg['name'] == data['cpg']:
+            fake_cpg_info = {
+                "rawFreeMiB": 7630848,
+                "usableFreeMiB": 3815424
+            }
+            resp = flask.make_response(json.dumps(fake_cpg_info), 200)
+            return resp
+
+    throw_error(404, NON_EXISTENT_CPG, "CPG '%s' doesn't exist" % data['cpg'])
+
+
 @app.route('/api/v1/cpgs/<cpg_name>', methods=['DELETE'])
 def delete_cpg(cpg_name):
     debugRequest(flask.request)
@@ -1221,6 +1238,161 @@ def get_system():
                    "timeZone": "America/Los_Angeles"}
 
     resp = flask.make_response(json.dumps(system_info), 200)
+    return resp
+
+
+@app.route('/api/v1/capacity', methods=['GET'])
+def get_overall_capacity():
+    debugRequest(flask.request)
+
+    capacity_info = {
+        "allCapacity": {
+            "totalMiB": 20054016,
+            "allocated": {
+                "totalAllocatedMiB": 12535808,
+                "volumes": {
+                    "totalVolumesMiB": 10919936,
+                    "nonCPGsMiB": 0,
+                    "nonCPGUserMiB": 0,
+                    "nonCPGSnapshotMiB": 0,
+                    "nonCPGAdminMiB": 0,
+                    "CPGsMiB": 10919936,
+                    "CPGUserMiB": 7205538,
+                    "CPGUserUsedMiB": 7092550,
+                    "CPGUserUnusedMiB": 112988,
+                    "CPGSnapshotMiB": 2411870,
+                    "CPGSnapshotUsedMiB": 210256,
+                    "CPGSnapshotUnusedMiB": 2201614,
+                    "CPGAdminMiB": 1302528,
+                    "CPGAdminUsedMiB": 115200,
+                    "CPGAdminUnusedMiB": 1187328,
+                    "unmappedMiB": 0
+                },
+                "system": {
+                    "totalSystemMiB": 1615872,
+                    "internalMiB": 780288,
+                    "spareMiB": 835584,
+                    "spareUsedMiB": 0,
+                    "spareUnusedMiB": 835584
+                }
+            },
+            "freeMiB": 7518208,
+            "freeInitializedMiB": 7518208,
+            "freeUninitializedMiB": 0,
+            "unavailableCapacityMiB": 0,
+            "failedCapacityMiB": 0
+        },
+        "FCCapacity": {
+            "totalMiB": 20054016,
+            "allocated": {
+                "totalAllocatedMiB": 12535808,
+                "volumes": {
+                    "totalVolumesMiB": 10919936,
+                    "nonCPGsMiB": 0,
+                    "nonCPGUserMiB": 0,
+                    "nonCPGSnapshotMiB": 0,
+                    "nonCPGAdminMiB": 0,
+                    "CPGsMiB": 10919936,
+                    "CPGUserMiB": 7205538,
+                    "CPGUserUsedMiB": 7092550,
+                    "CPGUserUnusedMiB": 112988,
+                    "CPGSnapshotMiB": 2411870,
+                    "CPGSnapshotUsedMiB": 210256,
+                    "CPGSnapshotUnusedMiB": 2201614,
+                    "CPGAdminMiB": 1302528,
+                    "CPGAdminUsedMiB": 115200,
+                    "CPGAdminUnusedMiB": 1187328,
+                    "unmappedMiB": 0
+                },
+                "system": {
+                    "totalSystemMiB": 1615872,
+                    "internalMiB": 780288,
+                    "spareMiB": 835584,
+                    "spareUsedMiB": 0,
+                    "spareUnusedMiB": 835584
+                }
+            },
+            "freeMiB": 7518208,
+            "freeInitializedMiB": 7518208,
+            "freeUninitializedMiB": 0,
+            "unavailableCapacityMiB": 0,
+            "failedCapacityMiB": 0
+        },
+        "NLCapacity": {
+            "totalMiB": 0,
+            "allocated": {
+                "totalAllocatedMiB": 0,
+                "volumes": {
+                    "totalVolumesMiB": 0,
+                    "nonCPGsMiB": 0,
+                    "nonCPGUserMiB": 0,
+                    "nonCPGSnapshotMiB": 0,
+                    "nonCPGAdminMiB": 0,
+                    "CPGsMiB": 0,
+                    "CPGUserMiB": 0,
+                    "CPGUserUsedMiB": 0,
+                    "CPGUserUnusedMiB": 0,
+                    "CPGSnapshotMiB": 0,
+                    "CPGSnapshotUsedMiB": 0,
+                    "CPGSnapshotUnusedMiB": 0,
+                    "CPGAdminMiB": 0,
+                    "CPGAdminUsedMiB": 0,
+                    "CPGAdminUnusedMiB": 0,
+                    "unmappedMiB": 0
+                },
+                "system": {
+                    "totalSystemMiB": 0,
+                    "internalMiB": 0,
+                    "spareMiB": 0,
+                    "spareUsedMiB": 0,
+                    "spareUnusedMiB": 0
+                }
+            },
+            "freeMiB": 0,
+            "freeInitializedMiB": 0,
+            "freeUninitializedMiB": 0,
+            "unavailableCapacityMiB": 0,
+            "failedCapacityMiB": 0
+        },
+        "SSDCapacity": {
+            "totalMiB": 0,
+            "allocated": {
+                "totalAllocatedMiB": 0,
+                "volumes": {
+                    "totalVolumesMiB": 0,
+                    "nonCPGsMiB": 0,
+                    "nonCPGUserMiB": 0,
+                    "nonCPGSnapshotMiB": 0,
+                    "nonCPGAdminMiB": 0,
+                    "CPGsMiB": 0,
+                    "CPGUserMiB": 0,
+                    "CPGUserUsedMiB": 0,
+                    "CPGUserUnusedMiB": 0,
+                    "CPGSnapshotMiB": 0,
+                    "CPGSnapshotUsedMiB": 0,
+                    "CPGSnapshotUnusedMiB": 0,
+                    "CPGAdminMiB": 0,
+                    "CPGAdminUsedMiB": 0,
+                    "CPGAdminUnusedMiB": 0,
+                    "unmappedMiB": 0
+                },
+                "system": {
+                    "totalSystemMiB": 0,
+                    "internalMiB": 0,
+                    "spareMiB": 0,
+                    "spareUsedMiB": 0,
+                    "spareUnusedMiB": 0
+                }
+            },
+            "freeMiB": 0,
+            "freeInitializedMiB": 0,
+            "freeUninitializedMiB": 0,
+            "unavailableCapacityMiB": 0,
+            "failedCapacityMiB": 0
+        },
+    }
+
+    resp = flask.make_response(json.dumps(capacity_info), 200)
     return resp
 
 

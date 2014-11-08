@@ -169,6 +169,28 @@ class HP3ParClientCPGTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
         self.printFooter('delete_CPGs')
 
+    def test_4_get_cpg_available_space(self):
+        self.printHeader('get_cpg_available_space')
+
+        optional = self.CPG_OPTIONS
+        name = CPG_NAME1
+        self.cl.createCPG(name, optional)
+
+        cpg1 = self.cl.getCPGAvailableSpace(name)
+        self.assertIsNotNone(cpg1)
+
+        self.printFooter('get_cpg_available_space')
+
+    def test_4_get_cpg_available_space_bad_cpg(self):
+        self.printHeader('get_cpg_available_space_bad_cpg')
+
+        self.assertRaises(
+            exceptions.HTTPNotFound,
+            self.cl.getCPGAvailableSpace,
+            'BadName')
+
+        self.printFooter('get_cpg_available_space_bad_cpg')
+
 
 # testing
 # suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientCPGTestCase)

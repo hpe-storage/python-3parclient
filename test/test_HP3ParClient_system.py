@@ -145,6 +145,12 @@ class HP3ParClientSystemTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
         self.printFooter("query_task_non_int")
 
+    def test_get_overall_system_capacity(self):
+        self.printHeader("get_overall_system_capacity")
+        capacity = self.cl.getOverallSystemCapacity()
+        self.assertIsNotNone(capacity)
+        self.printFooter("get_overall_system_capacity")
+
 
 # testing
 # suite = unittest.TestLoader().

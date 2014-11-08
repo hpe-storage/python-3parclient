@@ -9,6 +9,7 @@
       .. automethod:: getWsApiVersion
       .. automethod:: getStorageSystemInfo
       .. automethod:: getWSAPIConfigurationInfo
+      .. automethod:: getOverallSystemCapacity
       .. automethod:: debug_rest
       .. automethod:: login
       .. automethod:: logout
@@ -23,6 +24,7 @@
       .. automethod:: createSnapshot
       .. automethod:: getCPGs
       .. automethod:: getCPG
+      .. automethod:: getCPGAvailableSpace
       .. automethod:: createCPG
       .. automethod:: deleteCPG
       .. automethod:: getVLUNs

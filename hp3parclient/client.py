@@ -277,6 +277,95 @@ class HP3ParClient(object):
         response, body = self.http.get('/wsapiconfiguration')
         return body
 
+    def getOverallSystemCapacity(self):
+        """Get the overall system capacity for the 3PAR server.
+
+        :returns: Dictionary of system capacity information
+
+        .. code-block:: python
+
+            capacity = {
+              "allCapacity": {                        # Overall system capacity
+                                                      # includes FC, NL, SSD
+                                                      # device types
+                "totalMiB": 20054016,                 # Total system capacity
+                                                      # in MiB
+                "allocated": {                        # Allocated space info
+                  "totalAllocatedMiB": 12535808,      # Total allocated
+                                                      # capacity
+                  "volumes": {                        # Volume capacity info
+                    "totalVolumesMiB": 10919936,      # Total capacity
+                                                      # allocated to volumes
+                    "nonCPGsMiB": 0,                  # Total non-CPG capacity
+                    "nonCPGUserMiB": 0,               # The capacity allocated
+                                                      # to non-CPG user space
+                    "nonCPGSnapshotMiB": 0,           # The capacity allocated
+                                                      # to non-CPG snapshot
+                                                      # volumes
+                    "nonCPGAdminMiB": 0,              # The capacity allocated
+                                                      # to non-CPG
+                                                      # administrative volumes
+                    "CPGsMiB": 10919936,              # Total capacity
+                                                      # allocated to CPGs
+                    "CPGUserMiB": 7205538,            # User CPG space
+                    "CPGUserUsedMiB": 7092550,        # The CPG allocated to
+                                                      # user space that is
+                                                      # in use
+                    "CPGUserUnusedMiB": 112988,       # The CPG allocated to
+                                                      # user space that is not
+                                                      # in use
+                    "CPGSnapshotMiB": 2411870,        # Snapshot CPG space
+                    "CPGSnapshotUsedMiB": 210256,     # CPG allocated to
+                                                      # snapshot that is in use
+                    "CPGSnapshotUnusedMiB": 2201614,  # CPG allocated to
+                                                      # snapshot space that is
+                                                      # not in use
+                    "CPGAdminMiB": 1302528,           # Administrative volume
+                                                      # CPG space
+                    "CPGAdminUsedMiB": 115200,        # The CPG allocated to
+                                                      # administrative space
+                                                      # that is in use
+                    "CPGAdminUnusedMiB": 1187328,     # The CPG allocated to
+                                                      # administrative space
+                                                      # that is not in use
+                    "unmappedMiB": 0                  # Allocated volume space
+                                                      # that is unmapped
+                  },
+                  "system": {                    # System capacity info
+                     "totalSystemMiB": 1615872,  # System space capacity
+                     "internalMiB": 780288,      # The system capacity
+                                                 # allocated to internal
+                                                 # resources
+                     "spareMiB": 835584,         # Total spare capacity
+                     "spareUsedMiB": 0,          # The system capacity
+                                                 # allocated to spare resources
+                                                 # in use
+                     "spareUnusedMiB": 835584    # The system capacity
+                                                 # allocated to spare resources
+                                                 # that are unused
+                    }
+                },
+                  "freeMiB": 7518208,             # Free capacity
+                  "freeInitializedMiB": 7518208,  # Free initialized capacity
+                  "freeUninitializedMiB": 0,      # Free uninitialized capacity
+                  "unavailableCapacityMiB": 0,    # Unavailable capacity in MiB
+                  "failedCapacityMiB": 0          # Failed capacity in MiB
+              },
+              "FCCapacity": {   # System capacity from FC devices only
+                  ...           # Same structure as above
+              },
+              "NLCapacity": {   # System capacity from NL devices only
+                  ...           # Same structure as above
+              },
+              "SSDCapacity": {  # System capacity from SSD devices only
+                  ...           # Same structure as above
+              }
+            }
+
+        """
+        response, body = self.http.get('/capacity')
+        return body
+
     # Volume methods
     def getVolumes(self):
         """Get the list of Volumes
@@ -1696,6 +1785,30 @@ class HP3ParClient(object):
 
         """
         response, body = self.http.get('/cpgs/%s' % name)
+        return body
+
+    def getCPGAvailableSpace(self, name):
+        """Get available space information about a CPG.
+
+        :param name: The name of the CPG to find
+        :type name: str
+
+        :returns: Available space dict
+
+        .. code-block:: python
+
+            info = {
+                "rawFreeMiB": 1000000,    # Raw free capacity in MiB
+                "usableFreeMiB": 5000     # LD free capacity in MiB
+            }
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_CPG - CPG Not Found
+
+        """
+        info = {'cpg': name}
+
+        response, body = self.http.post('/spacereporter', body=info)
         return body
 
     def createCPG(self, name, optional=None):
