@@ -149,14 +149,73 @@ class HP3PARSSHClient(object):
             self._logger.addHandler(ch)
             HP3PARSSHClient.log_debug = True
 
-    def run(self, cmd):
+    @staticmethod
+    def strip_input_from_output(cmd, output):
+        """The input commands are echoed in the output. Strip that.
+
+        The legacy way of doing this expected a fixed number of before and
+        after lines. With Unity many commands are being broken into multiple
+        lines, so the stripper needs to adjust.
+
+        This new stripper attempts to recognize the input commands and prompt
+        in the output so that it knows what it is stripping (or else it
+        raises an exception).
+        """
+
+        # Keep output lines after the 'exit'.
+        # 'exit' is the last of the stdin.
+        for i, line in enumerate(output):
+            if line == 'exit':
+                output = output[i + 1:]
+                break
+        else:
+            HP3PARSSHClient._logger.error("Did not find 'exit' in output")
+            raise exceptions.SSHException("Multi-line stripper failed.")
+
+        # The next line is prompt plus setclienv command.
+        # Use this to get the prompt string.
+        prompt_pct = output[0].find('% setclienv csvtable 1')
+        if prompt_pct < 0:
+            msg = "Multi-line stripper failed.  " \
+                  "Did not find '% setclienv csvtable 1' in output"
+            HP3PARSSHClient._logger.error(msg)
+            raise exceptions.SSHException(msg)
+        prompt = output[0][0:prompt_pct + 1]
+        del output[0]
+
+        # Next find the prompt plus the command.
+        # It might be broken into multiple lines, so loop and
+        # append until we find the whole prompt plus command.
+        command_string = ' '.join(cmd)
+        seek = ' '.join((prompt, command_string))
+        found = ''
+        for i, line in enumerate(output):
+            found = ''.join((found, line.rstrip('\r\n')))
+            if found == seek:
+                # Found the whole thing.  Use the rest as output now.
+                output = output[i + 1:]
+                break
+        else:
+            HP3PARSSHClient._logger.error(
+                "Did not find match for command in output")
+            raise exceptions.SSHException("Multi-line stripper failed.")
+
+        # Always strip the last 2
+        return output[:len(output) - 2]
+
+    def run(self, cmd, multi_line_stripper=False):
         """Runs a CLI command over SSH, without doing any result parsing."""
         self._logger.debug("SSH CMD = %s " % cmd)
 
         (stdout, stderr) = self._run_ssh(cmd, False)
         # we have to strip out the input and exit lines
         tmp = stdout.split("\r\n")
-        out = tmp[5:len(tmp) - 2]
+
+        # default is old stripper -- to avoid breaking things, for now
+        if multi_line_stripper:
+            out = self.strip_input_from_output(cmd, tmp)
+        else:
+            out = tmp[5:len(tmp) - 2]
         self._logger.debug("OUT = %s" % out)
         return out
 

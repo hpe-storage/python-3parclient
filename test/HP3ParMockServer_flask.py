@@ -1218,7 +1218,7 @@ def get_system():
 
     system_info = {"id": 12345,
                    "name": "Flask",
-                   "systemVersion": "3.1.3.168",
+                   "systemVersion": "3.2.1.46",
                    "IPv4Addr": "10.10.10.10",
                    "model": "HP_3PAR 7400",
                    "serialNumber": "1234567",
@@ -1401,7 +1401,7 @@ def get_version():
     debugRequest(flask.request)
     version = {'major': 1,
                'minor': 3,
-               'build': 30103230}
+               'build': 30201046}
     resp = flask.make_response(json.dumps(version), 200)
     return resp
 

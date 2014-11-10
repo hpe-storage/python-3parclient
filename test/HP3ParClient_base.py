@@ -19,13 +19,14 @@ import os
 import sys
 sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
 
-from hp3parclient import client
+from hp3parclient import client, file_client
 import unittest
 import subprocess
 import time
 import inspect
 from testconfig import config
 import datetime
+from functools import wraps
 
 TIME = datetime.datetime.now().strftime('%H%M%S')
 
@@ -52,6 +53,17 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
     unitTest = config['TEST']['unit'].lower() == 'true'
     port = None
 
+    ssh_port = None
+    if 'ssh_port' in config['TEST']:
+        ssh_port = int(config['TEST']['ssh_port'])
+    elif unitTest:
+        ssh_port = 2200
+    else:
+        ssh_port = 22
+
+    # Don't setup SSH unless needed.  It slows things down.
+    withSSH = False
+
     if 'domain' in config['TEST']:
         DOMAIN = config['TEST']['domain']
     else:
@@ -74,7 +86,10 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
     else:
         missing_key_policy = None
 
-    def setUp(self, withSSH=False):
+    def setUp(self, withSSH=False, withFilePersona=False):
+
+        self.withSSH = withSSH
+        self.withFilePersona = withFilePersona
 
         cwd = os.path.dirname(os.path.abspath(
             inspect.getfile(inspect.currentframe())))
@@ -102,31 +117,60 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
                 pass
 
             time.sleep(1)
-            self.cl = client.HP3ParClient(self.flask_url)
-            # SSH is not supported in flask, so not initializing
-            # those tests are expected to fail
+            if self.withFilePersona:
+                self.cl = file_client.HP3ParFilePersonaClient(self.flask_url)
+            else:
+                self.cl = client.HP3ParClient(self.flask_url)
+
+            if self.withSSH:
+
+                self.printHeader('Using paramiko SSH server on port %s' %
+                                 self.ssh_port)
+
+                ssh_script = 'HP3ParMockServer_ssh.py'
+                ssh_path = "%s/%s" % (cwd, ssh_script)
+
+                self.mockSshServer = subprocess.Popen([sys.executable,
+                                                       ssh_path,
+                                                       str(self.ssh_port)],
+                                                      stdout=subprocess.PIPE,
+                                                      stderr=subprocess.PIPE,
+                                                      stdin=subprocess.PIPE)
+                time.sleep(1)
+
         else:
-            self.printHeader('Using 3PAR ' + self.url_3par)
-            self.cl = client.HP3ParClient(self.url_3par)
-            if withSSH:
-                # This seems to slow down the test cases, so only use this when
-                # requested
+            if withFilePersona:
+                self.printHeader('Using 3PAR %s with File Persona' %
+                                 self.url_3par)
+                self.cl = file_client.HP3ParFilePersonaClient(self.url_3par)
+            else:
+                self.printHeader('Using 3PAR ' + self.url_3par)
+                self.cl = client.HP3ParClient(self.url_3par)
+
+        if self.withSSH:
+            # This seems to slow down the test cases, so only use this when
+            # requested
+            if self.unitTest:
+                # The mock SSH server can be accessed at 0.0.0.0.
+                ip = '0.0.0.0'
+            else:
                 parsed_3par_url = urlparse(self.url_3par)
                 ip = parsed_3par_url.hostname.split(':').pop()
-                try:
-                    # Set the conn_timeout to None so that the ssh connections
-                    # will use the default transport values which will allow
-                    # the test case process to terminate after completing
-                    self.cl.setSSHOptions(
-                        ip,
-                        self.user,
-                        self.password,
-                        conn_timeout=None,
-                        known_hosts_file=self.known_hosts_file,
-                        missing_key_policy=self.missing_key_policy)
-                except Exception as ex:
-                    print ex
-                    self.fail("failed to start ssh client")
+            try:
+                # Now that we don't do keep-alive, the conn_timeout needs to
+                # be set high enough to avoid sometimes slow response in
+                # the File Persona tests.
+                self.cl.setSSHOptions(
+                    ip,
+                    self.user,
+                    self.password,
+                    port=self.ssh_port,
+                    conn_timeout=500,
+                    known_hosts_file=self.known_hosts_file,
+                    missing_key_policy=self.missing_key_policy)
+            except Exception as ex:
+                print ex
+                self.fail("failed to start ssh client")
 
         if self.debug:
             self.cl.debug_rest(True)
@@ -145,6 +189,19 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
         self.cl.logout()
         if self.unitTest:
             self.mockServer.kill()
+            if self.withSSH:
+                self.mockSshServer.kill()
+
+    def print_header_and_footer(func):
+        """Decorator to print header and footer for unit tests."""
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            test = args[0]
+            test.printHeader(unittest.TestCase.id(test))
+            result = func(*args, **kwargs)
+            test.printFooter(unittest.TestCase.id(test))
+            return result
+        return wrapper
 
     def printHeader(self, name):
         print("\n##Start testing '%s'" % name)

@@ -118,7 +118,11 @@ class HP3ParClient(object):
     TASK_FAILED = 4
 
     # build contains major minor mj=3 min=01 main=03 build=230
+    # When updating these, make sure desc is appropriate for error messages
+    # and make sure the version overrides in file_client are still OK.
     HP3PAR_WS_MIN_BUILD_VERSION = 30103230
+    HP3PAR_WS_MIN_BUILD_VERSION_DESC = '3.1.3 MU1'
+
     VLUN_TYPE_EMPTY = 1
     VLUN_TYPE_PORT = 2
     VLUN_TYPE_HOST = 3
@@ -182,8 +186,9 @@ class HP3ParClient(object):
         # therefore all we need to compare is the build
         if (api_version is None or
            api_version['build'] < self.HP3PAR_WS_MIN_BUILD_VERSION):
-            raise exceptions.UnsupportedVersion('Invalid 3PAR WS API, requires'
-                                                ' version, 3.1.3 MU1')
+            raise exceptions.UnsupportedVersion(
+                'Invalid 3PAR WS API, requires version, %s' %
+                self.HP3PAR_WS_MIN_BUILD_VERSION_DESC)
 
     def setSSHOptions(self, ip, login, password, port=22,
                       conn_timeout=None, privatekey=None,

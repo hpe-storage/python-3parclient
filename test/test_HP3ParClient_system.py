@@ -35,8 +35,6 @@ class HP3ParClientSystemTestCase(hp3parbase.HP3ParClientBaseTestCase):
         # very last, tear down base class
         super(HP3ParClientSystemTestCase, self).tearDown()
 
-    @unittest.skipIf(config['TEST']['unit'].lower() == 'true',
-                     "only works with real array")
     def test_get_patch(self):
         """This can work with or without a patch, but you need to manually
            enter a valid one or use the bogus one.

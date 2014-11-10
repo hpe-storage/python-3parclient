@@ -69,17 +69,21 @@ class ClientException(Exception):
         if not error:
             return
 
-        if 'code' in error:
-            self._error_code = error['code']
-        if 'desc' in error:
-            self._error_desc = error['desc']
-        if 'ref' in error:
-            self._error_ref = error['ref']
+        if isinstance(error, str):
+            # instead of KeyError below, take it and make it the _error_desc.
+            self._error_desc = error
+        else:
+            if 'code' in error:
+                self._error_code = error['code']
+            if 'desc' in error:
+                self._error_desc = error['desc']
+            if 'ref' in error:
+                self._error_ref = error['ref']
 
-        if 'debug1' in error:
-            self._debug1 = error['debug1']
-        if 'debug2' in error:
-            self._debug2 = error['debug2']
+            if 'debug1' in error:
+                self._debug1 = error['debug1']
+            if 'debug2' in error:
+                self._debug2 = error['debug2']
 
     def get_code(self):
         return self._error_code

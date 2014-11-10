@@ -47,7 +47,7 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
 
     def setUp(self, withSSH=False):
 
-        super(HP3ParClientHostSetTestCase, self).setUp(withSSH=True)
+        super(HP3ParClientHostSetTestCase, self).setUp(withSSH=False)
 
     # noinspection PyBroadException
     def tearDown(self):

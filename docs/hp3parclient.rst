@@ -25,6 +25,15 @@ hp3parclient Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`file_client` Module
+-------------------------
+
+.. automodule:: hp3parclient.file_client
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :noindex:
+
 :mod:`http` Module
 ------------------
 

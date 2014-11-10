@@ -1,13 +1,16 @@
 HP 3PAR REST Client
 ===================
 This is a Client library that can talk to the HP 3PAR Storage array.  The 3PAR
-storage array has a REST web service interface.
-This client library implements a simple interface to talking with that REST
-interface using the python httplib2 http library.
+storage array has a REST web service interface and a command line interface.
+This client library implements a simple interface for talking with either
+interface, as needed.  The python httplib2 library is used to communicate
+with the REST interface.  The python paramiko library is used to communicate
+with the command line interface over an SSH connection.
 
 Requirements
 ============
 This branch requires 3.1.3 version MU1 of the 3PAR firmware.
+File Persona capabilities require 3PAR firmware 3.2.1 Build 46 or later.
 
 Capabilities
 ============
@@ -84,6 +87,55 @@ Capabilities
 * Stop Online Physical Copy
 * Query Online Physical Copy Status
 * Stop Offline Physical Copy
+
+File Persona Capabilities
+=========================
+* Get File Services Info
+
+* Create a File Provisioning Group
+* Grow a File Provisioning Group
+* Get File Provisioning Group Info
+* Modify a File Provisioning Group
+* Remove a File Provisioning Group
+
+* Create a Virtual File Server
+* Get Virtual File Server Info
+* Modify a Virtual File Server
+* Remove a Virtual File Server
+
+* Assign an IP Address to a Virtual File Server
+* Get the Network Config of a Virtual File Server
+* Modify the Network Config of a Virtual File Server
+* Remove the Network Config of a Virtual File Server
+
+* Create a File Services User Group
+* Modify a File Services User Group
+* Remove a File Services User Group
+
+* Create a File Services User
+* Modify a File Services User
+* Remove a File Services User
+
+* Create a File Store
+* Get File Store Info
+* Modify a File Store
+* Remove a File Store
+
+* Create a File Share
+* Get File Share Info
+* Modify a File Share
+* Remove a File Share
+
+* Create a File Store Snapshot
+* Get File Store Snapshot Info
+* Remove a File Store Snapshot
+
+* Reclaim Space from Deleted File Store Snapshots
+* Get File Store Snapshot Reclamation Info
+* Stop or Pause a File Store Snapshot Reclamation Task
+
+* Set File Services Quotas
+* Get Files Services Quota Info
 
 Installation
 ============

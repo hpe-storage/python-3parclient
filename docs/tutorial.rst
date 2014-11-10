@@ -67,3 +67,35 @@ a call to :meth:`~hp3parclient.client.HP3ParClient.getVolumes`.
 
 
 .. note:: volumes is an array of volumes in the above call
+
+Using the File Persona Client
+-----------------------------
+The **HP3PARFilePersonaClient** extends the **HP3PARClient** adding File
+Persona capabilities.  When you need File Persona capabilities, create a
+:class:`~hp3parclient.file_client.HP3ParFilePersonaClient` instead of the
+:class:`~hp3parclient.client.HP3ParClient`.
+For example, the following code shows how to use this client to get volumes
+like above and also get File Provisioning Groups with the extended client
+making a call to :meth:`~hp3parclient.file_client.HP3ParFilePersonaClient.getfpg`.
+
+.. code-block:: python
+
+    import pprint
+
+    from hp3parclient import file_client
+
+    username = 'your-3PAR-user-name'
+    password = 'your-3PAR-password'
+    ip = '10.10.10.10'
+
+    cl = file_client.HP3ParFilePersonaClient("https://%s:8080/api/v1" % ip)
+    cl.setSSHOptions(ip_address, username, password)
+    cl.login(username, password)
+
+    volumes = cl.getVolumes()
+    pprint.pprint(volumes)
+
+    fpgs = cl.getfpg()
+    pprint.pprint(fpgs)
+
+    cl.logout()

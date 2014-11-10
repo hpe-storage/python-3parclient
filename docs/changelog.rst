@@ -1,6 +1,49 @@
 Changelog
 =========
 
+Changes in Version 3.2.0
+------------------------
+* Added File Persona Client:
+   - getfs
+   - createfpg
+   - growfpg
+   - getfpg
+   - setfpg
+   - removefpg
+   - createvfs
+   - getvfs
+   - setvfs
+   - removevfs
+   - createfsip
+   - setfsip
+   - getfsip
+   - removefsip
+   - createfsgroup
+   - setfsgroup
+   - removefsgroup
+   - createfsuser
+   - setfsuser
+   - removefsuser
+   - createfstore
+   - getfstore
+   - setfstore
+   - removefstore
+   - createfshare
+   - setfshare
+   - getfshare
+   - removefshare
+   - createfsnap
+   - getfsnap
+   - removefsnap
+   - startfsnapclean
+   - getfsnapclean
+   - stopfsnapclean
+   - setfsquota
+   - getfsquota
+   - gettpdinterface
+
+* Added paramiko SSH simulator initially supporting just a few test cases.
+
 Changes in Version 3.1.3
 ------------------------
 * Added 'paramiko' and 'eventlet' requirements to setup.py.  Running a standard

@@ -14,5 +14,6 @@ Sub-modules:
 
    client
    exceptions
+   file_client
    http
    ssh
