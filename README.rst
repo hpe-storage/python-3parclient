@@ -15,11 +15,15 @@ Capabilities
 * Delete Volume
 * Get all Volumes
 * Get a Volume
+* Modify a Volume
+* Copy a Volume
+* Create a Volume Snapshot
 
 * Create CPG
 * Delete CPG
 * Get all CPGs
 * Get a CPG
+* Get a CPG's Available Space
 
 * Create a VLUN
 * Delete a VLUN
@@ -30,6 +34,8 @@ Capabilities
 * Delete a Host
 * Get all Hosts
 * Get a Host
+* Get VLUNs for a Host
+* Find a Host
 
 * Find a Host Set for a Host
 * Get all Host Sets
@@ -49,6 +55,35 @@ Capabilities
 * Find Volume Metadata
 * Remove Volume Metadata
 
+* Create a Volume Set
+* Delete a Volume Set
+* Modify a Volume Set
+* Get a Volume Set
+* Get all Volume Sets
+* Find one Volume Set containing a specified Volume
+* Find all Volume Sets containing a specified Volume
+
+* Create a QOS Rule
+* Modify a QOS Rule
+* Delete a QOS Rule
+* Set a QOS Rule
+* Query a QOS Rule
+* Query all QOS Rules
+
+* Get a Task
+* Get all Tasks
+
+* Get a Patch
+* Get all Patches
+
+* Get WSAPI Version
+* Get WSAPI Configuration Info
+* Get Storage System Info
+* Get Overall System Capacity
+
+* Stop Online Physical Copy
+* Query Online Physical Copy Status
+* Stop Offline Physical Copy
 
 Installation
 ============
