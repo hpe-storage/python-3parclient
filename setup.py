@@ -15,7 +15,7 @@ setup(
   maintainer="Walter A. Boring IV",
   keywords=["hp", "3par", "rest"],
   requires=['httplib2(>=0.6.0)', 'paramiko', 'eventlet'],
-  install_requires=['httplib2 >= 0.6.0'],
+  install_requires=['httplib2 >= 0.6.0', 'paramiko', 'eventlet'],
   tests_require=["nose", "werkzeug", "nose-testconfig"],
   license="Apache License, Version 2.0",
   packages=find_packages(),

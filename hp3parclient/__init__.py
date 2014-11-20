@@ -22,7 +22,7 @@ HP 3PAR Client.
 
 """
 
-version_tuple = (3, 1, 2)
+version_tuple = (3, 1, 3)
 
 
 def get_version_string():
