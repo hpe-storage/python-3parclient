@@ -36,6 +36,10 @@ from hp3parclient import exceptions
 class HP3PARSSHClient(object):
     """This class is used to execute SSH commands on a 3PAR."""
 
+    log_debug = False
+    _logger = logging.getLogger(__name__)
+    _logger.setLevel(logging.INFO)
+
     def __init__(self, ip, login, password,
                  port=22, conn_timeout=None, privatekey=None,
                  **kwargs):
@@ -46,7 +50,6 @@ class HP3PARSSHClient(object):
         self.san_password = password
         self.san_private_key = privatekey
 
-        self._logger = logging.getLogger(__name__)
         self._create_ssh(**kwargs)
 
     def _create_ssh(self, **kwargs):
@@ -134,17 +137,17 @@ class HP3PARSSHClient(object):
 
     def set_debug_flag(self, flag):
         """
-        This turns on/off http request/response debugging output to console
+        This turns on ssh debugging output to console
 
         :param flag: Set to True to enable debugging output
         :type flag: bool
 
         """
-        self.log_debug = flag
-        if self.log_debug:
+        if not HP3PARSSHClient.log_debug and flag:
             ch = logging.StreamHandler()
             self._logger.setLevel(logging.DEBUG)
             self._logger.addHandler(ch)
+            HP3PARSSHClient.log_debug = True
 
     def run(self, cmd):
         """Runs a CLI command over SSH, without doing any result parsing."""

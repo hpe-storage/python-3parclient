@@ -6,6 +6,7 @@ Changes in Version 3.1.3
 * Added 'paramiko' and 'eventlet' requirements to setup.py.  Running a standard
   python setup.py install should install these modules now if they are
   missing.
+* Use static loggers to fix duplicate logging problem.
 
 Changes in Version 3.1.2
 ------------------------
