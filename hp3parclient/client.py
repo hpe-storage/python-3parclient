@@ -1643,9 +1643,9 @@ class HP3ParClient(object):
     def queryHost(self, iqns=None, wwns=None):
         """Find a host from an iSCSI initiator or FC WWN.
 
-        :param iqn: lookup based on iSCSI initiator list
+        :param iqns: lookup based on iSCSI initiator list
         :type iqns: list
-        :param wwn: lookup based on WWN list
+        :param wwns: lookup based on WWN list
         :type wwns: list
 
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
