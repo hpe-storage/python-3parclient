@@ -768,10 +768,13 @@ class HP3ParClientVolumeTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
         optional = {'comment': 'test volume', 'tpvv': True}
         self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+
+        # Some backends have a key limit of 31 characters while and other
+        # are larger
         self.assertRaises(exceptions.HTTPBadRequest,
                           self.cl.setVolumeMetaData,
                           VOLUME_NAME1,
-                          'this_key_will_cause_an_exception',
+                          'this_key_will_cause_an_exception ' 'x' * 256,
                           'test_val')
 
         self.printFooter('set volume metadata invalid length')

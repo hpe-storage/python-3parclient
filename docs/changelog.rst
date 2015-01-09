@@ -7,6 +7,7 @@ Changes in Version 3.1.3
   python setup.py install should install these modules now if they are
   missing.
 * Use static loggers to fix duplicate logging problem.
+* Update unit tests to better support more backend configurations and versions.
 
 Changes in Version 3.1.2
 ------------------------

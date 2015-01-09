@@ -22,7 +22,6 @@ import unittest
 import HP3ParClient_base
 import random
 
-PORT_1 = {'node': 1, 'cardPort': 1, 'slot': 1}
 VOLUME_SIZE = 512
 EXPORTED_VLUN = 26
 HOST_IN_SET = 77
@@ -126,8 +125,8 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         self.cl.createVolume(volume_name2, cpg_name, VOLUME_SIZE)
 
         # Create VLUNs
-        vlun1 = [volume_name1, LUN_1, host_name, PORT_1]
-        vlun2 = [volume_name2, LUN_2, host_name, PORT_1]
+        vlun1 = [volume_name1, LUN_1, host_name, self.port]
+        vlun2 = [volume_name2, LUN_2, host_name, self.port]
         vluns_to_delete.extend([vlun1, vlun2])
 
         self.cl.createVLUN(*vlun1)
@@ -226,8 +225,8 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         self.cl.createVolume(volume_name2, cpg_name, VOLUME_SIZE)
 
         # Create VLUNs
-        vlun1 = [volume_name1, LUN_1, host_name, PORT_1]
-        vlun2 = [volume_name2, LUN_2, host_name, PORT_1]
+        vlun1 = [volume_name1, LUN_1, host_name, self.port]
+        vlun2 = [volume_name2, LUN_2, host_name, self.port]
         vluns_to_delete.extend([vlun1, vlun2])
 
         self.cl.createVLUN(*vlun1)

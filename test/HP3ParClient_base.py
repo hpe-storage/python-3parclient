@@ -50,6 +50,7 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
     url_3par = config['TEST']['3par_url']
     debug = config['TEST']['debug'].lower() == 'true'
     unitTest = config['TEST']['unit'].lower() == 'true'
+    port = None
 
     if 'domain' in config['TEST']:
         DOMAIN = config['TEST']['domain']
@@ -131,6 +132,14 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
             self.cl.debug_rest(True)
 
         self.cl.login(self.user, self.password)
+
+        if not self.port:
+            ports = self.cl.getPorts()
+            ports = [p for p in ports['members']
+                     if p['linkState'] == 4  # Ready
+                     and ('device' not in p or not p['device'])
+                     and p['mode'] == self.cl.PORT_MODE_TARGET]
+            self.port = ports[0]['portPos']
 
     def tearDown(self):
         self.cl.logout()
