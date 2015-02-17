@@ -26,7 +26,7 @@ Issues
 
 All issues should be reported (and can be tracked / voted for /
 commented on) at the main `github issues
-<https://github.com/WaltHP/python-3parclient/issues>`_, in the "3PAR Python Driver"
+<https://github.com/hp-storage/python-3parclient/issues>`_, in the "3PAR Python Driver"
 project.
 
 Changes

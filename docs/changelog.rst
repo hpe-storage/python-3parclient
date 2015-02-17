@@ -44,6 +44,9 @@ Changes in Version 3.2.0
 
 * Added paramiko SSH simulator initially supporting just a few test cases.
 * Fixed PEP8 violations.
+* Change GitHub account reference from WaltHP to hp-storage.
+* Modify the steps in the Installing from Source section to ensure correct
+  installation of dependencies and ordering.
 
 Changes in Version 3.1.3
 ------------------------
