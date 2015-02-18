@@ -16,11 +16,13 @@
 """Test class of 3Par Client handling of Host Sets."""
 import sys
 import os
-sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
-from hp3parclient import exceptions
 import unittest
 import HP3ParClient_base
 import random
+
+# Add the path for the hp3parclient modules
+sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
+from hp3parclient import exceptions
 
 VOLUME_SIZE = 512
 EXPORTED_VLUN = 26
@@ -311,8 +313,8 @@ class HP3ParClientHostSetTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         test_prefix = 'UT_'
 
         # name too long
-        host_set_name = (test_prefix + "HOST_SET_NAME_IS_TOOOOOOOOOO_LONG_"
-                         + HP3ParClient_base.TIME)
+        host_set_name = (test_prefix + "HOST_SET_NAME_IS_TOOOOOOOOOO_LONG_" +
+                         HP3ParClient_base.TIME)
         host_sets_to_delete.append(host_set_name)
 
         pre_count = len(self.cl.getHostSets()['members'])

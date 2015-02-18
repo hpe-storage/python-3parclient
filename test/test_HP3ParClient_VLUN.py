@@ -17,10 +17,12 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
-from hp3parclient import exceptions
 import HP3ParClient_base as hp3parbase
 import random
+
+# Add the path for the hp3parclient modules
+sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
+from hp3parclient import exceptions
 
 CPG_NAME1 = 'CPG1_VLUN_UNIT_TEST' + hp3parbase.TIME
 CPG_NAME2 = 'CPG2_VLUN_UNIT_TEST' + hp3parbase.TIME

@@ -1149,7 +1149,7 @@ def create_qos():
     elif qos['type'] != 1:
         throw_error(404, INV_INPUT,
                     "Flask currently only supports type = 1 (VVSET). "
-                    + "Type unsuppored: %s" % qos['type'])
+                    "Type unsuppored: %s" % qos['type'])
     _validate_qos_input(qos)
 
     for vset in volume_sets['members']:

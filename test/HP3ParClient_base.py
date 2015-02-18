@@ -17,9 +17,6 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
-
-from hp3parclient import client, file_client
 import unittest
 import subprocess
 import time
@@ -27,6 +24,10 @@ import inspect
 from testconfig import config
 import datetime
 from functools import wraps
+
+# Add the path for the hp3parclient modules
+sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
+from hp3parclient import client, file_client
 
 TIME = datetime.datetime.now().strftime('%H%M%S')
 
@@ -180,9 +181,9 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
         if not self.port:
             ports = self.cl.getPorts()
             ports = [p for p in ports['members']
-                     if p['linkState'] == 4  # Ready
-                     and ('device' not in p or not p['device'])
-                     and p['mode'] == self.cl.PORT_MODE_TARGET]
+                     if p['linkState'] == 4 and  # Ready
+                     ('device' not in p or not p['device']) and
+                     p['mode'] == self.cl.PORT_MODE_TARGET]
             self.port = ports[0]['portPos']
 
     def tearDown(self):

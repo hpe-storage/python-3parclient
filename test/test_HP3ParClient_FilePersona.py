@@ -24,8 +24,8 @@ import sys
 from testconfig import config
 from functools import wraps
 
+# Add the path for the hp3parclient modules
 sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
-
 import HP3ParClient_base as hp3parbase
 
 cpgs_to_delete = []

@@ -20,13 +20,13 @@ import pprint
 import sys
 
 from testconfig import config
+import HP3ParClient_base as hp3parbase
 
+# Add the path for the hp3parclient modules
 sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
-
 from hp3parclient import exceptions
 from hp3parclient import file_client
 from hp3parclient import ssh
-import HP3ParClient_base as hp3parbase
 
 
 class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):

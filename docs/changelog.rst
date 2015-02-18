@@ -43,6 +43,7 @@ Changes in Version 3.2.0
    - gettpdinterface
 
 * Added paramiko SSH simulator initially supporting just a few test cases.
+* Fixed PEP8 violations.
 
 Changes in Version 3.1.3
 ------------------------
