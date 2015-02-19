@@ -44,7 +44,7 @@ following command from the root directory of the **HP3PARClient** source.
 
 .. code-block:: bash
 
-   $ python setup.py doc
+   $ tox -e docs
 
 
 .. toctree::

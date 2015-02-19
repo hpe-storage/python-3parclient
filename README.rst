@@ -155,7 +155,12 @@ To run a specific test::
 
  $ tox -e py27 -- test/file.py:class_name.test_method_name
 
-.. TODO(Ramy): Add instructions on running coverage tests with tox
+To run all unit tests with code coverage::
+
+ $ tox -e cover
+
+The output of the coverage tests will be placed into the ``coverage`` dir.
+
 
 Folders
 =======
@@ -168,9 +173,13 @@ Folders
 Documentation
 =============
 
+To build the documentation::
+
+ $ tox -e docs
+
 To view the built documentation point your browser to::
 
- $ python-3parclient/docs/_build/html/index.html
+ docs/html/index.html
 
 
 Running Simulators

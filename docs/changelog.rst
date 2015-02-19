@@ -48,6 +48,8 @@ Changes in Version 3.2.0
 * Modify the steps in the Installing from Source section to ensure correct
   installation of dependencies and ordering.
 * Added support for flash cache policy set on a virtual volume set.
+* Added tox environments to run tests with code coverage and to generate the documentation
+* Consolidated the test/README.rst into the top level README.rst and added clarifications
 
 Changes in Version 3.1.3
 ------------------------
