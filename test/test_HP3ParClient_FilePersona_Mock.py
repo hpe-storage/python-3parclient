@@ -107,27 +107,29 @@ class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
                                             'foo', 'bar'],
                                            multi_line_stripper=True)
         self.cl.removefpg("foo", "bar", d=True)
-        self.cl.ssh.run.assert_called_with(['removefpg', '-f', '-d',
-                                            'foo', 'bar'],
-                                           multi_line_stripper=True)
+        self.cl.ssh.run.assert_called_with(
+            self.ArgMatcher(self.assertEqual,
+                            'removefpg', ['-f', '-d'], ['foo', 'bar']),
+            multi_line_stripper=True)
         self.cl.removefpg("foo", "bar", forget="4gotten", wait=True)
-        self.cl.ssh.run.assert_called_with(['removefpg', '-f',
-                                            '-forget', '4gotten',
-                                            '-wait',
-                                            'foo', 'bar'],
-                                           multi_line_stripper=True)
+        self.cl.ssh.run.assert_called_with(
+            self.ArgMatcher(self.assertEqual,
+                            'removefpg',
+                            ['-f', '-wait', ('-forget', '4gotten')],
+                            ['foo', 'bar']),
+            multi_line_stripper=True)
         # what if string 'True' is used.  That is not a boolean!
         self.cl.removefpg("foo", "bar", forget='True', wait=True)
-        self.cl.ssh.run.assert_called_with(['removefpg', '-f',
-                                            '-forget', 'True',
-                                            '-wait',
-                                            'foo', 'bar'],
-                                           multi_line_stripper=True)
+        self.cl.ssh.run.assert_called_with(
+            self.ArgMatcher(self.assertEqual,
+                            'removefpg',
+                            ['-f', '-wait', ('-forget', 'True')],
+                            ['foo', 'bar']),
+            multi_line_stripper=True)
         # keyword=None is skipped
         # keyword=False (boolean) is skipped
         self.cl.removefpg("foo", "bar", forget=None, wait=False)
-        self.cl.ssh.run.assert_called_with(['removefpg', '-f',
-                                            'foo', 'bar'],
+        self.cl.ssh.run.assert_called_with(['removefpg', '-f', 'foo', 'bar'],
                                            multi_line_stripper=True)
 
     def test_removefpg_mock(self):
@@ -148,12 +150,13 @@ class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
                                            multi_line_stripper=True)
         self.cl.createfstore('testvfs', 'testfstore', fpg='testfpg',
                              comment='test comment')
-        self.cl.ssh.run.assert_called_with(['createfstore',
-                                            '-comment',
-                                            '"test comment"',
-                                            '-fpg', 'testfpg',
-                                            'testvfs', 'testfstore'],
-                                           multi_line_stripper=True)
+        self.cl.ssh.run.assert_called_with(
+            self.ArgMatcher(self.assertEqual,
+                            'createfstore',
+                            [('-comment', '"test comment"'),
+                             ('-fpg', 'testfpg')],
+                            ['testvfs', 'testfstore']),
+            multi_line_stripper=True)
 
     def test_createfshare_mock(self):
         """Use mock to test createfshare with protocol first."""

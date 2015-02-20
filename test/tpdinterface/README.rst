@@ -8,5 +8,8 @@ paramiko server seems to fail if this gets bigger than 4K.
 The tpdinterface.tcl is saved (committed) in this dir and read in by the Mock
 SSH server.
 
-Instructions for how to rebuild (e.g., expand) this file will be added here
-later (next time that change is needed... coming soon).
+When the tpdinterface.tcl needs updating (for example to add more interfaces),
+run the unit tests against a live array.  This will create a file called
+interface.save.  Copy the interface.save over tpdinterface.tcl file and then
+validate by running the tests with unit=true.  When the unit tests pass using
+the new tpdinterface.tcl, commit it.

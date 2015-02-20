@@ -55,8 +55,8 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
     """
 
     # File Persona minimum WSAPI overrides minimum for non-File Persona.
-    HP3PAR_WS_MIN_BUILD_VERSION = 30201046
-    HP3PAR_WS_MIN_BUILD_VERSION_DESC = '3.2.1 Build 46'
+    HP3PAR_WS_MIN_BUILD_VERSION = 30201200
+    HP3PAR_WS_MIN_BUILD_VERSION_DESC = '3.2.1 Build 200'
 
     def __init__(self, api_url):
         super(self.__class__, self).__init__(api_url)
@@ -224,7 +224,7 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             # we don't want ['split', 'into', 'a', 'nice', 'list'].
             # Put them back together.
             dictionary[key] = ' '.join(value)
-        elif key == 'vfsip':
+        elif key == 'vfsip' and value:
             # Expand the sub-fsips like in getfsip.
             interface = self.gettpdinterface()['getfsipInd']
             dictionary[key] = self._create_member(interface, value[0])
@@ -297,7 +297,7 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
     def _parse_members(self, keys, data):
         members = []
         if data:
-            if isinstance(data[0], list):
+            if len(keys) > 1 and isinstance(data[0], list):
                 members = []
                 # list of members (list of lists)
                 for values in data:
@@ -373,6 +373,13 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             if command == 'getfsip':
                 parsed_result = parsed_result[0]
 
+            # getfsnapclean added a special 'not running' message
+            # Filter out that garbage.
+            if command == 'getfsnapclean':
+                not_running = ['No', 'reclamation', 'task', 'running']
+                parsed_result = filter(lambda x: x[0:4] != not_running,
+                                       parsed_result)
+
             if single:
                 # Single member (need to add to list)
                 members = [client._create_member(interface, parsed_result)]
@@ -418,7 +425,7 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
 
     @_run_with_cli
     def createfpg(self, cpgname, fpgname, size,
-                  comment=None, node=None, recover=None,
+                  comment=None, node=None,
                   full=False, wait=False):
         """Create a file provisioning group.
 
@@ -439,9 +446,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                         provisioning group.
         :param node: Bind the created file provisioning group to the specified
                      node.
-        :param recover: Recovers the specified file provisioning group which
-                        is involved in Remote DR and that was removed using
-                        the -forget option.
         :param full: Create the file provisioning group using fully
                      provisioned volumes.
         :param wait: Wait until the associated task is completed before
@@ -651,26 +655,27 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
         pass
 
     @_run_with_cli
-    def setvfs(self, fpg, vfs,
-               certfile=None, certdata=None, rmcert=None,
+    def setvfs(self, vfs, fpg=None,
+               certfile=None, certdata=None, certgen=False, rmcert=None,
                comment=None, bgrace=None, igrace=None):
         """Modify a Virtual File Server.
 
         Allows modification of the specified Virtual File Server
 
         Only one of the following certificate options can be specified:
-        certfile, certdata, rmcert.
+        certfile, certdata, certgen, rmcert.
 
         Certificates must be in PEM format, containing both public and
         private keys.
 
         Grace times are specified in minutes.
 
+        :param vfs: The name of the VFS to be modified.
         :param fpg: The name of the File Provisioning Group to which the VFS
                     belongs.
-        :param vfs: The name of the VFS to be modified.
         :param certfile: Use the certificate data contained in this file.
         :param certdata: Use the certificate data contained in this string.
+        :param certgen: Generates and sets a certificate for the VFS.
         :param rmcert: Remove the named certificate from the VFS.
         :param comment: Specifies any additional textual information.
         :param bgrace: Specifies the block grace time for quotas within the
@@ -683,31 +688,31 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
 
     @_run_with_cli
     @_force_me
-    def removevfs(self, fpg, vfs):
+    def removevfs(self, vfs, fpg=None):
         """Remove a Virtual File Server.
 
         The removevfs command removes a Virtual File Server and its underlying
         components from the system.
 
+        :param vfs: The name of the VFS to be removed.
         :param fpg: fpg is the name of the File Provisioning Group containing
                     the VFS
-        :param vfs: The name of the VFS to be removed.
         :return: List of strings.  Lines of output from the CLI command.
         """
         pass
 
     @_run_with_cli
-    def createfsip(self, ipaddr, subnet, fpg, vfs, vlantag=None):
+    def createfsip(self, ipaddr, subnet, vfs, vlantag=None, fpg=None):
         """Assigns an IP address to a Virtual File Server.
 
         :param ipaddr: Specifies the IP address to be assign to the Virtual
                        File Server.
         :param subnet: Specifies the subnet mask to be used.
-        :param fpg: Specifies the file provisioning group in which the
-                    Virtual File Server was created.
         :param vfs: Specifies the Virtual File Server to which the IP
                     address will be assigned.
         :param vlantag: Specifies the VLAN Tag to be used.
+        :param fpg: Specifies the file provisioning group in which the
+                    Virtual File Server was created.
         :return: List of strings.  Lines of output from the CLI command.
         """
         pass
@@ -982,7 +987,7 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
     @_protocol_first
     def createfshare(self, protocol, vfs, sharename,
                      fpg=None, fstore=None, sharedir=None, comment=None,
-                     abe=None, fmode=None, dmode=None, allowip=None,
+                     abe=None, allowip=None,
                      denyip=None, allowperm=None, denyperm=None, cache=None,
                      options=None, clientip=None, ssl=None, urlpath=None):
         """Create a file share.
@@ -1011,8 +1016,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
 
         smb
             abe {true|false}
-            fmode <filemode>
-            dmode <dirmode>
             allowip <iplist>
             denyip <iplist>
             allowperm <permlist>
@@ -1075,12 +1078,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
              on the shares. The default is 'false'.  Valid values are 'true',
              'false' or None.  The parameter is a Python string -- not a
              boolean.
-        :param fmode: Specifies the default mode for newly created files, in
-             the same manner as the Linux chmod command. The range of values is
-             0000-0777. The default is 0700.
-        :param dmode: Specifies the default mode for newly created directories,
-             in the same manner as the Linux chmod command. The range of values
-             is 0000-3777. The default is 0700.
         :param allowip: Specifies client IP addresses that are allowed access
              to the share. Use commas to separate the IP addresses. The default
              is "", which allows all IP addresses (i.e. empty means all are
@@ -1180,7 +1177,7 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
     @_protocol_first
     def setfshare(self, protocol, vfs, sharename,
                   fpg=None, fstore=None, comment=None,
-                  abe=None, fmode=None, dmode=None, allowip=None,
+                  abe=None, allowip=None,
                   denyip=None, allowperm=None, denyperm=None, cache=None,
                   options=None, clientip=None,
                   ssl=None):
@@ -1213,8 +1210,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
 
         smb
             -abe {true|false}
-            -fmode <filemode>
-            -dmode <dirmode>
             -allowip [+|-]<iplist>
             -denyip [+|-]<iplist>
             -allowperm [+|-|=]<permlist>
@@ -1247,11 +1242,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
         :param abe: Access Based Enumeration. Specifies if users can see only
             the files and directories to which they have been allowed access
             on the shares.
-        :param fmode: Specifies the files mode in the same manner as the Linux
-            chmod command. The range of values is 0000-0777.
-
-        :param dmode: Specifies the directories mode in the same manner as the
-            Linux chmod command. The range of values is 0000-3777.
         :param allowip: Specifies client IP addresses that are allowed access
             to the share. Use commas to separate the IP addresses.
 

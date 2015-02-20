@@ -1403,7 +1403,7 @@ def get_version():
     debugRequest(flask.request)
     version = {'major': 1,
                'minor': 3,
-               'build': 30201046}
+               'build': 30201200}
     resp = flask.make_response(json.dumps(version), 200)
     return resp
 

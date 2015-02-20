@@ -51,7 +51,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         if self.interfaces is None:
             self.interfaces = self.cl.gettpdinterface()
 
-            save_interface = open('interface.save', 'w')
+            save_interface = open('tpdinterface/interface.save', 'w')
             for k, v in self.interfaces.iteritems():
                 save_interface.write(' {%s {' % k)
                 for header in v:
@@ -105,7 +105,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
         for fpgname, vfsname in vfss_to_delete:
             try:
-                self.cl.removevfs(fpgname, vfsname)
+                self.cl.removevfs(vfsname, fpg=fpgname)
             except Exception as e:
                 print e
                 pass
@@ -171,9 +171,10 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         for member in members:
             self.assertEqual([], member['ad'])
 
-            self.assertIsInstance(member['auth'], list)
-            for auth in member['auth']:
-                self.assertIsInstance(auth['order'], list)
+            self.assertIsInstance(member['auth'], dict)
+            self.assertIsInstance(member['auth']['order'], list)
+            for auth in member['auth']['order']:
+                self.assertIn(auth, ['Ldap', 'ActiveDirectory', 'Local'])
 
             self.assertIsInstance(member['dns'], dict)
             self.assertIsInstance(member['dns']['addresses'], str)
@@ -217,11 +218,6 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
                 self.assertIsInstance(node_ip['subnet'], str)
                 self.assertIsInstance(node_ip['vlantag'], str)
 
-            ntp = member['ntp']
-            self.assertIsInstance(ntp, dict)
-            self.assertIn(ntp['enable'], ('true', 'false'))
-            self.assertIsInstance(ntp['servers'], list)
-
     def validate_getfpg_members(self, members):
         for member in members:
             self.assertIsNotNone(member['CompId'])
@@ -231,8 +227,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
             self.assertIsInstance(member['comment'], str)
             self.assertIsInstance(int(member['createTime']), int)
             self.assertIsInstance(int(member['currentNode']), int)
-            self.assertIsInstance(member['defaultCpg'], str)
-            self.cl.getCPG(member['defaultCpg'])  # Is it a real CPG?
+            self.assertIn('defaultCpg', member)
 
             self.assertIsInstance(member['domains'], list)
             for domain in member['domains']:
@@ -245,11 +240,14 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
                 self.assertIsInstance(int(domain['volumes']), int)
 
             self.assertIsInstance(int(member['fFree']), int)
-            self.assertIsInstance(int(member['files']), int)
+            self.assertIsInstance(int(member['filesUsed']), int)
             self.assertIsInstance(int(member['freeCapacityKiB']), int)
+            self.assertIn(member['freezeState'], ['NOT_FROZEN', 'UNKNOWN'])
             self.assertIsInstance(member['fsname'], str)
             self.assertIsInstance(int(member['generation']), int)
             self.assertIsInstance(member['hosts'], list)
+            self.assertIn(member['isolationState'],
+                          ['ACCESSIBLE', 'UNKNOWN'])
             self.assertIn(member['mountStates'],
                           ['ACTIVATED', 'DEACTIVATED', 'UNMOUNTING'])
             self.assertIsInstance(member['mountpath'], str)
@@ -273,6 +271,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
                 self.assertIn(segment['readOnly'], ['true', 'false'])
                 self.assertIn(segment['unavailable'], ['true', 'false'])
 
+            self.assertIsInstance(int(member['usedCapacityKiB']), int)
             self.assertIsInstance(member['uuid'], str)
 
             self.assertIsInstance(member['volumes'], list)
@@ -368,7 +367,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         # Validate contents
         if fpgname is not None:
             success_message = None
-            not_found_message = 'Invalid VFS %s\r' % fpgname
+            not_found_message = 'Invalid VFS %s\r' % vfsname
             self.assertIn(message, (success_message, not_found_message))
         elif total == 0:
             self.assertEqual('No Virtual File Servers found.', message)
@@ -460,7 +459,8 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         # Create a CPG for the test
         cpgname = test_prefix + "CPG_" + hp3parbase.TIME
         cpgs_to_delete.append(cpgname)
-        optional = self.CPG_OPTIONS
+        optional = self.CPG_OPTIONS.copy()
+        optional.pop('domain', None)  # File Persona doesn't allow a domain
         self.cl.createCPG(cpgname, optional)
 
         result = self.cl.createfpg(cpgname, fpgname, '1X')
@@ -490,7 +490,6 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
         expected = 'belongs to domain.*which cannot be used for File Services.'
         self.find_expected_in_result(expected, result)
-        self.assertEqual('Task has failed\r', result[-1])
 
         self.validate_fpg(expected_count=fpg_count)
 
@@ -522,7 +521,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
         # Create same FPG again to test createfpg already exists error
         result = self.cl.createfpg(cpgname, fpgname, '1T', wait=True)
-        expected = ('Error: File Provisioning Group %s already exists\r' %
+        expected = ('Error: FPG %s already exists\r' %
                     fpgname)
         self.assertEqual(expected, result[0])
         self.validate_fpg(fpgname=fpgname, expected_count=fpg_count + 1)
@@ -554,14 +553,33 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         self.validate_fpg(fpgname=fpgname)
         return fpgname
 
+    def get_or_create_vfs(self, test_prefix, fpgname):
+
+        vfsname = config['TEST'].get('vfs')
+        if vfsname is not None:
+            return vfsname
+        vfsname = test_prefix + "VFS_" + hp3parbase.TIME
+        bgrace = '11'
+        igrace = '22'
+        comment = 'this is a test comment'
+        vfss_to_delete.append((fpgname, vfsname))
+        result = self.cl.createvfs('127.0.0.2', '255.255.0.0', vfsname,
+                                   fpg=fpgname,
+                                   bgrace=bgrace, igrace=igrace,
+                                   comment=comment,
+                                   wait=True)
+        expected = 'Created VFS "%s" on FPG %s.' % (vfsname, fpgname)
+        self.find_expected_in_result(expected, result)
+        self.validate_vfs(fpgname=fpgname, vfsname=vfsname)
+        return vfsname
+
     @unittest.skipIf(config['TEST']['skip_file_persona'].lower() == 'true',
                      SKIP_MSG)
     @print_header_and_footer
     def test_createvfs_bogus_grace(self):
         test_prefix = 'UT6_'
-        vfsname = test_prefix + "VFS_" + hp3parbase.TIME
         fpgname = self.get_or_create_fpg(test_prefix)
-        vfss_to_delete.append((fpgname, vfsname))
+        vfsname = self.get_or_create_vfs(test_prefix, fpgname)
         result = self.cl.createvfs('127.0.0.2', '255.255.255.0', vfsname,
                                    fpg=fpgname,
                                    bgrace='bogus', igrace='bogus',
@@ -699,7 +717,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
         result = self.cl.createfsnap(vfsname, fstore, tag, fpg=fpgname,
                                      retain=0)
-        self.assertEqual([], result)
+        self.assertTrue(result[0].endswith('_%s' % tag))
 
         result = self.cl.getfsnap('*%s' % tag,
                                   fpg=fpgname, vfs=vfsname, fstore=fstore,
@@ -721,13 +739,13 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
                                    fpg=fpgname, vfs=vfsname, fstore=fstore)
         # For some reason, when -pat is not used the result does not include
         # a CompId.  Otherwise the results should be identical (same fsnap).
-        pprint.pprint(result)
-        pprint.pprint(result2)
-        del member['CompId']
+        self.debug_print(result)
+        self.debug_print(result2)
+        del member['CompId']  # For some reason this is not in result2.
         self.assertEqual(result, result2)  # Should be same result
 
         result = self.cl.createfsnap(vfsname, fstore, tag, fpg=fpgname)
-        self.assertEqual([], result)
+        self.assertTrue(result[0].endswith('_%s' % tag))
 
         result = self.cl.removefsnap(vfsname, fstore, fpg=fpgname,
                                      snapname=snapname)
@@ -735,49 +753,50 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         result = self.cl.removefsnap(vfsname, fstore, fpg=fpgname)
         self.assertEqual([], result)
 
-        success = ['-- error code 0\r']
+        success = []
         running = ['Reclamation already running on %s\r' % fpgname]
         expected_in = (success, running)
         # After first one expect 'running', but to avoid timing issues in
         # the test results accept either success or running.
         result = self.cl.startfsnapclean(fpgname, reclaimStrategy='maxspeed')
         self.assertIn(result, expected_in)
-        result = self.cl.startfsnapclean(fpgname)
+        result = self.cl.startfsnapclean(fpgname, reclaimStrategy='maxspeed')
         self.assertIn(result, expected_in)
-        result = self.cl.stopfsnapclean(fpgname)
-        self.assertEqual([], result)
 
-        print "============GETFSNAPCLEAN=============="
         result = self.cl.getfsnapclean(fpgname)
-        pprint.pprint(result)
+        self.debug_print('GETFSNAPCLEAN:')
+        self.debug_print(result)
         self.assertIsNone(result['message'])
         self.assertLess(0, result['total'])
         for member in result['members']:
             self.assertTrue(member['avgFileSizeKb'].isdigit())
             self.assertTrue(member['endTime'].isdigit())
-            self.assertIn(member['exitStatus'], ['OK'])
-            self.assertIn(member['logLevel'], ['INFO'])
+            self.assertIn(member['exitStatus'], ['OK', 'N/A'])
+            self.assertIn(member['logLevel'], ['INFO', 'N/A'])
             self.assertTrue(member['numDentriesReclaimed'].isdigit())
             self.assertTrue(member['numDentriesScanned'].isdigit())
             self.assertTrue(member['numErrors'].isdigit())
             self.assertTrue(member['numInodesSkipped'].isdigit())
             self.assertTrue(member['spaceRecoveredCumulative'].isdigit())
             self.assertTrue(member['startTime'].isdigit())
-            self.assertIn(member['strategy'], ('maxspace', 'maxspeed'))
+            self.assertIn(member['strategy'], ('MAXSPACE', 'MAXSPEED'))
             uid_match = '^[0-f]*$'
             self.assertIsNotNone(re.match(uid_match, member['taskId']))
-            self.assertIn(member['taskState'], ('COMPLETED', 'STOPPED'))
-            self.assertIn(member['verboseMode'], ['NA'])
+            self.assertIn(member['taskState'],
+                          ('RUNNING', 'COMPLETED', 'STOPPED'))
+            self.assertIn(member['verboseMode'], ['false', 'NA'])
+
+        result = self.cl.stopfsnapclean(fpgname)
+        self.assertEqual([], result)
 
         result = self.cl.startfsnapclean(fpgname, resume=True)
         self.assertEqual(['No reclamation task running on FPG %s\r' % fpgname],
                          result)
 
     def remove_fstore(self, fpgname, vfsname, fstore):
-        result = self.cl.removefsnap(vfsname, fstore, fpg=fpgname)
-        self.assertEqual([], result)
+        self.cl.removefsnap(vfsname, fstore, fpg=fpgname)
         result = self.cl.startfsnapclean(fpgname, reclaimStrategy='maxspeed')
-        success = ['-- error code 0\r']
+        success = []
         running = ['Reclamation already running on %s\r' % fpgname]
         expected_in = (success, running)
         self.assertIn(result, expected_in)
@@ -791,7 +810,6 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         self.assertEqual([], result)
         result = self.cl.removefshare(protocol, vfsname, share_name,
                                       fpg=fpgname, fstore=share_name)
-        self.debug_print(result)  # TODO:
         if protocol == 'nfs':
             expected = ['%s Delete Export failed with error: '
                         'share %s does not exist\r' %
@@ -823,41 +841,29 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         if fpgname is None:
             fpgname = self.get_or_create_fpg(test_prefix)
 
-        vfs_count = self.get_vfs_count(fpg=fpgname)
-        bgrace = '11'
-        igrace = '22'
-        comment = 'this is a test comment'
-
         # Create VFS
-        vfsname = test_prefix + "VFS_" + hp3parbase.TIME
-        vfss_to_delete.append((fpgname, vfsname))
-        result = self.cl.createvfs('127.0.0.2', '255.255.0.0', vfsname,
-                                   fpg=fpgname,
-                                   bgrace=bgrace, igrace=igrace,
-                                   comment=comment,
-                                   wait=True)
-        expected = 'Created VFS %s on FPG %s.' % (vfsname, fpgname)
-        self.find_expected_in_result(expected, result)
-        self.validate_vfs(fpgname=fpgname, vfsname=vfsname)
+        vfsname = self.get_or_create_vfs(test_prefix, fpgname)
 
         # Try creating it again
         result = self.cl.createvfs('127.0.0.2', '255.255.255.0', vfsname,
                                    fpg=fpgname,
                                    wait=True)
-        expected = ('VFS %s already exists within FPG %s\r' %
+        expected = ('VFS "%s" already exists within FPG %s\r' %
                     (vfsname, fpgname))
         self.assertEqual(expected, result[0])
         self.validate_vfs(vfsname=vfsname, fpgname=fpgname,
-                          expected_count=vfs_count + 1)
+                          expected_count=1)
 
         # Get the VFS and validate the original settings.
         result = self.cl.getvfs(fpg=fpgname, vfs=vfsname)
-        self.assertEqual(bgrace, result['members'][0]['bgrace'])
-        self.assertEqual(igrace, result['members'][0]['igrace'])
-        self.assertEqual(comment, result['members'][0]['comment'])
+        self.assertIn('bgrace', result['members'][0])
+        self.assertIn('igrace', result['members'][0])
+        self.assertIn('comment', result['members'][0])
 
         # Test FSIPS while we have a VFS
-        self.get_fsips(fpgname, vfsname)
+        # (unfortunately FSIPS might not be ready yet)
+        if result['members'][0]['overallStateInt'] == '1':
+            self.get_fsips(fpgname, vfsname)
 
         # CRUD test fstore using this VFS
         fstore = test_prefix + "CRUD_FSTORE_" + hp3parbase.TIME
@@ -913,9 +919,8 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         self.assertIsInstance(member['denyIP'], list)
         self.assertEqual([], member['allowPerm'])
         self.assertEqual([], member['denyPerm'])
+        self.assertEqual('true', member['ca'])
         self.assertEqual('manual', member['cache'])
-        self.assertEqual('0700', member['dirMode'])
-        self.assertEqual('0700', member['fileMode'])
         self.assertEqual([], member['shareDir'])
         self.assertEqual(share_name, member['shareName'])
         self.assertEqual('---', member['uuid'])
@@ -932,24 +937,20 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         # FSTORE REMOVAL -- includes tests/asserts and fsnap remove/clean
         self.remove_fstore(fpgname, vfsname, fstore)
 
-        # Remove the VFS and verify that is was removed
-        self.cl.removevfs(fpgname, vfsname)
-        self.validate_vfs(no_vfsname=vfsname, fpgname=fpgname,
-                          expected_count=vfs_count)
-
     @unittest.skipIf(config['TEST']['skip_file_persona'].lower() == 'true',
                      SKIP_MSG)
     @print_header_and_footer
     def test_removevfs_bogus(self):
-        self.assertRaises(AttributeError, self.cl.removevfs, None, None)
-        self.assertRaises(AttributeError, self.cl.removevfs, 'bogus', None)
-        self.assertRaises(AttributeError, self.cl.removevfs, None, 'bogus')
-        self.assertRaises(TypeError, self.cl.removevfs,
-                          'bogus', 'bogus', 'bogus')
+        self.assertRaises(AttributeError, self.cl.removevfs, None)
+        result = self.cl.removevfs('bogus')
+        vfs_not_found = ('Virtual file server bogus was not found in any '
+                         'existing file provisioning group.\r')
+        self.assertEqual(vfs_not_found, result[0])
+        self.assertRaises(AttributeError, self.cl.removevfs, None, fpg='bogus')
 
-        result = self.cl.removevfs('bogus', 'bogus')
-        not_found = 'File Provisioning Group: bogus not found\r'
-        self.assertEqual(not_found, result[0])
+        result = self.cl.removevfs('bogus', fpg='bogus')
+        fpg_not_found = 'File Provisioning Group: bogus not found\r'
+        self.assertEqual(fpg_not_found, result[0])
 
 # testing
 # suite = unittest.TestLoader().
