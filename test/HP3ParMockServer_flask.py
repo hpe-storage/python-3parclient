@@ -1021,6 +1021,8 @@ def modify_volume_set(volume_set_name):
                 vset['name'] = data['newName']
             if 'comment' in data:
                 vset['comment'] = data['comment']
+            if 'flashCachePolicy' in data:
+                vset['flashCachePolicy'] = data['flashCachePolicy']
             if 'setmembers' in data and 'action' in data:
                 members = data['setmembers']
                 if 1 == data['action']:

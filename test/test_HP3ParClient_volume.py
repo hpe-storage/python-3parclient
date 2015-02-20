@@ -563,6 +563,32 @@ class HP3ParClientVolumeTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
         self.printFooter('modify_volume_set_change_comment')
 
+    def test_10_modify_volume_set_change_flash_cache(self):
+        self.printHeader('modify_volume_set_change_flash_cache')
+
+        try:
+            self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=self.DOMAIN,
+                                    comment="First")
+            self.cl.modifyVolumeSet(
+                VOLUME_SET_NAME1,
+                flashCachePolicy=self.cl.FLASH_CACHE_ENABLED)
+            vset = self.cl.getVolumeSet(VOLUME_SET_NAME1)
+            self.assertEqual(self.cl.FLASH_CACHE_ENABLED,
+                             vset['flashCachePolicy'])
+
+            self.cl.modifyVolumeSet(
+                VOLUME_SET_NAME1,
+                flashCachePolicy=self.cl.FLASH_CACHE_DISABLED)
+            vset = self.cl.getVolumeSet(VOLUME_SET_NAME1)
+            self.assertEqual(self.cl.FLASH_CACHE_DISABLED,
+                             vset['flashCachePolicy'])
+        except exceptions.HTTPBadRequest:
+            # means we are on a server that doesn't support FlashCachePolicy
+            # pre 3.2.1 MU2
+            pass
+
+        self.printFooter('modify_volume_set_change_flash_cache')
+
     def test_10_modify_volume_set_add_members_to_empty(self):
         self.printHeader('modify_volume_set_add_members_to_empty')
 

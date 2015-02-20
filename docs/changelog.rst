@@ -47,6 +47,7 @@ Changes in Version 3.2.0
 * Change GitHub account reference from WaltHP to hp-storage.
 * Modify the steps in the Installing from Source section to ensure correct
   installation of dependencies and ordering.
+* Added support for flash cache policy set on a virtual volume set.
 
 Changes in Version 3.1.3
 ------------------------

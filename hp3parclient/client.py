@@ -169,6 +169,9 @@ class HP3ParClient(object):
     CHAP_OPERATION_MODE_INITIATOR = 1
     CHAP_OPERATION_MODE_TARGET = 2
 
+    FLASH_CACHE_ENABLED = 1
+    FLASH_CACHE_DISABLED = 2
+
     def __init__(self, api_url):
         self.api_url = api_url
         self.http = http.HTTPJSONRESTClient(self.api_url)
@@ -2204,7 +2207,7 @@ class HP3ParClient(object):
         response, body = self.http.delete('/volumesets/%s' % name)
 
     def modifyVolumeSet(self, name, action=None, newName=None, comment=None,
-                        setmembers=None):
+                        flashCachePolicy=None, setmembers=None):
         """
         This modifies a volume set by adding or remove a volume from the volume
         set. It's actions is based on the enums SET_MEM_ADD or SET_MEM_REMOVE.
@@ -2217,6 +2220,8 @@ class HP3ParClient(object):
         :type newName: str
         :param comment: the comment for on the vv set
         :type comment: str
+        :param flashCachePolicy: the flash-cache policy for the vv set
+        :type comment: FLASH_CACHED_ENABLED or FLASH_CACHE_DISABLED
         :param setmembers: the vv to add to the set, the existence of the vv
                            will not be checked
         :type setmembers: array
@@ -2266,6 +2271,9 @@ class HP3ParClient(object):
 
         if comment:
             info['comment'] = comment
+
+        if flashCachePolicy:
+            info['flashCachePolicy'] = flashCachePolicy
 
         if setmembers:
             members = {'setmembers': setmembers}
