@@ -140,38 +140,51 @@ File Persona Capabilities
 Installation
 ============
 
-::
+To install::
 
- $ python setup.py install
-
+ $ sudo pip install .
 
 Unit Tests
 ==========
 
-::
+To run all unit tests::
 
- $ pip install nose
- $ pip install nose-testconfig
- $ cd test
- $ nosetests --tc-file config.ini
+ $ tox -e py27
 
+To run a specific test::
+
+ $ tox -e py27 -- test/file.py:class_name.test_method_name
+
+.. TODO(Ramy): Add instructions on running coverage tests with tox
 
 Folders
 =======
+
 * docs -- contains the documentation.
 * hp3parclient -- the actual client.py library
 * test -- unit tests
 * samples -- some sample uses
 
-
 Documentation
 =============
 
-To view the built documentation point your browser to
+To view the built documentation point your browser to::
 
-::
-
-  python-3parclient/docs/_build/html/index.html
+ $ python-3parclient/docs/_build/html/index.html
 
 
+Running Simulators
+==================
+
+The unit tests should automatically start/stop the simulators.  To start them
+manually use the following commands.  To stop them, use 'kill'.  Starting them
+manually before running unit tests also allows you to watch the debug output.
+
+* WSAPI::
+
+  $ python test/HP3ParMockServer_flask.py -port 5001 -user <USERNAME> -password <PASSWORD> -debug
+
+* SSH::
+
+  $ python test/HP3ParMockServer_ssh.py [port]
 

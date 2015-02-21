@@ -14,14 +14,9 @@
 #    under the License.
 
 import mock
-import os
 import paramiko
-import sys
 import HP3ParClient_base
 import unittest
-
-# Add the path for the hp3parclient modules
-sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
 
 user = "u"
 password = "p"

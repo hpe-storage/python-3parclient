@@ -15,15 +15,11 @@
 """Test class of 3Par Client handling File Persona API."""
 
 import mock
-import os
 import pprint
-import sys
 
 from testconfig import config
 import HP3ParClient_base as hp3parbase
 
-# Add the path for the hp3parclient modules
-sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
 from hp3parclient import exceptions
 from hp3parclient import file_client
 from hp3parclient import ssh

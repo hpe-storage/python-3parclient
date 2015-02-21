@@ -24,9 +24,6 @@ import inspect
 from testconfig import config
 import datetime
 from functools import wraps
-
-# Add the path for the hp3parclient modules
-sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
 from hp3parclient import client, file_client
 
 TIME = datetime.datetime.now().strftime('%H%M%S')
@@ -37,11 +34,6 @@ try:
 except ImportError:
     # Fall back to Python 2's urllib2
     from urlparse import urlparse
-
-# pip install nose-testconfig
-
-# e.g.
-# nosetests test_HP3ParClient_host.py -v --tc-file config.ini
 
 
 class HP3ParClientBaseTestCase(unittest.TestCase):
