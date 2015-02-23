@@ -2,3 +2,6 @@ docs/_build
 *.pyc
 .project
 .pydevproject
+*.egg-info
+.tox
+test_bogus_known_hosts_file

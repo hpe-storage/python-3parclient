@@ -14,14 +14,10 @@
 #    under the License.
 
 """Test class of 3Par Client handling of Host Sets."""
-import sys
-import os
 import unittest
 import HP3ParClient_base
 import random
 
-# Add the path for the hp3parclient modules
-sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
 from hp3parclient import exceptions
 
 VOLUME_SIZE = 512

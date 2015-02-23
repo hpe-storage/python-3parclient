@@ -15,14 +15,10 @@
 
 """Test class of 3PAR Client System Level APIS."""
 
-import sys
-import os
 from testconfig import config
 import unittest
 import HP3ParClient_base as hp3parbase
 
-# Add the path for the hp3parclient modules
-sys.path.insert(0, os.path.realpath(os.path.abspath('../')))
 from hp3parclient import exceptions
 
 
