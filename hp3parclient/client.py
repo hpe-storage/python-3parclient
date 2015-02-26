@@ -172,17 +172,28 @@ class HP3ParClient(object):
     FLASH_CACHE_ENABLED = 1
     FLASH_CACHE_DISABLED = 2
 
-    def __init__(self, api_url):
+    def __init__(self, api_url, debug=False):
         self.api_url = api_url
         self.http = http.HTTPJSONRESTClient(self.api_url)
         api_version = None
         self.ssh = None
+
+        self.debug_rest(debug)
+
         try:
             api_version = self.getWsApiVersion()
-        except Exception:
-            msg = ('Either, the 3PAR WS is not running or the'
-                   ' version of the WS is invalid.')
-            raise exceptions.UnsupportedVersion(msg)
+        except Exception as ex:
+            ex_desc = ex.get_description()
+
+            if (ex_desc and "Unable to find the server at" in ex_desc or
+                    "Only absolute URIs are allowed" in ex_desc):
+                raise exceptions.HTTPBadRequest(ex_desc)
+            else:
+                msg = ('Error: \'%s\' - Error communicating with the 3PAR WS. '
+                       'Check proxy settings. If error persists, either the '
+                       '3PAR WS is not running or the version of the WS is '
+                       'not supported.') % ex_desc
+                raise exceptions.UnsupportedVersion(msg)
 
         # Note the build contains major, minor, maintenance and build
         # e.g. 30102422 is 3 01 02 422

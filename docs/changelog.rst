@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Changes in Version 3.2.1
+------------------------
+* Improved debug capabilities during initialization of the client.
+
 Changes in Version 3.2.0
 ------------------------
 * Added File Persona Client:
