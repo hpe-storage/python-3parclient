@@ -17,7 +17,7 @@ HP 3PAR Client.
 
 :Author: Walter A. Boring IV
 :Author: Kurt Martin
-:Copyright: Copyright 2012-2014, Hewlett Packard Development Company, L.P.
+:Copyright: Copyright 2012-2015, Hewlett Packard Development Company, L.P.
 :License: Apache v2.0
 
 """

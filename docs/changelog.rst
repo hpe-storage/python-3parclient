@@ -9,6 +9,7 @@ Changes in Version 3.2.1
 * Require 3.2.1 (MU3) for File Persona client
 * Improved file client test coverage
 * Renew SSH session if lost and increase retry attempts to 2 (issue #5)
+* Added missing exceptions to API docs for deleteVolume.
 
 Changes in Version 3.2.0
 ------------------------

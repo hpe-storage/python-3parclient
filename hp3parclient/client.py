@@ -1,4 +1,4 @@
-# (c) Copyright 2012-2014 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2012-2015 Hewlett Packard Development Company, L.P.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -489,6 +489,10 @@ class HP3ParClient(object):
             - RETAINED - Volume retention time has not expired
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - HAS_RO_CHILD - Volume has read-only child
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+            - HAS_CHILD - The volume has a child volume
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+            - IN_USE - The volume is in use by VV set, VLUN, etc
 
         """
         response, body = self.http.delete('/volumes/%s' % name)
