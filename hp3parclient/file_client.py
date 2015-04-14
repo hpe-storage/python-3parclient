@@ -19,7 +19,7 @@
 :Author: Mark Sturdevant
 :Description: Client for 3PAR File Persona.
     This module provides a client for File Persona functionality.
-    The File Persona client requires 3PAR InForm 3.2.1 with File Persona
+    The File Persona client requires 3PAR InForm 3.2.1 (MU3) with File Persona
     capability.  This client extends the regular 3PAR client.
 
 """
@@ -45,7 +45,7 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
 
     """ The 3PAR File Persona Client.
 
-    The File Persona client requires 3PAR InForm 3.2.1 with File Persona
+    The File Persona client requires 3PAR InForm 3.2.1 (MU3) with File Persona
     capability
 
     :param api_url: The url to the WSAPI service on 3PAR
@@ -55,8 +55,8 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
     """
 
     # File Persona minimum WSAPI overrides minimum for non-File Persona.
-    HP3PAR_WS_MIN_BUILD_VERSION = 30201200
-    HP3PAR_WS_MIN_BUILD_VERSION_DESC = '3.2.1 Build 200'
+    HP3PAR_WS_MIN_BUILD_VERSION = 30201256
+    HP3PAR_WS_MIN_BUILD_VERSION_DESC = '3.2.1 (MU3)'
 
     def __init__(self, api_url):
         super(self.__class__, self).__init__(api_url)
@@ -401,7 +401,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
 
         :return: Dictionary of TPD interfaces
         """
-        pass
 
     @_wrap_tcl
     @_run_with_cli
@@ -421,7 +420,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             }
 
         """
-        pass
 
     @_run_with_cli
     def createfpg(self, cpgname, fpgname, size,
@@ -453,7 +451,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                      information.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     def growfpg(self, fpgname, size):
@@ -470,7 +467,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
         :param size: The size of the filesystem to be grown.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_wrap_tcl
     @_run_with_cli
@@ -491,7 +487,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             }
 
         """
-        pass
 
     @_run_with_cli
     @_force_me
@@ -536,7 +531,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                        a forced failover.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     @_force_me
@@ -566,7 +560,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             * **pat** -- The fpgname parameter is a glob-style pattern.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     def createvfs(self, ipaddr, subnet, vfsname,
@@ -622,7 +615,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                      information.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_wrap_tcl
     @_run_with_cli
@@ -652,7 +644,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             }
 
         """
-        pass
 
     @_run_with_cli
     def setvfs(self, vfs, fpg=None,
@@ -684,7 +675,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                        VFS.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     @_force_me
@@ -699,7 +689,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                     the VFS
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     def createfsip(self, ipaddr, subnet, vfs, vlantag=None, fpg=None):
@@ -715,7 +704,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                     Virtual File Server was created.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     @_force_me
@@ -732,7 +720,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                     Virtual File Server was created.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_wrap_tcl
     @_run_with_cli
@@ -754,7 +741,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             }
 
         """
-        pass
 
     @_run_with_cli
     @_force_me
@@ -768,7 +754,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                     File Server was created.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     def createfsgroup(self, groupname, gid=None, memberlist=None):
@@ -787,7 +772,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
         :param memberlist: User members of the group.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     @_force_me
@@ -817,7 +801,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                            It is a set of comma separated strings.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     @_force_me
@@ -831,7 +814,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                           character), and underscores.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     def createfsuser(self, username, passwd='default', primarygroup=None,
@@ -862,7 +844,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                         a member.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     @_force_me
@@ -900,7 +881,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                         strings.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     @_force_me
@@ -913,7 +893,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                          character), and underscores.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     def createfstore(self, vfs, fstore, comment=None, fpg=None):
@@ -928,7 +907,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
         :param fpg: Specifies the name of the file provisioning group.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_wrap_tcl
     @_run_with_cli
@@ -954,7 +932,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             }
 
         """
-        pass
 
     @_run_with_cli
     def setfstore(self, vfs, fstore, comment=None, fpg=None):
@@ -966,7 +943,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
         :param fpg: The name of the parent File Provisioning Group.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     @_force_me
@@ -981,10 +957,10 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
         :param fpg: The name of the parent File Provisioning Group.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     @_protocol_first
+    @_force_me
     def createfshare(self, protocol, vfs, sharename,
                      fpg=None, fstore=None, sharedir=None, comment=None,
                      abe=None, allowip=None,
@@ -1171,7 +1147,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
              <urlpath>.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     @_protocol_first
@@ -1351,7 +1326,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
         :param ssl: Specifies to enable or disable SSL.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_wrap_tcl
     @_run_with_cli
@@ -1404,7 +1378,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             }
 
         """
-        pass
 
     @_run_with_cli
     @_protocol_first
@@ -1435,7 +1408,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             used as <fstore>.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     @_force_me
@@ -1467,7 +1439,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                     groups, -fpg must be specified.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_wrap_tcl
     @_run_with_cli
@@ -1503,7 +1474,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             }
 
         """
-        pass
 
     @_run_with_cli
     @_force_me
@@ -1522,7 +1492,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                     groups, -fpg must be specified.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     def startfsnapclean(self, fpgname, resume=False, reclaimStrategy=None):
@@ -1536,7 +1505,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             'maxspace': Suggests optimize to reclaim maximum space.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_wrap_tcl
     @_run_with_cli
@@ -1558,7 +1526,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             }
 
         """
-        pass
 
     @_run_with_cli
     def stopfsnapclean(self, fpgname, pause=False):
@@ -1578,7 +1545,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
         :param pause: Specifies to pause a reclamation task.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_run_with_cli
     def setfsquota(self, vfsname, fpg=None, username=None, groupname=None,
@@ -1635,7 +1601,6 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
              VFS.
         :return: List of strings.  Lines of output from the CLI command.
         """
-        pass
 
     @_wrap_tcl
     @_run_with_cli
@@ -1661,4 +1626,3 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             }
 
         """
-        pass

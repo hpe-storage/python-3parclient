@@ -4,7 +4,10 @@ Changelog
 Changes in Version 3.2.1
 ------------------------
 * Improved debug capabilities during initialization of the client.
-* reworked findHost to use a random hostname to fix collisions
+* Reworked findHost to use a random hostname to fix collisions
+* Fix cross-protocol share hang by using non-interactive flag
+* Require 3.2.1 (MU3) for File Persona client
+* Improved file client test coverage
 
 Changes in Version 3.2.0
 ------------------------

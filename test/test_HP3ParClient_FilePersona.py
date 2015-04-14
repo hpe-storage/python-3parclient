@@ -356,7 +356,6 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
     def validate_vfs(self, fpgname=None, vfsname=None, no_vfsname=None,
                      expected_count=None):
 
-        self.assertIsNotNone(fpgname, 'Need an fpgname for now.')
         result = self.cl.getvfs(fpg=fpgname)
         self.debug_print("DEBUG: getvfs result...")
         self.debug_print(result)
@@ -370,7 +369,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
             not_found_message = 'Invalid VFS %s\r' % vfsname
             self.assertIn(message, (success_message, not_found_message))
         elif total == 0:
-            self.assertEqual('No Virtual File Servers found.', message)
+            self.assertEqual('', message)
         else:
             self.assertIsNone(message)
 
@@ -779,11 +778,11 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
             self.assertTrue(member['numInodesSkipped'].isdigit())
             self.assertTrue(member['spaceRecoveredCumulative'].isdigit())
             self.assertTrue(member['startTime'].isdigit())
-            self.assertIn(member['strategy'], ('MAXSPACE', 'MAXSPEED'))
+            self.assertIn(member['strategy'].upper(), ('MAXSPACE', 'MAXSPEED'))
             uid_match = '^[0-f]*$'
             self.assertIsNotNone(re.match(uid_match, member['taskId']))
             self.assertIn(member['taskState'],
-                          ('RUNNING', 'COMPLETED', 'STOPPED'))
+                          ('RUNNING', 'COMPLETED', 'STOPPED', 'UNKNOWN'))
             self.assertIn(member['verboseMode'], ['false', 'NA'])
 
         result = self.cl.stopfsnapclean(fpgname)

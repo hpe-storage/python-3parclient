@@ -106,10 +106,10 @@ class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
         self.cl.ssh.run.assert_called_with(['removefpg', '-f',
                                             'foo', 'bar'],
                                            multi_line_stripper=True)
-        self.cl.removefpg("foo", "bar", d=True)
+        self.cl.removefpg("foo", "bar", f=False)  # f=False needs to be ignored
         self.cl.ssh.run.assert_called_with(
             self.ArgMatcher(self.assertEqual,
-                            'removefpg', ['-f', '-d'], ['foo', 'bar']),
+                            'removefpg', ['-f'], ['foo', 'bar']),
             multi_line_stripper=True)
         self.cl.removefpg("foo", "bar", forget="4gotten", wait=True)
         self.cl.ssh.run.assert_called_with(
@@ -131,6 +131,20 @@ class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
         self.cl.removefpg("foo", "bar", forget=None, wait=False)
         self.cl.ssh.run.assert_called_with(['removefpg', '-f', 'foo', 'bar'],
                                            multi_line_stripper=True)
+
+    def test_build_cmd_from_str_or_list(self):
+        """Test that build_cmd works with list or string."""
+        result1 = self.cl._build_command('test -foo')
+        self.assertEqual(['test', '-foo'], result1)
+        result2 = self.cl._build_command(['test', '-foo'])
+        self.assertEqual(['test', '-foo'], result2)
+
+    def test_get_details(self):
+        """Test that get_details cannot be overridden by an arg."""
+        test_function_name = 'testdetails'
+        file_client.GET_DETAILS[test_function_name] = True
+        result = self.cl._build_command(test_function_name, d=False)
+        self.assertEqual([test_function_name, '-d'], result)
 
     def test_removefpg_mock(self):
         """Use mock to test removefpg -f."""
@@ -162,11 +176,11 @@ class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
         """Use mock to test createfshare with protocol first."""
         self.assertRaises(TypeError, self.cl.createfshare)
         self.cl.createfshare('nfs', 'testvfs', 'testfshare')
-        self.cl.ssh.run.assert_called_with(['createfshare', 'nfs',
+        self.cl.ssh.run.assert_called_with(['createfshare', 'nfs', '-f',
                                             'testvfs', 'testfshare'],
                                            multi_line_stripper=True)
         self.cl.createfshare('smb', 'testvfs', 'testfshare')
-        self.cl.ssh.run.assert_called_with(['createfshare', 'smb',
+        self.cl.ssh.run.assert_called_with(['createfshare', 'smb', '-f',
                                             'testvfs', 'testfshare'],
                                            multi_line_stripper=True)
         self.cl.createfshare('nfs', 'testvfs', 'testfstore', fpg='testfpg',
@@ -175,7 +189,8 @@ class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
         self.cl.ssh.run.assert_called_with(self.ArgMatcher(
             self.assertEqual,
             ['createfshare', 'nfs'],
-            [('-fpg', 'testfpg'),
+            ['-f',
+             ('-fpg', 'testfpg'),
              ('-fstore', 'testfstore'),
              ('-sharedir', 'testsharedir'),
              ('-comment', '"test comment"')],  # Comments get quoted
