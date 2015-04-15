@@ -2804,3 +2804,55 @@ class HP3ParClient(object):
         """
         word = re.search(search_string.strip(' ') + ' ([^ ]*)', s)
         return word.groups()[0].strip(' ')
+
+    def getStatData(self, name):
+        # Request the last 7 days worth of performance data for the CPG.
+        # Interval is set to one hour.
+        cmd = ['srstatld', '-cpg', name, '-hourly', '-btsecs', '-7d']
+        output = self._run(cmd)
+        return self._format_srstatld_output(output)
+
+    def _format_srstatld_output(self, out):
+        # Strip off header and footer lines
+        data = out[2:(len(out) - 2)]
+        result = {'intervals': [],
+                  'overall': {}}
+        for line in data:
+            line = line.split(',')
+            formatted = {'time': line[0],
+                         'secs': line[1],
+                         'iops': {'rd': line[2],
+                                  'wr': line[3],
+                                  'tot': line[4]},
+                         'kbps': {'rd': line[5],
+                                  'wr': line[6],
+                                  'tot': line[7]},
+                         'svct_ms': {'rd': line[8],
+                                     'wr': line[9],
+                                     'tot': line[10]},
+                         'iosz_kbs': {'rd': line[11],
+                                      'wr': line[12],
+                                      'tot': line[13]},
+                         'qlen': line[14],
+                         'avg_busy_perc': line[15]}
+            result['intervals'].append(formatted)
+
+        line = out[len(out) - 1].split(',')
+        formatted = {'secs': line[1],
+                     'iops': {'rd': line[2],
+                              'wr': line[3],
+                              'tot': line[4]},
+                     'kbps': {'rd': line[5],
+                              'wr': line[6],
+                              'tot': line[7]},
+                     'svct_ms': {'rd': line[8],
+                                 'wr': line[9],
+                                 'tot': line[10]},
+                     'iosz_kbs': {'rd': line[11],
+                                  'wr': line[12],
+                                  'tot': line[13]},
+                     'qlen': line[14],
+                     'avg_busy_perc': line[15]}
+        result['overall'] = formatted
+
+        return result
