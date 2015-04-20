@@ -89,7 +89,7 @@ making a call to :meth:`~hp3parclient.file_client.HP3ParFilePersonaClient.getfpg
     ip = '10.10.10.10'
 
     cl = file_client.HP3ParFilePersonaClient("https://%s:8080/api/v1" % ip)
-    cl.setSSHOptions(ip_address, username, password)
+    cl.setSSHOptions(ip, username, password)
     cl.login(username, password)
 
     volumes = cl.getVolumes()
