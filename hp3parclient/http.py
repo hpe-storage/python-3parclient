@@ -186,6 +186,8 @@ class HTTPJSONRESTClient(httplib2.Http):
 
         self._http_log_req(args, kwargs)
         resp, body = super(HTTPJSONRESTClient, self).request(*args, **kwargs)
+        if isinstance(body, bytes):
+            body = body.decode('utf-8')
         self._http_log_resp(resp, body)
 
         # Try and conver the body response to an object
