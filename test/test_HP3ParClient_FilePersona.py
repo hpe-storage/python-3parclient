@@ -32,6 +32,14 @@ fshares_to_delete = []
 SKIP_MSG = "Skipping test because skip_file_persona=true in config."
 
 
+def is_live_test():
+    return config['TEST']['unit'].lower() == 'false'
+
+
+def skip_file_persona():
+    return config['TEST']['skip_file_persona'].lower() == 'true'
+
+
 class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
     interfaces = None
@@ -51,7 +59,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         if self.interfaces is None:
             self.interfaces = self.cl.gettpdinterface()
 
-            save_interface = open('tpdinterface/interface.save', 'w')
+            save_interface = open('test/tpdinterface/interface.save', 'w')
             for k, v in self.interfaces.iteritems():
                 save_interface.write(' {%s {' % k)
                 for header in v:
@@ -393,30 +401,24 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
                    fpgname is None or member['fspname'] == fpgname):
                     self.fail('Found unexpected VFS %s.' % no_vfsname)
 
-    @unittest.skipIf(config['TEST']['skip_file_persona'].lower() == 'true',
-                     SKIP_MSG)
-    @unittest.skipIf(config['TEST']['unit'].lower() == 'false',
+    @unittest.skipIf(is_live_test(),
                      "Skip on real array which may have exiting VFSs.")
     @print_header_and_footer
     def test_getvfs_empty(self):
         self.validate_vfs(expected_count=0)
 
-    @unittest.skipIf(config['TEST']['skip_file_persona'].lower() == 'true',
-                     SKIP_MSG)
+    @unittest.skipIf(is_live_test() and skip_file_persona(), SKIP_MSG)
     @print_header_and_footer
     def test_getfs(self):
         self.validate_fs(expected_count=1)
 
-    @unittest.skipIf(config['TEST']['skip_file_persona'].lower() == 'true',
-                     SKIP_MSG)
-    @unittest.skipIf(config['TEST']['unit'].lower() == 'false',
-                     "Skip on real array which may have exiting FPGs.")
+    @unittest.skipIf(is_live_test(),
+                     "Skip on real array which may have exiting VFSs.")
     @print_header_and_footer
     def test_getfpg_empty(self):
         self.validate_fpg(expected_count=0)
 
-    @unittest.skipIf(config['TEST']['skip_file_persona'].lower() == 'true',
-                     SKIP_MSG)
+    @unittest.skipIf(is_live_test() and skip_file_persona(), SKIP_MSG)
     @print_header_and_footer
     def test_getfpg_bogus(self):
         result = self.cl.getfpg('bogus1', 'bogus2', 'bogus3')
@@ -425,8 +427,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         self.assertEqual(0, result['total'])
         self.assertEqual([], result['members'])
 
-    @unittest.skipIf(config['TEST']['skip_file_persona'].lower() == 'true',
-                     SKIP_MSG)
+    @unittest.skipIf(is_live_test() and skip_file_persona(), SKIP_MSG)
     @print_header_and_footer
     def test_createfpg_bogus_cpg(self):
 
@@ -444,8 +445,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
         self.validate_fpg(expected_count=fpg_count)
 
-    @unittest.skipIf(config['TEST']['skip_file_persona'].lower() == 'true',
-                     SKIP_MSG)
+    @unittest.skipIf(is_live_test() and skip_file_persona(), SKIP_MSG)
     @print_header_and_footer
     def test_createfpg_bad_size(self):
         test_prefix = 'UT2_'
@@ -468,8 +468,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
         self.validate_fpg(expected_count=fpg_count)
 
-    @unittest.skipIf(config['TEST']['skip_file_persona'].lower() == 'true',
-                     SKIP_MSG)
+    @unittest.skipIf(is_live_test() and skip_file_persona(), SKIP_MSG)
     @print_header_and_footer
     def test_createfpg_in_domain_err(self):
 
@@ -492,8 +491,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
         self.validate_fpg(expected_count=fpg_count)
 
-    @unittest.skipIf(config['TEST']['skip_file_persona'].lower() == 'true',
-                     SKIP_MSG)
+    @unittest.skipIf(is_live_test() and skip_file_persona(), SKIP_MSG)
     @print_header_and_footer
     def test_createfpg_twice_and_remove(self):
 
@@ -572,8 +570,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         self.validate_vfs(fpgname=fpgname, vfsname=vfsname)
         return vfsname
 
-    @unittest.skipIf(config['TEST']['skip_file_persona'].lower() == 'true',
-                     SKIP_MSG)
+    @unittest.skipIf(is_live_test() and skip_file_persona(), SKIP_MSG)
     @print_header_and_footer
     def test_createvfs_bogus_grace(self):
         test_prefix = 'UT6_'
@@ -830,8 +827,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
             expected = ['Could not find Store=bogus\r']
         self.assertEqual(expected, result)
 
-    @unittest.skipIf(config['TEST']['skip_file_persona'].lower() == 'true',
-                     SKIP_MSG)
+    @unittest.skipIf(skip_file_persona(), SKIP_MSG)
     @print_header_and_footer
     def test_create_and_remove_shares(self):
 
@@ -936,8 +932,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         # FSTORE REMOVAL -- includes tests/asserts and fsnap remove/clean
         self.remove_fstore(fpgname, vfsname, fstore)
 
-    @unittest.skipIf(config['TEST']['skip_file_persona'].lower() == 'true',
-                     SKIP_MSG)
+    @unittest.skipIf(is_live_test() and skip_file_persona(), SKIP_MSG)
     @print_header_and_footer
     def test_removevfs_bogus(self):
         self.assertRaises(AttributeError, self.cl.removevfs, None)

@@ -306,7 +306,7 @@ OPTIONS
                 return "No File Provisioning Groups found."
 
     def do_cli_gettpdinterface(self, *args):
-        tpdinterface = open('./tpdinterface/tpdinterface.tcl', 'r')
+        tpdinterface = open('./test/tpdinterface/tpdinterface.tcl', 'r')
         tcl = tpdinterface.read()
         self.logger.log(
             logging.ERROR,
