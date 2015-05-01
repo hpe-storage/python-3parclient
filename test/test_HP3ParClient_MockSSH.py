@@ -15,8 +15,10 @@
 
 import mock
 import paramiko
-import HP3ParClient_base
 import unittest
+
+import HP3ParClient_base
+from hp3parclient import exceptions
 
 user = "u"
 password = "p"
@@ -143,3 +145,28 @@ class HP3ParClientMockSSHTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
                           self.base,
                           known_hosts_file,
                           missing_key_policy)
+
+    def test_create_ssh_except(self):
+        """Make sure that SSH exceptions are not quietly eaten."""
+
+        self.cl.setSSHOptions(ip,
+                              user,
+                              password,
+                              known_hosts_file=None,
+                              missing_key_policy=paramiko.AutoAddPolicy)
+
+        self.cl.ssh.ssh = mock.Mock()
+        self.cl.ssh.ssh.invoke_shell.side_effect = Exception('boom')
+
+        cmd = ['fake']
+        self.assertRaises(exceptions.SSHException, self.cl.ssh._run_ssh, cmd)
+
+        self.cl.ssh.ssh.assert_has_calls(
+            [
+                mock.call.get_transport(),
+                mock.call.get_transport().is_alive(),
+                mock.call.invoke_shell(),
+                mock.call.get_transport(),
+                mock.call.get_transport().is_alive(),
+            ]
+        )

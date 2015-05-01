@@ -263,7 +263,7 @@ exit
         channel.close()
         return (stdout, stderr)
 
-    def _run_ssh(self, cmd_list, check_exit=True, attempts=1):
+    def _run_ssh(self, cmd_list, check_exit=True, attempts=2):
         self.check_ssh_injection(cmd_list)
         command = ' '. join(cmd_list)
 
@@ -276,7 +276,10 @@ exit
                                              check_exit_code=check_exit)
                 except Exception as e:
                     self._logger.error(e)
-                    greenthread.sleep(randint(20, 500) / 100.0)
+                    if attempts > 0:
+                        greenthread.sleep(randint(20, 500) / 100.0)
+                    if not self.ssh.get_transport().is_alive():
+                        self._create_ssh()
 
             msg = ("SSH Command failed after '%(total_attempts)r' "
                    "attempts : '%(command)s'" %
@@ -285,6 +288,7 @@ exit
             raise exceptions.SSHException(message=msg)
         except Exception:
             self._logger.error("Error running ssh command: %s" % command)
+            raise
 
     def check_ssh_injection(self, cmd_list):
         ssh_injection_pattern = ['`', '$', '|', '||', ';', '&', '&&',

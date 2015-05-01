@@ -8,6 +8,7 @@ Changes in Version 3.2.1
 * Fix cross-protocol share hang by using non-interactive flag
 * Require 3.2.1 (MU3) for File Persona client
 * Improved file client test coverage
+* Renew SSH session if lost and increase retry attempts to 2 (issue #5)
 
 Changes in Version 3.2.0
 ------------------------
