@@ -19,6 +19,7 @@ import unittest
 
 import HP3ParClient_base
 from hp3parclient import exceptions
+from hp3parclient import ssh
 
 user = "u"
 password = "p"
@@ -170,3 +171,72 @@ class HP3ParClientMockSSHTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
                 mock.call.get_transport().is_alive(),
             ]
         )
+
+    def test_sanitize_cert(self):
+        # no begin cert
+        input = 'foo -END CERTIFICATE- no begin'
+        expected = input
+        out = ssh.HP3PARSSHClient.sanitize_cert(input)
+        self.assertEqual(expected, out)
+        # pre, begin, middle, end, post
+        input = 'head -BEGIN CERTIFICATE-1234-END CERTIFICATE- tail'
+        expected = 'head -BEGIN CERTIFICATE-sanitized-END CERTIFICATE- tail'
+        out = ssh.HP3PARSSHClient.sanitize_cert(input)
+        self.assertEqual(expected, out)
+        # end before begin
+        input = 'head -END CERTIFICATE-1234-BEGIN CERTIFICATE- tail'
+        expected = 'head -END CERTIFICATE-1234-BEGIN CERTIFICATE-sanitized'
+        out = ssh.HP3PARSSHClient.sanitize_cert(input)
+        self.assertEqual(expected, out)
+        # no end
+        input = 'head -BEGIN CERTIFICATE-1234-END CEXXXXXXXTE- tail'
+        expected = 'head -BEGIN CERTIFICATE-sanitized'
+        out = ssh.HP3PARSSHClient.sanitize_cert(input)
+        self.assertEqual(expected, out)
+        # test with a list
+        input = ['head -BEGIN CERTIFICATE-----1234',
+                 'ss09f87sdf987sf97sfsds0f7sf97s89',
+                 '6789-----END CERTIFICATE- tail']
+        expected = 'head -BEGIN CERTIFICATE-sanitized-END CERTIFICATE- tail'
+        out = ssh.HP3PARSSHClient.sanitize_cert(input)
+        self.assertEqual(expected, out)
+
+    def test_strip_input_from_output(self):
+        cmd = ['foo', '-v']
+        # nothing after exit
+        output = ['exit']
+        self.assertRaises(exceptions.SSHException,
+                          ssh.HP3PARSSHClient.strip_input_from_output,
+                          cmd,
+                          output)
+        # no exit
+        output = ['line1', 'line2', 'line3']
+        self.assertRaises(exceptions.SSHException,
+                          ssh.HP3PARSSHClient.strip_input_from_output,
+                          cmd,
+                          output)
+        # no setclienv csv
+        output = [cmd, 'exit', 'out']
+        self.assertRaises(exceptions.SSHException,
+                          ssh.HP3PARSSHClient.strip_input_from_output,
+                          cmd,
+                          output)
+        # command not in output after exit
+        output = [cmd, 'exit', 'PROMPT% setclienv csvtable 1']
+        self.assertRaises(exceptions.SSHException,
+                          ssh.HP3PARSSHClient.strip_input_from_output,
+                          cmd,
+                          output)
+        # success
+        output = [cmd,
+                  'setclienv csvtable 1',
+                  'exit',
+                  'PROMPT% setclienv csvtable 1',
+                  'PROMPT% foo -v',
+                  'out1',
+                  'out2',
+                  'out3',
+                  '------',
+                  'totals']
+        result = ssh.HP3PARSSHClient.strip_input_from_output(cmd, output)
+        self.assertEqual(['out1', 'out2', 'out3'], result)

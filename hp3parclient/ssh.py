@@ -150,6 +150,37 @@ class HP3PARSSHClient(object):
             HP3PARSSHClient.log_debug = True
 
     @staticmethod
+    def sanitize_cert(output_list):
+
+        if isinstance(output_list, list):
+            output = ''.join(output_list)
+        else:
+            output = output_list
+
+        try:
+            begin_cert_str = '-BEGIN CERTIFICATE-'
+            begin_cert_pos = output.index(begin_cert_str)
+            pre = ''.join((output[:begin_cert_pos], begin_cert_str,
+                           'sanitized'))
+            try:
+                end_cert_str = '-END CERTIFICATE-'
+                end_cert_pos = output.index(end_cert_str)
+                return pre if begin_cert_pos >= end_cert_pos else ''.join(
+                    (pre, output[end_cert_pos:]))
+            except ValueError:
+                return pre
+        except ValueError:
+            return output
+
+    @staticmethod
+    def raise_stripper_error(reason, output):
+        msg = "Multi-line stripper failed: %s" % reason
+        HP3PARSSHClient._logger.error(msg)
+        HP3PARSSHClient._logger.debug("Output: %s" %
+                                      HP3PARSSHClient.sanitize_cert(output))
+        raise exceptions.SSHException(msg)
+
+    @staticmethod
     def strip_input_from_output(cmd, output):
         """The input commands are echoed in the output. Strip that.
 
@@ -169,17 +200,19 @@ class HP3PARSSHClient(object):
                 output = output[i + 1:]
                 break
         else:
-            HP3PARSSHClient._logger.error("Did not find 'exit' in output")
-            raise exceptions.SSHException("Multi-line stripper failed.")
+            reason = "Did not find 'exit' in output."
+            HP3PARSSHClient.raise_stripper_error(reason, output)
+
+        if not output:
+            reason = "Did not find any output after 'exit'."
+            HP3PARSSHClient.raise_stripper_error(reason, output)
 
         # The next line is prompt plus setclienv command.
         # Use this to get the prompt string.
         prompt_pct = output[0].find('% setclienv csvtable 1')
         if prompt_pct < 0:
-            msg = "Multi-line stripper failed.  " \
-                  "Did not find '% setclienv csvtable 1' in output"
-            HP3PARSSHClient._logger.error(msg)
-            raise exceptions.SSHException(msg)
+            reason = "Did not find '% setclienv csvtable 1' in output."
+            HP3PARSSHClient.raise_stripper_error(reason, output)
         prompt = output[0][0:prompt_pct + 1]
         del output[0]
 
@@ -196,9 +229,9 @@ class HP3PARSSHClient(object):
                 output = output[i + 1:]
                 break
         else:
-            HP3PARSSHClient._logger.error(
-                "Did not find match for command in output")
-            raise exceptions.SSHException("Multi-line stripper failed.")
+            HP3PARSSHClient._logger.debug("Command: %s" % command_string)
+            reason = "Did not find match for command in output"
+            HP3PARSSHClient.raise_stripper_error(reason, output)
 
         # Always strip the last 2
         return output[:len(output) - 2]
@@ -214,9 +247,10 @@ class HP3PARSSHClient(object):
         # default is old stripper -- to avoid breaking things, for now
         if multi_line_stripper:
             out = self.strip_input_from_output(cmd, tmp)
+            self._logger.debug("OUT = %s" % self.sanitize_cert(out))
         else:
             out = tmp[5:len(tmp) - 2]
-        self._logger.debug("OUT = %s" % out)
+            self._logger.debug("OUT = %s" % out)
         return out
 
     def _ssh_execute(self, cmd, check_exit_code=True):
