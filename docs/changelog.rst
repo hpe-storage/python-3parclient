@@ -4,6 +4,7 @@ Changelog
 Changes in Version 3.2.1
 ------------------------
 * Improved debug capabilities during initialization of the client.
+* reworked findHost to use a random hostname to fix collisions
 
 Changes in Version 3.2.0
 ------------------------
