@@ -26,7 +26,6 @@ also supports running actions on the 3PAR that use SSH.
 This client requires and works with 3PAR InForm 3.1.3 MU1 firmware
 
 """
-import base64
 import re
 import time
 import uuid
@@ -1638,16 +1637,8 @@ class HP3ParClient(object):
             # create a safe, random hostname that won't
             # create a collision when findHost is called
             # in parallel, before the temp host is removed.
-            uuid_str = str(uuid.uuid4()).replace("-", "")
-            safe_uuid = uuid.UUID("urn:uuid:%s" % uuid_str)
-            encoded = base64.b64encode(safe_uuid.bytes)
-
-            # 3par doesn't allow +, now /
-            encoded = encoded.replace('+', '.')
-            encoded = encoded.replace('/', '-')
-            # strip off the == as 3PAR doesn't like those.
-            encoded = encoded.replace('=', '')
-            return encoded
+            uuid_str = str(uuid.uuid4()).replace("-", "")[:20]
+            return uuid_str
 
         cmd = ['createhost']
         # create a random hostname
