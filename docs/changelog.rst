@@ -10,6 +10,7 @@ Changes in Version 3.2.1
 * Improved file client test coverage
 * Renew SSH session if lost and increase retry attempts to 2 (issue #5)
 * Added missing exceptions to API docs for deleteVolume.
+* Fix JSON parsing using Python3
 
 Changes in Version 3.2.0
 ------------------------
