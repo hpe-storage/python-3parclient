@@ -1738,7 +1738,7 @@ class HP3ParClient(object):
 
         if allVLUNs:
             for vlun in allVLUNs['members']:
-                if vlun['hostname'] == hostName:
+                if 'hostname' in vlun and vlun['hostname'] == hostName:
                     vluns.append(vlun)
 
         if len(vluns) < 1:

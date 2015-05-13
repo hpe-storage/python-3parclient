@@ -11,6 +11,7 @@ Changes in Version 3.2.1
 * Renew SSH session if lost and increase retry attempts to 2 (issue #5)
 * Added missing exceptions to API docs for deleteVolume.
 * Fix JSON parsing using Python3
+* Be safe accessing 'hostname' key in getHostVLUNs (issue #14)
 
 Changes in Version 3.2.0
 ------------------------
