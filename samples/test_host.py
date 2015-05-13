@@ -39,7 +39,7 @@ cl.login(username, password)
 def create_test_host():
     try:
         host = cl.getHost(TESTHOST)
-        print "host already exists"
+        print("host already exists")
     except exceptions.HTTPNotFound as ex:
         iscsi = ['iqn.1993-08.org.debian:01:00000000000', 'iqn.bogus.org.debian:01:0000000000']
         fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
@@ -63,22 +63,22 @@ def create_test_host():
         cl.createHost(TESTHOST, None, None, extra)
         pass
     except exceptions.HTTPUnauthorized as ex:
-        print "You must login"
+        print("You must login")
     except Exception as ex:
-        print ex
+        print(ex)
 
 def delete_test_host():
     try:
         cl.deleteHost(TESTHOST)
     except exceptions.HTTPUnauthorized as ex:
-        print "You must login"
+        print("You must login")
     except Exception as ex:
-        print ex
+        print(ex)
 
 def modify_test_host():
     try:
         host = cl.getHost(TESTHOST)
-        print "host already exists"
+        print("host already exists")
         iscsi = ['iqn.1993-08.org.debian:01:00000000000', 'iqn.bogus.org.debian:01:0000000000']
         fc = ['00:00:00:00:00:00:00:00', '11:11:11:11:11:11:11:11']
         extra = {
@@ -107,16 +107,16 @@ def modify_test_host():
         #cl.createHost(TESTHOST, None, None, extra)
         pass
     except exceptions.HTTPUnauthorized as ex:
-        print "You must login"
+        print("You must login")
     except Exception as ex:
-        print ex
+        print(ex)
 
 def get_hosts():
     try:
         hosts = cl.getHosts()
-        print hosts
+        print(hosts)
     except exceptions.HTTPNotFound as ex:
-        print ex
+        print(ex)
 
 #create_test_host()
 #get_host(cl, TESTHOST)

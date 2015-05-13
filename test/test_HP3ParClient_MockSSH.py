@@ -21,6 +21,12 @@ import HP3ParClient_base
 from hp3parclient import exceptions
 from hp3parclient import ssh
 
+# Python 3+ override
+try:
+    basestring
+except NameError:
+    basestring = str
+
 user = "u"
 password = "p"
 ip = "10.10.22.241"
@@ -50,7 +56,7 @@ class HP3ParClientMockSSHTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
                             known_hosts_file=known_hosts_file,
                             missing_key_policy=missing_key_policy)
                     except paramiko.SSHException as e:
-                        if 'Invalid missing_key_policy' in e.message:
+                        if 'Invalid missing_key_policy' in str(e):
                             raise e
                     except Exception:
                         pass

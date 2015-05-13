@@ -25,7 +25,7 @@ if "debug" in args and args.debug == True:
 
 def test_login():
     #this will fail
-    print "Test Logout"
+    print("Test Logout")
     try: 
        cl.login("username", "hp")
        pprint.pprint("Login worked")
@@ -33,7 +33,7 @@ def test_login():
        pprint.pprint("Login Failed")
 
 def test_logout():
-    print "Test Logout"
+    print("Test Logout")
     #this will work
     try: 
        cl.login("user", "hp")
@@ -48,7 +48,7 @@ def test_logout():
        pprint.pprint("Logout Failed")
 
 def test_get_volumes():
-    print "Get Volumes"
+    print("Get Volumes")
     try:
        cl.login("user", "hp")
        volumes = cl.getVolumes()
@@ -56,11 +56,11 @@ def test_get_volumes():
     except exceptions.HTTPUnauthorized as ex:
        pprint.pprint("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
 
 def test_create_volume():
-    print "Create Volumes"
+    print("Create Volumes")
     try:
        cl.login("user", "hp")
        cl.createVolume("Volume1", "someCPG", "300")
@@ -70,7 +70,7 @@ def test_create_volume():
     except exceptions.HTTPUnauthorized as ex:
        pprint.pprint("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
     try:
        cl.createVolume("Volume3", "testCPG", 2048, "foo")
@@ -80,73 +80,73 @@ def test_create_volume():
     try:
 	volume = cl.createVolume("VolumeBad", "testCPG", 2048, {'bogus':'break'})
     except exceptions.HTTPBadRequest as ex:
-	print "Got Expected Exception %s" % ex
+	print("Got Expected Exception %s" % ex)
         pass
 
     try:
 	volume = cl.createVolume("VolumeExists", "testCPG", 2048)
     except exceptions.HTTPConflict as ex:
-	print "Got Expected Exception %s" % ex
+	print("Got Expected Exception %s" % ex)
         pass
 
     try:
 	volume = cl.createVolume("VolumeTooLarge", "testCPG", 10241024)
     except exceptions.HTTPBadRequest as ex:
-	print "Got Expected Exception %s" % ex
+	print("Got Expected Exception %s" % ex)
         pass
 
     try:
 	volume = cl.createVolume("VolumeNotEnoughSpace", "testCPG", 9999)
     except exceptions.HTTPBadRequest as ex:
-	print "Got Expected Exception %s" % ex
+	print("Got Expected Exception %s" % ex)
         pass
 
-    print "Complete\n"
+    print("Complete\n")
 
 def test_delete_volume():
-    print "Test Delete Volume"
+    print("Test Delete Volume")
 
     try:
 	cl.deleteVolume("foo")
     except exceptions.HTTPNotFound as ex:
-	print "Got Expected Exception %s" % ex
+	print("Got Expected Exception %s" % ex)
         pass
 
     try:
 	cl.deleteVolume("forbidden")
     except exceptions.HTTPForbidden as ex:
-	print "Got Expected Exception %s" % ex
+	print("Got Expected Exception %s" % ex)
         pass
 
     try:
 	cl.deleteVolume("retained")
     except exceptions.HTTPForbidden as ex:
-	print "Got Expected Exception %s" % ex
+	print("Got Expected Exception %s" % ex)
         pass
 
     try:
 	cl.deleteVolume("readonlychild")
     except exceptions.HTTPForbidden as ex:
-	print "Got Expected Exception %s" % ex
+	print("Got Expected Exception %s" % ex)
         pass
 
     try:
 	cl.deleteVolume("works")
     except exceptions.HTTPNotFound as ex:
-	print "Got Expected Exception %s" % ex
+	print("Got Expected Exception %s" % ex)
         pass
 
-    print "Complete\n"
+    print("Complete\n")
 
 
 def test_error():
-    print "test Error"
+    print("test Error")
     try:
        resp, body = cl.http.get('/throwerror')
        pprint.pprint(resp)
        pprint.pprint(body)
     except Exception as ex:
-       print ex
+       print(ex)
 
 
 #test_create_volume()

@@ -349,7 +349,7 @@ OPTIONS
                 else:
                     filtered_fpgs.append(self.fpgs[fpg])
         else:
-            filtered_fpgs = self.fpgs.values()
+            filtered_fpgs = list(self.fpgs.values())
 
         # Place-holders for most values set outside of loop.
         # Param based on the create params (or generated) inside the loop.
@@ -496,7 +496,7 @@ OPTIONS
 
         filtered_vfss = []
         if opts.fpg or opts.vfs:
-            for vfs in self.vfss.values():
+            for vfs in list(self.vfss.values()):
                 if opts.vfs and vfs.vfsname != opts.vfs:
                     continue
                 if opts.fpg and vfs.fpg != opts.fpg:
@@ -504,7 +504,7 @@ OPTIONS
 
                 filtered_vfss.append(vfs)
         else:
-            filtered_vfss = self.vfss.values()
+            filtered_vfss = list(self.vfss.values())
 
         # Place-holders for most values set outside of loop.
         # Param based on the create params (or generated) inside the loop.
@@ -567,7 +567,7 @@ OPTIONS
         if opts.fpg and not opts.fpg in self.fpgs:
             return 'File Provisioning Group: %s not found\r' % opts.fpg
 
-        for vfs in self.vfss.values():
+        for vfs in list(self.vfss.values()):
             if vfs.vfsname == opts.vfs and (opts.fpg is None
                                             or vfs.fpg == opts.fpg):
                 self.vfss.pop(vfs.vfsname)
@@ -598,7 +598,7 @@ OPTIONS
             return 'File Provisioning Group: %s not found\r' % opts.fpg
 
         fsips = []
-        for vfs in self.vfss.values():
+        for vfs in list(self.vfss.values()):
             if opts.vfs and vfs.vfsname != opts.vfs:
                 continue
             if opts.fpg and vfs.fpg != opts.fpg:
@@ -639,7 +639,7 @@ OPTIONS
     def do_cli_showpatch(self, *args):
 
         self.logger.log(logging.ERROR, "TEST SHOWPATCH")
-        print args
+        print(args)
 
         if len(args) > 1:
             self.logger.log(logging.ERROR, "TEST SHOWPATCH len %s" % len(args))
@@ -656,7 +656,7 @@ OPTIONS
     def process_command(self, cmd):
         self.logger.log(logging.INFO, cmd)
         if cmd is None:
-            print "returnNone"
+            print("returnNone")
             return ''
         args = cmd.split()
         if args:
@@ -714,7 +714,7 @@ if __name__ == "__main__":
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind(('', int(port)))
     s.listen(60)
-    print "Listening for SSH client connections..."
+    print("Listening for SSH client connections...")
     connection, address = s.accept()
     transport = None
     channel = None
@@ -730,14 +730,14 @@ if __name__ == "__main__":
         while True:
             channel = transport.accept(60)
             if channel is None:
-                print "Failed to get SSH channel."
+                print("Failed to get SSH channel.")
                 sys.exit(1)
 
-            print "Connected"
+            print("Connected")
             server.event.wait(10)
 
             if not server.event.isSet():
-                print "No shell set"
+                print("No shell set")
                 sys.exit(1)
 
             fio = channel.makefile('rU')
@@ -760,7 +760,7 @@ if __name__ == "__main__":
             output_to_send = '\r\n'.join(output)
             channel.send(output_to_send)
             channel.close()
-            print "Disconnected"
+            print("Disconnected")
 
     finally:
         if channel:
@@ -768,7 +768,7 @@ if __name__ == "__main__":
         if transport:
             try:
                 transport.close()
-                print "transport closed"
+                print("transport closed")
             except Exception as e:
-                print ("transport close exception %s" % e)
+                print("transport close exception %s" % e)
                 pass

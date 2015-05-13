@@ -141,7 +141,7 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
 
         # Add the options
         if len(kwargs) > 0:
-            for k, v in kwargs.iteritems():
+            for k, v in list(kwargs.items()):
                 if isinstance(v, bool):
                     # Boolean, just add a flag if true. No value.
                     if v:
@@ -301,11 +301,11 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                 members = []
                 # list of members (list of lists)
                 for values in data:
-                    member = dict(zip(keys, values))
+                    member = dict(list(zip(keys, values)))
                     members.append(member)
             else:
                 # 1 member (list of values)
-                members = dict(zip(keys, data))
+                members = dict(list(zip(keys, data)))
         return members
 
     def _create_member(self, interface, values):
@@ -377,8 +377,8 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             # Filter out that garbage.
             if command == 'getfsnapclean':
                 not_running = ['No', 'reclamation', 'task', 'running']
-                parsed_result = filter(lambda x: x[0:4] != not_running,
-                                       parsed_result)
+                parsed_result = [x for x in parsed_result if x[0:4] !=
+                                 not_running]
 
             if single:
                 # Single member (need to add to list)

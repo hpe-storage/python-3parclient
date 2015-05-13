@@ -15,31 +15,31 @@ from hp3parclient import client, exceptions
 
 
 def get_volumes(cl):
-    print "Get Volumes"
+    print("Get Volumes")
     try:
        volumes = cl.getVolumes()
        if volumes:
            for volume in volumes['members']:
-               print "Found '%s'" % volume['name']
+               print("Found '%s'" % volume['name'])
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
-    print "Complete\n"
+       print(ex)
+    print("Complete\n")
 
 def get_volume(cl, name):
-    print "Get Volume %s" % name
+    print("Get Volume %s" % name)
     try:
         vol = cl.getVolume(name)
         pprint.pprint(vol)
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
-    print "Complete\n"
+       print(ex)
+    print("Complete\n")
 
 def get_hosts(cl):
-    print "Get Hosts"
+    print("Get Hosts")
     try:
        hosts = cl.getHosts()
        if hosts:
@@ -47,73 +47,73 @@ def get_hosts(cl):
                pprint.pprint(host)
 #               print "Found '%s'" % host['name']
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
 def get_host(cl,hostname):
     try:
         host = cl.getHost(hostname)
         pprint.pprint(host)
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
 def delete_host(cl,hostname):
     try:
         host = cl.deleteHost(hostname)
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
 def get_host_vluns(cl,hostname):
     try:
         host = cl.getHostVLUNs(hostname)
         pprint.pprint(host)
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
 def delete_host_vluns(cl, hostName):
     try:
         vluns = cl.getHostVLUNs(hostName)
         if vluns:
             for vlun in vluns:
-                print "Deleting VLUN %s " % vlun['volumeName']
+                print("Deleting VLUN %s " % vlun['volumeName'])
                 cl.deleteVLUN(vlun['volumeName'], vlun['lun'], 
                               vlun['hostname'], vlun['portPos'])
 
     except exceptions.HTTPUnauthorized as ex:
-        print "You must login"
+        print("You must login")
     except Exception as ex:
-        print ex
+        print(ex)
 
 def get_ports(cl):
     try:
         ports = cl.getPorts()
         pprint.pprint(ports)
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
 
 def get_vluns(cl):
-    print "Get VLUNs"
+    print("Get VLUNs")
     try:
         vluns = cl.getVLUNs()
         if vluns:
             pprint.pprint(vluns)
             for vlun in vluns['members']:
                 pprint.pprint(vlun)
-                print "Found VLUN '%s'" % vlun['volumeName']
+                print("Found VLUN '%s'" % vlun['volumeName'])
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
 
 def get_vlun(cl,vlunname):
@@ -121,28 +121,28 @@ def get_vlun(cl,vlunname):
         vlun = cl.getVLUN(vlunname)
         pprint.pprint(vlun)
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
 
 def get_cpgs(cl):
-    print "Get CPGs"
+    print("Get CPGs")
     try:
         cpgs = cl.getCPGs()
         if cpgs:
             for cpg in cpgs['members']:
-                print "Found CPG '%s'" % cpg['name']
+                print("Found CPG '%s'" % cpg['name'])
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
 def get_cpg(cl, name):
     try:
         cpg = cl.getCPG(name)
         pprint.pprint(cpg)
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)

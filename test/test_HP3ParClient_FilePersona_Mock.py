@@ -32,7 +32,7 @@ class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
     def debug_print(self, obj, **kwargs):
         if self.DEBUG:
-            print pprint.pformat(obj, **kwargs)
+            print(pprint.pformat(obj, **kwargs))
 
     def setUp(self, **kwargs):
         version = (file_client.HP3ParFilePersonaClient
@@ -200,7 +200,7 @@ class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
         cmd = [
             'createvfs',
             '-fpg',
-            u'marktestfpg',
+            'marktestfpg',
             '-wait',
             '127.0.0.2',
             '255.255.255.0',
@@ -229,7 +229,7 @@ class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
         cmd = [
             'createvfs',
             '-fpg',
-            u'marktestfpg',
+            'marktestfpg',
             '-wait',
             '127.0.0.2',
             '255.255.255.0',
@@ -256,7 +256,7 @@ class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
         cmd = [
             'createvfs',
             '-fpg',
-            u'marktestfpg',
+            'marktestfpg',
             '-wait',
             '127.0.0.2',
             '255.255.255.0',
@@ -283,7 +283,7 @@ class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
         cmd = [
             'createvfs',
             '-fpg',
-            u'marktestfpg',
+            'marktestfpg',
             '-wait',
             '127.0.0.2',
             '255.255.255.0',

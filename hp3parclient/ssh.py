@@ -32,6 +32,14 @@ import re
 from eventlet import greenthread
 from hp3parclient import exceptions
 
+# Python 3+ override
+try:
+    basestring
+    python3 = False
+except NameError:
+    basestring = str
+    python3 = True
+
 
 class HP3PARSSHClient(object):
     """This class is used to execute SSH commands on a 3PAR."""
@@ -242,7 +250,10 @@ class HP3PARSSHClient(object):
 
         (stdout, stderr) = self._run_ssh(cmd, False)
         # we have to strip out the input and exit lines
-        tmp = stdout.split("\r\n")
+        if python3:
+            tmp = stdout.decode().split("\r\n")
+        else:
+            tmp = stdout.split("\r\n")
 
         # default is old stripper -- to avoid breaking things, for now
         if multi_line_stripper:
