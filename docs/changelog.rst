@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Changes in Version 3.3.0
+------------------------
+* Replaced all httplib2 calls with Python Request calls
+* SSL certificate verification can be enabled by passing secure=True
+* SSL certificate verification can be done against a self provided .crt file
+  with secure='/path/to/ca-certificates.crt'
+
 Changes in Version 3.2.2
 ------------------------
 * Python3.4+ compliant

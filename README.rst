@@ -3,13 +3,13 @@ HP 3PAR REST Client
 This is a Client library that can talk to the HP 3PAR Storage array.  The 3PAR
 storage array has a REST web service interface and a command line interface.
 This client library implements a simple interface for talking with either
-interface, as needed.  The python httplib2 library is used to communicate
+interface, as needed.  The python Requests library is used to communicate
 with the REST interface.  The python paramiko library is used to communicate
 with the command line interface over an SSH connection.
 
 Requirements
 ============
-This branch requires 3.1.3 version MU1 of the 3PAR firmware.
+This branch requires 3.1.3 version MU1 or later of the 3PAR firmware.
 File Persona capabilities require 3PAR firmware 3.2.1 Build 46 or later.
 
 Capabilities

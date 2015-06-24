@@ -113,6 +113,61 @@ class ClientException(Exception):
 
         return formatted_string
 
+# SSL Errors
+
+
+class SSLCertFailed(ClientException):
+    """
+    The SSL certificate from the server could not be verified
+    """
+    http_status = ""
+    message = "SSL Certificate Verification Failed"
+
+
+#  Python Requests Errors
+
+
+class RequestException(ClientException):
+    """
+    There was an ambiguous exception that occurred in Requests
+    """
+    pass
+
+
+class ConnectionError(ClientException):
+    """
+    There was an error connecting to the server
+    """
+    pass
+
+
+class HTTPError(ClientException):
+    """
+    An HTTP error occurred
+    """
+    pass
+
+
+class URLRequired(ClientException):
+    """
+    A valid URL is required to make a request
+    """
+    pass
+
+
+class TooManyRedirects(ClientException):
+    """
+    Too many redirects
+    """
+    pass
+
+
+class Timeout(ClientException):
+    """
+    The request timed out
+    """
+    pass
+
 
 # 400 Errors
 
@@ -346,7 +401,7 @@ _code_map = dict((c.http_status, c) for c in
 def from_response(response, body):
     """
     Return an instance of an ClientException or subclass
-    based on an httplib2 response.
+    based on a Python Requests response.
 
     Usage::
 

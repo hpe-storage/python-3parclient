@@ -7,3 +7,4 @@ docs/html
 test_bogus_known_hosts_file
 .coverage
 cover
+test/tpdinterface/interface.save

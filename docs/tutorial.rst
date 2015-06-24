@@ -27,9 +27,20 @@ Doing so is easy:
 .. code-block:: python
 
   from hp3parclient import client, exceptions
-  #this creates the client object and sets the url to the
-  #3PAR server with IP 10.10.10.10 on port 8008.
+  # this creates the client object and sets the url to the
+  # 3PAR server with IP 10.10.10.10 on port 8008.
   cl = client.HP3ParClient("http://10.10.10.10:8008/api/v1")
+
+  # SSL certification verification is defaulted to False. In order to
+  # override this, set secure=True. or secure='/path/to/cert.crt'
+  # cl = client.HP3ParClient("https://10.10.10.10:8080/api/v1",
+  #                          secure=True)
+  # Or, to use ca certificates as documented by Python Requests,
+  # pass in the ca-certificates.crt file
+  # http://docs.python-requests.org/en/v1.0.4/user/advanced/
+  # cl = client.HP3ParClient("https://10.10.10.10:8080/api/v1",
+  #                          secure='/etc/ssl/certs/ca-certificates.crt')
+
   # Set the SSH authentication options for the SSH based calls.
   cl.setSSHOptions(ip_address, username, password)
 
@@ -89,6 +100,14 @@ making a call to :meth:`~hp3parclient.file_client.HP3ParFilePersonaClient.getfpg
     ip = '10.10.10.10'
 
     cl = file_client.HP3ParFilePersonaClient("https://%s:8080/api/v1" % ip)
+    # to override SSL certificate verification pass secure=True
+    # cl = file_client.HP3ParFilePersonaClient("https://%s:8080/api/v1" % ip,
+    #                                          secure=True)
+    # Or, to use ca certificates as documented by Python Requests,
+    # pass in the ca-certificates.crt file
+    # http://docs.python-requests.org/en/v1.0.4/user/advanced/
+    # cl = client.HP3ParClient("https://10.10.10.10:8080/api/v1",
+    #                          secure='/etc/ssl/certs/ca-certificates.crt')
     cl.setSSHOptions(ip, username, password)
     cl.login(username, password)
 

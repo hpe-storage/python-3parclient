@@ -177,9 +177,9 @@ class HP3ParClient(object):
     FLASH_CACHE_ENABLED = 1
     FLASH_CACHE_DISABLED = 2
 
-    def __init__(self, api_url, debug=False):
+    def __init__(self, api_url, debug=False, secure=False):
         self.api_url = api_url
-        self.http = http.HTTPJSONRESTClient(self.api_url)
+        self.http = http.HTTPJSONRESTClient(self.api_url, secure=secure)
         api_version = None
         self.ssh = None
         self.vlun_query_supported = False
@@ -194,6 +194,8 @@ class HP3ParClient(object):
             if (ex_desc and ("Unable to find the server at" in ex_desc or
                              "Only absolute URIs are allowed" in ex_desc)):
                 raise exceptions.HTTPBadRequest(ex_desc)
+            if (ex_desc and "SSL Certificate Verification Failed" in ex_desc):
+                raise exceptions.SSLCertFailed()
             else:
                 msg = ('Error: \'%s\' - Error communicating with the 3PAR WS. '
                        'Check proxy settings. If error persists, either the '

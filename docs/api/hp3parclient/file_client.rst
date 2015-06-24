@@ -4,7 +4,7 @@
 .. automodule:: hp3parclient.file_client
    :synopsis: HP 3PAR File Persona Client API
 
-   .. autoclass:: hp3parclient.file_client.HP3ParFilePersonaClient()
+   .. autoclass:: hp3parclient.file_client.HP3ParFilePersonaClient(api_url, secure=False)
 
       .. automethod:: gettpdinterface
       .. automethod:: getfs

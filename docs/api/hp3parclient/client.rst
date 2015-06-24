@@ -4,7 +4,7 @@
 .. automodule:: hp3parclient.client
    :synopsis: HP 3PAR REST Web client
 
-   .. autoclass:: hp3parclient.client.HP3ParClient(api_url)
+   .. autoclass:: hp3parclient.client.HP3ParClient(api_url, secure=False)
 
       .. automethod:: getWsApiVersion
       .. automethod:: getStorageSystemInfo

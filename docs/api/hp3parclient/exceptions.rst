@@ -9,6 +9,7 @@
    .. autoclass:: hp3parclient.exceptions.AuthorizationFailure
    .. autoclass:: hp3parclient.exceptions.NoUniqueMatch
    .. autoclass:: hp3parclient.exceptions.ClientException
+   .. autoclass:: hp3parclient.exceptions.SSLCertFailed
    .. autoclass:: hp3parclient.exceptions.HTTPBadRequest
    .. autoclass:: hp3parclient.exceptions.HTTPUnauthorized
    .. autoclass:: hp3parclient.exceptions.HTTPForbidden

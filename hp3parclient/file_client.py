@@ -58,8 +58,8 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
     HP3PAR_WS_MIN_BUILD_VERSION = 30201256
     HP3PAR_WS_MIN_BUILD_VERSION_DESC = '3.2.1 (MU3)'
 
-    def __init__(self, api_url):
-        super(self.__class__, self).__init__(api_url)
+    def __init__(self, api_url, secure=False):
+        super(self.__class__, self).__init__(api_url, secure=secure)
         self.interfaces = None
 
     @staticmethod
