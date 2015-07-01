@@ -2940,54 +2940,58 @@ class HP3ParClient(object):
         word = re.search(search_string.strip(' ') + ' ([^ ]*)', s)
         return word.groups()[0].strip(' ')
 
-    def getStatData(self, name):
-        # Request the last 7 days worth of performance data for the CPG.
-        # Interval is set to one hour.
-        cmd = ['srstatld', '-cpg', name, '-hourly', '-btsecs', '-7d']
+    def getCPGStatData(self, name, interval='daily', history='7d'):
+        """
+        Requests CPG performance data at a sampling rate (interval) for a
+        given length of time to sample (history)
+
+        :param name: a valid CPG name
+        :type name: str
+        :param interval: hourly, or daily
+        :type interval: str
+        :param history: xm for x minutes, xh for x hours, or xd for x days
+                        (e.g. 30m, 1.5h, 7d)
+        :type history: str
+
+        :returns: dict
+
+        :raises SrstatldException: srstatld gives invalid output
+        """
+        if interval not in ['daily', 'hourly']:
+            raise exceptions.ClientException("Input interval not valid")
+        if not re.compile("(\d*\.\d+|\d+)[mhd]").match(history):
+            raise exceptions.ClientException("Input history not valid")
+        cmd = ['srstatld', '-cpg', name, '-' + interval, '-btsecs',
+               '-' + history]
         output = self._run(cmd)
-        return self._format_srstatld_output(output)
+        if not isinstance(output, list):
+            raise exceptions.SrstatldException("srstatld output not a list")
+        elif len(output) < 4:
+            raise exceptions.SrstatldException("srstatld output list too "
+                                               + "short")
+        elif len(output[-1].split(',')) < 16:
+            raise exceptions.SrstatldException("srstatld output last line "
+                                               + "invalid")
+        else:
+            return self._format_srstatld_output(output)
 
     def _format_srstatld_output(self, out):
-        # Strip off header and footer lines
-        data = out[2:(len(out) - 2)]
-        result = {'intervals': [],
-                  'overall': {}}
-        for line in data:
-            line = line.split(',')
-            formatted = {'time': line[0],
-                         'secs': line[1],
-                         'iops': {'rd': line[2],
-                                  'wr': line[3],
-                                  'tot': line[4]},
-                         'kbps': {'rd': line[5],
-                                  'wr': line[6],
-                                  'tot': line[7]},
-                         'svct_ms': {'rd': line[8],
-                                     'wr': line[9],
-                                     'tot': line[10]},
-                         'iosz_kbs': {'rd': line[11],
-                                      'wr': line[12],
-                                      'tot': line[13]},
-                         'qlen': line[14],
-                         'avg_busy_perc': line[15]}
-            result['intervals'].append(formatted)
+        """
+        Formats the output of the 3PAR CLI command srstatld
+        Takes the total read/write value when possible
 
-        line = out[len(out) - 1].split(',')
-        formatted = {'secs': line[1],
-                     'iops': {'rd': line[2],
-                              'wr': line[3],
-                              'tot': line[4]},
-                     'kbps': {'rd': line[5],
-                              'wr': line[6],
-                              'tot': line[7]},
-                     'svct_ms': {'rd': line[8],
-                                 'wr': line[9],
-                                 'tot': line[10]},
-                     'iosz_kbs': {'rd': line[11],
-                                  'wr': line[12],
-                                  'tot': line[13]},
-                     'qlen': line[14],
-                     'avg_busy_perc': line[15]}
-        result['overall'] = formatted
+        :param out: the output of srstatld
+        :type out: list
 
-        return result
+        :returns: dict
+        """
+        line = out[-1].split(',')
+        formatted = {
+            'throughput': float(line[4]),
+            'bandwidth': float(line[7]),
+            'latency': float(line[10]),
+            'io_size': float(line[13]),
+            'queue_length': float(line[14]),
+            'avg_busy_perc': float(line[15])
+        }
+        return formatted

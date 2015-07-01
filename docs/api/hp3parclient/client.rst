@@ -79,3 +79,4 @@
       .. automethod:: getTask
       .. automethod:: getPatches
       .. automethod:: getPatch
+      .. automethod:: getCPGStatData
