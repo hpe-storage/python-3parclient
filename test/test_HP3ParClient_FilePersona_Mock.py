@@ -196,6 +196,48 @@ class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
              ('-comment', '"test comment"')],  # Comments get quoted
             ['testvfs', 'testfstore']), multi_line_stripper=True)
 
+    def test_createfshare_mock_smb_ca(self):
+        """Use mock to test createfshare smb -ca argument."""
+
+        self.cl.createfshare('smb', 'testvfs', 'testfshare', ca=None)
+        self.cl.ssh.run.assert_called_with(['createfshare', 'smb', '-f',
+                                            'testvfs', 'testfshare'],
+                                           multi_line_stripper=True)
+
+        self.cl.createfshare('smb', 'testvfs', 'testfshare', ca='true')
+        self.cl.ssh.run.assert_called_with(self.ArgMatcher(
+            self.assertEqual,
+            ['createfshare', 'smb'],
+            ['-f', ('-ca', 'true')],
+            ['testvfs', 'testfshare']), multi_line_stripper=True)
+
+        self.cl.createfshare('smb', 'testvfs', 'testfshare', ca='false')
+        self.cl.ssh.run.assert_called_with(self.ArgMatcher(
+            self.assertEqual,
+            ['createfshare', 'smb'],
+            ['-f', ('-ca', 'false')],
+            ['testvfs', 'testfshare']), multi_line_stripper=True)
+
+    def test_setfshare_mock_smb_ca(self):
+        """Use mock to test setfshare smb -ca argument."""
+
+        self.cl.setfshare('smb', 'testvfs', 'testfshare', ca=None)
+        self.cl.ssh.run.assert_called_with(['setfshare', 'smb',
+                                            'testvfs', 'testfshare'],
+                                           multi_line_stripper=True)
+
+        self.cl.setfshare('smb', 'testvfs', 'testfshare', ca='true')
+        self.cl.ssh.run.assert_called_with(['setfshare', 'smb',
+                                            '-ca', 'true',
+                                            'testvfs', 'testfshare'],
+                                           multi_line_stripper=True)
+
+        self.cl.setfshare('smb', 'testvfs', 'testfshare', ca='false')
+        self.cl.ssh.run.assert_called_with(['setfshare', 'smb',
+                                            '-ca', 'false',
+                                            'testvfs', 'testfshare'],
+                                           multi_line_stripper=True)
+
     def test_strip_input_from_output(self):
         cmd = [
             'createvfs',

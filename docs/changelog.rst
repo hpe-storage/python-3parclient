@@ -8,6 +8,8 @@ Changes in Version 3.2.2
   pull and install from
 * Updated tox to run py34 tests
 * Modified basic Python calls to work with both Python2 and Python3.4
+* Added optional 'ca' parameter to createfshare and setfshare (for SMB
+  Continuous Availability)
 
 Changes in Version 3.2.1
 ------------------------

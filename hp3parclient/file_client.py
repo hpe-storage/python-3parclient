@@ -965,6 +965,7 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                      fpg=None, fstore=None, sharedir=None, comment=None,
                      abe=None, allowip=None,
                      denyip=None, allowperm=None, denyperm=None, cache=None,
+                     ca=None,
                      options=None, clientip=None, ssl=None, urlpath=None):
         """Create a file share.
 
@@ -997,6 +998,7 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             allowperm <permlist>
             denyperm <permlist>
             cache {off|manual|optimized|auto}
+            ca {true|false}
 
         nfs
             options <options>
@@ -1127,6 +1129,12 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
              documents.
              If this is not specified, the default is "manual".
 
+        :param ca: Continuous Availability. Specifies if SMB3 continuous
+             availability features should be enabled for this share. If not
+             specified, the default is 'true'. Valid values are 'true',
+             'false' or None. The parameter is a Python string -- not a
+             boolean.
+
         :param options: Specifies options to use for the share to be created.
              Standard NFS export options except "no_subtree_check" are
              supported. Do not enter option "fsid", which is provided. If not
@@ -1154,6 +1162,7 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
                   fpg=None, fstore=None, comment=None,
                   abe=None, allowip=None,
                   denyip=None, allowperm=None, denyperm=None, cache=None,
+                  ca=None,
                   options=None, clientip=None,
                   ssl=None):
         """Set/modify file share properties.
@@ -1190,6 +1199,7 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             -allowperm [+|-|=]<permlist>
             -denyperm [+|-|=]<permlist>
             -cache {off|manual|optimized|auto}
+            -ca {true|false}
 
         nfs
             -options <options>
@@ -1298,6 +1308,11 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             "auto": The client may cache every file that it opens from this
             share. The share is configured to allow automatic caching of
             documents.
+        :param ca: Continuous Availability. Specifies if SMB3 continuous
+             availability features should be enabled for this share. If not
+             specified, the default is 'true'. Valid values are 'true',
+             'false' or None. The parameter is a Python string -- not a
+             boolean.
         :param options: Specifies the new options to use for the share.
             This completely overwrites the options you set previously. Standard
             NFS export options except "no_subtree_check" are supported. Do not
