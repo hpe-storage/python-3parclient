@@ -10,6 +10,8 @@ Changes in Version 3.2.2
 * Modified basic Python calls to work with both Python2 and Python3.4
 * Added optional 'ca' parameter to createfshare and setfshare (for SMB
   Continuous Availability)
+* Volume Set snapshot capabilities have been added
+* Adds tests for volume set snapshots
 
 Changes in Version 3.2.1
 ------------------------

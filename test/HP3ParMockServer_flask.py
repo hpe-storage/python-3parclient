@@ -837,6 +837,50 @@ def create_snapshot(volume_name):
     throw_error(404, NON_EXISTENT_VOL, "volume doesn't exist")
 
 
+@app.route('/api/v1/volumesets/<volumeset_name>', methods=['POST'])
+def create_volumeset_snapshot(volumeset_name):
+    debugRequest(flask.request)
+    data = json.loads(flask.request.data.decode('utf-8'))
+
+    valid_keys = {'action': None, 'parameters': None}
+    valid_parm_keys = {'name': None, 'destVolume': None, 'destCPG': None,
+                       'id': None, 'comment': None, 'online': None,
+                       'readOnly': None, 'expirationHours': None,
+                       'retentionHours': None}
+
+    # do some fake errors here depending on data
+    for key in list(data.keys()):
+        if key not in list(valid_keys.keys()):
+            throw_error(400, INV_INPUT, "Invalid Parameter '%s'" % key)
+        elif 'parameters' in list(data.keys()):
+            parm = data['parameters']
+            for subkey in list(parm.keys()):
+                if subkey not in valid_parm_keys:
+                    throw_error(400, INV_INPUT,
+                                "Invalid Parameter '%s'" % subkey)
+
+    vvset_snap_name = data['parameters']['name']
+    snap_base = vvset_snap_name.split("@count@")[0]
+
+    for vset in volume_sets['members']:
+        setmembers = vset.get('setmembers', None)
+        if vset['name'] == volumeset_name and setmembers:
+            for i, member in enumerate(setmembers):
+                vol_name = snap_base + str(i)
+                volumes['members'].append({'name': vol_name, 'copyOf': member})
+            if data['action'] == "createPhysicalCopy":
+                new_name = data['parameters'].get('destVolume')
+            else:
+                new_name = data['parameters'].get('name')
+
+            volume_sets['members'].append({'name': new_name})
+
+            resp = flask.make_response(json.dumps(vset), 200)
+            return resp
+
+    throw_error(404, NON_EXISTENT_SET, "volume set doesn't exist")
+
+
 @app.route('/api/v1/volumes', methods=['POST'])
 def create_volumes():
     debugRequest(flask.request)

@@ -980,6 +980,113 @@ class HP3ParClientVolumeTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
         self.printFooter('find volume metadata missing volume')
 
+    def test_20_create_vvset_snapshot_no_optional(self):
+        self.printHeader('create_vvset_snapshot_no_optional')
+
+        # create volume to add to volume set
+        optional = {'snapCPG': CPG_NAME1}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+
+        # create volume set and add a volume to it
+        self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
+                                setmembers=[VOLUME_NAME1])
+
+        # @count@ is needed by 3PAR to create volume set snapshots. will
+        # create SNAP_NAME1-0 format
+        self.cl.createSnapshotOfVolumeSet(SNAP_NAME1 + "-@count@",
+                                          VOLUME_SET_NAME1)
+
+        # assert snapshot was created
+        snap = SNAP_NAME1 + "-0"
+        snapshot = self.cl.getVolume(snap)
+        self.assertEqual(VOLUME_NAME1, snapshot['copyOf'])
+
+        # cleanup volume snapshot and volume set
+        self.cl.deleteVolume(snap)
+        self.cl.deleteVolumeSet(VOLUME_SET_NAME1)
+
+        self.printFooter('create_vvset_snapshot_no_optional')
+
+    def test_20_create_vvset_snapshot(self):
+        self.printHeader('create_vvset_snapshot')
+
+        # create volume to add to volume set
+        optional = {'snapCPG': CPG_NAME1}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+
+        # create volume set and add a volume to it
+        self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN,
+                                setmembers=[VOLUME_NAME1])
+
+        # @count@ is needed by 3PAR to create volume set snapshots. will
+        # create SNAP_NAME1-0 format
+        optional = {'expirationHours': 300}
+        self.cl.createSnapshotOfVolumeSet(SNAP_NAME1 + "-@count@",
+                                          VOLUME_SET_NAME1, optional)
+
+        # assert snapshot was created
+        snap = SNAP_NAME1 + "-0"
+        snapshot = self.cl.getVolume(snap)
+        self.assertEqual(VOLUME_NAME1, snapshot['copyOf'])
+
+        # cleanup volume snapshot and volume set
+        self.cl.deleteVolume(snap)
+        self.cl.deleteVolumeSet(VOLUME_SET_NAME1)
+
+        self.printFooter('create_vvset_snapshot')
+
+    def test_20_create_vvset_snapshot_badParams(self):
+        self.printHeader('create_vvset_snapshot_badParams')
+
+        # add one
+        self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN)
+
+        optional = {'Bad': True, 'expirationHours': 300}
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.createSnapshotOfVolumeSet,
+            SNAP_NAME1,
+            VOLUME_SET_NAME1,
+            optional
+        )
+
+        self.printFooter('create_vvset_snapshot_badParams')
+
+    def test_20_create_vvset_snapshot_nonExistVolumeSet(self):
+        self.printHeader('create_vvset_snapshot_nonExistVolume')
+
+        # add one
+        name = 'UnitTestVvsetSnapshot'
+        volSetName = 'NonExistVolumeSet'
+        optional = {'comment': 'test vvset snapshot',
+                    'readOnly': True, 'expirationHours': 300}
+        self.assertRaises(
+            exceptions.HTTPNotFound,
+            self.cl.createSnapshotOfVolumeSet,
+            name,
+            volSetName,
+            optional
+        )
+
+        self.printFooter('create_vvset_snapshot_nonExistVolume')
+
+    def test_20_create_vvset_emptyVolumeSet(self):
+        self.printHeader('test_20_create_vvset_emptyVolumeSet')
+
+        name = 'UnitTestVvsetSnapshot'
+        self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=DOMAIN)
+
+        self.assertRaises(
+            exceptions.HTTPNotFound,
+            self.cl.createSnapshotOfVolumeSet,
+            name,
+            VOLUME_SET_NAME1
+        )
+
+        self.cl.deleteVolumeSet(VOLUME_SET_NAME1)
+
+        self.printFooter('test_20_create_vvset_emptyVolumeSet')
+
 # testing
 # suite = unittest.TestLoader().
 #   loadTestsFromTestCase(HP3ParClientVolumeTestCase)
