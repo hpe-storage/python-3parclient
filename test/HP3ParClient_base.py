@@ -162,7 +162,7 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
                     known_hosts_file=self.known_hosts_file,
                     missing_key_policy=self.missing_key_policy)
             except Exception as ex:
-                print ex
+                print(ex)
                 self.fail("failed to start ssh client")
 
         if self.debug:

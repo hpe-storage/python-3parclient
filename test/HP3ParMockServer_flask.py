@@ -94,7 +94,7 @@ def make_json_app(import_name, **kwargs):
     # app.debug = True
     app.secret_key = id_generator(24)
 
-    for code in default_exceptions.keys():
+    for code in list(default_exceptions.keys()):
         app.error_handler_spec[None][code] = make_json_error
 
     return app
@@ -154,7 +154,7 @@ def credentials():
         return 'GET credentials called'
 
     elif flask.request.method == 'POST':
-        data = json.loads(flask.request.data)
+        data = json.loads(flask.request.data.decode('utf-8'))
 
         if data['user'] == user_name and data['password'] == user_pass:
             # do something good here
@@ -187,7 +187,7 @@ def logout_credentials(session_key):
 @app.route('/api/v1/cpgs', methods=['POST'])
 def create_cpgs():
     debugRequest(flask.request)
-    data = json.loads(flask.request.data)
+    data = json.loads(flask.request.data.decode('utf-8'))
 
     valid_keys = {'name': None, 'growthIncrementMB': None,
                   'growthLimitMB': None,
@@ -246,7 +246,7 @@ def get_cpg(cpg_name):
 @app.route('/api/v1/spacereporter', methods=['POST'])
 def get_cpg_available_space():
     debugRequest(flask.request)
-    data = json.loads(flask.request.data)
+    data = json.loads(flask.request.data.decode('utf-8'))
 
     for cpg in cpgs['members']:
         if cpg['name'] == data['cpg']:
@@ -292,7 +292,7 @@ def get_host_sets():
 @app.route('/api/v1/hostsets', methods=['POST'])
 def create_host_set():
     debugRequest(flask.request)
-    data = json.loads(flask.request.data)
+    data = json.loads(flask.request.data.decode('utf-8'))
 
     valid_keys = {'name': None, 'comment': None,
                   'domain': None, 'setmembers': None}
@@ -344,7 +344,7 @@ def modify_host_set(host_set_name):
             throw_error(400, INV_INPUT_EXCEEDS_LENGTH,
                         'invalid input: string length exceeds limit')
 
-    data = json.loads(flask.request.data)
+    data = json.loads(flask.request.data.decode('utf-8'))
 
     if 'newName' in data:
         if len(data['newName']) > 32:
@@ -402,7 +402,7 @@ def delete_host_set(host_set_name):
 @app.route('/api/v1/hosts', methods=['POST'])
 def create_hosts():
     debugRequest(flask.request)
-    data = json.loads(flask.request.data)
+    data = json.loads(flask.request.data.decode('utf-8'))
 
     valid_members = ['FCWWNs', 'descriptors', 'domain', 'iSCSINames', 'id',
                      'name']
@@ -480,7 +480,7 @@ def create_hosts():
 @app.route('/api/v1/hosts/<host_name>', methods=['PUT'])
 def modify_host(host_name):
     debugRequest(flask.request)
-    data = json.loads(flask.request.data)
+    data = json.loads(flask.request.data.decode('utf-8'))
 
     if host_name == 'None':
         throw_error(404, INV_INPUT, 'Missing host name.')
@@ -701,7 +701,7 @@ def get_ports():
 @app.route('/api/v1/vluns', methods=['POST'])
 def create_vluns():
     debugRequest(flask.request)
-    data = json.loads(flask.request.data)
+    data = json.loads(flask.request.data.decode('utf-8'))
 
     valid_keys = {'volumeName': None, 'lun': 0, 'hostname': None,
                   'portPos': None,
@@ -803,7 +803,7 @@ def get_vluns_for_host(host_name):
 @app.route('/api/v1/volumes/<volume_name>', methods=['POST'])
 def create_snapshot(volume_name):
     debugRequest(flask.request)
-    data = json.loads(flask.request.data)
+    data = json.loads(flask.request.data.decode('utf-8'))
 
     valid_keys = {'action': None, 'parameters': None}
     valid_parm_keys = {'name': None, 'destVolume': None, 'destCPG': None,
@@ -840,7 +840,7 @@ def create_snapshot(volume_name):
 @app.route('/api/v1/volumes', methods=['POST'])
 def create_volumes():
     debugRequest(flask.request)
-    data = json.loads(flask.request.data)
+    data = json.loads(flask.request.data.decode('utf-8'))
 
     valid_keys = {'name': None, 'cpg': None, 'sizeMiB': None, 'id': None,
                   'comment': None, 'policies': None, 'snapCPG': None,
@@ -933,7 +933,7 @@ def modify_volume(volume_name):
         if volume['name'] == volume_name:
             break
 
-    data = json.loads(flask.request.data)
+    data = json.loads(flask.request.data.decode('utf-8'))
     _grow_volume(volume, data)
 
     # do volume renames last
@@ -969,7 +969,7 @@ def get_volume_sets():
 @app.route('/api/v1/volumesets', methods=['POST'])
 def create_volume_set():
     debugRequest(flask.request)
-    data = json.loads(flask.request.data)
+    data = json.loads(flask.request.data.decode('utf-8'))
 
     valid_keys = {'name': None, 'comment': None,
                   'domain': None, 'setmembers': None}
@@ -1014,7 +1014,7 @@ def get_volume_set(volume_set_name):
 @app.route('/api/v1/volumesets/<volume_set_name>', methods=['PUT'])
 def modify_volume_set(volume_set_name):
     debugRequest(flask.request)
-    data = json.loads(flask.request.data)
+    data = json.loads(flask.request.data.decode('utf-8'))
     for vset in volume_sets['members']:
         if vset['name'] == volume_set_name:
             if 'newName' in data:
@@ -1141,7 +1141,7 @@ def _delete_qos_db(qos_id):
 @app.route('/api/v1/qos', methods=['POST'])
 def create_qos():
     debugRequest(flask.request)
-    qos = json.loads(flask.request.data)
+    qos = json.loads(flask.request.data.decode('utf-8'))
 
     if 'name' not in qos:
         throw_error(404, INV_INPUT, "Missing required parameter 'name'")
@@ -1169,7 +1169,7 @@ def create_qos():
 @app.route('/api/v1/qos/<target_type>:<name>', methods=['PUT'])
 def modify_qos(target_type, name):
     debugRequest(flask.request)
-    qos = json.loads(flask.request.data)
+    qos = json.loads(flask.request.data.decode('utf-8'))
     _validate_qos_input(qos)
 
     for vset in volume_sets['members']:
@@ -1440,7 +1440,7 @@ def get_tasks():
 @app.route('/api/v1/volumes/<volume_name>/objectKeyValues', methods=['POST'])
 def create_key_value_pair(volume_name):
     debugRequest(flask.request)
-    kv_pair = json.loads(flask.request.data)
+    kv_pair = json.loads(flask.request.data.decode('utf-8'))
     key = kv_pair['key']
     value = kv_pair['value']
 
@@ -1490,7 +1490,7 @@ def create_key_value_pair(volume_name):
            methods=['PUT'])
 def update_key_value_pair(volume_name, key):
     debugRequest(flask.request)
-    body = json.loads(flask.request.data)
+    body = json.loads(flask.request.data.decode('utf-8'))
     value = body['value']
 
     if key is None:

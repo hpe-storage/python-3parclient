@@ -44,8 +44,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'HP 3PAR Client'
-copyright = u'2012-2014 Hewlett Packard Development Company, L.P.'
+project = 'HP 3PAR Client'
+copyright = '2012-2015 Hewlett Packard Development Company, L.P.'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -187,8 +187,8 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'hp3parclient.tex', u'hp3parclient Documentation',
-   u'Author', 'manual'),
+  ('index', 'hp3parclient.tex', 'hp3parclient Documentation',
+   'Author', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -217,8 +217,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'hp3parclient', u'hp3parclient Documentation',
-     [u'Author'], 1)
+    ('index', 'hp3parclient', 'hp3parclient Documentation',
+     ['Author'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -231,8 +231,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'hp3parclient', u'hp3parclient Documentation',
-   u'Author', 'hp3parclient', 'One line description of project.',
+  ('index', 'hp3parclient', 'hp3parclient Documentation',
+   'Author', 'hp3parclient', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -249,10 +249,10 @@ texinfo_documents = [
 # -- Options for Epub output ---------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'hp3parclient'
-epub_author = u'Author'
-epub_publisher = u'Author'
-epub_copyright = u'2012, Author'
+epub_title = 'hp3parclient'
+epub_author = 'Author'
+epub_publisher = 'Author'
+epub_copyright = '2012, Author'
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.

@@ -31,20 +31,20 @@ if "debug" in args and args.debug == True:
 
 
 def get_volumes():
-    print "Get Volumes"
+    print("Get Volumes")
     try:
        volumes = cl.getVolumes()
        if volumes:
            for volume in volumes['members']:
-               print "Found '%s'" % volume['name']
+               print("Found '%s'" % volume['name'])
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
-    print "Complete\n"
+       print(ex)
+    print("Complete\n")
 
 def get_hosts():
-    print "Get Hosts"
+    print("Get Hosts")
     try:
        hosts = cl.getHosts()
        if hosts:
@@ -52,80 +52,80 @@ def get_hosts():
                pprint.pprint(host)
 #               print "Found '%s'" % host['name']
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
 def get_host(hostname):
     try:
         host = cl.getHost(hostname)
         pprint.pprint(host)
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
 def get_vluns():
-    print "Get VLUNs"
+    print("Get VLUNs")
     try:
         vluns = cl.getVLUNs()
         if vluns:
             pprint.pprint(vluns)
             for vlun in vluns['members']:
-                print "Found CPG '%s'" % vlun['volumeName']
+                print("Found CPG '%s'" % vlun['volumeName'])
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
 def get_vlun(vlunname):
     try:
         vlun = cl.getVLUN(vlunname)
         pprint.pprint(vlun)
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
 
 def get_cpgs():
-    print "Get CPGs"
+    print("Get CPGs")
     try:
         cpgs = cl.getCPGs()
         if cpgs:
             for cpg in cpgs['members']:
-                print "Found CPG '%s'" % cpg['name']
+                print("Found CPG '%s'" % cpg['name'])
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
 def create_test_host():
     hostname = "WALT_TEST_HOST2"
     try:
         host = cl.getHost(hostname)
-        print "host already exists"
+        print("host already exists")
     except exceptions.HTTPNotFound as ex:
         cl.createHost(hostname, {'domain':'WALT_TEST'})
         pass
     except exceptions.HTTPUnauthorized as ex:
-        print "You must login"
+        print("You must login")
     except Exception as ex:
-        print ex
+        print(ex)
 
 def delete_test_host():
     try:
         cl.deleteHost("WALT_TEST_HOST2")
     except exceptions.HTTPUnauthorized as ex:
-        print "You must login"
+        print("You must login")
     except Exception as ex:
-        print ex
+        print(ex)
 
 def create_test_cpg():
     try:
        cl.createCPG(testCPGName, {'domain':'WALT_TEST', 'LDLayout' : {'RAIDType' : 1}})
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except exceptions.HTTPConflict as ex:
        # the cpg already exists.
        pass
@@ -137,7 +137,7 @@ def delete_test_cpg():
     try:
        cl.deleteCPG(testCPGName)
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except exceptions.HTTPConflict as ex:
        # the cpg already exists.
        pass
@@ -149,83 +149,83 @@ def delete_test_cpg():
 
 
 def create_volumes():
-    print "Create Volumes"
+    print("Create Volumes")
     try:
        volName = "%s1" % testVolName
-       print "Creating Volume '%s'" % volName
+       print("Creating Volume '%s'" % volName)
        cl.createVolume(volName, testCPGName, 300)
        volName = "%s2" % testVolName
-       print "Creating Volume '%s'" % volName
+       print("Creating Volume '%s'" % volName)
        cl.createVolume(volName, testCPGName, 1024,
                        {'comment': 'something', 'tpvv': True})
 
     except exceptions.HTTPUnauthorized as ex:
        pprint.pprint("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
     try:
 	volume = cl.createVolume("%s1" % testVolName, testCPGName, 2048)
     except exceptions.HTTPConflict as ex:
-	print "Got Expected Exception %s" % ex
+	print("Got Expected Exception %s" % ex)
         pass
 
-    print "Complete\n"
+    print("Complete\n")
 
 def create_snapshots():
-    print "Create Snapshots"
+    print("Create Snapshots")
     try:
         volName = "%s11" % testVolName
-        print "Creating Volume '%s'" % volName
+        print("Creating Volume '%s'" % volName)
         cl.createVolume(volName, testCPGName, 100, {'snapCPG': testCPGName})
         volume = cl.getVolume(volName)
 
         snapName = "%s1" % testSNAPName
-        print "Creating Snapshot '%s'" % snapName
+        print("Creating Snapshot '%s'" % snapName)
         cl.createSnapshot(snapName, volName,
                           {'readOnly' : True, 'comment': "Some comment",
 #                          {'comment': "Some comment",
                            'retentionHours' : 1,
                            'expirationHours' : 2})
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
-    print "Complete\n"
+       print(ex)
+    print("Complete\n")
 
 
 def delete_snapshots():
-    print "Delete Snapshots"
+    print("Delete Snapshots")
     try:
        volumes = cl.getVolumes()
        if volumes:
            for volume in volumes['members']:
                if volume['name'].startswith(testSNAPName):
-                   print "Deleting volume '%s'" % volume['name']
+                   print("Deleting volume '%s'" % volume['name'])
                    cl.deleteVolume(volume['name'])
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
-    print "Complete\n"
+    print("Complete\n")
 
 
 def delete_volumes():
-    print "Delete Volumes"
+    print("Delete Volumes")
     try:
        volumes = cl.getVolumes()
        if volumes:
            for volume in volumes['members']:
                if volume['name'].startswith(testVolName):
-                   print "Deleting volume '%s'" % volume['name']
+                   print("Deleting volume '%s'" % volume['name'])
                    cl.deleteVolume(volume['name'])
     except exceptions.HTTPUnauthorized as ex:
-       print "You must login first"
+       print("You must login first")
     except Exception as ex:
-       print ex
+       print(ex)
 
-    print "Complete\n"
+    print("Complete\n")
 
 
 #cl.login(username, password, {'InServ':'10.10.22.241'})

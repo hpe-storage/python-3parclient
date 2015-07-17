@@ -36,11 +36,11 @@ cl.setSSHOptions(ip, username, password, port=22, conn_timeout=None)
 cl.login(username, password)
 
 # Test commands and pretty-print their output...
-print "GETFS:"
+print("GETFS:")
 pprint.pprint(cl.getfs())
-print "GETVFS:"
+print("GETVFS:")
 pprint.pprint(cl.getvfs())
-print "GETFPG:"
+print("GETFPG:")
 pprint.pprint(cl.getfpg())
 
 cl.logout()

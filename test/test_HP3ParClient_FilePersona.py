@@ -47,7 +47,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
     def debug_print(self, obj, **kwargs):
         if self.DEBUG:
-            print pprint.pformat(obj, **kwargs)
+            print(pprint.pformat(obj, **kwargs))
 
     def setUp(self, withSSH=True, withFilePersona=True):
         self.withSSH = withSSH
@@ -60,7 +60,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
             self.interfaces = self.cl.gettpdinterface()
 
             save_interface = open('test/tpdinterface/interface.save', 'w')
-            for k, v in self.interfaces.iteritems():
+            for k, v in list(self.interfaces.items()):
                 save_interface.write(' {%s {' % k)
                 for header in v:
                     if isinstance(header, str):
@@ -90,7 +90,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
                 time.sleep(5)
 
             except Exception as e:
-                print e
+                print(e)
                 pass
 
         for fpgname, vfsname, fstore, share, protocol in fshares_to_delete:
@@ -99,7 +99,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
                                      fstore=fstore,
                                      fpg=fpgname)
             except Exception as e:
-                print e
+                print(e)
                 pass
         del fshares_to_delete[:]
 
@@ -107,7 +107,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
             try:
                 self.cl.removefstore(vfsname, fstore, fpg=fpgname)
             except Exception as e:
-                print e
+                print(e)
                 pass
         del fstores_to_delete[:]
 
@@ -115,7 +115,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
             try:
                 self.cl.removevfs(vfsname, fpg=fpgname)
             except Exception as e:
-                print e
+                print(e)
                 pass
         del vfss_to_delete[:]
 
@@ -123,7 +123,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
             try:
                 self.cl.removefpg(fpgname, wait=True)
             except Exception as e:
-                print e
+                print(e)
                 pass
         del fpgs_to_delete[:]
 
@@ -131,7 +131,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
             try:
                 self.cl.deleteCPG(cpgname)
             except Exception as e:
-                print e
+                print(e)
                 pass
         del cpgs_to_delete[:]
 
@@ -147,7 +147,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
             start_time = time.time()
             result = func(*args, **kwargs)
             elapsed_time = time.time() - start_time
-            print "Elapsed Time: %ss" % elapsed_time
+            print("Elapsed Time: %ss" % elapsed_time)
             test.printFooter(unittest.TestCase.id(test))
             return result
         return wrapper
@@ -157,13 +157,13 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
             if re.search(expected, line):
                 break
         else:
-            print "Did NOT find expected error. Expected: %s" % expected
-            print pprint.pformat(result)
+            print("Did NOT find expected error. Expected: %s" % expected)
+            print(pprint.pformat(result))
             self.fail("Did NOT find expected error. Expected: %s" % expected)
 
     def find_expected_key_val_in_members(self, expected, members):
         for member in members:
-            if expected in member.iteritems():
+            if expected in list(member.items()):
                 break
         else:
             self.fail("Did NOT find expected error. Expected: %s" % expected)

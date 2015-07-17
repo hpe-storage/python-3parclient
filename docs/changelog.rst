@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Changes in Version 3.2.2
+------------------------
+* Python3.4+ compliant
+* Added requirements-py3.txt and test-requirements-py3.txt for Python3.4 to
+  pull and install from
+* Updated tox to run py34 tests
+* Modified basic Python calls to work with both Python2 and Python3.4
+
 Changes in Version 3.2.1
 ------------------------
 * Improved debug capabilities during initialization of the client.
