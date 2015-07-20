@@ -124,6 +124,10 @@ class HP3ParClient(object):
     HP3PAR_WS_MIN_BUILD_VERSION = 30103230
     HP3PAR_WS_MIN_BUILD_VERSION_DESC = '3.1.3 MU1'
 
+    # Minimum build version needed for VLUN query support.
+    HP3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY = 30201292
+    HP3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY_DESC = '3.2.1 MU2'
+
     VLUN_TYPE_EMPTY = 1
     VLUN_TYPE_PORT = 2
     VLUN_TYPE_HOST = 3
@@ -178,6 +182,7 @@ class HP3ParClient(object):
         self.http = http.HTTPJSONRESTClient(self.api_url)
         api_version = None
         self.ssh = None
+        self.vlun_query_supported = False
 
         self.debug_rest(debug)
 
@@ -204,6 +209,11 @@ class HP3ParClient(object):
             raise exceptions.UnsupportedVersion(
                 'Invalid 3PAR WS API, requires version, %s' %
                 self.HP3PAR_WS_MIN_BUILD_VERSION_DESC)
+
+        # Check for VLUN query support.
+        if (api_version['build'] >=
+           self.HP3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY):
+            self.vlun_query_supported = True
 
     def setSSHOptions(self, ip, login, password, port=22,
                       conn_timeout=None, privatekey=None,
@@ -1732,14 +1742,23 @@ class HP3ParClient(object):
         # exception if it's not found.
         self.getHost(hostName)
 
-        allVLUNs = self.getVLUNs()
-
         vluns = []
+        # Check if the WSAPI supports VLUN querying. If it is supported
+        # request only the VLUNs that are associated with the host.
+        if self.vlun_query_supported:
+            query = '"hostname EQ %s"' % hostName
+            response, body = self.http.get('/vluns?query=%s' %
+                                           quote(query.encode("utf8")))
 
-        if allVLUNs:
-            for vlun in allVLUNs['members']:
-                if 'hostname' in vlun and vlun['hostname'] == hostName:
-                    vluns.append(vlun)
+            for vlun in body.get('members', []):
+                vluns.append(vlun)
+        else:
+            allVLUNs = self.getVLUNs()
+
+            if allVLUNs:
+                for vlun in allVLUNs['members']:
+                    if 'hostname' in vlun and vlun['hostname'] == hostName:
+                        vluns.append(vlun)
 
         if len(vluns) < 1:
             raise exceptions.HTTPNotFound(
@@ -1943,11 +1962,23 @@ class HP3ParClient(object):
             -  NON_EXISTENT_VLUN - VLUN doesn't exist
 
         """
-        vluns = self.getVLUNs()
-        if vluns:
-            for vlun in vluns['members']:
-                if vlun['volumeName'] == volumeName:
+        # Check if the WSAPI supports VLUN querying. If it is supported
+        # request only the VLUNs that are associated with the volume.
+        if self.vlun_query_supported:
+            query = '"volumeName EQ %s"' % volumeName
+            response, body = self.http.get('/vluns?query=%s' %
+                                           quote(query.encode("utf8")))
+
+            # Return the first active VLUN found for the volume.
+            for vlun in body.get('members', []):
+                if vlun['active']:
                     return vlun
+        else:
+            vluns = self.getVLUNs()
+            if vluns:
+                for vlun in vluns['members']:
+                    if vlun['volumeName'] == volumeName:
+                        return vlun
 
         raise exceptions.HTTPNotFound({'code': 'NON_EXISTENT_VLUN',
                                        'desc': "VLUN '%s' was not found" %

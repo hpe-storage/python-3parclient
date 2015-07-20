@@ -14,6 +14,8 @@ Changes in Version 3.2.2
 * Adds tests for volume set snapshots
 * Fixed error that was happening during client initialization when an error
   was missing a description. (issue #15)
+* Add support for VLUN queries in getVLUN and getHostVLUNs when a backend
+  with WSAPI 1.4.2 or greater is being used.
 
 Changes in Version 3.2.1
 ------------------------

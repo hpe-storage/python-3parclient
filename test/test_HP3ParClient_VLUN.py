@@ -17,8 +17,17 @@
 
 import HP3ParClient_base as hp3parbase
 import random
+import mock
+import unittest
+from testconfig import config
 
+from hp3parclient import client
 from hp3parclient import exceptions
+
+try:
+    from urllib.parse import quote
+except ImportError:
+    from urllib2 import quote
 
 CPG_NAME1 = 'CPG1_VLUN_UNIT_TEST' + hp3parbase.TIME
 CPG_NAME2 = 'CPG2_VLUN_UNIT_TEST' + hp3parbase.TIME
@@ -280,6 +289,119 @@ class HP3ParClientVLUNTestCase(hp3parbase.HP3ParClientBaseTestCase):
         )
 
         self.printFooter('get_host_vluns_unknown_host')
+
+    @unittest.skipIf(config['TEST']['unit'].lower() == 'false',
+                     "only works with flask server")
+    @mock.patch('hp3parclient.client.HP3ParClient.getWsApiVersion')
+    def test_5_get_VLUN_no_query_support(self, mock_version):
+        self.printHeader('get_VLUN_no_query_support')
+
+        # Mock the version number to a version that does not support
+        # VLUN querying and then remake the client.
+        version = (client.HP3ParClient
+                   .HP3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY - 1)
+        mock_version.return_value = {'build': version}
+        self.cl = client.HP3ParClient(self.flask_url)
+
+        # Mock the HTTP GET function to track what the call to it was.
+        self.cl.http.get = mock.Mock()
+        self.cl.http.get.return_value = (
+            {},
+            {'members': [{'volumeName': VOLUME_NAME1}]}
+        )
+
+        self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1)
+        self.cl.getVLUN(VOLUME_NAME1)
+
+        # Check for the request that happens when VLUN querying is unsupported.
+        self.cl.http.get.assert_has_calls([mock.call('/vluns')])
+
+        self.printFooter('get_VLUN_no_query_support')
+
+    @unittest.skipIf(config['TEST']['unit'].lower() == 'false',
+                     "only works with flask server")
+    @mock.patch('hp3parclient.client.HP3ParClient.getWsApiVersion')
+    def test_5_get_host_VLUNs_no_query_support(self, mock_version):
+        self.printHeader('get_host_VLUNs_no_query_support')
+
+        # Mock the version number to a version that does not support
+        # VLUN querying and then remake the client.
+        version = (client.HP3ParClient
+                   .HP3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY - 1)
+        mock_version.return_value = {'build': version}
+        self.cl = client.HP3ParClient(self.flask_url)
+
+        # Mock the HTTP GET function to track what the call to it was.
+        self.cl.http.get = mock.Mock()
+        self.cl.http.get.return_value = (
+            {}, {'members': [{'hostname': HOST_NAME1}]}
+        )
+
+        self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1)
+        self.cl.getHostVLUNs(HOST_NAME1)
+
+        # Check for the request that happens when VLUN querying is unsupported.
+        self.cl.http.get.assert_has_calls([mock.call('/vluns')])
+
+        self.printFooter('get_host_VLUNs_no_query_support')
+
+    @unittest.skipIf(config['TEST']['unit'].lower() == 'false',
+                     "only works with flask server")
+    @mock.patch('hp3parclient.client.HP3ParClient.getWsApiVersion')
+    def test_5_get_VLUN_query_support(self, mock_version):
+        self.printHeader('get_VLUN_query_support')
+
+        # Mock the version number to a version that supports
+        # VLUN querying and then remake the client.
+        version = client.HP3ParClient.HP3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY
+        mock_version.return_value = {'build': version}
+        self.cl = client.HP3ParClient(self.flask_url)
+
+        # Mock the HTTP GET function to track what the call to it was.
+        self.cl.http.get = mock.Mock()
+        self.cl.http.get.return_value = (
+            {},
+            {'members': [{'volumeName': VOLUME_NAME1, 'active': True}]}
+        )
+
+        self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1)
+        self.cl.getVLUN(VOLUME_NAME1)
+
+        # Check for the request that happens when VLUN querying is supported.
+        query = '"volumeName EQ %s"' % VOLUME_NAME1
+        expected_query = '/vluns?query=%s' % quote(query.encode("utf-8"))
+        self.cl.http.get.assert_has_calls([mock.call(expected_query)])
+
+        self.printFooter('get_VLUN_query_support')
+
+    @unittest.skipIf(config['TEST']['unit'].lower() == 'false',
+                     "only works with flask server")
+    @mock.patch('hp3parclient.client.HP3ParClient.getWsApiVersion')
+    def test_5_get_host_VLUNs_query_support(self, mock_version):
+        self.printHeader('get_host_VLUNs_query_support')
+
+        # Mock the version number to a version that supports
+        # VLUN querying and then remake the client.
+        version = client.HP3ParClient.HP3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY
+        mock_version.return_value = {'build': version}
+        self.cl = client.HP3ParClient(self.flask_url)
+
+        # Mock the HTTP GET function to track what the call to it was.
+        self.cl.http.get = mock.Mock()
+        self.cl.http.get.return_value = (
+            {},
+            {'members': [{'hostname': HOST_NAME1, 'active': True}]}
+        )
+
+        self.cl.createVLUN(VOLUME_NAME1, LUN_1, HOST_NAME1)
+        self.cl.getHostVLUNs(HOST_NAME1)
+
+        # Check for the request that happens when VLUN querying is supported.
+        query = '"hostname EQ %s"' % HOST_NAME1
+        expected_query = '/vluns?query=%s' % quote(query.encode("utf-8"))
+        self.cl.http.get.assert_has_calls([mock.call(expected_query)])
+
+        self.printFooter('get_host_VLUNs_query_support')
 
 # testing
 # suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientVLUNTestCase)
