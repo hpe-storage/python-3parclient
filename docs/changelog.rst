@@ -12,6 +12,8 @@ Changes in Version 3.2.2
   Continuous Availability)
 * Volume Set snapshot capabilities have been added
 * Adds tests for volume set snapshots
+* Fixed error that was happening during client initialization when an error
+  was missing a description. (issue #15)
 
 Changes in Version 3.2.1
 ------------------------

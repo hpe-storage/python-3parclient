@@ -186,8 +186,8 @@ class HP3ParClient(object):
         except Exception as ex:
             ex_desc = ex.get_description()
 
-            if (ex_desc and "Unable to find the server at" in ex_desc or
-                    "Only absolute URIs are allowed" in ex_desc):
+            if (ex_desc and ("Unable to find the server at" in ex_desc or
+                             "Only absolute URIs are allowed" in ex_desc)):
                 raise exceptions.HTTPBadRequest(ex_desc)
             else:
                 msg = ('Error: \'%s\' - Error communicating with the 3PAR WS. '
