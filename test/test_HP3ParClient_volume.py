@@ -586,6 +586,13 @@ class HP3ParClientVolumeTestCase(hp3parbase.HP3ParClientBaseTestCase):
             # means we are on a server that doesn't support FlashCachePolicy
             # pre 3.2.1 MU2
             pass
+        except exceptions.HTTPNotFound as e:
+            # Pass if server doesn't have flash cache
+            # Not found (HTTP 404) 285 - Flash cache does not exist
+            if e.get_code() == 285:
+                pass
+            else:
+                raise
 
         self.printFooter('modify_volume_set_change_flash_cache')
 
