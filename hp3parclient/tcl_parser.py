@@ -22,9 +22,7 @@ This module parses TCL strings and returns python structures.
 
 """
 
-TOP_LIST = 0
-SUB_LIST = 1
-SUB_SUB_LIST = 2
+MAX_LEVELS = 10
 
 
 class HP3ParTclParser(object):
@@ -35,10 +33,7 @@ class HP3ParTclParser(object):
 
         token = ''
         result = []
-        top_list = []
-        sub_list = []
-        sub_sub_list = []
-        lists = [top_list, sub_list, sub_sub_list]
+        lists = [[]] * MAX_LEVELS
 
         level = -1
 
@@ -48,46 +43,34 @@ class HP3ParTclParser(object):
 
                 level += 1
 
-                if level > SUB_SUB_LIST:
+                if level > MAX_LEVELS:
                     # For deeper nesting, just capture as string
                     token += c
                 else:
                     token = ''
-
-                if level <= SUB_SUB_LIST:
-                    # Start new sub-sub-list
-                    lists[SUB_SUB_LIST] = []
-
-                if level <= SUB_LIST:
-                    # Starting new sub-list
-                    lists[SUB_LIST] = []
+                    for l in range(0, level + 1):
+                        lists[level] = []
 
             elif c == '}':
 
-                if token != '' and level <= SUB_SUB_LIST:
+                if token != '' and level <= MAX_LEVELS:
                     lists[level].append(token)
                     token = ''
 
-                if level > SUB_SUB_LIST:
+                if level > MAX_LEVELS:
                     # For deeper nesting, just capture as string
                     token += c
-                elif level == SUB_SUB_LIST:
-                    # End sub-sub-list.  Append it to parent.
-                    lists[SUB_LIST].append(lists[SUB_SUB_LIST])
-                    lists[SUB_SUB_LIST] = []
-                elif level == SUB_LIST:
-                    # End sub-list.  Append it to parent.
-                    lists[TOP_LIST].append(lists[SUB_LIST])
-                    lists[SUB_LIST] = []
-                elif level == TOP_LIST:
-                    # End a top-list.
-                    result.append(lists[TOP_LIST])
-                    lists[TOP_LIST] = []
+                elif level > 0:
+                    lists[level - 1].append(lists[level])
+                    lists[level] = []
+                else:
+                    result.append(lists[level])
+                    lists[level] = []
 
                 level -= 1
 
             elif c == ' ':
-                if level > SUB_SUB_LIST:
+                if level > MAX_LEVELS:
                     # For deeper nesting, just capture as string
                     token += c
                 elif token != '':

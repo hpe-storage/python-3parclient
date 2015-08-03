@@ -10,6 +10,7 @@ Changes in Version 3.2.2
 * Modified basic Python calls to work with both Python2 and Python3.4
 * Added optional 'ca' parameter to createfshare and setfshare (for SMB
   Continuous Availability)
+* Improved handling of nested and optional lists in File Persona get methods
 * Volume Set snapshot capabilities have been added
 * Adds tests for volume set snapshots
 * Fixed error that was happening during client initialization when an error

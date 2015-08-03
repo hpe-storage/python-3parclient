@@ -241,17 +241,28 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
             for domain in member['domains']:
                 self.assertIsInstance(domain['filesets'], str)
                 self.assertIsInstance(domain['fsname'], str)
-                self.assertIsInstance(domain['hosts'], str)
+
+                # Domain hosts typically look like ['node1fs', 'node0fs']
+                self.assertIsInstance(domain['hosts'], list)
+                for host in domain['hosts']:
+                    self.assertIsInstance(host, str)
                 self.assertIsInstance(domain['ipfsType'], str)
                 self.assertIsInstance(domain['name'], str)
                 self.assertIsInstance(int(domain['owner']), int)
-                self.assertIsInstance(int(domain['volumes']), int)
+
+                # volumes is ID or list of IDs
+                if isinstance(domain['volumes'], list):
+                    for vol_id in domain['volumes']:
+                        self.assertIsInstance(int(vol_id), int)
+                else:
+                    self.assertIsInstance(int(domain['volumes']), int)
 
             self.assertIsInstance(int(member['fFree']), int)
             self.assertIsInstance(int(member['filesUsed']), int)
             self.assertIsInstance(int(member['freeCapacityKiB']), int)
             self.assertIn(member['freezeState'], ['NOT_FROZEN', 'UNKNOWN'])
-            self.assertIsInstance(member['fsname'], str)
+            fpgname = member['fsname']
+            self.assertIsInstance(fpgname, str)
             self.assertIsInstance(int(member['generation']), int)
             self.assertIsInstance(member['hosts'], list)
             self.assertIn(member['isolationState'],
@@ -289,11 +300,29 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
             self.assertIsInstance(member['volumes'], list)
             for volume in member['volumes']:
                 self.assertIsInstance(int(volume['capacityInMb']), int)
-                self.assertIsInstance(volume['hosts'], str)
-                self.assertIsInstance(int(volume['lunUuid']), int)
-                self.assertIsInstance(volume['name'], str)
 
-            self.assertIsInstance(member['vvs'], str)
+                # Volume hosts should be something like ['0', '1']
+                self.assertIsInstance(volume['hosts'], list)
+                for host in volume['hosts']:
+                    self.assertIsInstance(int(host), int)
+
+                self.assertIsInstance(int(volume['lunUuid']), int)
+                self.assertFalse(volume['name'])  # Name is always empty
+
+            def validate_vv_name(fpg_name, vv_name):
+                """Expect vv name to look like 'fpg_name.#'."""
+                self.assertIsInstance(vv_name, str)
+                vv_split = vv_name.split('.')
+                self.assertEqual(fpg_name, vv_split[0])
+                self.assertIsInstance(int(vv_split[1]), int)
+
+            if isinstance(member['vvs'], list):
+                for vv in member['vvs']:
+                    validate_vv_name(fpgname, vv)
+            else:
+                vv = member['vvs']
+                self.assertIsInstance(vv, str)
+                validate_vv_name(fpgname, vv)
 
     def validate_getvfs_members(self, members):
         for member in members:
