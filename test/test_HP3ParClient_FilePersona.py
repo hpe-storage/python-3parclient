@@ -257,7 +257,11 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
             self.assertIn(member['isolationState'],
                           ['ACCESSIBLE', 'UNKNOWN'])
             self.assertIn(member['mountStates'],
-                          ['ACTIVATED', 'DEACTIVATED', 'UNMOUNTING'])
+                          ['ACTIVATED',
+                           'DEACTIVATED',
+                           'MOUNTING',
+                           'UNMOUNTING',
+                           ])
             self.assertIsInstance(member['mountpath'], str)
             self.assertTrue(member['mountpath'].startswith('/'))
             self.assertIsInstance(int(member['number']), int)
@@ -338,7 +342,8 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         # Validate contents
         if total == 0:
             self.assertEqual([], members)
-            self.assertEqual('No File Provisioning Groups found.', message)
+            self.assertIn(message, ('No File Provisioning Groups found.',
+                                    None))
         else:
             self.assertIsNone(message)
             self.validate_getfpg_members(members)
@@ -572,15 +577,28 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
     @unittest.skipIf(is_live_test() and skip_file_persona(), SKIP_MSG)
     @print_header_and_footer
-    def test_createvfs_bogus_grace(self):
+    def test_createvfs_bogus_bgrace(self):
         test_prefix = 'UT6_'
         fpgname = self.get_or_create_fpg(test_prefix)
         vfsname = self.get_or_create_vfs(test_prefix, fpgname)
         result = self.cl.createvfs('127.0.0.2', '255.255.255.0', vfsname,
                                    fpg=fpgname,
-                                   bgrace='bogus', igrace='bogus',
+                                   bgrace='bogus', igrace='60',
                                    wait=True)
         self.assertEqual('bgrace value should be between 1 and 2147483647\r',
+                         result[0])
+
+    @unittest.skipIf(is_live_test() and skip_file_persona(), SKIP_MSG)
+    @print_header_and_footer
+    def test_createvfs_bogus_igrace(self):
+        test_prefix = 'UT6_'
+        fpgname = self.get_or_create_fpg(test_prefix)
+        vfsname = self.get_or_create_vfs(test_prefix, fpgname)
+        result = self.cl.createvfs('127.0.0.2', '255.255.255.0', vfsname,
+                                   fpg=fpgname,
+                                   bgrace='60', igrace='bogus',
+                                   wait=True)
+        self.assertEqual('igrace value should be between 1 and 2147483647\r',
                          result[0])
 
     def get_fsips(self, fpgname, vfsname):
