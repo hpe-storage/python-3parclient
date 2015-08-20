@@ -208,7 +208,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
             self.assertEqual(4, len(member['node']))
             for node in member['node']:
                 self.assertIn(node['activeNode'], ('Yes', 'No'))
-                self.assertIn(node['bondMode'], ('1', '-'))
+                self.assertIn(node['bondMode'], ('1', '6', '-'))
                 self.assertIn(node['fsvcList'], ('Yes', 'No'))
                 self.assertIn(node['fsvcState'], ('running', 'Unknown'))
                 self.assertIn(node['inCluster'], ('Yes', 'No'))
