@@ -1969,10 +1969,9 @@ class HP3ParClient(object):
             response, body = self.http.get('/vluns?query=%s' %
                                            quote(query.encode("utf8")))
 
-            # Return the first active VLUN found for the volume.
+            # Return the first VLUN found for the volume.
             for vlun in body.get('members', []):
-                if vlun['active']:
-                    return vlun
+                return vlun
         else:
             vluns = self.getVLUNs()
             if vluns:
