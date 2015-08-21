@@ -177,9 +177,17 @@ class HPE3ParClient(object):
     FLASH_CACHE_ENABLED = 1
     FLASH_CACHE_DISABLED = 2
 
-    def __init__(self, api_url, debug=False, secure=False):
+    RC_ACTION_CHANGE_DIRECTION = 6
+    RC_ACTION_CHANGE_TO_PRIMARY = 7
+    RC_ACTION_MIGRATE_GROUP = 8
+    RC_ACTION_CHANGE_TO_SECONDARY = 9
+    RC_ACTION_CHANGE_TO_NATURUAL_DIRECTION = 10
+    RC_ACTION_OVERRIDE_FAIL_SAFE = 11
+
+    def __init__(self, api_url, debug=False, secure=False, timeout=None):
         self.api_url = api_url
-        self.http = http.HTTPJSONRESTClient(self.api_url, secure=secure)
+        self.http = http.HTTPJSONRESTClient(self.api_url, secure=secure,
+                                            timeout=timeout)
         api_version = None
         self.ssh = None
         self.vlun_query_supported = False
@@ -2909,6 +2917,990 @@ class HPE3ParClient(object):
             pass
 
         return False
+
+    def getRemoteCopyInfo(self):
+        """
+        Querying Overall Remote-Copy Information
+
+        :returns: Overall Remote Copy Information
+        """
+        response, body = self.http.get('/remotecopy')
+        return body
+
+    def getRemoteCopyGroups(self):
+        """
+        Returns information on all Remote Copy Groups
+
+        :returns: list of Remote Copy Groups
+
+        """
+        response, body = self.http.get('/remotecopygroups')
+        return body
+
+    def getRemoteCopyGroup(self, name):
+        """
+        Returns information on one Remote Copy Group
+
+        :param name: the remote copy group name
+        :type name: str
+
+        :returns: Remote Copy Group
+
+        """
+        response, body = self.http.get('/remotecopygroups/%s' % name)
+        return body
+
+    def createRemoteCopyGroup(self, name, targets, optional=None):
+        """
+        Creates a remote copy group
+
+        :param name: the remote copy group name
+        :type name: str
+        :param targets: Specifies the attributes of the target of the
+                        remote-copy group.
+        :type targets: list
+        :param optional: dict of other optional items
+        :type optional: dict
+
+        .. code-block:: python
+            targets = [
+                {
+                    "targetName": "name",      # Target name associated with
+                                               # the remote-copy group to be
+                                               # created
+                    "mode": 2,                 # Specifies the volume group
+                                               # mode.
+                                               # 1 - The remote-copy group mode
+                                               #     is synchronous.
+                                               # 2 - The remote-copy group mode
+                                               #     is periodic.
+                                               # 3 - The remote-copy group mode
+                                               #     is periodic.
+                                               # 4 - Remote-copy group mode is
+                                               #     asynchronous.
+                    "userCPG": "SOME_CPG",     # Specifies the user CPG
+                                               # that will be used for
+                                               # volumes that are
+                                               # autocreated on the
+                                               # target.
+                    "snapCPG": "SOME_SNAP_CPG" # Specifies the snap CPG
+                                               # that will be used for
+                                               # volumes that are
+                                               # autocreated on the
+                                               # target.
+                }
+            ]
+
+            optional = {
+                "localSnapCPG" : "SNAP_CPG",   # Specifies the local snap
+                                               # CPG that will be used for
+                                               # volumes that are autocreated.
+                "localUserCPG" : "SOME_CPG",   # Specifies the local user
+                                               # CPG that will be used for
+                                               # volumes that are autocreated.
+                "domain" : "some-domain"       # Specifies the attributes of
+                                               # the target of the
+                                               # remote-copy group.
+            }
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+            - INV_INPUT_ILLEGAL_CHAR - Invalid character in the remote-copy
+              group or volume name.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - EXISTENT_RCOPY_GROUP - The remote-copy group already exists.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+            - RCOPY_GROUP_TOO_MANY_TARGETS - Too many remote-copy group targets
+              have been specified.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+            - INV_INPUT_BAD_ENUM_VALUE - The mode is not valid.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+            - RCOPY_GROUP_TARGET_NOT_UNIQUE - The remote-copy group target is
+              not unique.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_IS_NOT_READY - The remote-copy configuration is not ready
+              for commands.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_MODE_NOT_SUPPORTED - The remote-copy group mode is
+              not supported.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+            - RCOPY_GROUP_MAX_GROUP_REACHED_PERIODIC - The maximum number of
+              remote-copy groups in periodic mode has been reached.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+            - RCOPY_GROUP_MAX_GROUP_REACHED_PERIODIC - The maximum number of
+              remote-copy groups in periodic mode has been reached.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_SECONDARY_GROUP_MORE_THAN_ONE_BACKUP_TARGET -
+              Secondary groups should have only one target that is not a
+              backup.
+        :raises: :class:`~hp3parclient.exceptions.HTTPServiceUnavailable`
+            - RCOPY_GROUP_MORE_THAN_ONE_SYNC_TARGET - Remote-copy groups can
+              have no more than one synchronous-mode target.
+        :raises: :class:`~hp3parclient.exceptions.HTTPServiceUnavailable`
+            - RCOPY_GROUP_MORE_THAN_ONE_PERIODIC_TARGET - Remote-copy groups
+              can have no more than one periodic-mode target.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_ONE_TO_ONE_CONFIG_FOR_MIXED_MODE - Mixed mode is
+              supported in a 1-to-1 remote-copy configuration.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_INV_TARGET - The specified target is not a target of
+              the remote-copy group.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotImplemented`
+            - RCOPY_TARGET_IN_PEER_PERSISTENCE_SYNC_GROUP_ONLY - The
+              remote-copy target is configured with peer persistence; only
+              synchronous groups can be added.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotImplemented`
+            - RCOPY_TARGET_MODE_NOT_SUPPORTED - The remote-copy target
+              mode is not supported.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotImplemented`
+            - RCOPY_TARGET_MULTI_TARGET_NOT_SUPPORTED - The remote-copy target
+              was created in an earlier version of the HP 3PAR OS that does not
+              support multiple targets.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotImplemented`
+            - RCOPY_TARGET_VOL_AUTO_CREATION_NOT_SUPPORTED - The remote-copy
+              target is in an older version of the HP 3PAR OS that does not
+              support autocreation of
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+            - RCOPY_GROUP_MIXED_MODES_ON_ONE_TARGET - Remote-copy groups
+              with different modes on a single target are not supported.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_CPG - The CPG does not exists.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - CPG_NOT_IN_SAME_DOMAIN - Snap CPG is not in the same domain as
+            the user CPG.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+            - NON_EXISTENT_DOMAIN - Domain doesn't exist.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_HAS_NO_CPG - No CPG has been defined for the
+              remote-copy group on the target.
+        :raises: :class:`~hp3parclient.exceptions.HTTPServiceUnavailable`
+            - RCOPY_MAX_SYNC_TARGET_REACHED - The maximum number of remote-copy
+              synchronous targets has been reached.
+        :raises: :class:`~hp3parclient.exceptions.HTTPServiceUnavailable`
+            - RCOPY_MAX_PERIODIC_TARGET_REACHED - The maximum number of
+              remote-copy periodic targets has been reached.
+        """
+        parameters = {'name': name, 'targets': targets}
+        if optional:
+            parameters = self._mergeDict(parameters, optional)
+
+        response, body = self.http.post('/remotecopygroups',
+                                        body=parameters)
+        return body
+
+    def removeRemoteCopyGroup(self, name, keep_snap=False):
+        """
+        Deletes a remote copy group
+
+        :param name: the remote copy group name
+        :type name: str
+        :param keep_snap: used to retain the local volume resynchronization
+                          snapshot. NOTE: to retain the snapshot pass 'true'
+                          to keep_snap
+        :type keep_snap: str
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_RCOPY_GROUP - The remote-copy group does not exist.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_STARTED - The remote-copy group has already been
+              started.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_IS_BUSY - The remote-copy group is currently busy;
+              retry later.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_TARGET_IS_NOT_READY - The remote-copy group target is not
+              ready.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_OPERATION_ONLY_ON_PRIMARY_SIDE - The operation
+              should be performed only on the primary side.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_RENAME_RESYNC_SNAPSHOT_FAILED - Renaming of the
+              remote-copy group resynchronization snapshot failed.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_IN_FAILOVER_STATE - The remote-copy group is in
+              failover state; both the source system and the target system
+              are in the primary state.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - RCOPY_GROUP_TARGET_VOLUME_MISMATCH - Secondary group on target
+              system has a mismatched volume configuration.
+        """
+        if keep_snap:
+            snap_query = 'true'
+        else:
+            snap_query = 'false'
+
+        response, body = self.http.delete(
+            '/remotecopygroups/%(name)s?keepSnap=%(snap_query)s' %
+            {'name': name, 'snap_query': snap_query})
+        return body
+
+    def modifyRemoteCopyGroup(self, name, optional=None):
+        """
+        Modifies a remote copy group
+
+        :param name: the remote copy group name
+        :type name: str
+        :param optional: dict of other optional items
+        :type optional: dict
+
+        .. code-block:: python
+            optional = {
+                "localUserCPG": "CPG",      # Specifies the local user
+                                            # CPG that will be used for
+                                            # autocreated volumes.
+                "localSnapCPG": "SNAP_CPG", # Specifies the local snap
+                                            # CPG that will be used for
+                                            # autocreated volumes.
+                "targets": targets,         # Specifies the attributes of
+                                            # the remote-copy group
+                                            # target.
+                "unsetUserCPG": False,      # If True, this option
+                                            # unsets the localUserCPG and
+                                            # remoteUserCPG of the
+                                            # remote-copy group.
+                "unsetSnapCPG": Flase       # If True, this option
+                                            # unsets the localSnapCPG and
+                                            # remoteSnapCPG of the
+                                            # remote-copy group.
+            }
+
+            targets = [
+                {
+                    "targetName": "name",        # Specifies the target name
+                                                 # associated with the
+                                                 # remote-copy group to be
+                                                 # created.
+                    "remoteUserCPG": "CPG",      # Specifies the user CPG
+                                                 # on the target that will be
+                                                 # used for autocreated
+                                                 # volumes.
+                    "remoteSnapCPG": "SNAP_CPG", # Specifies the snap CPG
+                                                 # on the target that will be
+                                                 # used for autocreated
+                                                 # volumes.
+                    "syncPeriod": 300,           # Specifies that asynchronous
+                                                 # periodic remote-copy groups
+                                                 # should be synchronized
+                                                 # periodically to the
+                                                 # <period_value>.
+                                                 # Range is 300 - 31622400
+                                                 # seconds (1 year).
+                    "rmSyncPeriod": False,       # If True, this option
+                                                 # resets the syncPeriod
+                                                 # time to 0 (zero).
+                                                 # If False, the
+                                                 # syncPeriod value is 0
+                                                 # (zero), then Ignore.
+                                                 # If False, and the
+                                                 # syncPeriod value is
+                                                 # positive, then then the
+                                                 # synchronizaiton period
+                                                 # is set.
+                    "mode": 2,                   # Volume group mode. Can be
+                                                 # either synchronous or
+                                                 # periodic.
+                                                 # 1 - The remote-copy group
+                                                 #     mode is synchronous.
+                                                 # 2 - The remote-copy group
+                                                 #     mode is periodic.
+                                                 # 3 - The remote-copy group
+                                                 #     mode is periodic.
+                                                 # 4 - Remote-copy group mode
+                                                 #     is asynchronous.
+                    "snapFrequency": 300,        # Async mode only. Specifies
+                                                 # the interval in seconds at
+                                                 # which Remote Copy takes
+                                                 # coordinated snapshots. Range
+                                                 # is 300-31622400 seconds
+                                                 # (1 year).
+                    "rmSnapFrequency": False,    # If True, this option resets
+                                                 # the snapFrequency time
+                                                 # rmSnapFrequency to 0 (zero).
+                                                 # If False and the
+                                                 # snapFrequency value is 0
+                                                 # (zero), then Ignore. If
+                                                 # False, and the snapFrequency
+                                                 # value is positive, sets the
+                                                 # snapFrequency value.
+                    "policies": policies         # The policy assigned to
+                                                 # the remote-copy group.
+                }
+            ]
+
+            policies = {
+                "autoRecover": False,       # If the remote copy is stopped
+                                            # as a result of links going
+                                            # down, the remote-copy group
+                                            # can be automatically
+                                            # restarted after the links
+                                            # come back up.
+                "overPeriodAlert": False,   # If synchronization of an
+                                            # asynchronous periodic
+                                            # remote-copy group takes
+                                            # longer to complete than its
+                                            # synchronization period, an
+                                            # alert is generated.
+                "autoFailover": False,      # Automatic failover on a
+                                            # remote-copy group.
+                "pathManagement": False     # Automatic failover on a
+                                            # remote-copy group.
+            }
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_RCOPY_GROUP - The remote-copy group does not exist.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_OPERATION_ONLY_ON_PRIMARY_SIDE - The operation should
+              be performed only on the primary side.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_IS_NOT_PERIODIC - Target in group is not periodic.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_INV_POLICY_FOR_PERIODIC_GROUP - Invalid policy for a
+              periodic group.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_INV_POLICY_FOR_SYNC_GROUP - Invalid policy for a
+              synchronous target.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_CPG - The CPG does not exists.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_INV_TARGET - The specified target is not a target of
+              the remote-copy group.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - CPG_NOT_IN_SAME_DOMAIN - Snap CPG is not in the same domain as
+            the user CPG.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+            - INV_INPUT_BELOW_RANGE - The minimum allowable period is 300
+              seconds.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+            - INV_INPUT_EXCEEDS_RANGE - Invalid input: the period is too long.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_STARTED - The remote-copy group has already been
+              started.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_INV_OPERATION_ON_MULTIPLE_TARGETS - The operation is
+              not supported on multiple targets.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+            - RCOPY_GROUP_TARGET_NOT_UNIQUE - The remote-copy group target is
+              not unique.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_INV_TARGET_NUMBER - The wrong number of targets is
+              specified for the remote-copy group.
+        """
+        parameters = {}
+        if optional:
+            parameters = self._mergeDict(parameters, optional)
+
+        response, body = self.http.put('/remotecopygroups/%s' % name,
+                                       body=parameters)
+        return body
+
+    def addVolumeToRemoteCopyGroup(self, name, volumeName, targets,
+                                   optional=None):
+        """
+        Adds a volume to a remote copy group
+
+        :param name: Name of the remote copy group
+        :type name: string
+        :param volumeName: Specifies the name of the existing virtual
+                           volume to be admitted to an existing remote-copy
+                           group.
+        :type volumeName: string
+        :param targets: Specifies the attributes of the target of the
+                        remote-copy group.
+        :type targets: list
+        :param optional: dict of other optional items
+        :type optional: dict
+
+        .. code-block:: python
+            targets = [
+                {
+                    "targetName": "name",            # The target name
+                                                     # associated with this
+                                                     # group.
+                    "secVolumeName": "sec_vol_name"  # Specifies the name of
+                                                     # the secondary volume
+                                                     # on the target system.
+                }
+            ]
+
+            optional = {
+                "snapshotName": "snapshot_name", # The optional read-only
+                                                 # snapshotName is a
+                                                 # starting snapshot when
+                                                 # the group is started
+                                                 # without performing a
+                                                 # full resynchronization.
+                                                 # Instead, for
+                                                 # synchronized groups,
+                                                 # the volume
+                                                 # synchronizes deltas
+                                                 # between this
+                                                 # snapshotName and
+                                                 # the base volume. For
+                                                 # periodic groups, the
+                                                 # volume synchronizes
+                                                 # deltas between this
+                                                 # snapshotName and a
+                                                 # snapshot of the base.
+                "volumeAutoCreation": False,     # If set to true, the
+                                                 # secondary volumes
+                                                 # should be created
+                                                 # automatically on the
+                                                 # target using the CPG
+                                                 # associated with the
+                                                 # remote-copy group on
+                                                 # that target.
+                "skipInitialSync": False         # If set to true, the
+                                                 # volume should skip the
+                                                 # initial sync. This is
+                                                 # for the admission of
+                                                 # volumes that have
+                                                 # been pre-synced with
+                                                 # the target volume.
+            }
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_RCOPY_GROUP - The remote-copy group does not exist.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_VOL - volume doesn't exist
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_SNAPSHOT - The specified snapshot does not exist.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_SNAPSHOT_IS_RW - The specified snapshot can only be
+              read-only.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_VOL_IS_RO - The volume to be admitted to the
+              remote-copy group cannot be read-only.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_HAS_NO_CPG - No CPG has been defined for the
+              remote-copy group on the target.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+            - RCOPY_GROUP_EXISTENT_VOL - The specified volume is
+              already in the remote-copy group.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+            - RCOPY_GROUP_EXISTENT_VOL_ON_TARGET - The specified secondary
+              volume to be automatically created already exists on the target.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_INV_TARGET - The specified target is not a target of
+              the remote-copy group.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_VOL_SIZE_NOT_MATCH - The size of the volume added to
+              the remote-copy group does not match the size of the volume on
+              the target.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - RCOPY_GROUP_NON_EXISTENT_VOL_ON_TARGET - The specified secondary
+              volume does not exist on the target.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_VOL_NO_SNAPSHOT_SPACE - The volume to be admitted
+              into the remote-copy group requires that snapshot space be
+              allocated.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_TARGET_VOL_NO_SNAPSHOT_SPACE - The specified
+              secondary volumes on the target require snapshot space.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_VOL_IS_PHYSICAL_COPY - A physical copy cannot
+              be added to a remote-copy group
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_MAX_VOL_REACHED_PERIODIC - The number of
+              periodic-mode volumes on the system has reached the limit.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_MAX_VOL_REACHED_SYNC - The number of
+              synchronous-mode volumes on the system has reached the limit.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_MAX_VOL_REACHED - The number of volumes on the
+              system has reached the limit.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_IS_NOT_READY - The remote-copy configuration is not ready
+        :raises: :class:`~hp3parclient.exceptions.`
+            - RCOPY_GROUP_VOL_INTERNAL_CONSISTENCY_ERR - The volume to be
+              admitted into the remote-copy group has an internal consistency
+              error.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_IS_BEING_REMOVED - The volume to be admitted into the
+              remote-copy group is being removed.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUPSNAPSHOT_PARENT_MISMATCH - The names of the snapshot
+              and its parent do not match.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_TARGET_VOL_EXPORTED - Secondary volumes cannot be
+              admitted when they are exported.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_VOL_IS_PEER_PROVISIONED - A peer-provisioned volume
+              cannot be admitted into a remote-copy group.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_VOL_ONLINE_CONVERSION - Online volume conversions do
+              not support remote copy.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_VOL_ONLINE_PROMOTE - Online volume promotes do not
+              support remote copy.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_VOL_ONLINE_COPY - Online volume copies do not support
+              remote copy.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_VOL_CLEAN_UP - Cleanup of internal volume is in
+              progress.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_VOL_IS_INTERNAL - Internal volumes cannot be admitted
+              into a remote-copy group.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_VOL_NOT_IN_SAME_DOMAIN - The remote-copy group has a
+              different domain than the volume.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_STARTED - The remote-copy group has already been
+              started.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_IS_BUSY - The remote-copy group is currently busy;
+              retry later.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_VOL_IN_OTHER_GROUP - The volume is already in
+              another remote-copy group.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_INV_TARGET_NUMBER - The wrong number of targets is
+              specified for the remote-copy group.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_INV_TARGET - The specified target is not a target of
+              the remote-copy group.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_NOT_SUPPORT_VOL_ID - The target for the remote-copy
+              group does not support volume IDs.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_IS_SELF_MIRRORED - The target is self-mirrored.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_TARGET_VOL_IS_RO - The remote-copy target volume
+              cannot be read-only.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_OPERATION_ONLY_ON_PRIMARY_SIDE - The operation should
+              be performed only on the primary side.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_TARGET_IS_NOT_READY - The remote-copy group target is not
+              ready.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotImplemented`
+            - RCOPY_UNSUPPORTED_TARGET_VERSION - The target HP 3PAR OS version
+              is not supported.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_MULTIPLE_VOL_IN_SAME_FAMILY - A remote-copy group
+              cannot contain multiple volumes in the same family tree.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_MULTIPLE_RW_SNAPSHOT_IN_SAME_FAMILY - Only one
+              read/write snapshot in the same family can be added to a
+              remote-copy group.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_SYNC_SNAPSHOT_IN_MULTIPLE_TARGET - A synchronization
+              snapshot cannot be set with multiple targets.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_ADD_VOL_FAILED - Failed to add volume to the
+              remote-copy group.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_ADD_VOL_FAILED_PARTIAL - Adding volume to
+              remote-copy group succeeded on some targets.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_SET_AUTO_CREATED - The set was created
+              automatically Members cannot be added or removed.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_SECONDARY_DOES_NOT_MATCH_PRIMARY - The remote-copy
+              group is in the failover state. Both systems are in the primary
+              state.
+        """
+        parameters = {'action': 1,
+                      'volumeName': volumeName,
+                      'targets': targets}
+        if optional:
+            parameters = self._mergeDict(parameters, optional)
+
+        response, body = self.http.put('/remotecopygroups/%s' % name,
+                                       body=parameters)
+        return body
+
+    def removeVolumeFromRemoteCopyGroup(self, name, volumeName,
+                                        optional=None,
+                                        removeFromTarget=False):
+        """
+        Removes a volume from a remote copy group
+
+        :param name: Name of the remote copy group
+        :type name: string
+        :param volumeName: Specifies the name of the existing virtual
+                           volume to be admitted to an existing remote-copy
+                           group.
+        :type volumeName: string
+        :param optional: dict of other optional items
+        :type optional: dict
+
+        .. code-block:: python
+            optional = {
+                "keepSnap": False  # If true, the resynchronization
+                                   # snapshot of the local volume is
+                                   # retained.
+            }
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_RCOPY_GROUP - The remote-copy group does not exist.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_VOL - volume doesn't exist
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_IS_NOT_READY - The remote-copy configuration is not ready
+              for commands.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_STARTED - The remote-copy group has already been
+              started.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_IS_BUSY - The remote-copy group is currently busy;
+              retry later.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - RCOPY_GROUP_VOL_NOT_IN_GROUP - The volume is not in the
+              remote-copy group.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_RENAME_RESYNC_SNAPSHOT_FAILED - Renaming of the
+              remote-copy group resynchronization snapshot failed.
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+            - RCOPY_GROUP_CREATED_MIRROR_CONFIG_OFF - The remote-copy group was
+              created when the configuration mirroring policy was turned off on
+              the target. However, this policy is now turned on. In order to
+              dismiss a volume from the remote-copy group, the configuration
+              mirroring policy must be turned off. Retry after turning the
+              policy off.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_OPERATION_ONLY_ON_PRIMARY_SIDE - The operation should
+              be performed only on the primary side.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_TARGET_IS_NOT_READY - The remote-copy group target is
+              not ready.
+        """
+        # If removeFromTarget is set to True, we need to issue the command via
+        # ssh due to this feature not being supported in the WSAPI.
+        if removeFromTarget:
+            if optional:
+                keep_snap = optional.get('keepSnap', False)
+            else:
+                keep_snap = False
+
+            if keep_snap:
+                cmd = ['dismissrcopyvv', '-f', '-keepsnap', '-removevv',
+                       volumeName, name]
+            else:
+                cmd = ['dismissrcopyvv', '-f', '-removevv', volumeName, name]
+            self._run(cmd)
+        else:
+            parameters = {'action': 2,
+                          'volumeName': volumeName}
+            if optional:
+                parameters = self._mergeDict(parameters, optional)
+
+            response, body = self.http.put('/remotecopygroups/%s' % name,
+                                           body=parameters)
+            return body
+
+    def startRemoteCopy(self, name, optional=None):
+        """
+        Starts a remote copy
+
+        :param name: Name of the remote copy group
+        :type name: string
+        :param optional: dict of other optional items
+        :type optional: dict
+
+        .. code-block:: python
+            # All the volumes in the group must be specified. While specifying
+            # the pair, the starting snapshot is optional. If it is not
+            # specified, a full resynchronization of the volume is performed.
+            startingSnapshots = [
+                {
+                    "volumeName": "vol_name",    # Volume name
+                    "snapshotName": "snap_name"  # Snapshot name
+                }
+            ]
+
+            optional = {
+                "skipInitialSync": False,    # If True, the volume
+                                             # should skip the initial
+                                             # synchronization and
+                                             # sets the volumes to
+                                             # a synchronized state.
+                "targetName": "target_name", # The target name associated
+                                             # with this group.
+                "startingSnapshots": startingSnapshots
+            }
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_RCOPY_GROUP - The remote-copy group does not exist.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_INV_TARGET - The specified target is not a target of
+              the remote-copy group.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_STARTED - The remote-copy group has already been
+              started.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+            - RCOPY_GROUP_EMPTY - The remote-copy group must contain volumes
+              before being started.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_OPERATION_ONLY_ON_PRIMARY_SIDE - The operation
+              should be performed only on the primary side.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+            - RCOPY_TARGET_NOT_SPECIFIED - A target must be specified to
+              complete this operation.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+            - RCOPY_GROUP_NOT_ALL_VOLUMES_SPECIFIED - All the volumes in the
+              remote-copy group must be specified to complete this operation.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - RCOPY_GROUP_EXISTENT_VOL_WWN_ON_TARGET - Secondary volume WWN
+              already exists on the target.
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - RCOPY_GROUP_VOLUME_ALREADY_SYNCED - Volume is already
+              synchronized.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+            - RCOPY_GROUP_INCORRECT_SNAPSHOT_OR_VOLUME_SPECIFIED - An incorrect
+              starting snapshot or volume was specified, or the snapshot or
+              volume does not exist.
+        """
+        parameters = {'action': 3}
+        if optional:
+            parameters = self._mergeDict(parameters, optional)
+
+        response, body = self.http.put('/remotecopygroups/%s' % name,
+                                       body=parameters)
+        return body
+
+    def stopRemoteCopy(self, name, optional=None):
+        """
+        Stops a remote copy
+
+        :param name: Name of the remote copy group
+        :type name: string
+        :param optional: dict of other optional items
+        :type optional: dict
+
+        .. code-block:: python
+            optional = {
+                "noSnapshot": False,        # If true, this option turns
+                                            # off creation of snapshots
+                                            # in synchronous and
+                                            # periodic modes, and
+                                            # deletes the current
+                                            # synchronization snapshots.
+                "targetName": "target_name" # The target name associated
+                                            # with this group
+            }
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_RCOPY_GROUP - The remote-copy group does not exist.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_TARGET_IS_NOT_READY - The remote-copy group target is not
+              ready.
+        """
+        parameters = {'action': 4}
+        if optional:
+            parameters = self._mergeDict(parameters, optional)
+
+        response, body = self.http.put('/remotecopygroups/%s' % name,
+                                       body=parameters)
+        return body
+
+    def synchronizeRemoteCopyGroup(self, name, optional=None):
+        """
+        Synchronizing a remote copy group
+
+        :param name: Name of the remote copy group
+        :type name: string
+        :param optional: dict of other optional items
+        :type optional: dict
+
+        .. code-block:: python
+            optional = {
+                "noResyncSnapshot": False,   # If true, does not save
+                                             # the resynchronization
+                                             # snapshot. Applicable
+                                             # only to remote-copy
+                                             # groups in asychronous
+                                             # periodic mode.
+                "targetName": "target_name", # The target name
+                                             # assoicated with the
+                                             # remote-copy group.
+                "fullSync": False            # If true, this option
+                                             # forces a full
+                                             # synchronization of the
+                                             # remote-copy group, even
+                                             # if the volumes are
+                                             # already synchronized.
+                                             # This option, which
+                                             # applies only to volume
+                                             # groups in synchronous
+                                             # mode, can be used to
+                                             # resynchronize volumes
+                                             # that have become
+                                             # inconsistent.
+            }
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_RCOPY_GROUP - The remote-copy group does not exist.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_OPERATION_ONLY_ON_PRIMARY_SIDE - The operation
+              should be performed only on the primary side.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - UNLICENSED_FEATURE - The system is not licensed for this feature.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_INV_TARGET - The specified target is not a target of
+              the remote-copy group.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_TARGET_IS_NOT_READY - The remote-copy group target is not
+              ready.
+        :raises: :class:`~hp3parclient.exceptions.`
+            - RCOPY_GROUP_INVOLVED_IN_SYNCHRONIZATION - The remote-copy group
+              is already involved in synchronization.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_STARTED - The remote-copy group has already been
+              started.
+        """
+        parameters = {'action': 5}
+        if optional:
+            parameters = self._mergeDict(parameters, optional)
+
+        response, body = self.http.put('/remotecopygroups/%s' % name,
+                                       body=parameters)
+        return body
+
+    def recoverRemoteCopyGroupFromDisaster(self, name, action, optional=None):
+        """
+        Recovers a remote copy group from a disaster
+
+        :param name: Name of the remote copy group
+        :type name: string
+        :param action: Specifies the action to be taken on the specified group.
+                       The action may be any of values 6 through 11:
+                       * RC_ACTION_CHANGE_DIRECTION - Changes the current
+                         direction of the remote-copy groups.
+                       * RC_ACTION_CHANGE_TO_PRIMARY - Changes the secondary
+                         groups to primary groups on the active system.
+                       * RC_ACTION_MIGRATE_GROUP - Migrates the remote-copy
+                         group from the primary system to the secondary system
+                         without impacting I/O.
+                       * RC_ACTION_CHANGE_TO_SECONDARY - Changes the primary
+                         remote-copy group on the backup system to the
+                         secondary remote-copy group.
+                       * RC_ACTION_CHANGE_TO_NATURUAL_DIRECTION - Changes all
+                         remote-copy groups to their natural direction and
+                         starts them.
+                       * RC_ACTION_OVERRIDE_FAIL_SAFE - Overrides the failsafe
+                         state that is applied to the remote-copy group.
+        :type action: int
+        :param optional: dict of other optional items
+        :type optional: dict
+
+        .. code-block:: python
+            optional = {
+                "targetName": "target_name",  # The target name
+                                              # associated with this
+                                              # group.
+                "skipStart": False,           # If true, groups are not
+                                              # started after role reversal
+                                              # is completed. Valid for
+                                              # only FAILOVER, RECOVER,
+                                              # and RESTORE operations.
+                "skipSync": False,            # If true, the groups are
+                                              # not synchronized after
+                                              # role reversal is
+                                              # completed. Valid only for
+                                              # FAILOVER, RECOVER, and
+                                              # RESTORE operations.
+                "discardNewData": False,      # If true and the group
+                                              # has multiple targets,
+                                              # don't check other targets
+                                              # of the group to see if
+                                              # newer data should be
+                                              # pushed from them.
+                                              # Valid only for FAILOVER
+                                              # operation.
+                "skipPromote": False,         # If true, the snapshots of
+                                              # the groups that are
+                                              # switched from secondary
+                                              # to primary are not
+                                              # promoted to the base
+                                              # volume. Valid only for
+                                              # FAILOVER and REVERSE
+                                              # operations.
+                "noSnapshot": False,          # If true, the snapshots
+                                              # are not taken of the
+                                              # groups that are switched
+                                              # from secondary to
+                                              # primary. Valid for
+                                              # FAILOVER, REVERSE, and
+                                              # RESTORE operations.
+                "stopGroups": False,          # If true, the groups are
+                                              # stopped before performing
+                                              # the reverse operation.
+                                              # Valid only for REVERSE
+                                              # operation.
+                "localGroupsDirection": False # If true, the group's
+                                              # direction is changed only
+                                              # on the system where the
+                                              # operation is run. Valid
+                                              # only for REVERSE operation
+            }
+
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_RCOPY_GROUP - The remote-copy group does not exist.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - UNLICENSED_FEATURE - System is not licensed for this feature.
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+            - RCOPY_GROUP_INV_TARGET - Specified target is not in remote copy
+              group.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - INV_INPUT_MISSING_REQUIRED - Group has multiple targets.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_RCOPY_GROUP_ROLE_CONFLICT - Group is not in correct
+              role for this operation.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_INV_OPERATION_ON_MULTIPLE_TARGETS - The operation is
+              not supported on multiple targets.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_NOT_STOPPED - Remote copy group is not stopped.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_RCOPY_GROUP_ROLE_CONFLICT - Group is not in correct
+              role for this operation.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_NOT_STARTED - Remote copy not started.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - INV_INPUT_PARAM_CONFLICT - Parameters cannot be present at the
+              same time.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_PROMOTE_IN_PROGRESS - Volume promotion is
+              in progress.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_IS_BUSY - Remote copy group is currently busy.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_STARTED - Remote copy group has already been started.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_EMPTY - Remote copy group does not contain any
+              volumes.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_OPERATION_ONLY_ON_PRIMARY_SIDE - Operation should
+              only be issued on primary side.
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+            - RCOPY_GROUP_OPERATION_ONLY_ON_SECONDARY_SIDE - Operation should
+              only be issued on secondary side.
+        """
+        parameters = {'action': action}
+        if optional:
+            parameters = self._mergeDict(parameters, optional)
+
+        response, body = self.http.post('/remotecopygroups/%s' % name,
+                                        body=parameters)
+        return body
+
+    def toggleRemoteCopyConfigMirror(self, target, mirror_config=True):
+        """
+        Used to toggle config mirroring policies on a target device.
+
+        :param target: The 3PAR target name to enable/disable config mirroring.
+        :type target: string
+        :param mirror_config: Specifies whether to enable or disable config
+                              mirroring.
+        :type mirror_config: bool
+        """
+        if mirror_config:
+            policy = 'mirror_config'
+        else:
+            policy = 'no_mirror_config'
+
+        cmd = ['setrcopytarget', 'pol', policy, target]
+        self._run(cmd)
 
     def _mergeDict(self, dict1, dict2):
         """

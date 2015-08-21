@@ -45,6 +45,14 @@ class HPE3ParClientBaseTestCase(unittest.TestCase):
     unitTest = config['TEST']['unit'].lower() == 'true'
     port = None
 
+    remote_copy = config['TEST']['run_remote_copy'].lower() == 'true'
+    run_remote_copy = remote_copy and not unitTest
+    if run_remote_copy:
+        secondary_user = config['TEST_REMOTE_COPY']['user']
+        secondary_password = config['TEST_REMOTE_COPY']['pass']
+        secondary_url_3par = config['TEST_REMOTE_COPY']['3par_url']
+        secondary_target_name = config['TEST_REMOTE_COPY']['target_name']
+
     ssh_port = None
     if 'ssh_port' in config['TEST']:
         ssh_port = int(config['TEST']['ssh_port'])
@@ -164,6 +172,26 @@ class HPE3ParClientBaseTestCase(unittest.TestCase):
                 print(ex)
                 self.fail("failed to start ssh client")
 
+        # Setup remote copy target
+        if self.run_remote_copy:
+            parsed_3par_url = urlparse(self.secondary_url_3par)
+            ip = parsed_3par_url.hostname.split(':').pop()
+            self.secondary_cl = client.HPE3ParClient(self.secondary_url_3par)
+            try:
+                self.secondary_cl.setSSHOptions(
+                    ip,
+                    self.secondary_user,
+                    self.secondary_password,
+                    port=self.ssh_port,
+                    conn_timeout=500,
+                    known_hosts_file=self.known_hosts_file,
+                    missing_key_policy=self.missing_key_policy)
+            except Exception as ex:
+                print(ex)
+                self.fail("failed to start ssh client")
+            self.secondary_cl.login(self.secondary_user,
+                                    self.secondary_password)
+
         if self.debug:
             self.cl.debug_rest(True)
 
@@ -179,6 +207,8 @@ class HPE3ParClientBaseTestCase(unittest.TestCase):
 
     def tearDown(self):
         self.cl.logout()
+        if self.run_remote_copy:
+            self.secondary_cl.logout()
         if self.unitTest:
             self.mockServer.kill()
             if self.withSSH:

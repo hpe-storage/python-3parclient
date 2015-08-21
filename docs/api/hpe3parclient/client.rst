@@ -81,3 +81,16 @@
       .. automethod:: getPatches
       .. automethod:: getPatch
       .. automethod:: getCPGStatData
+      .. automethod:: getRemoteCopyInfo
+      .. automethod:: getRemoteCopyGroups
+      .. automethod:: getRemoteCopyGroup
+      .. automethod:: createRemoteCopyGroup
+      .. automethod:: removeRemoteCopyGroup
+      .. automethod:: modifyRemoteCopyGroup
+      .. automethod:: addVolumeToRemoteCopyGroup
+      .. automethod:: removeVolumeFromRemoteCopyGroup
+      .. automethod:: startRemoteCopy
+      .. automethod:: stopRemoteCopy
+      .. automethod:: synchronizeRemoteCopyGroup
+      .. automethod:: recoverRemoteCopyGroupFromDisaster
+      .. automethod:: toggleRemoteCopyConfigMirror

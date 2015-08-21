@@ -14,6 +14,10 @@
 
 """Test class of 3PAR Client handling volume & snapshot."""
 
+import time
+import unittest
+from testconfig import config
+
 import HPE3ParClient_base as hpe3parbase
 
 from hpe3parclient import exceptions
@@ -29,6 +33,31 @@ VOLUME_SET_NAME1 = 'VOLUME_SET1_UNIT_TEST' + hpe3parbase.TIME
 VOLUME_SET_NAME2 = 'VOLUME_SET2_UNIT_TEST' + hpe3parbase.TIME
 VOLUME_SET_NAME3 = 'VOLUME_SET3_UNIT_TEST' + hpe3parbase.TIME
 SIZE = 512
+REMOTE_COPY_GROUP_NAME1 = 'RCG1_UNIT_TEST' + hpe3parbase.TIME
+REMOTE_COPY_GROUP_NAME2 = 'RCG2_UNIT_TEST' + hpe3parbase.TIME
+REMOTE_COPY_TARGETS = [{"targetName": "testTarget",
+                        "mode": 2,
+                        "roleReversed": False,
+                        "groupLastSyncTime": None}]
+RC_VOLUME_NAME = 'RC_VOLUME1_UNIT_TEST' + hpe3parbase.TIME
+SKIP_RCOPY_MESSAGE = ("Only works with flask server.")
+SKIP_FLASK_RCOPY_MESSAGE = ("Remote copy is not configured to be tested "
+                            "on live arrays.")
+RCOPY_STARTED = 3
+RCOPY_STOPPED = 5
+FAILOVER_GROUP = 7
+RESTORE_GROUP = 10
+
+
+def is_live_test():
+    return config['TEST']['unit'].lower() == 'false'
+
+
+def no_remote_copy():
+    unit_test = config['TEST']['unit'].lower() == 'false'
+    remote_copy = config['TEST']['run_remote_copy'].lower() == 'true'
+    run_remote_copy = not remote_copy or not unit_test
+    return run_remote_copy
 
 
 class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
@@ -43,6 +72,14 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
             pass
         try:
             self.cl.createCPG(CPG_NAME2, optional)
+        except Exception:
+            pass
+        try:
+            self.secondary_cl.createCPG(CPG_NAME1, optional)
+        except Exception:
+            pass
+        try:
+            self.secondary_cl.createCPG(CPG_NAME2, optional)
         except Exception:
             pass
 
@@ -78,6 +115,35 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
             pass
         try:
             self.cl.deleteCPG(CPG_NAME2)
+        except Exception:
+            pass
+        try:
+            self.cl.stopRemoteCopy(REMOTE_COPY_GROUP_NAME1)
+        except Exception:
+            pass
+        try:
+            self.cl.removeVolumeFromRemoteCopyGroup(
+                REMOTE_COPY_GROUP_NAME1, RC_VOLUME_NAME, removeFromTarget=True)
+        except Exception:
+            pass
+        try:
+            self.cl.removeRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        except Exception:
+            pass
+        try:
+            self.cl.deleteVolume(RC_VOLUME_NAME)
+        except Exception:
+            pass
+        try:
+            self.secondary_cl.deleteVolume(RC_VOLUME_NAME)
+        except Exception:
+            pass
+        try:
+            self.secondary_cl.deleteCPG(CPG_NAME1)
+        except Exception:
+            pass
+        try:
+            self.secondary_cl.deleteCPG(CPG_NAME2)
         except Exception:
             pass
 
@@ -1099,6 +1165,769 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.cl.deleteVolumeSet(VOLUME_SET_NAME1)
 
         self.printFooter('test_20_create_vvset_emptyVolumeSet')
+
+    @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
+    def test_21_create_remote_copy_group(self):
+        self.printHeader('create_remote_copy_group')
+
+        # Create empty remote copy group
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      REMOTE_COPY_TARGETS,
+                                      optional={"domain": DOMAIN})
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        self.printFooter('create_remote_copy_group')
+
+    @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
+    def test_21_delete_remote_copy_group(self):
+        self.printHeader('delete_remote_copy_group')
+
+        # Create empty remote copy group
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      REMOTE_COPY_TARGETS,
+                                      optional={"domain": DOMAIN})
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Delete remote copy group
+        self.cl.removeRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+
+        self.assertRaises(
+            exceptions.HTTPNotFound,
+            self.cl.getRemoteCopyGroup,
+            REMOTE_COPY_GROUP_NAME1
+        )
+
+        self.printFooter('create_delete_copy_group')
+
+    @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
+    def test_21_modify_remote_copy_group(self):
+        self.printHeader('modify_remote_copy_group')
+
+        # Create empty remote copy group
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      REMOTE_COPY_TARGETS,
+                                      optional={"domain": DOMAIN})
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        REMOTE_COPY_TARGETS[0]['syncPeriod'] = 300
+        self.cl.modifyRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      {'targets': REMOTE_COPY_TARGETS})
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        self.assertEqual(300, targets[0]['syncPeriod'])
+
+        self.printFooter('modify_remote_copy_group')
+
+    @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
+    def test_21_add_volume_to_remote_copy_group(self):
+        self.printHeader('add_volume_to_remote_copy_group')
+
+        # Create empty remote copy group
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      REMOTE_COPY_TARGETS,
+                                      optional={"domain": DOMAIN})
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Create volume
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(RC_VOLUME_NAME, CPG_NAME1, SIZE, optional)
+
+        # Add volume to remote copy group
+        self.cl.addVolumeToRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                           RC_VOLUME_NAME,
+                                           REMOTE_COPY_TARGETS)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        volumes = resp['volumes']
+        self.assertEqual(RC_VOLUME_NAME, volumes[0]['name'])
+
+        self.printFooter('add_volume_to_remote_copy_group')
+
+    @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
+    def test_21_add_volume_to_remote_copy_group_nonExistVolume(self):
+        self.printHeader('add_volume_to_remote_copy_group_nonExistVolume')
+
+        # Create empty remote copy group
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      REMOTE_COPY_TARGETS,
+                                      optional={"domain": DOMAIN})
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Add non existent volume to remote copy group
+        self.assertRaises(
+            exceptions.HTTPNotFound,
+            self.cl.addVolumeToRemoteCopyGroup,
+            REMOTE_COPY_GROUP_NAME1,
+            'BAD_VOLUME_NAME',
+            REMOTE_COPY_TARGETS
+        )
+
+        self.printFooter('add_volume_to_remote_copy_group_nonExistVolume')
+
+    @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
+    def test_21_remove_volume_from_remote_copy_group(self):
+        self.printHeader('remove_volume_from_remote_copy_group')
+
+        # Create empty remote copy group
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      REMOTE_COPY_TARGETS,
+                                      optional={"domain": DOMAIN})
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Create volume
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(RC_VOLUME_NAME, CPG_NAME1, SIZE, optional)
+
+        # Add volume to remote copy group
+        self.cl.addVolumeToRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                           RC_VOLUME_NAME,
+                                           REMOTE_COPY_TARGETS)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        volumes = resp['volumes']
+        self.assertEqual(RC_VOLUME_NAME, volumes[0]['name'])
+
+        # Remove volume from remote copy group
+        self.cl.removeVolumeFromRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                                RC_VOLUME_NAME)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        volumes = resp['volumes']
+        self.assertEqual([], volumes)
+
+        self.printFooter('remove_volume_from_remote_copy_group')
+
+    @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
+    def test_21_start_remote_copy(self):
+        self.printHeader('start_remote_copy')
+
+        # Create empty remote copy group
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      REMOTE_COPY_TARGETS,
+                                      optional={"domain": DOMAIN})
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Create volume
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(RC_VOLUME_NAME, CPG_NAME1, SIZE, optional)
+
+        # Add volume to remote copy group
+        self.cl.addVolumeToRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                           RC_VOLUME_NAME,
+                                           REMOTE_COPY_TARGETS)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        volumes = resp['volumes']
+        self.assertEqual(RC_VOLUME_NAME, volumes[0]['name'])
+
+        # Start remote copy for the group
+        self.cl.startRemoteCopy(REMOTE_COPY_GROUP_NAME1)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        self.assertEqual(RCOPY_STARTED, targets[0]['state'])
+
+        self.printFooter('start_remote_copy')
+
+    @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
+    def test_21_stop_remote_copy(self):
+        self.printHeader('stop_remote_copy')
+
+        # Create empty remote copy group
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      REMOTE_COPY_TARGETS,
+                                      optional={"domain": DOMAIN})
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Create volume
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(RC_VOLUME_NAME, CPG_NAME1, SIZE, optional)
+
+        # Add volume to remote copy group
+        self.cl.addVolumeToRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                           RC_VOLUME_NAME,
+                                           REMOTE_COPY_TARGETS)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        volumes = resp['volumes']
+        self.assertEqual(RC_VOLUME_NAME, volumes[0]['name'])
+
+        # Start remote copy for the group
+        self.cl.startRemoteCopy(REMOTE_COPY_GROUP_NAME1)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        self.assertEqual(RCOPY_STARTED, targets[0]['state'])
+
+        # Stop remote copy for the group
+        self.cl.stopRemoteCopy(REMOTE_COPY_GROUP_NAME1)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        self.assertEqual(RCOPY_STOPPED, targets[0]['state'])
+
+        self.printFooter('stop_remote_copy')
+
+    @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
+    def test_21_synchronize_remote_copy_group(self):
+        self.printHeader('synchronize_remote_copy_group')
+
+        # Create empty remote copy group
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      REMOTE_COPY_TARGETS,
+                                      optional={"domain": DOMAIN})
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Create volume
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(RC_VOLUME_NAME, CPG_NAME1, SIZE, optional)
+
+        # Add volume to remote copy group
+        self.cl.addVolumeToRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                           RC_VOLUME_NAME,
+                                           REMOTE_COPY_TARGETS)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        volumes = resp['volumes']
+        self.assertEqual(RC_VOLUME_NAME, volumes[0]['name'])
+
+        # Start remote copy for the group
+        self.cl.startRemoteCopy(REMOTE_COPY_GROUP_NAME1)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        self.assertEqual(RCOPY_STARTED, targets[0]['state'])
+
+        # Synchronize the remote copy group
+        self.cl.synchronizeRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        assert targets[0]['groupLastSyncTime'] is not None
+
+        self.printFooter('synchronize_remote_copy_group')
+
+    @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
+    def test_21_failover_remote_copy_group(self):
+        self.printHeader('failover_remote_copy_group')
+
+        # Create empty remote copy group
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      REMOTE_COPY_TARGETS,
+                                      optional={"domain": DOMAIN})
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Create volume
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(RC_VOLUME_NAME, CPG_NAME1, SIZE, optional)
+
+        # Add volume to remote copy group
+        self.cl.addVolumeToRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                           RC_VOLUME_NAME,
+                                           REMOTE_COPY_TARGETS)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        volumes = resp['volumes']
+        self.assertEqual(RC_VOLUME_NAME, volumes[0]['name'])
+
+        # Start remote copy for the group
+        self.cl.startRemoteCopy(REMOTE_COPY_GROUP_NAME1)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        self.assertEqual(RCOPY_STARTED, targets[0]['state'])
+
+        # Failover remote copy group
+        self.cl.recoverRemoteCopyGroupFromDisaster(REMOTE_COPY_GROUP_NAME1,
+                                                   FAILOVER_GROUP)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(True, resp['roleReversed'])
+
+        self.printFooter('failover_remote_copy_group')
+
+    @unittest.skipIf(no_remote_copy(), SKIP_FLASK_RCOPY_MESSAGE)
+    def test_22_create_remote_copy_group(self):
+        self.printHeader('create_remote_copy_group')
+
+        # Create empty remote copy group
+        targets = [{"targetName": self.secondary_target_name,
+                    "mode": 2,
+                    "userCPG": CPG_NAME1,
+                    "snapCPG": CPG_NAME1}]
+        optional = {'localSnapCPG': CPG_NAME1,
+                    'localUserCPG': CPG_NAME1,
+                    'domain': DOMAIN}
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      targets,
+                                      optional=optional)
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Check remote copy group on the secondary array
+        info = self.cl.getStorageSystemInfo()
+        client_id = str(info['id'])
+        target_rcg_name = REMOTE_COPY_GROUP_NAME1 + ".r" + client_id
+        resp = self.secondary_cl.getRemoteCopyGroup(target_rcg_name)
+        self.assertEqual(target_rcg_name, resp['name'])
+
+    @unittest.skipIf(no_remote_copy(), SKIP_FLASK_RCOPY_MESSAGE)
+    def test_22_delete_remote_copy_group(self):
+        self.printHeader('delete_remote_copy_group')
+
+        # Create empty remote copy group
+        targets = [{"targetName": self.secondary_target_name,
+                    "mode": 2,
+                    "userCPG": CPG_NAME1,
+                    "snapCPG": CPG_NAME1}]
+        optional = {'localSnapCPG': CPG_NAME1,
+                    'localUserCPG': CPG_NAME1,
+                    'domain': DOMAIN}
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      targets,
+                                      optional=optional)
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Check remote copy group on the secondary array
+        info = self.cl.getStorageSystemInfo()
+        client_id = str(info['id'])
+        target_rcg_name = REMOTE_COPY_GROUP_NAME1 + ".r" + client_id
+        resp = self.secondary_cl.getRemoteCopyGroup(target_rcg_name)
+        self.assertEqual(target_rcg_name, resp['name'])
+
+        # Delete remote copy group
+        self.cl.removeRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+
+        self.assertRaises(
+            exceptions.HTTPNotFound,
+            self.cl.getRemoteCopyGroup,
+            REMOTE_COPY_GROUP_NAME1
+        )
+
+        # Check remote copy does not exist on target array
+        self.assertRaises(
+            exceptions.HTTPNotFound,
+            self.secondary_cl.getRemoteCopyGroup,
+            REMOTE_COPY_GROUP_NAME1
+        )
+
+        self.printFooter('create_delete_copy_group')
+
+    @unittest.skipIf(no_remote_copy(), SKIP_FLASK_RCOPY_MESSAGE)
+    def test_22_modify_remote_copy_group(self):
+        self.printHeader('modify_remote_copy_group')
+
+        # Create empty remote copy group
+        targets = [{"targetName": self.secondary_target_name,
+                    "mode": 2,
+                    "userCPG": CPG_NAME1,
+                    "snapCPG": CPG_NAME1}]
+        optional = {'localSnapCPG': CPG_NAME1,
+                    'localUserCPG': CPG_NAME1,
+                    'domain': DOMAIN}
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      targets,
+                                      optional=optional)
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Check remote copy group on the secondary array
+        info = self.cl.getStorageSystemInfo()
+        client_id = str(info['id'])
+        target_rcg_name = REMOTE_COPY_GROUP_NAME1 + ".r" + client_id
+        resp = self.secondary_cl.getRemoteCopyGroup(target_rcg_name)
+        self.assertEqual(target_rcg_name, resp['name'])
+
+        # Modify the remote copy group
+        targets = [{'targetName': self.secondary_target_name,
+                    'syncPeriod': 300}]
+        self.cl.modifyRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      {'targets': targets})
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        self.assertEqual(300, targets[0]['syncPeriod'])
+
+        # Check modification on target array
+        resp = self.secondary_cl.getRemoteCopyGroup(target_rcg_name)
+        targets = resp['targets']
+        self.assertEqual(300, targets[0]['syncPeriod'])
+
+        self.printFooter('modify_remote_copy_group')
+
+    @unittest.skipIf(no_remote_copy(), SKIP_FLASK_RCOPY_MESSAGE)
+    def test_22_add_volume_to_remote_copy_group(self):
+        self.printHeader('add_volume_to_remote_copy_group')
+
+        # Create empty remote copy group
+        targets = [{"targetName": self.secondary_target_name,
+                    "mode": 2,
+                    "userCPG": CPG_NAME1,
+                    "snapCPG": CPG_NAME1}]
+        optional = {'localSnapCPG': CPG_NAME1,
+                    'localUserCPG': CPG_NAME1,
+                    'domain': DOMAIN}
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      targets,
+                                      optional=optional)
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Check remote copy group on the secondary array
+        info = self.cl.getStorageSystemInfo()
+        client_id = str(info['id'])
+        target_rcg_name = REMOTE_COPY_GROUP_NAME1 + ".r" + client_id
+        resp = self.secondary_cl.getRemoteCopyGroup(target_rcg_name)
+        self.assertEqual(target_rcg_name, resp['name'])
+
+        # Create volume
+        optional = {'comment': 'test volume', 'tpvv': True,
+                    'snapCPG': CPG_NAME1}
+        self.cl.createVolume(RC_VOLUME_NAME, CPG_NAME1, SIZE,
+                             optional)
+
+        # Add volume to remote copy group
+        targets = [{'targetName': self.secondary_target_name,
+                    'secVolumeName': RC_VOLUME_NAME}]
+        optional = {'volumeAutoCreation': True}
+        self.cl.addVolumeToRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                           RC_VOLUME_NAME,
+                                           targets,
+                                           optional=optional)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        volumes = resp['volumes']
+        self.assertEqual(RC_VOLUME_NAME, volumes[0]['localVolumeName'])
+        remote_volumes = volumes[0]['remoteVolumes']
+        self.assertEqual(RC_VOLUME_NAME, remote_volumes[0]['remoteVolumeName'])
+
+        self.printFooter('add_volume_to_remote_copy_group')
+
+    @unittest.skipIf(no_remote_copy(), SKIP_FLASK_RCOPY_MESSAGE)
+    def test_22_add_volume_to_remote_copy_group_nonExistVolume(self):
+        self.printHeader('add_volume_to_remote_copy_group_nonExistVolume')
+
+        # Create empty remote copy group
+        targets = [{"targetName": self.secondary_target_name,
+                    "mode": 2,
+                    "userCPG": CPG_NAME1,
+                    "snapCPG": CPG_NAME1}]
+        optional = {'localSnapCPG': CPG_NAME1,
+                    'localUserCPG': CPG_NAME1,
+                    'domain': DOMAIN}
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      targets,
+                                      optional=optional)
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Check remote copy group on the secondary array
+        info = self.cl.getStorageSystemInfo()
+        client_id = str(info['id'])
+        target_rcg_name = REMOTE_COPY_GROUP_NAME1 + ".r" + client_id
+        resp = self.secondary_cl.getRemoteCopyGroup(target_rcg_name)
+        self.assertEqual(target_rcg_name, resp['name'])
+
+        # Add non existent volume to remote copy group
+        targets = [{'targetName': self.secondary_target_name,
+                    'secVolumeName': RC_VOLUME_NAME}]
+        self.assertRaises(
+            exceptions.HTTPNotFound,
+            self.cl.addVolumeToRemoteCopyGroup,
+            REMOTE_COPY_GROUP_NAME1,
+            'BAD_VOLUME_NAME',
+            targets
+        )
+
+        self.printFooter('add_volume_to_remote_copy_group_nonExistVolume')
+
+    @unittest.skipIf(no_remote_copy(), SKIP_FLASK_RCOPY_MESSAGE)
+    def test_22_remove_volume_from_remote_copy_group(self):
+        self.printHeader('remove_volume_from_remote_copy_group')
+
+        # Create empty remote copy group
+        targets = [{"targetName": self.secondary_target_name,
+                    "mode": 2,
+                    "userCPG": CPG_NAME1,
+                    "snapCPG": CPG_NAME1}]
+        optional = {'localSnapCPG': CPG_NAME1,
+                    'localUserCPG': CPG_NAME1,
+                    'domain': DOMAIN}
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      targets,
+                                      optional=optional)
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Create volume
+        optional = {'comment': 'test volume', 'tpvv': True,
+                    'snapCPG': CPG_NAME1}
+        self.cl.createVolume(RC_VOLUME_NAME, CPG_NAME1, SIZE,
+                             optional)
+
+        # Add volume to remote copy group
+        targets = [{'targetName': self.secondary_target_name,
+                    'secVolumeName': RC_VOLUME_NAME}]
+        optional = {'volumeAutoCreation': True}
+        self.cl.addVolumeToRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                           RC_VOLUME_NAME,
+                                           targets,
+                                           optional=optional)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        volumes = resp['volumes']
+        self.assertEqual(RC_VOLUME_NAME, volumes[0]['localVolumeName'])
+        remote_volumes = volumes[0]['remoteVolumes']
+        self.assertEqual(RC_VOLUME_NAME, remote_volumes[0]['remoteVolumeName'])
+
+        # Remove volume from remote copy group
+        self.cl.removeVolumeFromRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                                RC_VOLUME_NAME,
+                                                removeFromTarget=True)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        volumes = resp['volumes']
+        self.assertEqual([], volumes)
+
+        # Check volume does not exist on target array
+        self.assertRaises(
+            exceptions.HTTPNotFound,
+            self.secondary_cl.getVolume,
+            RC_VOLUME_NAME
+        )
+
+        self.printFooter('remove_volume_from_remote_copy_group')
+
+    @unittest.skipIf(no_remote_copy(), SKIP_FLASK_RCOPY_MESSAGE)
+    def test_22_start_remote_copy(self):
+        self.printHeader('start_remote_copy')
+
+        # Create empty remote copy group
+        targets = [{"targetName": self.secondary_target_name,
+                    "mode": 2,
+                    "userCPG": CPG_NAME1,
+                    "snapCPG": CPG_NAME1}]
+        optional = {'localSnapCPG': CPG_NAME1,
+                    'localUserCPG': CPG_NAME1,
+                    'domain': DOMAIN}
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      targets,
+                                      optional=optional)
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Create volume
+        optional = {'comment': 'test volume', 'tpvv': True,
+                    'snapCPG': CPG_NAME1}
+        self.cl.createVolume(RC_VOLUME_NAME, CPG_NAME1, SIZE,
+                             optional)
+
+        # Add volume to remote copy group
+        targets = [{'targetName': self.secondary_target_name,
+                    'secVolumeName': RC_VOLUME_NAME}]
+        optional = {'volumeAutoCreation': True}
+        self.cl.addVolumeToRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                           RC_VOLUME_NAME,
+                                           targets,
+                                           optional=optional)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        volumes = resp['volumes']
+        self.assertEqual(RC_VOLUME_NAME, volumes[0]['localVolumeName'])
+        remote_volumes = volumes[0]['remoteVolumes']
+        self.assertEqual(RC_VOLUME_NAME, remote_volumes[0]['remoteVolumeName'])
+
+        # Start remote copy for the group
+        self.cl.startRemoteCopy(REMOTE_COPY_GROUP_NAME1)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        self.assertEqual(RCOPY_STARTED, targets[0]['state'])
+
+        self.printFooter('start_remote_copy')
+
+    @unittest.skipIf(no_remote_copy(), SKIP_FLASK_RCOPY_MESSAGE)
+    def test_22_stop_remote_copy(self):
+        self.printHeader('start_remote_copy')
+
+        # Create empty remote copy group
+        targets = [{"targetName": self.secondary_target_name,
+                    "mode": 2,
+                    "userCPG": CPG_NAME1,
+                    "snapCPG": CPG_NAME1}]
+        optional = {'localSnapCPG': CPG_NAME1,
+                    'localUserCPG': CPG_NAME1,
+                    'domain': DOMAIN}
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      targets,
+                                      optional=optional)
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Create volume
+        optional = {'comment': 'test volume', 'tpvv': True,
+                    'snapCPG': CPG_NAME1}
+        self.cl.createVolume(RC_VOLUME_NAME, CPG_NAME1, SIZE,
+                             optional)
+
+        # Add volume to remote copy group
+        targets = [{'targetName': self.secondary_target_name,
+                    'secVolumeName': RC_VOLUME_NAME}]
+        optional = {'volumeAutoCreation': True}
+        self.cl.addVolumeToRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                           RC_VOLUME_NAME,
+                                           targets,
+                                           optional=optional)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        volumes = resp['volumes']
+        self.assertEqual(RC_VOLUME_NAME, volumes[0]['localVolumeName'])
+        remote_volumes = volumes[0]['remoteVolumes']
+        self.assertEqual(RC_VOLUME_NAME, remote_volumes[0]['remoteVolumeName'])
+
+        # Start remote copy for the group
+        self.cl.startRemoteCopy(REMOTE_COPY_GROUP_NAME1)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        self.assertEqual(RCOPY_STARTED, targets[0]['state'])
+
+        # Stop remote copy for the group
+        self.cl.stopRemoteCopy(REMOTE_COPY_GROUP_NAME1)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        self.assertEqual(RCOPY_STOPPED, targets[0]['state'])
+
+        self.printFooter('start_remote_copy')
+
+    @unittest.skipIf(no_remote_copy(), SKIP_FLASK_RCOPY_MESSAGE)
+    def test_22_synchronize_remote_copy_group(self):
+        self.printHeader('synchronize_remote_copy_group')
+
+        # Create empty remote copy group
+        targets = [{"targetName": self.secondary_target_name,
+                    "mode": 2,
+                    "userCPG": CPG_NAME1,
+                    "snapCPG": CPG_NAME1}]
+        optional = {'localSnapCPG': CPG_NAME1,
+                    'localUserCPG': CPG_NAME1,
+                    'domain': DOMAIN}
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      targets,
+                                      optional=optional)
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Create volume
+        optional = {'comment': 'test volume', 'tpvv': True,
+                    'snapCPG': CPG_NAME1}
+        self.cl.createVolume(RC_VOLUME_NAME, CPG_NAME1, SIZE,
+                             optional)
+
+        # Add volume to remote copy group
+        targets = [{'targetName': self.secondary_target_name,
+                    'secVolumeName': RC_VOLUME_NAME}]
+        optional = {'volumeAutoCreation': True}
+        self.cl.addVolumeToRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                           RC_VOLUME_NAME,
+                                           targets,
+                                           optional=optional)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        volumes = resp['volumes']
+        self.assertEqual(RC_VOLUME_NAME, volumes[0]['localVolumeName'])
+        remote_volumes = volumes[0]['remoteVolumes']
+        self.assertEqual(RC_VOLUME_NAME, remote_volumes[0]['remoteVolumeName'])
+
+        # Start remote copy for the group
+        self.cl.startRemoteCopy(REMOTE_COPY_GROUP_NAME1)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        self.assertEqual(RCOPY_STARTED, targets[0]['state'])
+
+        # Synchronize the remote copy group
+        self.cl.synchronizeRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        assert targets[0]['groupLastSyncTime'] is not None
+
+        self.printFooter('synchronize_remote_copy_group')
+
+    @unittest.skipIf(no_remote_copy(), SKIP_FLASK_RCOPY_MESSAGE)
+    def test_22_failover_remote_copy_group(self):
+        self.printHeader('failover_remote_copy_group')
+
+        # Create empty remote copy group
+        targets = [{"targetName": self.secondary_target_name,
+                    "mode": 2,
+                    "userCPG": CPG_NAME1,
+                    "snapCPG": CPG_NAME1}]
+        optional = {'localSnapCPG': CPG_NAME1,
+                    'localUserCPG': CPG_NAME1,
+                    'domain': DOMAIN}
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      targets,
+                                      optional=optional)
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Create volume
+        optional = {'comment': 'test volume', 'tpvv': True,
+                    'snapCPG': CPG_NAME1}
+        self.cl.createVolume(RC_VOLUME_NAME, CPG_NAME1, SIZE,
+                             optional)
+
+        # Add volume to remote copy group
+        targets = [{'targetName': self.secondary_target_name,
+                    'secVolumeName': RC_VOLUME_NAME}]
+        optional = {'volumeAutoCreation': True}
+        self.cl.addVolumeToRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                           RC_VOLUME_NAME,
+                                           targets,
+                                           optional=optional)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        volumes = resp['volumes']
+        self.assertEqual(RC_VOLUME_NAME, volumes[0]['localVolumeName'])
+        remote_volumes = volumes[0]['remoteVolumes']
+        self.assertEqual(RC_VOLUME_NAME, remote_volumes[0]['remoteVolumeName'])
+
+        # Start remote copy for the group
+        self.cl.startRemoteCopy(REMOTE_COPY_GROUP_NAME1)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        self.assertEqual(RCOPY_STARTED, targets[0]['state'])
+
+        # Stop remote copy for the group
+        self.cl.stopRemoteCopy(REMOTE_COPY_GROUP_NAME1)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        self.assertEqual(RCOPY_STOPPED, targets[0]['state'])
+
+        # Failover remote copy group
+        info = self.cl.getStorageSystemInfo()
+        client_id = str(info['id'])
+        target_rcg_name = REMOTE_COPY_GROUP_NAME1 + ".r" + client_id
+        self.secondary_cl.recoverRemoteCopyGroupFromDisaster(
+            target_rcg_name, FAILOVER_GROUP)
+        resp = self.secondary_cl.getRemoteCopyGroup(target_rcg_name)
+        targets = resp['targets']
+        self.assertEqual(True, targets[0]['roleReversed'])
+
+        # Restore the remote copy group
+        self.secondary_cl.recoverRemoteCopyGroupFromDisaster(
+            target_rcg_name, RESTORE_GROUP)
+        # Let the restore take affect
+        time.sleep(10)
+
+        self.printFooter('failover_remote_copy_group')
 
 # testing
 # suite = unittest.TestLoader().

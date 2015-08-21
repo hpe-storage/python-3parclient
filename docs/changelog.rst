@@ -7,6 +7,23 @@ Changes in Version 4.0.1
 * Allows suppressing of InsecureRequestWarning messages (Issue #18)
 * Changes the exception isinstance check to look for basestring/str instead of
   bytes in order to properly store the error description.
+* Allows changing timeouts for requests
+* Added remote copy support
+   - getRemoteCopyInfo
+   - getRemoteCopyGroups
+   - getRemoteCopyGroup
+   - createRemoteCopyGroup
+   - removeRemoteCopyGroup
+   - modifyRemoteCopyGroup
+   - addVolumeToRemoteCopyGroup
+   - removeVolumeFromRemoteCopyGroup
+   - startRemoteCopy
+   - stopRemoteCopy
+   - synchronizeRemoteCopyGroup
+   - recoverRemoteCopyGroupFromDisaster
+   - toggleRemoteCopyConfigMirror
+* Testing remote copy against two live arrays is now supported through
+  config.ini
 
 Changes in Version 4.0.0
 ------------------------

@@ -6,6 +6,7 @@ import random
 import string
 import argparse
 import uuid
+from time import gmtime, strftime
 from werkzeug.exceptions import default_exceptions
 from werkzeug.exceptions import HTTPException
 
@@ -47,6 +48,20 @@ INV_INPUT_VV_GROW_SIZE = 152
 VV_NEW_SIZE_EXCEED_CPG_LIMIT = 153
 NON_EXISTENT_OBJECT_KEY = 180
 EXISTENT_OBJECT_KEY = 181
+NON_EXISTENT_RCOPY_GROUP = 187
+EXISTENT_RCOPY_GROUP = 237
+
+# Remote Copy Actions
+ADMIT_VV = 1
+DISMISS_VV = 2
+START_GROUP = 3
+STOP_GROUP = 4
+SYNC_GROUP = 5
+FAILOVER_GROUP = 7
+
+# Remote Copy States
+RCOPY_STARTED = 3
+RCOPY_STOPPED = 5
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-debug", help="Turn on http debugging",
@@ -1003,6 +1018,169 @@ def _grow_volume(volume, data):
         volume['sizeMiB'] = new_size
 
 
+@app.route('/api/v1/remotecopygroups', methods=['GET'])
+def get_remote_copy_groups():
+    debugRequest(flask.request)
+    resp = flask.make_response(json.dumps(remote_copy_groups), 200)
+    return resp
+
+
+@app.route('/api/v1/remotecopygroups/<rcg_name>', methods=['GET'])
+def get_remote_copy_group(rcg_name):
+    debugRequest(flask.request)
+
+    for rcg in remote_copy_groups['members']:
+        if rcg['name'] == rcg_name:
+            resp = flask.make_response(json.dumps(rcg), 200)
+            return resp
+
+    throw_error(404, NON_EXISTENT_RCOPY_GROUP,
+                "remote copy group doesn't exist")
+
+
+@app.route('/api/v1/remotecopygroups', methods=['POST'])
+def create_remote_copy_group():
+    debugRequest(flask.request)
+    data = json.loads(flask.request.data.decode('utf-8'))
+
+    valid_keys = {'name': None, 'targets': None, 'targetName': None,
+                  'mode': None, 'userCPG': None, 'snapCPG': None,
+                  'localSnapCPG': None, 'localUserCPG': None, 'domain': None}
+
+    for key in list(data.keys()):
+        if key not in list(valid_keys.keys()):
+            throw_error(400, INV_INPUT, "Invalid Parameter '%s'" % key)
+
+    if 'name' in list(data.keys()):
+        for rcg in remote_copy_groups['members']:
+            if rcg['name'] == data['name']:
+                throw_error(409, EXISTENT_RCOPY_GROUP,
+                            "Remote copy group exists.")
+        if len(data['name']) > 25:
+            throw_error(400, INV_INPUT_EXCEEDS_LENGTH,
+                        'Invalid Input: String length exceeds limit : Name')
+    else:
+        throw_error(400, INV_INPUT,
+                    'No remote copy group provided.')
+
+    data['volumes'] = []
+    remote_copy_groups['members'].append(data)
+    return flask.make_response("", 200)
+
+
+@app.route('/api/v1/remotecopygroups/<rcg_name>', methods=['DELETE'])
+def delete_remote_copy_group(rcg_name):
+    debugRequest(flask.request)
+    for rcg in remote_copy_groups['members']:
+        if rcg['name'] == rcg_name:
+            remote_copy_groups['members'].remove(rcg)
+            return flask.make_response("", 200)
+
+    throw_error(404, NON_EXISTENT_RCOPY_GROUP,
+                "The remote copy group '%s' does not exist." % rcg_name)
+
+
+@app.route('/api/v1/remotecopygroups/<rcg_name>', methods=['PUT'])
+def modify_remote_copy_group(rcg_name):
+    debugRequest(flask.request)
+    data = json.loads(flask.request.data.decode('utf-8'))
+
+    valid_keys = {'targets': None, 'targetName': None,
+                  'mode': None, 'userCPG': None, 'snapCPG': None,
+                  'localSnapCPG': None, 'localUserCPG': None, 'domain': None,
+                  'unsetUserCPG': None, 'unsetSnapCPG': None, '': None,
+                  'remoteUserCPG': None, 'remoteSnapCPG': None,
+                  'syncPeriod': None, 'rmSyncPeriod': None,
+                  'snapFrequency': None, 'rmSnapFrequency': None,
+                  'policies': None, 'autoRecover': None,
+                  'overPeriodAlert': None, 'autoFailover': None,
+                  'pathManagement': None, 'secVolumeName': None,
+                  'snapshotName': None, 'volumeAutoCreation': None,
+                  'skipInitialSync': None, 'volumeName': None, 'action': None}
+
+    for key in list(data.keys()):
+        if key not in list(valid_keys.keys()):
+            throw_error(400, INV_INPUT, "Invalid Parameter '%s'" % key)
+
+    action = data.get('action')
+    for rcg in remote_copy_groups['members']:
+        if rcg['name'] == rcg_name:
+            # We are modifying values for a remote copy group
+            if not action:
+                for k, v in data.items():
+                    rcg[k] = v
+                    resp = flask.make_response(json.dumps(rcg), 200)
+            # We are adding a volume to a remote copy group
+            elif action == ADMIT_VV:
+                vol_found = False
+                for vol in volumes['members']:
+                    if data['volumeName'] == vol['name']:
+                        vol_found = True
+                        rcg['volumes'].append(vol)
+                if not vol_found:
+                    throw_error(404, NON_EXISTENT_VOL, "volume doesn't exist")
+
+                resp = flask.make_response(json.dumps(rcg), 200)
+            # We are removing a volume to a remote copy group
+            elif action == DISMISS_VV:
+                for vol in rcg['volumes']:
+                    if data['volumeName'] == vol['name']:
+                        rcg['volumes'].remove(vol)
+                resp = flask.make_response(json.dumps(rcg), 200)
+            # We are starting remote copy on a group
+            elif action == START_GROUP:
+                targets = rcg['targets']
+                for target in targets:
+                    target['state'] = RCOPY_STARTED
+                resp = flask.make_response(json.dumps(rcg), 200)
+            # We are stopping remote copy on a group
+            elif action == STOP_GROUP:
+                targets = rcg['targets']
+                for target in targets:
+                    target['state'] = RCOPY_STOPPED
+                resp = flask.make_response(json.dumps(rcg), 200)
+            # We are synchronizing the remote copy group
+            elif action == SYNC_GROUP:
+                targets = rcg['targets']
+                sync_time = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+                for target in targets:
+                    target['groupLastSyncTime'] = sync_time
+                resp = flask.make_response(json.dumps(rcg), 200)
+
+            return resp
+
+    throw_error(404, NON_EXISTENT_RCOPY_GROUP,
+                "remote copy group doesn't exist")
+
+
+@app.route('/api/v1/remotecopygroups/<rcg_name>', methods=['POST'])
+def recover_remote_copy_group(rcg_name):
+    debugRequest(flask.request)
+    data = json.loads(flask.request.data.decode('utf-8'))
+
+    valid_keys = {'targets': None, 'targetName': None, 'skipStart': None,
+                  'skipSync': None, 'discardNewData': None,
+                  'skipPromote': None, 'noSnapshot': None, 'stopGroups': None,
+                  'localGroupsDirection': None, 'action': None}
+
+    for key in list(data.keys()):
+        if key not in list(valid_keys.keys()):
+            throw_error(400, INV_INPUT, "Invalid Parameter '%s'" % key)
+
+    action = data.get('action')
+    for rcg in remote_copy_groups['members']:
+        if rcg['name'] == rcg_name:
+            # We are failing over a remote copy group
+            if action == FAILOVER_GROUP:
+                rcg['roleReversed'] = True
+                resp = flask.make_response(json.dumps(rcg), 200)
+
+    return resp
+
+    throw_error(404, NON_EXISTENT_RCOPY_GROUP,
+                "remote copy group doesn't exist")
+
+
 @app.route('/api/v1/volumesets', methods=['GET'])
 def get_volume_sets():
     debugRequest(flask.request)
@@ -1955,6 +2133,14 @@ if __name__ == "__main__":
     global volume_sets
     volume_sets = {'members': [],
                    'total': 0}
+
+    global remote_copy_groups
+    remote_copy_groups = {'members': [],
+                          'total': 0}
+
+    global target_remote_copy_groups
+    target_remote_copy_groups = {'members': [],
+                                 'total': 0}
 
     global qos_db
     qos_db = {'members': [],
