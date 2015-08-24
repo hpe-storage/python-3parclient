@@ -18,6 +18,7 @@ Changes in Version 3.2.2
 * Add support for VLUN queries in getVLUN and getHostVLUNs when a backend
   with WSAPI 1.4.2 or greater is being used.
 * Added support for calling srstatld with a given interval and history
+* Added unit tests for the Exception class.
 
 Changes in Version 3.2.1
 ------------------------
