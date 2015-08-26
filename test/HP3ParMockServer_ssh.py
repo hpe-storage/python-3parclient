@@ -16,6 +16,7 @@
 import argparse
 import logging
 import os
+import shlex
 import socket
 import sys
 import threading
@@ -183,7 +184,7 @@ modify the units to TB (t or T suffix).
 
         parser = CliArgumentParser(prog=args[0])
         parser.add_argument(
-            '-comment', nargs='+',
+            '-comment',
             help="Specifies any additional textual information.")
         parser.add_argument(
             '-bgrace', default='3600',
@@ -658,7 +659,7 @@ OPTIONS
         if cmd is None:
             print("returnNone")
             return ''
-        args = cmd.split()
+        args = shlex.split(cmd)
         if args:
             method = getattr(self, 'do_cli_' + args[0], self.do_cli_other)
             try:
