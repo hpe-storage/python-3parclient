@@ -883,8 +883,15 @@ class HP3ParClientVolumeTestCase(hp3parbase.HP3ParClientBaseTestCase):
                                   'test_key_2',
                                   expected_value_2)
         result = self.cl.getAllVolumeMetaData(VOLUME_NAME1)
-        self.assertEqual(expected_value_1, result['members'][0]['value'])
-        self.assertEqual(expected_value_2, result['members'][1]['value'])
+
+        # Key- Value pairs are unordered
+        for member in result['members']:
+            if member['key'] == 'test_key_1':
+                self.assertEqual(expected_value_1, member['value'])
+            elif member['key'] == 'test_key_2':
+                self.assertEqual(expected_value_2, member['value'])
+            else:
+                raise Exception("Unexpected member %s" % member)
 
         # No keys present in metadata
         optional = {'comment': 'test volume', 'tpvv': True}
