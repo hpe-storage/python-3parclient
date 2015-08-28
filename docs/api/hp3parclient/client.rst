@@ -61,6 +61,7 @@
       .. automethod:: modifyVolumeSet
       .. automethod:: addVolumeToVolumeSet
       .. automethod:: removeVolumeFromVolumeSet
+      .. automethod:: createSnapshotOfVolumeSet
       .. automethod:: setQOSRule
       .. automethod:: queryQoSRule
       .. automethod:: queryQoSRules

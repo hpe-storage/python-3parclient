@@ -2384,32 +2384,32 @@ class HP3ParClient(object):
                 'retentionHours': 12        # time from now to expire
             }
 
-        :raises: :class: `~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
             - INVALID_INPUT_VV_PATTERN - Invalid volume pattern specified
-        :raises: :class: `~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_SET - The set does not exist
-        :raises: :class: `~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - EMPTY_SET - The set is empty
-        :raises: :class: `~hp3parclient.exceptions.HTTPServiceUnavailable`
+        :raises: :class:`~hp3parclient.exceptions.HTTPServiceUnavailable`
             - VV_LIMIT_REACHED - Maximum number of volumes reached
-        :raises: :class: `~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOL - The storage volume does not exist
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - VV_IS_BEING_REMOVED - The volume is being removed
-        :raises: :class: `~hp3parclient.exceptions.`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_READONLY_TO_READONLY_SNAP - Creating a
             read-only copy from a read-only volume is not permitted
-        :raises: :class: `~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
             - NO_SNAP_CPG - No snapshot CPG has been configured for the volume
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_DUP_NAME - Invalid input (duplicate name).
-        :raises: :class: `~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_SNAP_PARENT_SAME_BASE - Two parent
             snapshots share thesame base volume
-        :raises: :class: `~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_ONLINE_COPY_IN_PROGRESS - Invalid
             operation. Online copyis in progress
-        :raises: :class: `~hp3parclient.exceptions.HTTPServiceUnavailable`
+        :raises: :class:`~hp3parclient.exceptions.HTTPServiceUnavailable`
             - VV_ID_LIMIT_REACHED - Max number of volumeIDs has been reached
         :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOLUME - The volume does not exists
@@ -2417,11 +2417,11 @@ class HP3ParClient(object):
             - VV_IN_STALE_STATE - The volume is in a stale state.
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - VV_NOT_STARTED - Volume is not started
-        :raises: :class: `~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - VV_UNAVAILABLE - The volume is not accessible
-        :raises: :class: `~hp3parclient.exceptions.HTTPServiceUnavailable`
+        :raises: :class:`~hp3parclient.exceptions.HTTPServiceUnavailable`
             - SNAPSHOT_LIMIT_REACHED - Max number of snapshots has been reached
-        :raises: :class: `~hp3parclient.exceptions.HTTPServiceUnavailable`
+        :raises: :class:`~hp3parclient.exceptions.HTTPServiceUnavailable`
             - CPG_ALLOCATION_WARNING_REACHED - The CPG has reached the
             allocation warning
         :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
@@ -2437,7 +2437,7 @@ class HP3ParClient(object):
             target of an online copy.
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_INTERNAL_VOLUME - Illegal op on internal vol
-        :raises: :class: `~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
             - EXISTENT_ID - An ID exists
         :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_NOT_IN_NORMAL_STATE - Volume state is not normal
@@ -2448,7 +2448,7 @@ class HP3ParClient(object):
             expiration time.
         :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_TIME - Invalid time specified.
-        :raises: :class: `~hp3parclient.exceptions.`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_SNAPSHOT_NOT_SAME_TYPE - Some snapshots in the
             volume set are read-only, some are read-write
         """
@@ -2954,7 +2954,8 @@ class HP3ParClient(object):
 
         :returns: dict
 
-        :raises SrstatldException: srstatld gives invalid output
+        :raises: :class:`~hp3parclient.exceptions.SrstatldException`
+            - srstatld gives invalid output
         """
         if interval not in ['daily', 'hourly']:
             raise exceptions.ClientException("Input interval not valid")
