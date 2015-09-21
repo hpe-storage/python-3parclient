@@ -22,7 +22,7 @@ HPE 3PAR Client.
 
 """
 
-version_tuple = (4, 0, 0)
+version_tuple = (4, 0, 1)
 
 
 def get_version_string():

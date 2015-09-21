@@ -2023,7 +2023,7 @@ class HPE3ParClient(object):
         """
         info = {'volumeName': volumeName}
 
-        if lun:
+        if lun is not None:
             info['lun'] = lun
 
         if hostname:

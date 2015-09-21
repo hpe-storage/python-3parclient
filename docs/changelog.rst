@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Changes in Version 4.0.1
+------------------------
+* Fixed error where you could not create a LUN with the ID of 0. (issue #17)
+
 Changes in Version 4.0.0
 ------------------------
 * Rebranded the client from HP to HPE.
