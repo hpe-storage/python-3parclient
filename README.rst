@@ -1,3 +1,11 @@
+.. image:: https://img.shields.io/pypi/v/python-3parclient.svg
+    :target: https://pypi.python.org/pypi/python-3parclient
+    :alt: Latest Version
+
+.. image:: https://img.shields.io/pypi/dm/python-3parclient.svg
+    :target: https://pypi.python.org/pypi/python-3parclient
+    :alt: Downloads
+
 HPE 3PAR REST Client
 ===================
 This is a Client library that can talk to the HPE 3PAR Storage array.  The 3PAR
