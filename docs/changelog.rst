@@ -5,6 +5,8 @@ Changes in Version 4.0.1
 ------------------------
 * Fixed error where you could not create a LUN with the ID of 0. (issue #17)
 * Allows suppressing of InsecureRequestWarning messages (Issue #18)
+* Changes the exception isinstance check to look for basestring/str instead of
+  bytes in order to properly store the error description.
 
 Changes in Version 4.0.0
 ------------------------

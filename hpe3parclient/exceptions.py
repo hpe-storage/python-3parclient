@@ -26,6 +26,12 @@ Exceptions for the client
 
 import logging
 
+# Python 3+ override
+try:
+    basestring
+except NameError:
+    basestring = str
+
 LOG = logging.getLogger(__name__)
 
 
@@ -69,7 +75,7 @@ class ClientException(Exception):
         if not error:
             return
 
-        if isinstance(error, str):
+        if isinstance(error, basestring):
             # instead of KeyError below, take it and make it the _error_desc.
             self._error_desc = error
         else:
