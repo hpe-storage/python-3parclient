@@ -4,6 +4,7 @@ Changelog
 Changes in Version 4.0.1
 ------------------------
 * Fixed error where you could not create a LUN with the ID of 0. (issue #17)
+* Allows suppressing of InsecureRequestWarning messages (Issue #18)
 
 Changes in Version 4.0.0
 ------------------------

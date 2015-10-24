@@ -48,6 +48,9 @@ class HTTPJSONRESTClient(object):
     :type secure: bool
     :param http_log_debug: Turns on http log debugging. Default will not log
     :type http_log_debug: bool
+    :param suppress_ssl_warnings: Suppresses log warning messages if True.
+                                  Default will not suppress warnings.
+    :type suppress_ssl_warnings: bool
 
     """
 
@@ -56,7 +59,11 @@ class HTTPJSONRESTClient(object):
     http_log_debug = False
     _logger = logging.getLogger(__name__)
 
-    def __init__(self, api_url, secure=False, http_log_debug=False):
+    def __init__(self, api_url, secure=False, http_log_debug=False,
+                 suppress_ssl_warnings=False):
+        if suppress_ssl_warnings:
+            requests.packages.urllib3.disable_warnings()
+
         self.session_key = None
 
         # should be http://<Server:Port>/api/v1
