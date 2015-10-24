@@ -1,10 +1,10 @@
-:mod:`file_client` -- HP3ParFilePersonaClient
+:mod:`file_client` -- HPE3ParFilePersonaClient
 ====================================================
 
-.. automodule:: hp3parclient.file_client
-   :synopsis: HP 3PAR File Persona Client API
+.. automodule:: hpe3parclient.file_client
+   :synopsis: HPE 3PAR File Persona Client API
 
-   .. autoclass:: hp3parclient.file_client.HP3ParFilePersonaClient(api_url, secure=False)
+   .. autoclass:: hpe3parclient.file_client.HPE3ParFilePersonaClient(api_url, secure=False)
 
       .. automethod:: gettpdinterface
       .. automethod:: getfs

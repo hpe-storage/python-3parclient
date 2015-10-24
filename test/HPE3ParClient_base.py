@@ -1,4 +1,4 @@
-# (c) Copyright 2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2015 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test base class of 3Par Client."""
+"""Test base class of 3PAR Client."""
 
 import os
 import sys
@@ -23,7 +23,7 @@ import inspect
 from testconfig import config
 import datetime
 from functools import wraps
-from hp3parclient import client, file_client
+from hpe3parclient import client, file_client
 
 TIME = datetime.datetime.now().strftime('%H%M%S')
 
@@ -35,7 +35,7 @@ except ImportError:
     from urlparse import urlparse
 
 
-class HP3ParClientBaseTestCase(unittest.TestCase):
+class HPE3ParClientBaseTestCase(unittest.TestCase):
 
     user = config['TEST']['user']
     password = config['TEST']['pass']
@@ -93,7 +93,7 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
             passwordArg = '-password=%s' % self.password
             portArg = '-port=%s' % parsed_url.port
 
-            script = 'HP3ParMockServer_flask.py'
+            script = 'HPE3ParMockServer_flask.py'
             path = "%s/%s" % (cwd, script)
             try:
                 self.mockServer = subprocess.Popen([sys.executable,
@@ -110,16 +110,16 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
 
             time.sleep(1)
             if self.withFilePersona:
-                self.cl = file_client.HP3ParFilePersonaClient(self.flask_url)
+                self.cl = file_client.HPE3ParFilePersonaClient(self.flask_url)
             else:
-                self.cl = client.HP3ParClient(self.flask_url)
+                self.cl = client.HPE3ParClient(self.flask_url)
 
             if self.withSSH:
 
                 self.printHeader('Using paramiko SSH server on port %s' %
                                  self.ssh_port)
 
-                ssh_script = 'HP3ParMockServer_ssh.py'
+                ssh_script = 'HPE3ParMockServer_ssh.py'
                 ssh_path = "%s/%s" % (cwd, ssh_script)
 
                 self.mockSshServer = subprocess.Popen([sys.executable,
@@ -134,10 +134,10 @@ class HP3ParClientBaseTestCase(unittest.TestCase):
             if withFilePersona:
                 self.printHeader('Using 3PAR %s with File Persona' %
                                  self.url_3par)
-                self.cl = file_client.HP3ParFilePersonaClient(self.url_3par)
+                self.cl = file_client.HPE3ParFilePersonaClient(self.url_3par)
             else:
                 self.printHeader('Using 3PAR ' + self.url_3par)
-                self.cl = client.HP3ParClient(self.url_3par)
+                self.cl = client.HPE3ParClient(self.url_3par)
 
         if self.withSSH:
             # This seems to slow down the test cases, so only use this when

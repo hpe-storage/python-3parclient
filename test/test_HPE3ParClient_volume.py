@@ -1,4 +1,4 @@
-# (c) Copyright 2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2015 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,29 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test class of 3Par Client handling volume & snapshot."""
+"""Test class of 3PAR Client handling volume & snapshot."""
 
-import HP3ParClient_base as hp3parbase
+import HPE3ParClient_base as hpe3parbase
 
-from hp3parclient import exceptions
+from hpe3parclient import exceptions
 
-CPG_NAME1 = 'CPG1_UNIT_TEST' + hp3parbase.TIME
-CPG_NAME2 = 'CPG2_UNIT_TEST' + hp3parbase.TIME
-VOLUME_NAME1 = 'VOLUME1_UNIT_TEST' + hp3parbase.TIME
-VOLUME_NAME2 = 'VOLUME2_UNIT_TEST' + hp3parbase.TIME
-VOLUME_NAME3 = 'VOLUME3_UNIT_TEST' + hp3parbase.TIME
-SNAP_NAME1 = 'SNAP_UNIT_TEST' + hp3parbase.TIME
+CPG_NAME1 = 'CPG1_UNIT_TEST' + hpe3parbase.TIME
+CPG_NAME2 = 'CPG2_UNIT_TEST' + hpe3parbase.TIME
+VOLUME_NAME1 = 'VOLUME1_UNIT_TEST' + hpe3parbase.TIME
+VOLUME_NAME2 = 'VOLUME2_UNIT_TEST' + hpe3parbase.TIME
+VOLUME_NAME3 = 'VOLUME3_UNIT_TEST' + hpe3parbase.TIME
+SNAP_NAME1 = 'SNAP_UNIT_TEST' + hpe3parbase.TIME
 DOMAIN = 'UNIT_TEST_DOMAIN'
-VOLUME_SET_NAME1 = 'VOLUME_SET1_UNIT_TEST' + hp3parbase.TIME
-VOLUME_SET_NAME2 = 'VOLUME_SET2_UNIT_TEST' + hp3parbase.TIME
-VOLUME_SET_NAME3 = 'VOLUME_SET3_UNIT_TEST' + hp3parbase.TIME
+VOLUME_SET_NAME1 = 'VOLUME_SET1_UNIT_TEST' + hpe3parbase.TIME
+VOLUME_SET_NAME2 = 'VOLUME_SET2_UNIT_TEST' + hpe3parbase.TIME
+VOLUME_SET_NAME3 = 'VOLUME_SET3_UNIT_TEST' + hpe3parbase.TIME
 SIZE = 512
 
 
-class HP3ParClientVolumeTestCase(hp3parbase.HP3ParClientBaseTestCase):
+class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
     def setUp(self):
-        super(HP3ParClientVolumeTestCase, self).setUp(withSSH=True)
+        super(HPE3ParClientVolumeTestCase, self).setUp(withSSH=True)
 
         optional = self.CPG_OPTIONS
         try:
@@ -81,7 +81,7 @@ class HP3ParClientVolumeTestCase(hp3parbase.HP3ParClientBaseTestCase):
         except Exception:
             pass
 
-        super(HP3ParClientVolumeTestCase, self).tearDown()
+        super(HPE3ParClientVolumeTestCase, self).tearDown()
 
     def test_1_create_volume(self):
         self.printHeader('create_volume')
@@ -1102,5 +1102,5 @@ class HP3ParClientVolumeTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
 # testing
 # suite = unittest.TestLoader().
-#   loadTestsFromTestCase(HP3ParClientVolumeTestCase)
+#   loadTestsFromTestCase(HPE3ParClientVolumeTestCase)
 # unittest.TextTestRunner(verbosity=2).run(suite)

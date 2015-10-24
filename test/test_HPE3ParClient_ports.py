@@ -1,4 +1,4 @@
-# (c) Copyright 2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2015 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test class of 3Par Client handling Ports."""
+"""Test class of 3PAR Client handling Ports."""
 
-import HP3ParClient_base as hp3parbase
+import HPE3ParClient_base as hpe3parbase
 
 
-class HP3ParClientPortTestCase(hp3parbase.HP3ParClientBaseTestCase):
+class HPE3ParClientPortTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
     def setUp(self):
-        super(HP3ParClientPortTestCase, self).setUp()
+        super(HPE3ParClientPortTestCase, self).setUp()
 
     def tearDown(self):
-        super(HP3ParClientPortTestCase, self).tearDown()
+        super(HPE3ParClientPortTestCase, self).tearDown()
 
     def test_get_ports_all(self):
         self.printHeader('get_ports_all')

@@ -1,4 +1,4 @@
-# (c) Copyright 2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2015 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,20 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test class of 3Par Client handling CPG."""
+"""Test class of 3PAR Client handling CPG."""
 
-import HP3ParClient_base as hp3parbase
-from hp3parclient import exceptions
+import HPE3ParClient_base as hpe3parbase
+from hpe3parclient import exceptions
 
 DOMAIN = 'UNIT_TEST_DOMAIN'
-CPG_NAME1 = 'CPG1_UNIT_TEST' + hp3parbase.TIME
-CPG_NAME2 = 'CPG2_UNIT_TEST' + hp3parbase.TIME
+CPG_NAME1 = 'CPG1_UNIT_TEST' + hpe3parbase.TIME
+CPG_NAME2 = 'CPG2_UNIT_TEST' + hpe3parbase.TIME
 
 
-class HP3ParClientCPGTestCase(hp3parbase.HP3ParClientBaseTestCase):
+class HPE3ParClientCPGTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
     def setUp(self):
-        super(HP3ParClientCPGTestCase, self).setUp()
+        super(HPE3ParClientCPGTestCase, self).setUp()
 
     def tearDown(self):
         try:
@@ -39,7 +39,7 @@ class HP3ParClientCPGTestCase(hp3parbase.HP3ParClientBaseTestCase):
             pass
 
         # very last, tear down base class
-        super(HP3ParClientCPGTestCase, self).tearDown()
+        super(HPE3ParClientCPGTestCase, self).tearDown()
 
     def test_1_create_CPG(self):
         self.printHeader('create_CPG')
@@ -188,5 +188,5 @@ class HP3ParClientCPGTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
 
 # testing
-# suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientCPGTestCase)
+# suite = unittest.TestLoader().loadTestsFromTestCase(HPE3ParClientCPGTestCase)
 # unittest.TextTestRunner(verbosity=2).run(suite)

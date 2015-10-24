@@ -1,4 +1,4 @@
-# Copyright 2012-2014 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2012-2015 Hewlett Packard Enterprise Development LP
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -13,20 +13,20 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 """
-HP 3PAR Client.
+HPE 3PAR Client.
 
 :Author: Walter A. Boring IV
 :Author: Kurt Martin
-:Copyright: Copyright 2012-2015, Hewlett Packard Development Company, L.P.
+:Copyright: Copyright 2012-2015 Hewlett Packard Enterprise Development LP
 :License: Apache v2.0
 
 """
 
-version_tuple = (3, 3, 0)
+version_tuple = (4, 0, 0)
 
 
 def get_version_string():
-    """Current version of HP3PARClient."""
+    """Current version of HPE3PARClient."""
     if isinstance(version_tuple[-1], str):
         return '.'.join(map(str, version_tuple[:-1])) + version_tuple[-1]
     return '.'.join(map(str, version_tuple))

@@ -1,4 +1,4 @@
-import hp3parclient
+import hpe3parclient
 
 try:
     from setuptools import setup, find_packages
@@ -7,20 +7,20 @@ except ImportError:
 
 
 setup(
-  name='hp3parclient',
-  version=hp3parclient.version,
-  description="HP 3PAR HTTP REST Client",
+  name='hpe3parclient',
+  version=hpe3parclient.version,
+  description="HPE 3PAR HTTP REST Client",
   author="Walter A. Boring IV",
-  author_email="walter.boring@hp.com",
+  author_email="walter.boring@hpe.com",
   maintainer="Walter A. Boring IV",
-  keywords=["hp", "3par", "rest"],
+  keywords=["hpe", "3par", "rest"],
   requires=['paramiko', 'eventlet', 'requests'],
   install_requires=['paramiko', 'eventlet', 'requests'],
   tests_require=["nose", "werkzeug", "nose-testconfig", "requests"],
   license="Apache License, Version 2.0",
   packages=find_packages(),
-  provides=['hp3parclient'],
-  url="http://packages.python.org/hp3parclient",
+  provides=['hpe3parclient'],
+  url="http://packages.python.org/hpe3parclient",
   classifiers=[
      'Development Status :: 5 - Production/Stable',
      'Intended Audience :: Developers',

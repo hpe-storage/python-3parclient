@@ -1,4 +1,4 @@
-# (c) Copyright 2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2015 Hewlett Packard Enterprise Development LP
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -330,7 +330,7 @@ OPTIONS
             '10.50.158.2 255.255.0.0 0}' \
             '} ' \
             '{unityUserGWAddr291e4af6-925f-4f9d-b4eb-305a4b21fad5 10.50.0.1} '\
-            '{10.50.0.5 csim.rose.hp.com} ' \
+            '{10.50.0.5 csim.rose.hpe.com} ' \
             '{{defaultProfile 80 443 true 5 58 8192 8192}} ' \
             '{} {} {{ActiveDirectory Local}} ' \
             '{false ' \

@@ -5,13 +5,13 @@ from sys import path
 from os import getcwd
 import os, sys, inspect, pprint
 
-# this is a hack to get the hp driver module
+# this is a hack to get the hpe driver module
 # and it's utils module on the search path.
 cmd_folder = os.path.realpath(os.path.abspath("..") )
 if cmd_folder not in sys.path:
      sys.path.insert(0, cmd_folder)
 
-from hp3parclient import client, exceptions
+from hpe3parclient import client, exceptions
 
 
 def get_volumes(cl):

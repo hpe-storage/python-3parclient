@@ -1,4 +1,4 @@
-# Copyright 2014 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2014-2015 Hewlett Packard Enterprise Development LP
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 """
-HP3Par SSH Client
+HPE 3PAR SSH Client
 
 .. module: ssh
 
@@ -30,7 +30,7 @@ from random import randint
 import re
 
 from eventlet import greenthread
-from hp3parclient import exceptions
+from hpe3parclient import exceptions
 
 # Python 3+ override
 try:
@@ -41,7 +41,7 @@ except NameError:
     python3 = True
 
 
-class HP3PARSSHClient(object):
+class HPE3PARSSHClient(object):
     """This class is used to execute SSH commands on a 3PAR."""
 
     log_debug = False
@@ -151,11 +151,11 @@ class HP3PARSSHClient(object):
         :type flag: bool
 
         """
-        if not HP3PARSSHClient.log_debug and flag:
+        if not HPE3PARSSHClient.log_debug and flag:
             ch = logging.StreamHandler()
             self._logger.setLevel(logging.DEBUG)
             self._logger.addHandler(ch)
-            HP3PARSSHClient.log_debug = True
+            HPE3PARSSHClient.log_debug = True
 
     @staticmethod
     def sanitize_cert(output_list):
@@ -183,9 +183,9 @@ class HP3PARSSHClient(object):
     @staticmethod
     def raise_stripper_error(reason, output):
         msg = "Multi-line stripper failed: %s" % reason
-        HP3PARSSHClient._logger.error(msg)
-        HP3PARSSHClient._logger.debug("Output: %s" %
-                                      HP3PARSSHClient.sanitize_cert(output))
+        HPE3PARSSHClient._logger.error(msg)
+        HPE3PARSSHClient._logger.debug("Output: %s" %
+                                       HPE3PARSSHClient.sanitize_cert(output))
         raise exceptions.SSHException(msg)
 
     @staticmethod
@@ -209,18 +209,18 @@ class HP3PARSSHClient(object):
                 break
         else:
             reason = "Did not find 'exit' in output."
-            HP3PARSSHClient.raise_stripper_error(reason, output)
+            HPE3PARSSHClient.raise_stripper_error(reason, output)
 
         if not output:
             reason = "Did not find any output after 'exit'."
-            HP3PARSSHClient.raise_stripper_error(reason, output)
+            HPE3PARSSHClient.raise_stripper_error(reason, output)
 
         # The next line is prompt plus setclienv command.
         # Use this to get the prompt string.
         prompt_pct = output[0].find('% setclienv csvtable 1')
         if prompt_pct < 0:
             reason = "Did not find '% setclienv csvtable 1' in output."
-            HP3PARSSHClient.raise_stripper_error(reason, output)
+            HPE3PARSSHClient.raise_stripper_error(reason, output)
         prompt = output[0][0:prompt_pct + 1]
         del output[0]
 
@@ -237,9 +237,9 @@ class HP3PARSSHClient(object):
                 output = output[i + 1:]
                 break
         else:
-            HP3PARSSHClient._logger.debug("Command: %s" % command_string)
+            HPE3PARSSHClient._logger.debug("Command: %s" % command_string)
             reason = "Did not find match for command in output"
-            HP3PARSSHClient.raise_stripper_error(reason, output)
+            HPE3PARSSHClient.raise_stripper_error(reason, output)
 
         # Always strip the last 2
         return output[:len(output) - 2]

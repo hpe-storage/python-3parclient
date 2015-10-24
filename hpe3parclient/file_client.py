@@ -1,4 +1,4 @@
-# (c) Copyright 2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2015 Hewlett Packard Enterprise Development LP
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -11,7 +11,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-""" HP3PAR File Persona Client
+""" HPE 3PAR File Persona Client
 
 .. module: file_client
 .. moduleauthor: Mark Sturdevant
@@ -27,10 +27,10 @@
 import logging
 from functools import wraps
 
-from hp3parclient import client
-from hp3parclient import tcl_parser
+from hpe3parclient import client
+from hpe3parclient import tcl_parser
 
-TCL = tcl_parser.HP3ParTclParser()
+TCL = tcl_parser.HPE3ParTclParser()
 LOG = logging.getLogger(__name__)
 
 # Commands that require -f (non-interactive) flag register with _force_me
@@ -41,7 +41,7 @@ GET_DETAILS = {}
 PROTOCOL_FIRST = {}
 
 
-class HP3ParFilePersonaClient(client.HP3ParClient):
+class HPE3ParFilePersonaClient(client.HPE3ParClient):
 
     """ The 3PAR File Persona Client.
 
@@ -55,8 +55,8 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
     """
 
     # File Persona minimum WSAPI overrides minimum for non-File Persona.
-    HP3PAR_WS_MIN_BUILD_VERSION = 30201256
-    HP3PAR_WS_MIN_BUILD_VERSION_DESC = '3.2.1 (MU3)'
+    HPE3PAR_WS_MIN_BUILD_VERSION = 30201256
+    HPE3PAR_WS_MIN_BUILD_VERSION_DESC = '3.2.1 (MU3)'
 
     def __init__(self, api_url, secure=False):
         super(self.__class__, self).__init__(api_url, secure=secure)
@@ -163,7 +163,7 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
     def _build_command_and_run_with_ssh(cmd, *args, **kwargs):
         """Build CLI command from cmd, args, kwargs and run it with ssh."""
         client = args[0]  # first arg is the client itself
-        command = HP3ParFilePersonaClient._build_command(cmd, *args, **kwargs)
+        command = HPE3ParFilePersonaClient._build_command(cmd, *args, **kwargs)
         client.ssh.open()
         return client.ssh.run(command, multi_line_stripper=True)
 
@@ -179,7 +179,7 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
         @wraps(func)
         def wrapper(*args, **kwargs):
             func(*args, **kwargs)
-            return HP3ParFilePersonaClient._build_command_and_run_with_ssh(
+            return HPE3ParFilePersonaClient._build_command_and_run_with_ssh(
                 func.__name__, *args, **kwargs)
         return wrapper
 
@@ -1146,9 +1146,9 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
 
         :param clientip: Specifies the clients that can access the share.
              The NFS client can be specified by the name (for example,
-             sys1.hp.com), the name with a wildcard (for example, *.hp.com), or
-             by its IP address. Use comma to separate the IP addresses. If this
-             is not specified, the default is "*".
+             sys1.hpe.com), the name with a wildcard (for example, *.hpe.com),
+             or by its IP address. Use comma to separate the IP addresses. If
+             this is not specified, the default is "*".
         :param ssl: Specifies if SSL is enabled. The default is false.
         :param urlpath: Specifies the URL that clients will use to access the
              share. If this is not specified, the command uses <sharename> as
@@ -1324,9 +1324,9 @@ class HP3ParFilePersonaClient(client.HP3ParClient):
             See linux exports(5) man page for detailed information on valid
             options.
         :param clientip: Specifies the clients that can access the share. The
-            NFS client can be specified by the name (for example, sys1.hp.com),
-            the name with a wildcard (for example, *.hp.com), or by its IP
-            address. Use comma to separate the IP addresses.
+            NFS client can be specified by the name (for example,
+            sys1.hpe.com), the name with a wildcard (for example, *.hpe.com),
+            or by its IP address. Use comma to separate the IP addresses.
 
             If <iplist> has a prefix (for example, +1.1.1.0,2.2.2.0):
 

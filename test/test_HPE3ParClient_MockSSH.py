@@ -1,4 +1,4 @@
-# (c) Copyright 2012-2014 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2012-2015 Hewlett Packard Enterprise Development LP
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -17,9 +17,9 @@ import mock
 import paramiko
 import unittest
 
-import HP3ParClient_base
-from hp3parclient import exceptions
-from hp3parclient import ssh
+import HPE3ParClient_base
+from hpe3parclient import exceptions
+from hpe3parclient import ssh
 
 # Python 3+ override
 try:
@@ -33,7 +33,8 @@ ip = "10.10.22.241"
 api_url = "http://10.10.22.241:8008/api/v1"
 
 
-class HP3ParClientMockSSHTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
+class HPE3ParClientMockSSHTestCase(HPE3ParClient_base
+                                   .HPE3ParClientBaseTestCase):
 
     def mock_paramiko(self, known_hosts_file, missing_key_policy):
         """Verify that these params get into paramiko."""
@@ -83,7 +84,7 @@ class HP3ParClientMockSSHTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         """Verify that params are getting forwarded to _create_ssh()."""
 
         mock_ssh = mock.Mock()
-        with mock.patch('hp3parclient.ssh.HP3PARSSHClient._create_ssh',
+        with mock.patch('hpe3parclient.ssh.HPE3PARSSHClient._create_ssh',
                         mock_ssh, create=True):
 
             self.cl.setSSHOptions(ip, user, password,
@@ -97,10 +98,10 @@ class HP3ParClientMockSSHTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         # "closed" during a logout.
         self.cl.ssh = mock.MagicMock()
 
-    @mock.patch('hp3parclient.ssh.HP3PARSSHClient')
+    @mock.patch('hpe3parclient.ssh.HPE3PARSSHClient')
     def do_mock_ssh(self, known_hosts_file, missing_key_policy,
                     mock_ssh_client):
-        """Verify that params are getting forwarded to HP3PARSSHClient."""
+        """Verify that params are getting forwarded to HPE3PARSSHClient."""
 
         self.cl.setSSHOptions(ip, user, password,
                               known_hosts_file=known_hosts_file,
@@ -182,29 +183,29 @@ class HP3ParClientMockSSHTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         # no begin cert
         input = 'foo -END CERTIFICATE- no begin'
         expected = input
-        out = ssh.HP3PARSSHClient.sanitize_cert(input)
+        out = ssh.HPE3PARSSHClient.sanitize_cert(input)
         self.assertEqual(expected, out)
         # pre, begin, middle, end, post
         input = 'head -BEGIN CERTIFICATE-1234-END CERTIFICATE- tail'
         expected = 'head -BEGIN CERTIFICATE-sanitized-END CERTIFICATE- tail'
-        out = ssh.HP3PARSSHClient.sanitize_cert(input)
+        out = ssh.HPE3PARSSHClient.sanitize_cert(input)
         self.assertEqual(expected, out)
         # end before begin
         input = 'head -END CERTIFICATE-1234-BEGIN CERTIFICATE- tail'
         expected = 'head -END CERTIFICATE-1234-BEGIN CERTIFICATE-sanitized'
-        out = ssh.HP3PARSSHClient.sanitize_cert(input)
+        out = ssh.HPE3PARSSHClient.sanitize_cert(input)
         self.assertEqual(expected, out)
         # no end
         input = 'head -BEGIN CERTIFICATE-1234-END CEXXXXXXXTE- tail'
         expected = 'head -BEGIN CERTIFICATE-sanitized'
-        out = ssh.HP3PARSSHClient.sanitize_cert(input)
+        out = ssh.HPE3PARSSHClient.sanitize_cert(input)
         self.assertEqual(expected, out)
         # test with a list
         input = ['head -BEGIN CERTIFICATE-----1234',
                  'ss09f87sdf987sf97sfsds0f7sf97s89',
                  '6789-----END CERTIFICATE- tail']
         expected = 'head -BEGIN CERTIFICATE-sanitized-END CERTIFICATE- tail'
-        out = ssh.HP3PARSSHClient.sanitize_cert(input)
+        out = ssh.HPE3PARSSHClient.sanitize_cert(input)
         self.assertEqual(expected, out)
 
     def test_strip_input_from_output(self):
@@ -212,25 +213,25 @@ class HP3ParClientMockSSHTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         # nothing after exit
         output = ['exit']
         self.assertRaises(exceptions.SSHException,
-                          ssh.HP3PARSSHClient.strip_input_from_output,
+                          ssh.HPE3PARSSHClient.strip_input_from_output,
                           cmd,
                           output)
         # no exit
         output = ['line1', 'line2', 'line3']
         self.assertRaises(exceptions.SSHException,
-                          ssh.HP3PARSSHClient.strip_input_from_output,
+                          ssh.HPE3PARSSHClient.strip_input_from_output,
                           cmd,
                           output)
         # no setclienv csv
         output = [cmd, 'exit', 'out']
         self.assertRaises(exceptions.SSHException,
-                          ssh.HP3PARSSHClient.strip_input_from_output,
+                          ssh.HPE3PARSSHClient.strip_input_from_output,
                           cmd,
                           output)
         # command not in output after exit
         output = [cmd, 'exit', 'PROMPT% setclienv csvtable 1']
         self.assertRaises(exceptions.SSHException,
-                          ssh.HP3PARSSHClient.strip_input_from_output,
+                          ssh.HPE3PARSSHClient.strip_input_from_output,
                           cmd,
                           output)
         # success
@@ -244,5 +245,5 @@ class HP3ParClientMockSSHTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
                   'out3',
                   '------',
                   'totals']
-        result = ssh.HP3PARSSHClient.strip_input_from_output(cmd, output)
+        result = ssh.HPE3PARSSHClient.strip_input_from_output(cmd, output)
         self.assertEqual(['out1', 'out2', 'out3'], result)

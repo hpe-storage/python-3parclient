@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Changes in Version 4.0.0
+------------------------
+* Rebranded the client from HP to HPE.
+
 Changes in Version 3.3.0
 ------------------------
 * Replaced all httplib2 calls with Python Request calls

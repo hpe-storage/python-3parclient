@@ -1,4 +1,4 @@
-# (c) Copyright 2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2015 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,21 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test class of 3Par Client handling Stats."""
+"""Test class of 3PAR Client handling Stats."""
 
 import mock
-import HP3ParClient_base
-from hp3parclient import exceptions
+import HPE3ParClient_base
+from hpe3parclient import exceptions
 
 
-class HP3ParClientStatsTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
+class HPE3ParClientStatsTestCase(HPE3ParClient_base.HPE3ParClientBaseTestCase):
 
     def setUp(self):
-        super(HP3ParClientStatsTestCase, self).setUp(withSSH=True)
+        super(HPE3ParClientStatsTestCase, self).setUp(withSSH=True)
 
     def tearDown(self):
         # very last, tear down base class
-        super(HP3ParClientStatsTestCase, self).tearDown()
+        super(HPE3ParClientStatsTestCase, self).tearDown()
 
     def test_getCPGStatData(self):
         self.printHeader('getCPGStatData')
@@ -65,5 +65,5 @@ class HP3ParClientStatsTestCase(HP3ParClient_base.HP3ParClientBaseTestCase):
         self.printFooter('getCPGStatData')
 
 # testing
-# suite = unittest.TestLoader().loadTestsFromTestCase(HP3ParClientCPGTestCase)
+# suite = unittest.TestLoader().loadTestsFromTestCase(HPE3ParClientCPGTestCase)
 # unittest.TextTestRunner(verbosity=2).run(suite)

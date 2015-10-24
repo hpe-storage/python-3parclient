@@ -1,4 +1,4 @@
-# (c) Copyright 2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2015 Hewlett Packard Enterprise Development LP
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -25,7 +25,7 @@ This module parses TCL strings and returns python structures.
 MAX_LEVELS = 10
 
 
-class HP3ParTclParser(object):
+class HPE3ParTclParser(object):
     """The 3PAR TCL Parser."""
 
     @staticmethod

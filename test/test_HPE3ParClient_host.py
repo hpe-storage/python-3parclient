@@ -1,4 +1,4 @@
-# (c) Copyright 2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2015 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,34 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test class of 3Par Client handling Host."""
+"""Test class of 3PAR Client handling Host."""
 
-import HP3ParClient_base as hp3parbase
+import HPE3ParClient_base as hpe3parbase
 
-from hp3parclient import exceptions
+from hpe3parclient import exceptions
 
 # Insert colons into time string to match WWN format.
 TIME2 = ""
 for i in range(6):
     if i % 2 == 0:
-        TIME2 += ":" + hp3parbase.TIME[i]
+        TIME2 += ":" + hpe3parbase.TIME[i]
     else:
-        TIME2 += hp3parbase.TIME[i]
+        TIME2 += hpe3parbase.TIME[i]
 
 
 DOMAIN = 'UNIT_TEST_DOMAIN'
-HOST_NAME1 = 'HOST1_UNIT_TEST' + hp3parbase.TIME
-HOST_NAME2 = 'HOST2_UNIT_TEST' + hp3parbase.TIME
+HOST_NAME1 = 'HOST1_UNIT_TEST' + hpe3parbase.TIME
+HOST_NAME2 = 'HOST2_UNIT_TEST' + hpe3parbase.TIME
 WWN1 = "00:00:00:00:00" + TIME2
 WWN2 = "11:11:11:11:11" + TIME2
-IQN1 = 'iqn.1993-08.org.debian:01:00000' + hp3parbase.TIME
-IQN2 = 'iqn.bogus.org.debian:01:0000' + hp3parbase.TIME
+IQN1 = 'iqn.1993-08.org.debian:01:00000' + hpe3parbase.TIME
+IQN2 = 'iqn.bogus.org.debian:01:0000' + hpe3parbase.TIME
 
 
-class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
+class HPE3ParClientHostTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
     def setUp(self):
-        super(HP3ParClientHostTestCase, self).setUp()
+        super(HPE3ParClientHostTestCase, self).setUp()
 
     def tearDown(self):
         try:
@@ -52,7 +52,7 @@ class HP3ParClientHostTestCase(hp3parbase.HP3ParClientBaseTestCase):
             pass
 
         # very last, tear down base class
-        super(HP3ParClientHostTestCase, self).tearDown()
+        super(HPE3ParClientHostTestCase, self).tearDown()
 
     def test_1_create_host_badParams(self):
         self.printHeader('create_host_badParams')

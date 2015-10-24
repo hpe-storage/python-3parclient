@@ -1,4 +1,4 @@
-# (c) Copyright 2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2015 Hewlett Packard Enterprise Development LP
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -12,20 +12,21 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""Test class of 3Par Client handling File Persona API."""
+"""Test class of 3PAR Client handling File Persona API."""
 
 import mock
 import pprint
 
 from testconfig import config
-import HP3ParClient_base as hp3parbase
+import HPE3ParClient_base as hpe3parbase
 
-from hp3parclient import exceptions
-from hp3parclient import file_client
-from hp3parclient import ssh
+from hpe3parclient import exceptions
+from hpe3parclient import file_client
+from hpe3parclient import ssh
 
 
-class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
+class HPE3ParFilePersonaClientMockTestCase(hpe3parbase
+                                           .HPE3ParClientBaseTestCase):
 
     interfaces = None
     DEBUG = config['TEST']['debug'].lower() == 'true'
@@ -35,13 +36,13 @@ class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
             print(pprint.pformat(obj, **kwargs))
 
     def setUp(self, **kwargs):
-        version = (file_client.HP3ParFilePersonaClient
-                   .HP3PAR_WS_MIN_BUILD_VERSION)
+        version = (file_client.HPE3ParFilePersonaClient
+                   .HPE3PAR_WS_MIN_BUILD_VERSION)
         mock_version = mock.Mock()
         mock_version.return_value = {'build': version}
-        with mock.patch('hp3parclient.client.HP3ParClient.getWsApiVersion',
+        with mock.patch('hpe3parclient.client.HPE3ParClient.getWsApiVersion',
                         mock_version):
-            self.cl = file_client.HP3ParFilePersonaClient('anyurl')
+            self.cl = file_client.HPE3ParFilePersonaClient('anyurl')
             self.cl.ssh = mock.Mock()
             self.cl.http = mock.Mock()
             self.cl.ssh.run = mock.Mock()
@@ -264,7 +265,7 @@ class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
         expected = [
             'VFS UT5_VFS_150651 already exists within FPG marktestfpg\r']
 
-        actual = ssh.HP3PARSSHClient.strip_input_from_output(cmd, out)
+        actual = ssh.HPE3PARSSHClient.strip_input_from_output(cmd, out)
         self.assertEqual(expected, actual)
 
     def test_strip_input_from_output_no_exit(self):
@@ -291,7 +292,7 @@ class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
             ''
         ]
         self.assertRaises(exceptions.SSHException,
-                          ssh.HP3PARSSHClient.strip_input_from_output,
+                          ssh.HPE3PARSSHClient.strip_input_from_output,
                           cmd, out)
 
     def test_strip_input_from_output_no_setclienv(self):
@@ -318,7 +319,7 @@ class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
             ''
         ]
         self.assertRaises(exceptions.SSHException,
-                          ssh.HP3PARSSHClient.strip_input_from_output,
+                          ssh.HPE3PARSSHClient.strip_input_from_output,
                           cmd, out)
 
     def test_strip_input_from_output_no_cmd_match(self):
@@ -345,10 +346,10 @@ class HP3ParFilePersonaClientMockTestCase(hp3parbase.HP3ParClientBaseTestCase):
             ''
         ]
         self.assertRaises(exceptions.SSHException,
-                          ssh.HP3PARSSHClient.strip_input_from_output,
+                          ssh.HPE3PARSSHClient.strip_input_from_output,
                           cmd, out)
 
 # testing
 # suite = unittest.TestLoader().
-#     loadTestsFromTestCase(HP3ParFilePersonaClientTestCase)
+#     loadTestsFromTestCase(HPE3ParFilePersonaClientTestCase)
 # unittest.TextTestRunner(verbosity=2).run(suite)

@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright 2012 - 2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2012-2015 Hewlett Packard Enterprise Development LP
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -33,7 +33,7 @@ try:
 except ImportError:
     import simplejson as json
 
-from hp3parclient import exceptions
+from hpe3parclient import exceptions
 
 
 class HTTPJSONRESTClient(object):

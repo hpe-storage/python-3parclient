@@ -1,10 +1,10 @@
 :mod:`http` -- HTTP REST Base Class
 ====================================================
 
-.. automodule:: hp3parclient.http
+.. automodule:: hpe3parclient.http
    :synopsis: HTTP REST Base Class
 
-   .. autoclass::hp3parclient.http.HTTPJSONRESTClient(api_url, secure=False, http_log_debug=False)
+   .. autoclass::hpe3parclient.http.HTTPJSONRESTClient(api_url, secure=False, http_log_debug=False)
 
       .. automethod:: authenticate
       .. automethod:: unauthenticate

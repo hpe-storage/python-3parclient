@@ -1,4 +1,4 @@
-# (c) Copyright 2012-2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2012-2015 Hewlett Packard Enterprise Development LP
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -12,7 +12,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-""" HP3PAR REST Client.
+""" HPE 3PAR REST Client.
 
 .. module: client
 .. moduleauthor: Walter A. Boring IV
@@ -37,10 +37,10 @@ except ImportError:
     # Fall back to Python 2's urllib2
     from urllib2 import quote
 
-from hp3parclient import exceptions, http, ssh
+from hpe3parclient import exceptions, http, ssh
 
 
-class HP3ParClient(object):
+class HPE3ParClient(object):
 
     """ The 3PAR REST API Client.
 
@@ -121,12 +121,12 @@ class HP3ParClient(object):
     # build contains major minor mj=3 min=01 main=03 build=230
     # When updating these, make sure desc is appropriate for error messages
     # and make sure the version overrides in file_client are still OK.
-    HP3PAR_WS_MIN_BUILD_VERSION = 30103230
-    HP3PAR_WS_MIN_BUILD_VERSION_DESC = '3.1.3 MU1'
+    HPE3PAR_WS_MIN_BUILD_VERSION = 30103230
+    HPE3PAR_WS_MIN_BUILD_VERSION_DESC = '3.1.3 MU1'
 
     # Minimum build version needed for VLUN query support.
-    HP3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY = 30201292
-    HP3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY_DESC = '3.2.1 MU2'
+    HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY = 30201292
+    HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY_DESC = '3.2.1 MU2'
 
     VLUN_TYPE_EMPTY = 1
     VLUN_TYPE_PORT = 2
@@ -207,14 +207,14 @@ class HP3ParClient(object):
         # e.g. 30102422 is 3 01 02 422
         # therefore all we need to compare is the build
         if (api_version is None or
-           api_version['build'] < self.HP3PAR_WS_MIN_BUILD_VERSION):
+           api_version['build'] < self.HPE3PAR_WS_MIN_BUILD_VERSION):
             raise exceptions.UnsupportedVersion(
                 'Invalid 3PAR WS API, requires version, %s' %
-                self.HP3PAR_WS_MIN_BUILD_VERSION_DESC)
+                self.HPE3PAR_WS_MIN_BUILD_VERSION_DESC)
 
         # Check for VLUN query support.
         if (api_version['build'] >=
-           self.HP3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY):
+           self.HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY):
             self.vlun_query_supported = True
 
     def setSSHOptions(self, ip, login, password, port=22,
@@ -226,9 +226,9 @@ class HP3ParClient(object):
         that use SSH instead of REST HTTP.
 
         """
-        self.ssh = ssh.HP3PARSSHClient(ip, login, password, port,
-                                       conn_timeout, privatekey,
-                                       **kwargs)
+        self.ssh = ssh.HPE3PARSSHClient(ip, login, password, port,
+                                        conn_timeout, privatekey,
+                                        **kwargs)
 
     def _run(self, cmd):
         if self.ssh is None:
@@ -415,7 +415,7 @@ class HP3ParClient(object):
         :type name: str
 
         :returns: volume
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOL - volume doesn't exist
 
         """
@@ -468,15 +468,15 @@ class HP3ParClient(object):
 
         :returns: List of Volumes
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT - Invalid Parameter
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - TOO_LARGE - Volume size above limit
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - NO_SPACE - Not Enough space is available
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - PERM_DENIED - Permission denied
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - EXISTENT_SV - Volume Exists already
 
         """
@@ -493,17 +493,17 @@ class HP3ParClient(object):
         :param name: the name of the volume
         :type name: str
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOL - The volume does not exist
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - PERM_DENIED - Permission denied
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - RETAINED - Volume retention time has not expired
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - HAS_RO_CHILD - Volume has read-only child
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - HAS_CHILD - The volume has a child volume
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - IN_USE - The volume is in use by VV set, VLUN, etc
 
         """
@@ -562,61 +562,61 @@ class HP3ParClient(object):
                                            # False sets it when value > 0
             }
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_WARN_GT_LIMIT - Allocation warning level is higher than
             the limit.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_USR_ALRT_NON_TPVV - User space allocation alerts are
             valid only with a TPVV.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_RETAIN_GT_EXPIRE - Retention time is greater than
             expiration time.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_VV_POLICY - Invalid policy specification (for example,
             caching or system is set to true).
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_EXCEEDS_LENGTH - Invalid input: string length exceeds
             limit.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_TIME - Invalid time specified.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_MODIFY_USR_CPG_TPVV - usr_cpg cannot be modified
             on a TPVV.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - UNLICENSED_FEATURE - Retention time cannot be modified on a
             system without the Virtual Lock license.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - CPG_NOT_IN_SAME_DOMAIN - Snap CPG is not in the same domain as
             the user CPG.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_PEER_VOLUME - Cannot modify a peer volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPInternalServerError`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPInternalServerError`
             - INT_SERV_ERR - Metadata of the VV is corrupted.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_SYS_VOLUME - Cannot modify retention time on a
             system volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_INTERNAL_VOLUME - Cannot modify an internal
             volume
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_VOLUME_NOT_DEFINED_ALL_NODES - Cannot modify a
             volume until the volume is defined on all volumes.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INVALID_OPERATION_VV_ONLINE_COPY_IN_PROGRESS - Cannot modify a
             volume when an online copy for that volume is in progress.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INVALID_OPERATION_VV_VOLUME_CONV_IN_PROGRESS - Cannot modify a
             volume in the middle of a conversion operation.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INVALID_OPERATION_VV_SNAPSPACE_NOT_MOVED_TO_CPG - Snapshot space
             of a volume needs to be moved to a CPG before the user space.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_VOLUME_ACCOUNTING_IN_PROGRESS - The volume
             cannot be renamed until snapshot accounting has finished.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_ZERO_DETECT_TPVV - The zero_detect policy can be
             used only on TPVVs.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_CPG_ON_SNAPSHOT - CPG cannot be assigned to a
             snapshot.
 
@@ -633,65 +633,65 @@ class HP3ParClient(object):
                        next chunklet size (e.g. 256 or 1000 MiB)
         :type amount: int
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_NOT_IN_SAME_DOMAIN - The volume is not in the same domain.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOL - The volume does not exist.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_UNSUPPORTED_VV_TYPE - Invalid operation: Cannot
             grow this type of volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_TUNE_IN_PROGRESS - Invalid operation: Volume
             tuning is in progress.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_EXCEEDS_LENGTH - Invalid input: String length exceeds
             limit.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_VV_GROW_SIZE - Invalid grow size.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_NEW_SIZE_EXCEEDS_CPG_LIMIT - New volume size exceeds CPG limit
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_INTERNAL_VOLUME - This operation is not allowed
             on an internal volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_VOLUME_CONV_IN_PROGRESS - Invalid operation: VV
             conversion is in progress.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_VOLUME_COPY_IN_PROGRESS - Invalid operation:
             online copy is in progress.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_CLEANUP_IN_PROGRESS - Internal volume cleanup is
             in progress.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_IS_BEING_REMOVED - The volume is being removed.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_IN_INCONSISTENT_STATE - The volume has an internal consistency
             error.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_SIZE_CANNOT_REDUCE - New volume size is smaller than the
             current size.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_NEW_SIZE_EXCEEDS_LIMITS - New volume size exceeds the limit.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_SA_SD_SPACE_REMOVED - Invalid operation: Volume
             SA/SD space is being removed.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_IS_BUSY - Invalid operation: Volume is currently
             busy.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_NOT_STARTED - Volume is not started.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_IS_PCOPY - Invalid operation: Volume is a
             physical copy.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_NOT_IN_NORMAL_STATE - Volume state is not normal
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_PROMOTE_IN_PROGRESS - Invalid operation: Volume
             promotion is in progress.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_PARENT_OF_PCOPY - Invalid operation: Volume is
             the parent of physical copy.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - NO_SPACE - Insufficent space for requested operation.
 
         """
@@ -730,86 +730,86 @@ class HP3ParClient(object):
                                                 # apply to online copy)
             }
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_ILLEGAL_CHAR - Invalid VV name or CPG name.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_CPG - The CPG does not exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - CPG_NOT_IN SAME_DOMAIN - The CPG is not in the current domain.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOL - The volume does not exist
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_NOT_IN_SAME_DOMAIN - The volume is not in the same domain.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_BAD_ENUM_VALUE - The priority value in not in the valid
             range(1-3).
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - EXISTENT_VOLUME - The volume already exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_SYS_VOLUME - The operation is not allowed on a
             system volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_NON_BASE_VOLUME - The destination volume is not a
             base volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_IN_REMOTE_COPY - The destination volume is involved
             in a remote copy.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_EXPORTED - The volume is exported.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_COPY_TO_SELF - The destination volume is the
             same as the parent.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_READONLY_SNAPSHOT - The parent volume is a
             read-only snapshot.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_COPY_TO_BASE - The destination volume is the
             base volume of a parent volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_VOLUME_CONV_IN_PROGRESS  - The volume is in a
             conversion operation.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_NO_SNAPSHOT_ALLOWED - The parent volume must
             allow snapshots.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_ONLINE_COPY_IN_PROGRESS  - The volume is the
             target of an online copy.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_CLEANUP_IN_PROGRESS - Cleanup of internal volume
             for the volume is in progress.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_CIRCULAR_COPY - The parent volume is a copy of
             the destination volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_PEER_VOLUME - The operation is not allowed on a
             peer volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_INTERNAL_VOLUME - The operation is not allowed
             on an internal volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_IS_BEING_REMOVED - The volume is being removed.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_NOT_IN_NORMAL_STATE - The volume is not in the
             normal state.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_IN_INCONSISTENT_STATE - The volume has an internal consistency
             error.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_PCOPY_IN_PROGRESS  - The destination volume has
             a physical copy in progress.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_FAILED_ONLINE_COPY  - Online copying of the
             destination volume has failed.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_COPY_PARENT_TOO_BIG - The size of the parent
             volume is larger than the size of the destination volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_NO_PARENT - The volume has no physical parent.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - IN_USE - The resynchronization snapshot is in a stale state.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_IN_STALE_STATE - The volume is in a stale state.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VVCOPY - Physical copy not found.
 
         """
@@ -898,15 +898,15 @@ class HP3ParClient(object):
 
         :returns: the status of the task
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_BELOW_RANGE - Bad Request Task ID must be a positive
             value.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_EXCEEDS_RANGE - Bad Request Task ID is too large.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_TASK - Task with the specified task ID does not
             exist.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_WRONG_TYPE - Task ID is not an integer.
 
         """
@@ -1055,86 +1055,86 @@ class HP3ParClient(object):
         :param name: the name of the volume
         :type name: str
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_ILLEGAL_CHAR - Invalid VV name or CPG name.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_CPG - The CPG does not exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - CPG_NOT_IN SAME_DOMAIN - The CPG is not in the current domain.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOL - The volume does not exist
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_NOT_IN_SAME_DOMAIN - The volume is not in the same domain.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_BAD_ENUM_VALUE - The priority value in not in the valid
             range(1-3).
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - EXISTENT_VOLUME - The volume already exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_SYS_VOLUME - The operation is not allowed on a
             system volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_NON_BASE_VOLUME - The destination volume is not a
             base volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_IN_REMOTE_COPY - The destination volume is involved
             in a remote copy.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_EXPORTED - The volume is exported.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_COPY_TO_SELF - The destination volume is the
             same as the parent.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_READONLY_SNAPSHOT - The parent volume is a
             read-only snapshot.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_COPY_TO_BASE - The destination volume is the
             base volume of a parent volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_VOLUME_CONV_IN_PROGRESS  - The volume is in a
             conversion operation.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_NO_SNAPSHOT_ALLOWED - The parent volume must
             allow snapshots.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_ONLINE_COPY_IN_PROGRESS  - The volume is the
             target of an online copy.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_CLEANUP_IN_PROGRESS - Cleanup of internal volume
             for the volume is in progress.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_CIRCULAR_COPY - The parent volume is a copy of
             the destination volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_PEER_VOLUME - The operation is not allowed on a
             peer volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_INTERNAL_VOLUME - The operation is not allowed
             on an internal volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_IS_BEING_REMOVED - The volume is being removed.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_NOT_IN_NORMAL_STATE - The volume is not in the
             normal state.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_IN_INCONSISTENT_STATE - The volume has an internal consistency
             error.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_PCOPY_IN_PROGRESS  - The destination volume has
             a physical copy in progress.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_FAILED_ONLINE_COPY  - Online copying of the
             destination volume has failed.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_COPY_PARENT_TOO_BIG - The size of the parent
             volume is larger than the size of the destination volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_NO_PARENT - The volume has no physical parent.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - IN_USE - The resynchronization snapshot is in a stale state.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_IN_STALE_STATE - The volume is in a stale state.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VVCOPY - Physical copy not found.
 
         """
@@ -1164,9 +1164,9 @@ class HP3ParClient(object):
                 'retentionHours': 12        # time from now to expire
             }
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOL - The volume does not exist
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - PERM_DENIED - Permission denied
 
         """
@@ -1229,7 +1229,7 @@ class HP3ParClient(object):
         :type name: str
 
         :returns: host set dict
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_SET - The set does not exist
         """
         response, body = self.http.get('/hostsets/%s' % name)
@@ -1251,18 +1251,18 @@ class HP3ParClient(object):
         :returns: id of host set created
         :rtype: str
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - EXISTENT_SET - The set already exits.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - MEMBER_IN_DOMAINSET - The host is in a domain set.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - MEMBER_IN_SET - The object is already part of the set.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - MEMBER_NOT_IN_SAME_DOMAIN - Objects must be in the same domain
             to perform this operation.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_HOST - The host does not exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_DUP_NAME - Invalid input (duplicate name).
         """
         info = {'name': name}
@@ -1292,9 +1292,9 @@ class HP3ParClient(object):
         :param name: the host set to remove
         :type name: str
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_SET - The set does not exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - EXPORTED_VLUN - The host set has exported VLUNs.
         """
         self.http.delete('/hostsets/%s' % name)
@@ -1323,25 +1323,25 @@ class HP3ParClient(object):
                   location portion of the headers.
         :returns: body - the body of the response.  None if successful.
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - EXISTENT_SET - The set already exits.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_SET - The set does not exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - MEMBER_IN_DOMAINSET - The host is in a domain set.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - MEMBER_IN_SET - The object is already part of the set.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - MEMBER_NOT_IN_SET - The object is not part of the set.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - MEMBER_NOT_IN_SAME_DOMAIN - Objects must be in the same domain
             to perform this operation.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_DUP_NAME - Invalid input (duplicate name).
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_PARAM_CONFLICT - Invalid input (parameters cannot be
             present at the same time).
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_ILLEGAL_CHAR - Invalid contains one or more illegal
             characters.
         """
@@ -1435,7 +1435,7 @@ class HP3ParClient(object):
         :type name: str
 
         :returns: host dict
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_HOST - HOST doesn't exist
 
         """
@@ -1476,33 +1476,33 @@ class HP3ParClient(object):
                      'comment': "Joe's box"}    # Additional host information
             }
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - PERM_DENIED - Permission denied
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_MISSING_REQUIRED - Name not specified.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_PARAM_CONFLICT - FCWWNs and iSCSINames are both
             specified.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_EXCEEDS_LENGTH - Host name, domain name, or iSCSI name
             is too long.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_EMPTY_STR - Input string (for domain name, iSCSI name,
             etc.) is empty.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_ILLEGAL_CHAR - Any error from host-name or domain-name
             parsing.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_TOO_MANY_WWN_OR_iSCSI - More than 1024 WWNs or iSCSI
             names are specified.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_WRONG_TYPE - The length of WWN is not 16. WWN
             specification contains non-hexadecimal digit.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - EXISTENT_PATH - host WWN/iSCSI name already used by another host
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - EXISTENT_HOST - host name is already used.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - NO_SPACE - No space to create host.
 
         """
@@ -1565,54 +1565,54 @@ class HP3ParClient(object):
                                                 # chap only
             }
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT - Missing host name.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_PARAM_CONFLICT - Both iSCSINames & FCWWNs are
             specified. (lot of other possibilities)
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_ONE_REQUIRED - iSCSINames or FCWwns missing.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_ONE_REQUIRED - No path operation specified.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_BAD_ENUM_VALUE - Invalid enum value.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_MISSING_REQUIRED - Required fields missing.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_EXCEEDS_LENGTH - Host descriptor argument length, new
             host name, or iSCSI name is too long.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_ILLEGAL_CHAR - Error parsing host or iSCSI name.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - EXISTENT_HOST - New host name is already used.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_HOST - Host to be modified does not exist.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_TOO_MANY_WWN_OR_iSCSI - More than 1024 WWNs or iSCSI
             names are specified.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_WRONG_TYPE - Input value is of the wrong type.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - EXISTENT_PATH - WWN or iSCSI name is already claimed by other
             host.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_BAD_LENGTH - CHAP hex secret length is not 16 bytes, or
             chap ASCII secret length is not 12 to 16 characters.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NO_INITIATOR_CHAP - Setting target CHAP without initiator CHAP.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_CHAP - Remove non-existing CHAP.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - NON_UNIQUE_CHAP_SECRET - CHAP secret is not unique.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - EXPORTED_VLUN - Setting persona with active export; remove a host
             path on an active export.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - NON_EXISTENT_PATH - Remove a non-existing path.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - LUN_HOSTPERSONA_CONFLICT - LUN number and persona capability
             conflict.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_DUP_PATH - Duplicate path specified.
 
         """
@@ -1625,11 +1625,11 @@ class HP3ParClient(object):
         :param name: Host Name
         :type name: str
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_HOST - HOST Not Found
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             -  IN_USE - The HOST Cannot be removed because it's in use.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - PERM_DENIED - Permission denied
 
         """
@@ -1691,13 +1691,13 @@ class HP3ParClient(object):
         :param wwns: lookup based on WWN list
         :type wwns: list
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT - Invalid URI syntax.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_HOST - HOST Not Found
-        :raises: :class:`~hp3parclient.exceptions.HTTPInternalServerError`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPInternalServerError`
             - INTERNAL_SERVER_ERR - Internal server error.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_ILLEGAL_CHAR - Host name contains invalid character.
 
         """
@@ -1736,7 +1736,7 @@ class HP3ParClient(object):
         :param hostName: Host name
         :type hostNane: str
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_HOST - HOST Not Found
 
         """
@@ -1832,7 +1832,7 @@ class HP3ParClient(object):
         :type name: str
 
         :returns: cpg dict
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             -  NON_EXISTENT_CPG - CPG doesn't exist
 
         """
@@ -1854,7 +1854,7 @@ class HP3ParClient(object):
                 "usableFreeMiB": 5000     # LD free capacity in MiB
             }
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_CPG - CPG Not Found
 
         """
@@ -1897,17 +1897,17 @@ class HP3ParClient(object):
                     'diskPatterns': []}       # Patterns for candidate disks
             }
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT Invalid URI Syntax.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - NON_EXISTENT_DOMAIN - Domain doesn't exist.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - NO_SPACE - Not Enough space is available.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - BAD_CPG_PATTERN  A Pattern in a CPG specifies illegal values.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - PERM_DENIED - Permission denied
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - EXISTENT_CPG - CPG Exists already
 
         """
@@ -1924,11 +1924,11 @@ class HP3ParClient(object):
         :param name: CPG Name
         :type name: str
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_CPG - CPG Not Found
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             -  IN_USE - The CPG Cannot be removed because it's in use.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - PERM_DENIED - Permission denied
 
         """
@@ -1960,7 +1960,7 @@ class HP3ParClient(object):
 
         :returns: VLUN
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             -  NON_EXISTENT_VLUN - VLUN doesn't exist
 
         """
@@ -2071,21 +2071,21 @@ class HP3ParClient(object):
                     'slot': 2,   # PCI bus slot in the node (0-5)
                     'port': 1}   # Port number on the FC card (0-4)
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_MISSING_REQUIRED - Incomplete VLUN info. Missing
             volumeName or lun, or both hostname and port.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_PORT_SELECTION - Specified port is invalid.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_EXCEEDS_RANGE - The LUN specified exceeds expected
             range.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_HOST - The host does not exist
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VLUN - The VLUN does not exist
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_PORT - The port does not exist
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - PERM_DENIED - Permission denied
         """
 
@@ -2145,15 +2145,15 @@ class HP3ParClient(object):
             ...
             ]
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_IN_INCONSISTENT_STATE - Internal inconsistency error in vol
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_IS_BEING_REMOVED - The volume is being removed
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOLUME - The volume does not exists
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_SYS_VOLUME - Illegal op on system vol
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_INTERNAL_VOLUME - Illegal op on internal vol
         """
         vvset_names = []
@@ -2181,7 +2181,7 @@ class HP3ParClient(object):
 
         :returns: Volume Set
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_SET - The set doesn't exist
         """
         response, body = self.http.get('/volumesets/%s' % name)
@@ -2202,31 +2202,31 @@ class HP3ParClient(object):
         will not be checked
         :type setmembers: array
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - EXISTENT_SET - The set already exits.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - MEMBER_IN_DOMAINSET - The host is in a domain set.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - MEMBER_IN_SET - The object is already part of the set.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - MEMBER_NOT_IN_SAME_DOMAIN - Objects must be in the same domain to
             perform this operation.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_IN_INCONSISTENT_STATE - The volume has an internal
             inconsistency error.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_IS_BEING_REMOVED - The volume is being removed.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOLUME - The volume does not exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_HOST - The host does not exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_SYS_VOLUME - The operation is not allowed on a
             system volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_INTERNAL_VOLUME - The operation is not allowed
             on an internal volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_DUP_NAME - Invalid input (duplicate name).
         """
         info = {'name': name}
@@ -2251,12 +2251,12 @@ class HP3ParClient(object):
         :param name: the volume set to remove
         :type name: str
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_SET - The set does not exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - EXPORTED_VLUN - The host set has exported VLUNs. The VV set was
             exported.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - VVSET_QOS_TARGET - The object is already part of the set.
         """
         response, body = self.http.delete('/volumesets/%s' % name)
@@ -2281,38 +2281,38 @@ class HP3ParClient(object):
                            will not be checked
         :type setmembers: array
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - EXISTENT_SET - The set already exits.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_SET - The set does not exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - MEMBER_IN_DOMAINSET - The host is in a domain set.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - MEMBER_IN_SET - The object is already part of the set.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - MEMBER_NOT_IN_SET - The object is not part of the set.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - MEMBER_NOT_IN_SAME_DOMAIN - Objects must be in the same domain to
             perform this operation.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_IN_INCONSISTENT_STATE - The volume has an internal
             inconsistency error.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_IS_BEING_REMOVED - The volume is being removed.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOLUME - The volume does not exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_SYS_VOLUME - The operation is not allowed on a
             system volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_INTERNAL_VOLUME - The operation is not allowed
             on an internal volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_DUP_NAME - Invalid input (duplicate name).
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_PARAM_CONFLICT - Invalid input (parameters cannot be
             present at the same time).
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_ILLEGAL_CHAR - Invalid contains one or more illegal
             characters.
         """
@@ -2366,7 +2366,7 @@ class HP3ParClient(object):
         """Create a snapshot of an existing Volume Set.
 
         :param name: Name of the Snapshot. The vvname pattern is described in
-                     "VV Name Patterns" in the HP 3PAR Command Line Interface
+                     "VV Name Patterns" in the HPE 3PAR Command Line Interface
                      Reference, which is available at the following
                      website: http://www.hp.com/go/storage/docs
         :type name: str
@@ -2386,71 +2386,71 @@ class HP3ParClient(object):
                 'retentionHours': 12        # time from now to expire
             }
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INVALID_INPUT_VV_PATTERN - Invalid volume pattern specified
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_SET - The set does not exist
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - EMPTY_SET - The set is empty
-        :raises: :class:`~hp3parclient.exceptions.HTTPServiceUnavailable`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPServiceUnavailable`
             - VV_LIMIT_REACHED - Maximum number of volumes reached
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOL - The storage volume does not exist
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_IS_BEING_REMOVED - The volume is being removed
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_READONLY_TO_READONLY_SNAP - Creating a
             read-only copy from a read-only volume is not permitted
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - NO_SNAP_CPG - No snapshot CPG has been configured for the volume
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_DUP_NAME - Invalid input (duplicate name).
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_SNAP_PARENT_SAME_BASE - Two parent
             snapshots share thesame base volume
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_ONLINE_COPY_IN_PROGRESS - Invalid
             operation. Online copyis in progress
-        :raises: :class:`~hp3parclient.exceptions.HTTPServiceUnavailable`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPServiceUnavailable`
             - VV_ID_LIMIT_REACHED - Max number of volumeIDs has been reached
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOLUME - The volume does not exists
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_IN_STALE_STATE - The volume is in a stale state.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_NOT_STARTED - Volume is not started
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_UNAVAILABLE - The volume is not accessible
-        :raises: :class:`~hp3parclient.exceptions.HTTPServiceUnavailable`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPServiceUnavailable`
             - SNAPSHOT_LIMIT_REACHED - Max number of snapshots has been reached
-        :raises: :class:`~hp3parclient.exceptions.HTTPServiceUnavailable`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPServiceUnavailable`
             - CPG_ALLOCATION_WARNING_REACHED - The CPG has reached the
             allocation warning
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_VOLUME_CONV_IN_PROGRESS - Invalid operation: VV
             conversion is in progress.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_CLEANUP_IN_PROGRESS - Internal volume cleanup is
             in progress.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_PEER_VOLUME - Cannot modify a peer volume.
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - INV_OPERATION_VV_ONLINE_COPY_IN_PROGRESS  - The volume is the
             target of an online copy.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_INTERNAL_VOLUME - Illegal op on internal vol
-        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
             - EXISTENT_ID - An ID exists
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_NOT_IN_NORMAL_STATE - Volume state is not normal
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - VV_IN_INCONSISTENT_STATE - Internal inconsistency error in vol
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_RETAIN_GT_EXPIRE - Retention time is greater than
             expiration time.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_TIME - Invalid time specified.
-        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_SNAPSHOT_NOT_SAME_TYPE - Some snapshots in the
             volume set are read-only, some are read-write
         """
@@ -2516,9 +2516,9 @@ class HP3ParClient(object):
                            target name must be sys:all_others.
         :type targetName: str
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
            - NON_EXISTENT_QOS_RULE - QoS rule does not exist.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
            - INV_INPUT_ILLEGAL_CHAR - Illegal character in the input.
         """
         response, body = self.http.get('/qos/%(targetType)s:%(targetName)s' %
@@ -2593,25 +2593,25 @@ class HP3ParClient(object):
                 'defaultLatency': False # Use latencyGoal or defaultLatency?
             }
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
           - INV_INPUT_EXCEEDS_RANGE - Invalid input: number exceeds expected
           range.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
           - NON_EXISTENT_QOS_RULE - QoS rule does not exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
           - INV_INPUT_ILLEGAL_CHAR - Illegal character in the input.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
           - EXISTENT_QOS_RULE - QoS rule already exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
           - INV_INPUT_MIN_GOAL_GRT_MAX_LIMIT - I/O-per-second maximum limit
           should be greater than the minimum goal.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
           - INV_INPUT_BW_MIN_GOAL_GRT_MAX_LIMIT - Bandwidth maximum limit
           should be greater than the mimimum goal.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
           - INV_INPUT_BELOW_RANGE - I/O-per-second limit is below range.
           Bandwidth limit is below range.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
           - UNLICENSED_FEATURE - The system is not licensed for QoS.
         """
         info = {'name': targetName,
@@ -2687,25 +2687,25 @@ class HP3ParClient(object):
                 'defaultLatency': False # Use latencyGoal or defaultLatency?
             }
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             INV_INPUT_EXCEEDS_RANGE - Invalid input: number exceeds expected
             range.
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             NON_EXISTENT_QOS_RULE - QoS rule does not exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             INV_INPUT_ILLEGAL_CHAR - Illegal character in the input.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             EXISTENT_QOS_RULE - QoS rule already exists.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             INV_INPUT_IO_MIN_GOAL_GRT_MAX_LIMIT - I/O-per-second maximum limit
             should be greater than the minimum goal.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             INV_INPUT_BW_MIN_GOAL_GRT_MAX_LIMIT - Bandwidth maximum limit
             should be greater than the minimum goal.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             INV_INPUT_BELOW_RANGE - I/O-per-second limit is below
             range. Bandwidth limit is below range.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
                      UNLICENSED_FEATURE - The system is not licensed for QoS.
         """
         response = self.http.put('/qos/%(targetType)s:%(targetName)s' %
@@ -2723,9 +2723,9 @@ class HP3ParClient(object):
                            target name must be sys:all_others.
         :type targetName: str
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound` -
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound` -
                         NON_EXISTENT_QOS_RULE - QoS rule does not exist.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest` -
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest` -
                         INV_INPUT_ILLEGAL_CHAR - Illegal character in the input
 
         """
@@ -2746,16 +2746,16 @@ class HP3ParClient(object):
         :type value: str
 
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_EXCEEDS_LENGTH - Invalid input: string length exceeds
             limit.
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_MISSING_REQUIRED - Required fields missing
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_UNREC_NAME - Unrecognized name
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_ILLEGAL_CHAR - Illegal character in input
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOL - The volume does not exist
 
         """
@@ -2806,11 +2806,11 @@ class HP3ParClient(object):
                 'creationTime8601': '2014-07-22T17:10:22-07:00'
             }
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_ILLEGAL_CHAR - Illegal character in input
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOL - The volume does not exist
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_OBJECT_KEY - Object key does not exist
 
         """
@@ -2856,7 +2856,7 @@ class HP3ParClient(object):
                 ]
             }
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOL - The volume does not exist
 
         """
@@ -2874,11 +2874,11 @@ class HP3ParClient(object):
 
         :returns: None
 
-        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_ILLEGAL_CHAR - Illegal character in input
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOL - The volume does not exist
-        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_OBJECT_KEY - Object key does not exist
 
         """
@@ -2956,7 +2956,7 @@ class HP3ParClient(object):
 
         :returns: dict
 
-        :raises: :class:`~hp3parclient.exceptions.SrstatldException`
+        :raises: :class:`~hpe3parclient.exceptions.SrstatldException`
             - srstatld gives invalid output
         """
         if interval not in ['daily', 'hourly']:

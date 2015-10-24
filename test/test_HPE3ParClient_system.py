@@ -1,4 +1,4 @@
-# (c) Copyright 2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2015 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,19 +16,19 @@
 
 from testconfig import config
 import unittest
-import HP3ParClient_base as hp3parbase
+import HPE3ParClient_base as hpe3parbase
 
-from hp3parclient import exceptions
+from hpe3parclient import exceptions
 
 
-class HP3ParClientSystemTestCase(hp3parbase.HP3ParClientBaseTestCase):
+class HPE3ParClientSystemTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
     def setUp(self):
-        super(HP3ParClientSystemTestCase, self).setUp(withSSH=True)
+        super(HPE3ParClientSystemTestCase, self).setUp(withSSH=True)
 
     def tearDown(self):
         # very last, tear down base class
-        super(HP3ParClientSystemTestCase, self).tearDown()
+        super(HPE3ParClientSystemTestCase, self).tearDown()
 
     def test_get_patch(self):
         """This can work with or without a patch, but you need to manually
@@ -147,5 +147,5 @@ class HP3ParClientSystemTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
 # testing
 # suite = unittest.TestLoader().
-#     loadTestsFromTestCase(HP3ParClientSystemTestCase)
+#     loadTestsFromTestCase(HPE3ParClientSystemTestCase)
 # unittest.TextTestRunner(verbosity=2).run(suite)

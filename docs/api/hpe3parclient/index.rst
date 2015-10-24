@@ -1,8 +1,8 @@
-:mod:`client` -- HP3ParClient
+:mod:`client` -- HPE3ParClient
 ===========================================
 
-.. automodule:: hp3parclient
-   :synopsis: HP 3PAR REST Web client
+.. automodule:: hpe3parclient
+   :synopsis: HPE 3PAR REST Web client
 
    .. autodata:: version
 
@@ -16,4 +16,3 @@ Sub-modules:
    exceptions
    file_client
    http
-   ssh

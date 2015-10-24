@@ -1,4 +1,4 @@
-# (c) Copyright 2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2015 Hewlett Packard Enterprise Development LP
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -22,7 +22,7 @@ import unittest
 from testconfig import config
 from functools import wraps
 
-import HP3ParClient_base as hp3parbase
+import HPE3ParClient_base as hpe3parbase
 
 cpgs_to_delete = []
 fpgs_to_delete = []
@@ -40,7 +40,7 @@ def skip_file_persona():
     return config['TEST']['skip_file_persona'].lower() == 'true'
 
 
-class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
+class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
     interfaces = None
     DEBUG = config['TEST']['debug'].lower() == 'true'
@@ -52,7 +52,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
     def setUp(self, withSSH=True, withFilePersona=True):
         self.withSSH = withSSH
         self.withFilePersona = withFilePersona
-        super(HP3ParFilePersonaClientTestCase, self).setUp(
+        super(HPE3ParFilePersonaClientTestCase, self).setUp(
             withSSH=self.withSSH, withFilePersona=self.withFilePersona)
 
         # Only get the tpdinterface once and reuse it for all the tests.
@@ -75,7 +75,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
             save_interface.close()
 
         else:
-            self.cl.interfaces = HP3ParFilePersonaClientTestCase.interfaces
+            self.cl.interfaces = HPE3ParFilePersonaClientTestCase.interfaces
 
     def tearDown(self):
         """Clean-up -- without fail -- more than humanly possible."""
@@ -136,7 +136,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         del cpgs_to_delete[:]
 
         # very last, tear down base class
-        super(HP3ParFilePersonaClientTestCase, self).tearDown()
+        super(HPE3ParFilePersonaClientTestCase, self).tearDown()
 
     def print_header_and_footer(func):
         """Print header and footer for unit tests."""
@@ -468,7 +468,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         fpg_count = self.get_fpg_count()
 
         test_prefix = 'UT1_'
-        fpgname = test_prefix + "FPG_" + hp3parbase.TIME
+        fpgname = test_prefix + "FPG_" + hpe3parbase.TIME
         fpgs_to_delete.append(fpgname)
 
         bogus_cpgname = 'thiscpgdoesnotexist'
@@ -486,11 +486,11 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
         fpg_count = self.get_fpg_count()
 
-        fpgname = test_prefix + "FPG_" + hp3parbase.TIME
+        fpgname = test_prefix + "FPG_" + hpe3parbase.TIME
         fpgs_to_delete.append(fpgname)
 
         # Create a CPG for the test
-        cpgname = test_prefix + "CPG_" + hp3parbase.TIME
+        cpgname = test_prefix + "CPG_" + hpe3parbase.TIME
         cpgs_to_delete.append(cpgname)
         optional = self.CPG_OPTIONS.copy()
         optional.pop('domain', None)  # File Persona doesn't allow a domain
@@ -509,11 +509,11 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         fpg_count = self.get_fpg_count()
 
         test_prefix = 'UT3_'
-        fpgname = test_prefix + "FPG_" + hp3parbase.TIME
+        fpgname = test_prefix + "FPG_" + hpe3parbase.TIME
         fpgs_to_delete.append(fpgname)
 
         # Create a CPG for the test
-        cpgname = test_prefix + "CPG_" + hp3parbase.TIME
+        cpgname = test_prefix + "CPG_" + hpe3parbase.TIME
         cpgs_to_delete.append(cpgname)
         optional = self.CPG_OPTIONS
         self.cl.createCPG(cpgname, optional)
@@ -532,11 +532,11 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         fpg_count = self.get_fpg_count()
 
         test_prefix = 'UT4_'
-        fpgname = test_prefix + "FPG_" + hp3parbase.TIME
+        fpgname = test_prefix + "FPG_" + hpe3parbase.TIME
         fpgs_to_delete.append(fpgname)
 
         # Create a CPG for the test
-        cpgname = test_prefix + "CPG_" + hp3parbase.TIME
+        cpgname = test_prefix + "CPG_" + hpe3parbase.TIME
         cpgs_to_delete.append(cpgname)
         optional = self.CPG_OPTIONS.copy()
         optional.pop('domain', None)  # File Persona doesn't allow domain
@@ -567,10 +567,10 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         if fpgname is not None:
             return fpgname
 
-        fpgname = test_prefix + "FPG_" + hp3parbase.TIME
+        fpgname = test_prefix + "FPG_" + hpe3parbase.TIME
         fpgs_to_delete.append(fpgname)
         # Create a CPG for the test
-        cpgname = test_prefix + "CPG_" + hp3parbase.TIME
+        cpgname = test_prefix + "CPG_" + hpe3parbase.TIME
         cpgs_to_delete.append(cpgname)
         optional = self.CPG_OPTIONS.copy()
         optional.pop('domain', None)  # File Persona doesn't allow a domain
@@ -589,7 +589,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         vfsname = config['TEST'].get('vfs')
         if vfsname is not None:
             return vfsname
-        vfsname = test_prefix + "VFS_" + hp3parbase.TIME
+        vfsname = test_prefix + "VFS_" + hpe3parbase.TIME
         bgrace = '11'
         igrace = '22'
         comment = 'this is a test comment'
@@ -908,7 +908,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
             self.get_fsips(fpgname, vfsname)
 
         # CRUD test fstore using this VFS
-        fstore = test_prefix + "CRUD_FSTORE_" + hp3parbase.TIME
+        fstore = test_prefix + "CRUD_FSTORE_" + hpe3parbase.TIME
         self.crud_fstore(fpgname, vfsname, fstore)
 
         # NFS SHARES and FSTORE
@@ -970,7 +970,7 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
         # SNAPSHOTS (need a share to use)
 
         # test creates and cleans
-        tag = test_prefix + "TAG_" + hp3parbase.TIME
+        tag = test_prefix + "TAG_" + hpe3parbase.TIME
         self.create_fsnap(fpgname, vfsname, fstore, tag)
 
         # SHARE REMOVAL -- includes tests/asserts
@@ -995,5 +995,5 @@ class HP3ParFilePersonaClientTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
 # testing
 # suite = unittest.TestLoader().
-#     loadTestsFromTestCase(HP3ParFilePersonaClientTestCase)
+#     loadTestsFromTestCase(HPE3ParFilePersonaClientTestCase)
 # unittest.TextTestRunner(verbosity=2).run(suite)

@@ -1,4 +1,4 @@
-# (c) Copyright 2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2015 Hewlett Packard Enterprise Development LP
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -11,7 +11,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-""" HP3PAR sample client program for File Persona arrays.
+""" HPE3PAR sample client program for File Persona arrays.
 
 :Description: This simple sample shows how to call the File Persona API
 and print the results.
@@ -20,7 +20,7 @@ and print the results.
 
 import os, sys, pprint
 
-from hp3parclient import file_client
+from hpe3parclient import file_client
 
 cmd_folder = os.path.realpath(os.path.abspath("..") )
 if cmd_folder not in sys.path:
@@ -30,7 +30,7 @@ username = 'your-3PAR-user-name'
 password = 'your-3PAR-password'
 ip = 'your-3PAR-ip-address'
 
-cl = file_client.HP3ParFilePersonaClient("https://%s:8080/api/v1" % ip)
+cl = file_client.HPE3ParFilePersonaClient("https://%s:8080/api/v1" % ip)
 cl.setSSHOptions(ip, username, password, port=22, conn_timeout=None)
 
 cl.login(username, password)

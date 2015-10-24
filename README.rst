@@ -1,6 +1,6 @@
-HP 3PAR REST Client
+HPE 3PAR REST Client
 ===================
-This is a Client library that can talk to the HP 3PAR Storage array.  The 3PAR
+This is a Client library that can talk to the HPE 3PAR Storage array.  The 3PAR
 storage array has a REST web service interface and a command line interface.
 This client library implements a simple interface for talking with either
 interface, as needed.  The python Requests library is used to communicate
@@ -166,7 +166,7 @@ Folders
 =======
 
 * docs -- contains the documentation.
-* hp3parclient -- the actual client.py library
+* hpe3parclient -- the actual client.py library
 * test -- unit tests
 * samples -- some sample uses
 
@@ -191,9 +191,9 @@ manually before running unit tests also allows you to watch the debug output.
 
 * WSAPI::
 
-  $ python test/HP3ParMockServer_flask.py -port 5001 -user <USERNAME> -password <PASSWORD> -debug
+  $ python test/HPE3ParMockServer_flask.py -port 5001 -user <USERNAME> -password <PASSWORD> -debug
 
 * SSH::
 
-  $ python test/HP3ParMockServer_ssh.py [port]
+  $ python test/HPE3ParMockServer_ssh.py [port]
 

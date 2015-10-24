@@ -1,4 +1,4 @@
-# (c) Copyright 2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2015 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,19 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test class of 3Par Client handling exceptions."""
+"""Test class of 3PAR Client handling exceptions."""
 
-import HP3ParClient_base as hp3parbase
-from hp3parclient import exceptions
+import HPE3ParClient_base as hpe3parbase
+from hpe3parclient import exceptions
 
 
-class HP3ParClientExceptionTestCase(hp3parbase.HP3ParClientBaseTestCase):
+class HPE3ParClientExceptionTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
     def setUp(self):
-        super(HP3ParClientExceptionTestCase, self).setUp()
+        super(HPE3ParClientExceptionTestCase, self).setUp()
 
     def tearDown(self):
-        super(HP3ParClientExceptionTestCase, self).tearDown()
+        super(HPE3ParClientExceptionTestCase, self).tearDown()
 
     def test_from_response_string_format(self):
         self.printHeader('from_response')
