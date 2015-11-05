@@ -7,7 +7,7 @@ except ImportError:
 
 
 setup(
-  name='hpe3parclient',
+  name='python-3parclient',
   version=hpe3parclient.version,
   description="HPE 3PAR HTTP REST Client",
   author="Walter A. Boring IV",
