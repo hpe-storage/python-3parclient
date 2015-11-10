@@ -4,7 +4,7 @@ Installing / Upgrading
 
 
 **HPE3PARClient** is in the `Python Package Index
-<http://pypi.python.org/pypi/python-3parclient/>`_.
+<http://pypi.python.org/pypi/hpe3parclient/>`_.
 
 Installing with pip
 -------------------
@@ -12,11 +12,11 @@ Installing with pip
 We prefer `pip <http://pypi.python.org/pypi/pip>`_
 to install pymongo on platforms other than Windows::
 
-  $ pip install python-3parclient
+  $ pip install hpe3parclient
 
 To upgrade using pip::
 
-  $ pip install --upgrade python-3parclient
+  $ pip install --upgrade hpe3parclient
 
 Installing with easy_install
 ----------------------------
@@ -24,11 +24,11 @@ Installing with easy_install
 If you must install hpe3parclient using
 `setuptools <http://pypi.python.org/pypi/setuptools>`_ do::
 
-  $ easy_install python-3parclient
+  $ easy_install hpe3parclient
 
 To upgrade do::
 
-  $ easy_install -U python-3parclient
+  $ easy_install -U hpe3parclient
 
 
 Installing from source
@@ -42,10 +42,3 @@ install the driver from the resulting tree::
   $ cd python-3parclient
   $ pip install .
 
-Uninstalling an old client
---------------------------
-
-If the older **HP3PARClient** was installed on the system already it
-will need to be removed. Run the following command to remove it::
-
-  $ sudo pip uninstall hp3parclient

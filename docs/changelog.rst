@@ -4,8 +4,6 @@ Changelog
 Changes in Version 4.0.0
 ------------------------
 * Rebranded the client from HP to HPE.
-* Updated documentation to use the new PyPi project name for the
-  client, 'python-3parclient'.
 
 Changes in Version 3.3.0
 ------------------------
