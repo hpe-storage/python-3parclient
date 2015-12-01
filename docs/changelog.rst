@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Changes in Version 4.0.2
+------------------------
+* Fixed documentation and README errors
+
 Changes in Version 4.0.1
 ------------------------
 * Fixed error where you could not create a LUN with the ID of 0. (issue #17)
