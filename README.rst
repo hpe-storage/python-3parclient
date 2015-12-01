@@ -97,20 +97,6 @@ Capabilities
 * Query Online Physical Copy Status
 * Stop Offline Physical Copy
 
-* Query Remote Copy Info
-* Query a Remote Copy Group
-* Query all Remote Copy Groups
-* Create a Remote Copy Group
-* Delete a Remote Copy Group
-* Modify a Remote Copy Group
-* Add a Volume to a Remote Copy Group
-* Remove a Volume from a Remote Copy Group
-* Start Remote Copy on a Remote Copy Group
-* Stop Remote Copy on a Remote Copy Group
-* Synchronize a Remote Copy Group
-* Recover a Remote Copy Group from a Disaster
-* Enable/Disable Config Mirroring on a Remote Copy Target
-
 File Persona Capabilities
 =========================
 * Get File Services Info

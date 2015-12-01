@@ -2963,7 +2963,6 @@ class HPE3ParClient(object):
         :type optional: dict
 
         .. code-block:: python
-
             targets = [
                 {
                     "targetName": "name",      # Target name associated with
@@ -3004,79 +3003,79 @@ class HPE3ParClient(object):
                                                # remote-copy group.
             }
 
-        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_ILLEGAL_CHAR - Invalid character in the remote-copy
               group or volume name.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - EXISTENT_RCOPY_GROUP - The remote-copy group already exists.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
             - RCOPY_GROUP_TOO_MANY_TARGETS - Too many remote-copy group targets
               have been specified.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_BAD_ENUM_VALUE - The mode is not valid.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
             - RCOPY_GROUP_TARGET_NOT_UNIQUE - The remote-copy group target is
               not unique.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_IS_NOT_READY - The remote-copy configuration is not ready
               for commands.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_MODE_NOT_SUPPORTED - The remote-copy group mode is
               not supported.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
             - RCOPY_GROUP_MAX_GROUP_REACHED_PERIODIC - The maximum number of
               remote-copy groups in periodic mode has been reached.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
             - RCOPY_GROUP_MAX_GROUP_REACHED_PERIODIC - The maximum number of
               remote-copy groups in periodic mode has been reached.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_SECONDARY_GROUP_MORE_THAN_ONE_BACKUP_TARGET -
               Secondary groups should have only one target that is not a
               backup.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPServiceUnavailable`
+        :raises: :class:`~hp3parclient.exceptions.HTTPServiceUnavailable`
             - RCOPY_GROUP_MORE_THAN_ONE_SYNC_TARGET - Remote-copy groups can
               have no more than one synchronous-mode target.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPServiceUnavailable`
+        :raises: :class:`~hp3parclient.exceptions.HTTPServiceUnavailable`
             - RCOPY_GROUP_MORE_THAN_ONE_PERIODIC_TARGET - Remote-copy groups
               can have no more than one periodic-mode target.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_ONE_TO_ONE_CONFIG_FOR_MIXED_MODE - Mixed mode is
               supported in a 1-to-1 remote-copy configuration.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_INV_TARGET - The specified target is not a target of
               the remote-copy group.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotImplemented`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotImplemented`
             - RCOPY_TARGET_IN_PEER_PERSISTENCE_SYNC_GROUP_ONLY - The
               remote-copy target is configured with peer persistence; only
               synchronous groups can be added.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotImplemented`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotImplemented`
             - RCOPY_TARGET_MODE_NOT_SUPPORTED - The remote-copy target
               mode is not supported.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotImplemented`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotImplemented`
             - RCOPY_TARGET_MULTI_TARGET_NOT_SUPPORTED - The remote-copy target
               was created in an earlier version of the HP 3PAR OS that does not
               support multiple targets.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotImplemented`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotImplemented`
             - RCOPY_TARGET_VOL_AUTO_CREATION_NOT_SUPPORTED - The remote-copy
               target is in an older version of the HP 3PAR OS that does not
               support autocreation of
-        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
             - RCOPY_GROUP_MIXED_MODES_ON_ONE_TARGET - Remote-copy groups
               with different modes on a single target are not supported.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_CPG - The CPG does not exists.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - CPG_NOT_IN_SAME_DOMAIN - Snap CPG is not in the same domain as
             the user CPG.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
             - NON_EXISTENT_DOMAIN - Domain doesn't exist.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_HAS_NO_CPG - No CPG has been defined for the
               remote-copy group on the target.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPServiceUnavailable`
+        :raises: :class:`~hp3parclient.exceptions.HTTPServiceUnavailable`
             - RCOPY_MAX_SYNC_TARGET_REACHED - The maximum number of remote-copy
               synchronous targets has been reached.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPServiceUnavailable`
+        :raises: :class:`~hp3parclient.exceptions.HTTPServiceUnavailable`
             - RCOPY_MAX_PERIODIC_TARGET_REACHED - The maximum number of
               remote-copy periodic targets has been reached.
         """
@@ -3097,30 +3096,30 @@ class HPE3ParClient(object):
         :param keep_snap: used to retain the local volume resynchronization
                           snapshot. NOTE: to retain the snapshot pass 'true'
                           to keep_snap
-        :type keep_snap: bool
+        :type keep_snap: str
 
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_RCOPY_GROUP - The remote-copy group does not exist.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_STARTED - The remote-copy group has already been
               started.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_IS_BUSY - The remote-copy group is currently busy;
               retry later.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_TARGET_IS_NOT_READY - The remote-copy group target is not
               ready.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_OPERATION_ONLY_ON_PRIMARY_SIDE - The operation
               should be performed only on the primary side.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_RENAME_RESYNC_SNAPSHOT_FAILED - Renaming of the
               remote-copy group resynchronization snapshot failed.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_IN_FAILOVER_STATE - The remote-copy group is in
               failover state; both the source system and the target system
               are in the primary state.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - RCOPY_GROUP_TARGET_VOLUME_MISMATCH - Secondary group on target
               system has a mismatched volume configuration.
         """
@@ -3144,7 +3143,6 @@ class HPE3ParClient(object):
         :type optional: dict
 
         .. code-block:: python
-
             optional = {
                 "localUserCPG": "CPG",      # Specifies the local user
                                             # CPG that will be used for
@@ -3247,42 +3245,42 @@ class HPE3ParClient(object):
                                             # remote-copy group.
             }
 
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_RCOPY_GROUP - The remote-copy group does not exist.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_OPERATION_ONLY_ON_PRIMARY_SIDE - The operation should
               be performed only on the primary side.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_IS_NOT_PERIODIC - Target in group is not periodic.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_INV_POLICY_FOR_PERIODIC_GROUP - Invalid policy for a
               periodic group.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_INV_POLICY_FOR_SYNC_GROUP - Invalid policy for a
               synchronous target.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_CPG - The CPG does not exists.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_INV_TARGET - The specified target is not a target of
               the remote-copy group.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - CPG_NOT_IN_SAME_DOMAIN - Snap CPG is not in the same domain as
             the user CPG.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_BELOW_RANGE - The minimum allowable period is 300
               seconds.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT_EXCEEDS_RANGE - Invalid input: the period is too long.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_STARTED - The remote-copy group has already been
               started.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_INV_OPERATION_ON_MULTIPLE_TARGETS - The operation is
               not supported on multiple targets.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
             - RCOPY_GROUP_TARGET_NOT_UNIQUE - The remote-copy group target is
               not unique.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_INV_TARGET_NUMBER - The wrong number of targets is
               specified for the remote-copy group.
         """
@@ -3312,7 +3310,6 @@ class HPE3ParClient(object):
         :type optional: dict
 
         .. code-block:: python
-
             targets = [
                 {
                     "targetName": "name",            # The target name
@@ -3360,144 +3357,144 @@ class HPE3ParClient(object):
                                                  # the target volume.
             }
 
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_RCOPY_GROUP - The remote-copy group does not exist.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOL - volume doesn't exist
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_SNAPSHOT - The specified snapshot does not exist.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_SNAPSHOT_IS_RW - The specified snapshot can only be
               read-only.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_VOL_IS_RO - The volume to be admitted to the
               remote-copy group cannot be read-only.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_HAS_NO_CPG - No CPG has been defined for the
               remote-copy group on the target.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
             - RCOPY_GROUP_EXISTENT_VOL - The specified volume is
               already in the remote-copy group.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
             - RCOPY_GROUP_EXISTENT_VOL_ON_TARGET - The specified secondary
               volume to be automatically created already exists on the target.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_INV_TARGET - The specified target is not a target of
               the remote-copy group.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_VOL_SIZE_NOT_MATCH - The size of the volume added to
               the remote-copy group does not match the size of the volume on
               the target.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - RCOPY_GROUP_NON_EXISTENT_VOL_ON_TARGET - The specified secondary
               volume does not exist on the target.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_VOL_NO_SNAPSHOT_SPACE - The volume to be admitted
               into the remote-copy group requires that snapshot space be
               allocated.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_TARGET_VOL_NO_SNAPSHOT_SPACE - The specified
               secondary volumes on the target require snapshot space.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_VOL_IS_PHYSICAL_COPY - A physical copy cannot
               be added to a remote-copy group
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_MAX_VOL_REACHED_PERIODIC - The number of
               periodic-mode volumes on the system has reached the limit.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_MAX_VOL_REACHED_SYNC - The number of
               synchronous-mode volumes on the system has reached the limit.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_MAX_VOL_REACHED - The number of volumes on the
               system has reached the limit.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_IS_NOT_READY - The remote-copy configuration is not ready
-        :raises: :class:`~hpe3parclient.exceptions.`
+        :raises: :class:`~hp3parclient.exceptions.`
             - RCOPY_GROUP_VOL_INTERNAL_CONSISTENCY_ERR - The volume to be
               admitted into the remote-copy group has an internal consistency
               error.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_IS_BEING_REMOVED - The volume to be admitted into the
               remote-copy group is being removed.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUPSNAPSHOT_PARENT_MISMATCH - The names of the snapshot
               and its parent do not match.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_TARGET_VOL_EXPORTED - Secondary volumes cannot be
               admitted when they are exported.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_VOL_IS_PEER_PROVISIONED - A peer-provisioned volume
               cannot be admitted into a remote-copy group.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_VOL_ONLINE_CONVERSION - Online volume conversions do
               not support remote copy.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_VOL_ONLINE_PROMOTE - Online volume promotes do not
               support remote copy.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_VOL_ONLINE_COPY - Online volume copies do not support
               remote copy.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_VOL_CLEAN_UP - Cleanup of internal volume is in
               progress.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_VOL_IS_INTERNAL - Internal volumes cannot be admitted
               into a remote-copy group.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_VOL_NOT_IN_SAME_DOMAIN - The remote-copy group has a
               different domain than the volume.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_STARTED - The remote-copy group has already been
               started.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_IS_BUSY - The remote-copy group is currently busy;
               retry later.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_VOL_IN_OTHER_GROUP - The volume is already in
               another remote-copy group.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_INV_TARGET_NUMBER - The wrong number of targets is
               specified for the remote-copy group.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_INV_TARGET - The specified target is not a target of
               the remote-copy group.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_NOT_SUPPORT_VOL_ID - The target for the remote-copy
               group does not support volume IDs.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_IS_SELF_MIRRORED - The target is self-mirrored.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_TARGET_VOL_IS_RO - The remote-copy target volume
               cannot be read-only.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_OPERATION_ONLY_ON_PRIMARY_SIDE - The operation should
               be performed only on the primary side.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_TARGET_IS_NOT_READY - The remote-copy group target is not
               ready.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotImplemented`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotImplemented`
             - RCOPY_UNSUPPORTED_TARGET_VERSION - The target HP 3PAR OS version
               is not supported.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_MULTIPLE_VOL_IN_SAME_FAMILY - A remote-copy group
               cannot contain multiple volumes in the same family tree.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_MULTIPLE_RW_SNAPSHOT_IN_SAME_FAMILY - Only one
               read/write snapshot in the same family can be added to a
               remote-copy group.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_SYNC_SNAPSHOT_IN_MULTIPLE_TARGET - A synchronization
               snapshot cannot be set with multiple targets.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_ADD_VOL_FAILED - Failed to add volume to the
               remote-copy group.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_ADD_VOL_FAILED_PARTIAL - Adding volume to
               remote-copy group succeeded on some targets.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_SET_AUTO_CREATED - The set was created
               automatically Members cannot be added or removed.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_SECONDARY_DOES_NOT_MATCH_PRIMARY - The remote-copy
               group is in the failover state. Both systems are in the primary
               state.
@@ -3528,43 +3525,42 @@ class HPE3ParClient(object):
         :type optional: dict
 
         .. code-block:: python
-
             optional = {
                 "keepSnap": False  # If true, the resynchronization
                                    # snapshot of the local volume is
                                    # retained.
             }
 
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_RCOPY_GROUP - The remote-copy group does not exist.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOL - volume doesn't exist
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_IS_NOT_READY - The remote-copy configuration is not ready
               for commands.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_STARTED - The remote-copy group has already been
               started.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_IS_BUSY - The remote-copy group is currently busy;
               retry later.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - RCOPY_GROUP_VOL_NOT_IN_GROUP - The volume is not in the
               remote-copy group.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_RENAME_RESYNC_SNAPSHOT_FAILED - Renaming of the
               remote-copy group resynchronization snapshot failed.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+        :raises: :class:`~hp3parclient.exceptions.HTTPConflict`
             - RCOPY_GROUP_CREATED_MIRROR_CONFIG_OFF - The remote-copy group was
               created when the configuration mirroring policy was turned off on
               the target. However, this policy is now turned on. In order to
               dismiss a volume from the remote-copy group, the configuration
               mirroring policy must be turned off. Retry after turning the
               policy off.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_OPERATION_ONLY_ON_PRIMARY_SIDE - The operation should
               be performed only on the primary side.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_TARGET_IS_NOT_READY - The remote-copy group target is
               not ready.
         """
@@ -3602,7 +3598,6 @@ class HPE3ParClient(object):
         :type optional: dict
 
         .. code-block:: python
-
             # All the volumes in the group must be specified. While specifying
             # the pair, the starting snapshot is optional. If it is not
             # specified, a full resynchronization of the volume is performed.
@@ -3624,33 +3619,33 @@ class HPE3ParClient(object):
                 "startingSnapshots": startingSnapshots
             }
 
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_RCOPY_GROUP - The remote-copy group does not exist.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_INV_TARGET - The specified target is not a target of
               the remote-copy group.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_STARTED - The remote-copy group has already been
               started.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
             - RCOPY_GROUP_EMPTY - The remote-copy group must contain volumes
               before being started.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_OPERATION_ONLY_ON_PRIMARY_SIDE - The operation
               should be performed only on the primary side.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
             - RCOPY_TARGET_NOT_SPECIFIED - A target must be specified to
               complete this operation.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
             - RCOPY_GROUP_NOT_ALL_VOLUMES_SPECIFIED - All the volumes in the
               remote-copy group must be specified to complete this operation.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - RCOPY_GROUP_EXISTENT_VOL_WWN_ON_TARGET - Secondary volume WWN
               already exists on the target.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - RCOPY_GROUP_VOLUME_ALREADY_SYNCED - Volume is already
               synchronized.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
             - RCOPY_GROUP_INCORRECT_SNAPSHOT_OR_VOLUME_SPECIFIED - An incorrect
               starting snapshot or volume was specified, or the snapshot or
               volume does not exist.
@@ -3673,7 +3668,6 @@ class HPE3ParClient(object):
         :type optional: dict
 
         .. code-block:: python
-
             optional = {
                 "noSnapshot": False,        # If true, this option turns
                                             # off creation of snapshots
@@ -3685,9 +3679,9 @@ class HPE3ParClient(object):
                                             # with this group
             }
 
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_RCOPY_GROUP - The remote-copy group does not exist.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_TARGET_IS_NOT_READY - The remote-copy group target is not
               ready.
         """
@@ -3709,7 +3703,6 @@ class HPE3ParClient(object):
         :type optional: dict
 
         .. code-block:: python
-
             optional = {
                 "noResyncSnapshot": False,   # If true, does not save
                                              # the resynchronization
@@ -3735,23 +3728,23 @@ class HPE3ParClient(object):
                                              # inconsistent.
             }
 
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_RCOPY_GROUP - The remote-copy group does not exist.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_OPERATION_ONLY_ON_PRIMARY_SIDE - The operation
               should be performed only on the primary side.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - UNLICENSED_FEATURE - The system is not licensed for this feature.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_INV_TARGET - The specified target is not a target of
               the remote-copy group.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_TARGET_IS_NOT_READY - The remote-copy group target is not
               ready.
-        :raises: :class:`~hpe3parclient.exceptions.`
+        :raises: :class:`~hp3parclient.exceptions.`
             - RCOPY_GROUP_INVOLVED_IN_SYNCHRONIZATION - The remote-copy group
               is already involved in synchronization.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_STARTED - The remote-copy group has already been
               started.
         """
@@ -3791,7 +3784,6 @@ class HPE3ParClient(object):
         :type optional: dict
 
         .. code-block:: python
-
             optional = {
                 "targetName": "target_name",  # The target name
                                               # associated with this
@@ -3842,45 +3834,45 @@ class HPE3ParClient(object):
                                               # only for REVERSE operation
             }
 
-        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+        :raises: :class:`~hp3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_RCOPY_GROUP - The remote-copy group does not exist.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - UNLICENSED_FEATURE - System is not licensed for this feature.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+        :raises: :class:`~hp3parclient.exceptions.HTTPBadRequest`
             - RCOPY_GROUP_INV_TARGET - Specified target is not in remote copy
               group.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - INV_INPUT_MISSING_REQUIRED - Group has multiple targets.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_RCOPY_GROUP_ROLE_CONFLICT - Group is not in correct
               role for this operation.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_INV_OPERATION_ON_MULTIPLE_TARGETS - The operation is
               not supported on multiple targets.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_NOT_STOPPED - Remote copy group is not stopped.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_RCOPY_GROUP_ROLE_CONFLICT - Group is not in correct
               role for this operation.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_NOT_STARTED - Remote copy not started.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - INV_INPUT_PARAM_CONFLICT - Parameters cannot be present at the
               same time.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - INV_OPERATION_VV_PROMOTE_IN_PROGRESS - Volume promotion is
               in progress.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_IS_BUSY - Remote copy group is currently busy.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_STARTED - Remote copy group has already been started.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_EMPTY - Remote copy group does not contain any
               volumes.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_OPERATION_ONLY_ON_PRIMARY_SIDE - Operation should
               only be issued on primary side.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+        :raises: :class:`~hp3parclient.exceptions.HTTPForbidden`
             - RCOPY_GROUP_OPERATION_ONLY_ON_SECONDARY_SIDE - Operation should
               only be issued on secondary side.
         """
