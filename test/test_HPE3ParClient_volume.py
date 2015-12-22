@@ -1,4 +1,4 @@
-# (c) Copyright 2015 Hewlett Packard Enterprise Development LP
+# (c) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,8 @@ CPG_NAME2 = 'CPG2_UNIT_TEST' + hpe3parbase.TIME
 VOLUME_NAME1 = 'VOLUME1_UNIT_TEST' + hpe3parbase.TIME
 VOLUME_NAME2 = 'VOLUME2_UNIT_TEST' + hpe3parbase.TIME
 VOLUME_NAME3 = 'VOLUME3_UNIT_TEST' + hpe3parbase.TIME
-SNAP_NAME1 = 'SNAP_UNIT_TEST' + hpe3parbase.TIME
+SNAP_NAME1 = 'SNAP_UNIT_TEST1' + hpe3parbase.TIME
+SNAP_NAME2 = 'SNAP_UNIT_TEST2' + hpe3parbase.TIME
 DOMAIN = 'UNIT_TEST_DOMAIN'
 VOLUME_SET_NAME1 = 'VOLUME_SET1_UNIT_TEST' + hpe3parbase.TIME
 VOLUME_SET_NAME2 = 'VOLUME_SET2_UNIT_TEST' + hpe3parbase.TIME
@@ -85,6 +86,14 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
     def tearDown(self):
 
+        try:
+            self.cl.deleteVolume(SNAP_NAME1)
+        except Exception:
+            pass
+        try:
+            self.cl.deleteVolume(SNAP_NAME2)
+        except Exception:
+            pass
         try:
             self.cl.deleteVolumeSet(VOLUME_SET_NAME1)
         except Exception:
@@ -1928,6 +1937,32 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         time.sleep(10)
 
         self.printFooter('failover_remote_copy_group')
+
+    def test_23_get_volume_snapshots(self):
+        # Create volume and snaphot it
+        optional = {'snapCPG': CPG_NAME1}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+
+        self.cl.createSnapshot(SNAP_NAME1, VOLUME_NAME1)
+        self.cl.createSnapshot(SNAP_NAME2, VOLUME_NAME1)
+
+        # Get the volumes snapshots
+        snapshots = self.cl.getVolumeSnapshots(VOLUME_NAME1)
+
+        # Set snapshot names. If the test is not against a live array, we
+        # need to add the snapshot suffix.
+        if not is_live_test():
+            snapshots[0] = snapshots[0] + hpe3parbase.TIME
+            snapshots[1] = snapshots[1] + hpe3parbase.TIME
+
+        # If the volume has snapshots, their names will be returned as
+        # a list
+        self.assertEqual([SNAP_NAME1, SNAP_NAME2], snapshots)
+
+        # Test where volume does not exist
+        snapshots = self.cl.getVolumeSnapshots("BAD_VOL")
+        # An empty list is returned if the volume does not exist
+        self.assertEqual([], snapshots)
 
 # testing
 # suite = unittest.TestLoader().

@@ -1,4 +1,4 @@
-# (c) Copyright 2012-2015 Hewlett Packard Enterprise Development LP
+# (c) Copyright 2012-2016 Hewlett Packard Enterprise Development LP
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -17,12 +17,12 @@ HPE 3PAR Client.
 
 :Author: Walter A. Boring IV
 :Author: Kurt Martin
-:Copyright: Copyright 2012-2015 Hewlett Packard Enterprise Development LP
+:Copyright: Copyright 2012-2016 Hewlett Packard Enterprise Development LP
 :License: Apache v2.0
 
 """
 
-version_tuple = (4, 0, 2)
+version_tuple = (4, 0, 3)
 
 
 def get_version_string():

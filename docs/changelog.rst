@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Changes in Version 4.0.3
+------------------------
+* Adds the ability to retrieve all snapshots associated with a given volume
+
 Changes in Version 4.0.2
 ------------------------
 * Fixed documentation and README errors

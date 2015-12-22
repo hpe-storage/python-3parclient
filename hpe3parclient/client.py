@@ -1,4 +1,4 @@
-# (c) Copyright 2012-2015 Hewlett Packard Enterprise Development LP
+# (c) Copyright 2012-2016 Hewlett Packard Enterprise Development LP
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -3909,6 +3909,32 @@ class HPE3ParClient(object):
 
         cmd = ['setrcopytarget', 'pol', policy, target]
         self._run(cmd)
+
+    def getVolumeSnapshots(self, name):
+        """
+        Shows all snapshots associated with a given volume.
+
+        :param name: The volume name
+        :type name: str
+
+        :returns: List of snapshot names
+        """
+        cmd = ['showvv', '-p', '-copyof', name]
+        snap_output = self._run(cmd)
+
+        snapshots = []
+        # Throw out the first two lines
+        for snap in snap_output[2:]:
+            snap_parts = snap.split(',')
+            if len(snap_parts) > 1:
+                snap_name = snap_parts[1]
+                snapshots.append(snap_name)
+            else:
+                # When we reach a line that is not in the expected format,
+                # there are no more snapshot entries.
+                break
+
+        return snapshots
 
     def _mergeDict(self, dict1, dict2):
         """
