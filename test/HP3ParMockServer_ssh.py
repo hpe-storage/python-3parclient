@@ -569,8 +569,8 @@ OPTIONS
             return 'File Provisioning Group: %s not found\r' % opts.fpg
 
         for vfs in list(self.vfss.values()):
-            if vfs.vfsname == opts.vfs and (opts.fpg is None
-                                            or vfs.fpg == opts.fpg):
+            if vfs.vfsname == opts.vfs and (
+               opts.fpg is None or vfs.fpg == opts.fpg):
                 self.vfss.pop(vfs.vfsname)
                 return "deleted VFS"
         else:

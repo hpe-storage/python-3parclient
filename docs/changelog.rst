@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Changes in Version 3.3.1
+------------------------
+* Changes the exception isinstance check to look for basestring/str instead of
+  bytes in order to properly store the error description.
+
 Changes in Version 3.3.0
 ------------------------
 * Replaced all httplib2 calls with Python Request calls

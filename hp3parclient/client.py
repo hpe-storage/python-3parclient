@@ -2970,10 +2970,10 @@ class HP3ParClient(object):
             raise exceptions.SrstatldException("srstatld output not a list")
         elif len(output) < 4:
             raise exceptions.SrstatldException("srstatld output list too "
-                                               + "short")
+                                               "short")
         elif len(output[-1].split(',')) < 16:
             raise exceptions.SrstatldException("srstatld output last line "
-                                               + "invalid")
+                                               "invalid")
         else:
             return self._format_srstatld_output(output)
 
