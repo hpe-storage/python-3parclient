@@ -1,4 +1,4 @@
-# (c) Copyright 2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2015-2016 Hewlett Packard Development Company, L.P.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ VOLUME_NAME2 = 'VOLUME2_VLUN_UNIT_TEST' + hp3parbase.TIME
 DOMAIN = 'UNIT_TEST_DOMAIN'
 HOST_NAME1 = 'HOST1_VLUN_UNIT_TEST' + hp3parbase.TIME
 HOST_NAME2 = 'HOST2_VLUN_UNIT_TEST' + hp3parbase.TIME
+LUN_0 = 0
 LUN_1 = random.randint(1, 10)
 LUN_2 = random.randint(1, 10)
 
@@ -176,6 +177,19 @@ class HP3ParClientVLUNTestCase(hp3parbase.HP3ParClientBaseTestCase):
                           VOLUME_NAME1, LUN_1, HOST_NAME1, portPos)
 
         self.printFooter('create_VLUN_badParams')
+
+    def test_1_create_VLUN_with_id_zero(self):
+        self.printHeader('create_VLUN_with_id_zero')
+
+        self.cl.createVLUN(VOLUME_NAME1, LUN_0, HOST_NAME1)
+        vlun0 = self.cl.getVLUN(VOLUME_NAME1)
+        self.assertIsNotNone(vlun0)
+        lun = vlun0['lun']
+        self.assertEqual(LUN_0, lun)
+        volName = vlun0['volumeName']
+        self.assertEqual(VOLUME_NAME1, volName)
+
+        self.printFooter('create_VLUN_with_id_zero')
 
     def test_2_get_VLUN_bad(self):
         self.printHeader('get_VLUN_bad')

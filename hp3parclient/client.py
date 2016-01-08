@@ -1,4 +1,4 @@
-# (c) Copyright 2012-2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2012-2016 Hewlett Packard Development Company, L.P.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -2023,7 +2023,7 @@ class HP3ParClient(object):
         """
         info = {'volumeName': volumeName}
 
-        if lun:
+        if lun is not None:
             info['lun'] = lun
 
         if hostname:
