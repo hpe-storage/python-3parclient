@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright 2012 - 2015 Hewlett Packard Development Company, L.P.
+# Copyright 2012-2016 Hewlett Packard Development Company, L.P.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -48,6 +48,8 @@ class HTTPJSONRESTClient(object):
     :type secure: bool
     :param http_log_debug: Turns on http log debugging. Default will not log
     :type http_log_debug: bool
+    :param suppress_ssl_warnings: Suppresses log warning messages if True
+    :type suppress_ssl_warnings: bool
 
     """
 
@@ -56,7 +58,10 @@ class HTTPJSONRESTClient(object):
     http_log_debug = False
     _logger = logging.getLogger(__name__)
 
-    def __init__(self, api_url, secure=False, http_log_debug=False):
+    def __init__(self, api_url, secure=False, http_log_debug=False,
+                 suppress_ssl_warnings=False):
+        if suppress_ssl_warnings:
+            requests.packages.urllib3.disable_warnings()
         self.session_key = None
 
         # should be http://<Server:Port>/api/v1

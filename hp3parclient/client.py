@@ -177,9 +177,12 @@ class HP3ParClient(object):
     FLASH_CACHE_ENABLED = 1
     FLASH_CACHE_DISABLED = 2
 
-    def __init__(self, api_url, debug=False, secure=False):
+    def __init__(self, api_url, debug=False, secure=False,
+                 suppress_ssl_warnings=False):
         self.api_url = api_url
-        self.http = http.HTTPJSONRESTClient(self.api_url, secure=secure)
+        self.http = http.HTTPJSONRESTClient(
+            self.api_url, secure=secure,
+            suppress_ssl_warnings=suppress_ssl_warnings)
         api_version = None
         self.ssh = None
         self.vlun_query_supported = False
