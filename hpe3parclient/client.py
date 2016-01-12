@@ -184,10 +184,12 @@ class HPE3ParClient(object):
     RC_ACTION_CHANGE_TO_NATURUAL_DIRECTION = 10
     RC_ACTION_OVERRIDE_FAIL_SAFE = 11
 
-    def __init__(self, api_url, debug=False, secure=False, timeout=None):
+    def __init__(self, api_url, debug=False, secure=False, timeout=None,
+                 suppress_ssl_warnings=False):
         self.api_url = api_url
-        self.http = http.HTTPJSONRESTClient(self.api_url, secure=secure,
-                                            timeout=timeout)
+        self.http = http.HTTPJSONRESTClient(
+            self.api_url, secure=secure,
+            timeout=timeout, suppress_ssl_warnings=suppress_ssl_warnings)
         api_version = None
         self.ssh = None
         self.vlun_query_supported = False
@@ -3996,10 +3998,10 @@ class HPE3ParClient(object):
             raise exceptions.SrstatldException("srstatld output not a list")
         elif len(output) < 4:
             raise exceptions.SrstatldException("srstatld output list too "
-                                               + "short")
+                                               "short")
         elif len(output[-1].split(',')) < 16:
             raise exceptions.SrstatldException("srstatld output last line "
-                                               + "invalid")
+                                               "invalid")
         else:
             return self._format_srstatld_output(output)
 

@@ -4,7 +4,7 @@
 .. automodule:: hpe3parclient.client
    :synopsis: HPE 3PAR REST Web client
 
-   .. autoclass:: hpe3parclient.client.HPE3ParClient(api_url, secure=False)
+   .. autoclass:: hpe3parclient.client.HPE3ParClient(api_url, secure=False, timeout=None, suppress_ssl_warnings=False)
 
       .. automethod:: getWsApiVersion
       .. automethod:: getStorageSystemInfo

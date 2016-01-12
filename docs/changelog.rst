@@ -4,6 +4,8 @@ Changelog
 Changes in Version 4.0.3
 ------------------------
 * Adds the ability to retrieve all snapshots associated with a given volume
+* Fixes passing in the flag to the client object in order to suppressing
+  SSL warnings
 
 Changes in Version 4.0.2
 ------------------------
