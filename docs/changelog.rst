@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Changes in Version 4.0.3
+Changes in Version 4.1.0
 ------------------------
 * Adds the ability to retrieve all snapshots associated with a given volume
 * Fixes passing in the flag to the client object in order to suppressing
