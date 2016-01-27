@@ -7,6 +7,7 @@ Changes in Version 3.3.1
   bytes in order to properly store the error description.
 * Fixed error where you could not create a LUN with the ID of 0. (issue #17)
 * Allows suppressing of InsecureRequestWarning messages (Issue #18)
+* Adds the ability to retrieve all snapshots associated with a given volume
 
 Changes in Version 3.3.0
 ------------------------

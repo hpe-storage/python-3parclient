@@ -1,4 +1,4 @@
-# (c) Copyright 2015 Hewlett Packard Development Company, L.P.
+# (c) Copyright 2015-2016 Hewlett Packard Development Company, L.P.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -653,6 +653,45 @@ OPTIONS
                 return "Patch " + patch_id + " not recognized."
 
         return "showpatch needs more arg checking and implementing"
+
+    def do_cli_showvv(self, *args):
+        # NOTE(aorourke): Only the pattern matching (-p) for volumes whose
+        # copyof column matches the volumes name (-copyof) is supported in
+        # the mocked version of showvv.
+        parser = CliArgumentParser(prog=args[0])
+        parser.add_argument(
+            '-p', default=False, action="store_true",
+            help="Pattern for matching VVs to show.")
+        parser.add_argument(
+            '-copyof', default=True, action="store_true",
+            help="Show only VVs whose CopyOf column matches one more of the "
+                 "vvname_or_patterns.")
+        parser.add_argument(
+            "name",
+            help="The name of the VV to show.")
+
+        self.logger.log(
+            logging.INFO,
+            "showvv with argparser args %s" % ','.join(args))
+
+        opts = parser.parse_args(*args)
+
+        if not opts.p or not opts.copyof or not opts.name:
+            return "no vv listed"
+
+        if "VOLUME1_UNIT_TEST" in opts.name:
+            cli_out = """
+,,,,,,,,--Rsvd(MB)---,,,-(MB)-\r\n
+Id,Name,Prov,Type,CopyOf,BsId,Rd,-Detailed_State-,Adm,Snp,Usr,VSize\r\n
+123,SNAP_UNIT_TEST1,snp,vcopy,myVol,123,RO,-,-,-,-,-\r\n
+124,SNAP_UNIT_TEST2,vcopy,myVol,124,RO,-,-,-,-,-\r\n
+--------------------------------\r\n
+2,total\r\n
+"""
+        else:
+            cli_out = "no vv listed"
+
+        return cli_out
 
     def process_command(self, cmd):
         self.logger.log(logging.INFO, cmd)

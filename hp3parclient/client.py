@@ -2913,6 +2913,31 @@ class HP3ParClient(object):
 
         return False
 
+    def getVolumeSnapshots(self, name):
+        """
+        Shows all snapshots associated with a given volume.
+
+        :param name: The volume name
+        :type name: str
+        :returns: List of snapshot names
+        """
+        cmd = ['showvv', '-p', '-copyof', name]
+        snap_output = self._run(cmd)
+
+        snapshots = []
+        # Throw out the first two lines
+        for snap in snap_output[2:]:
+            snap_parts = snap.split(',')
+            if len(snap_parts) > 1:
+                snap_name = snap_parts[1]
+                snapshots.append(snap_name)
+            else:
+                # When we reach a line that is not in the expected format,
+                # there are no more snapshot entries.
+                break
+
+        return snapshots
+
     def _mergeDict(self, dict1, dict2):
         """
         Safely merge 2 dictionaries together

@@ -81,3 +81,4 @@
       .. automethod:: getPatches
       .. automethod:: getPatch
       .. automethod:: getCPGStatData
+      .. automethod:: getVolumeSnapshots
