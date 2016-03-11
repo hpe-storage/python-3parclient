@@ -22,7 +22,7 @@ import unittest
 from testconfig import config
 from functools import wraps
 
-import HPE3ParClient_base as hpe3parbase
+from test import HPE3ParClient_base as hpe3parbase
 
 cpgs_to_delete = []
 fpgs_to_delete = []

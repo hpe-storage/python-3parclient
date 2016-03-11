@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Changes in Version 4.2.0
+------------------------
+* Remove the destCPG during copyVolume operations when it's not an online
+  copy.  3PAR will throw an error if we don't
+* Added valid key checks in the flask unit test server for the
+  createPhysicalVolume action
+
 Changes in Version 4.1.0
 ------------------------
 * Adds the ability to retrieve all snapshots associated with a given volume

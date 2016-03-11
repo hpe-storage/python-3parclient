@@ -829,6 +829,10 @@ class HPE3ParClient(object):
         if optional:
             parameters = self._mergeDict(parameters, optional)
 
+        if 'online' not in parameters or not parameters['online']:
+            # 3Par won't allow destCPG to be set if it's not an online copy.
+            parameters.pop('destCPG', None)
+
         info = {'action': 'createPhysicalCopy',
                 'parameters': parameters}
 

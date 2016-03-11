@@ -17,7 +17,7 @@ import mock
 import paramiko
 import unittest
 
-import HPE3ParClient_base
+from test import HPE3ParClient_base
 from hpe3parclient import exceptions
 from hpe3parclient import ssh
 

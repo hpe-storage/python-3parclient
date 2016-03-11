@@ -18,7 +18,7 @@ import time
 import unittest
 from testconfig import config
 
-import HPE3ParClient_base as hpe3parbase
+from test import HPE3ParClient_base as hpe3parbase
 
 from hpe3parclient import exceptions
 
@@ -457,6 +457,43 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         )
 
         self.printFooter('copy_volume')
+
+    def test_7_copy_volume_failure(self):
+        self.printHeader('copy_volume_failure')
+
+        # add one
+        optional = {'comment': 'test volume', 'tpvv': True,
+                    'snapCPG': CPG_NAME1}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+        self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, SIZE, optional)
+
+        optional = {'online': False, 'tpvv': True}
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.copyVolume,
+            VOLUME_NAME1,
+            VOLUME_NAME2,
+            CPG_NAME1,
+            optional)
+
+        optional = {'online': False, 'tpdd': True}
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.copyVolume,
+            VOLUME_NAME1,
+            VOLUME_NAME2,
+            CPG_NAME1,
+            optional)
+
+        # destCPG isn't allowed to go to the 3PAR during an
+        # offline copy.  The client strips it out, so this should pass
+        optional = {'online': False, 'destCPG': 'test'}
+        self.cl.copyVolume(VOLUME_NAME1, VOLUME_NAME2, CPG_NAME1, optional)
+        self.cl.getVolume(VOLUME_NAME2)
+        self.cl.deleteVolume(VOLUME_NAME2)
+        self.cl.deleteVolume(VOLUME_NAME1)
+
+        self.printFooter('copy_volume_failure')
 
     def test_7_create_volume_set(self):
         self.printHeader('create_volume_set')

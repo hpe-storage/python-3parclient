@@ -14,7 +14,7 @@
 
 """Test class of 3PAR Client handling Ports."""
 
-import HPE3ParClient_base as hpe3parbase
+from test import HPE3ParClient_base as hpe3parbase
 
 
 class HPE3ParClientPortTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
