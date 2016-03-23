@@ -15,7 +15,7 @@
 
 """Test class of 3Par Client handling of Host Sets."""
 import unittest
-import HP3ParClient_base
+from test import HP3ParClient_base
 import random
 
 from hp3parclient import exceptions

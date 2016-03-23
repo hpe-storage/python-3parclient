@@ -14,7 +14,7 @@
 
 """Test class of 3Par Client handling VLUN."""
 
-import HP3ParClient_base as hp3parbase
+from test import HP3ParClient_base as hp3parbase
 import random
 import mock
 import unittest

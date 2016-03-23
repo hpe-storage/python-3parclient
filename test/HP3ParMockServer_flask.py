@@ -804,6 +804,8 @@ def get_vluns_for_host(host_name):
 def create_snapshot(volume_name):
     debugRequest(flask.request)
     data = json.loads(flask.request.data.decode('utf-8'))
+    # is this for an online copy?
+    onlineCopy = False
 
     valid_keys = {'action': None, 'parameters': None}
     valid_parm_keys = {'name': None, 'destVolume': None, 'destCPG': None,
@@ -822,10 +824,45 @@ def create_snapshot(volume_name):
                     throw_error(400, INV_INPUT,
                                 "Invalid Parameter '%s'" % subkey)
 
+    if 'action' in data and data['action'] == 'createPhysicalCopy':
+        valid_offline_param_keys = {'online': None, 'destVolume': None,
+                                    'saveSnapshot': None,
+                                    'priority': None}
+        valid_online_param_keys = {'online': None, 'destCPG': None,
+                                   'tpvv': None, 'tdvv': None,
+                                   'snapCPG': None, 'saveSnapshot': None,
+                                   'priority': None}
+        params = data['parameters']
+        if 'online' in params and params['online']:
+            # we are checking online copy
+            onlineCopy = True
+            for subkey in params.keys():
+                if subkey not in valid_online_param_keys:
+                    throw_error(400, INV_INPUT,
+                                "Invalid Parameter '%s'" % subkey)
+        else:
+            # we are checking offline copy
+            for subkey in params.keys():
+                if subkey not in valid_offline_param_keys:
+                    throw_error(400, INV_INPUT,
+                                "Invalid Parameter '%s'" % subkey)
+
     for volume in volumes['members']:
         if volume['name'] == volume_name:
             if data['action'] == "createPhysicalCopy":
                 new_name = data['parameters'].get('destVolume')
+                if not onlineCopy:
+                    # we have to have the destination volume for offline copies
+                    found = False
+                    for vol in volumes['members']:
+                        if vol['name'] == new_name:
+                            found = True
+                            break
+
+                    if not found:
+                        throw_error(404, NON_EXISTENT_VOL,
+                                    "volume does not exist")
+
             else:
                 new_name = data['parameters'].get('name')
 

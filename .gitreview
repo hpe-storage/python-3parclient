@@ -1,0 +1,4 @@
+[gerrit]
+host=repomaster.3pardata.com
+port=29418
+project=python-3parclient

@@ -17,7 +17,7 @@ import mock
 import paramiko
 import unittest
 
-import HP3ParClient_base
+from test import HP3ParClient_base
 from hp3parclient import exceptions
 from hp3parclient import ssh
 

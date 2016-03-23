@@ -14,7 +14,7 @@
 
 """Test class of 3Par Client handling CPG."""
 
-import HP3ParClient_base as hp3parbase
+from test import HP3ParClient_base as hp3parbase
 from hp3parclient import exceptions
 
 DOMAIN = 'UNIT_TEST_DOMAIN'

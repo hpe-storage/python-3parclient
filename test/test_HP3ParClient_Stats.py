@@ -15,7 +15,7 @@
 """Test class of 3Par Client handling Stats."""
 
 import mock
-import HP3ParClient_base
+from test import HP3ParClient_base
 from hp3parclient import exceptions
 
 

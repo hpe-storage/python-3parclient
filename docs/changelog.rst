@@ -6,6 +6,10 @@ Changes in Version 3.3.2
 * Add retries for certain exceptions.
     - exceptions.HTTPServiceUnavailable
     - requests.exceptions.ConnectionError
+* Remove the destCPG during copyVolume operations when it's not an online copy.
+  3PAR will throw an error if we don't
+* Added valid key checks in the flask unit test server for the
+  createPhysicalVolume action
 
 Changes in Version 3.3.1
 ------------------------

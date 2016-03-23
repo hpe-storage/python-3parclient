@@ -18,7 +18,7 @@ import mock
 import pprint
 
 from testconfig import config
-import HP3ParClient_base as hp3parbase
+from test import HP3ParClient_base as hp3parbase
 
 from hp3parclient import exceptions
 from hp3parclient import file_client

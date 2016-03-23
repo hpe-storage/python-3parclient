@@ -16,7 +16,7 @@
 
 from testconfig import config
 import unittest
-import HP3ParClient_base as hp3parbase
+from test import HP3ParClient_base as hp3parbase
 
 from hp3parclient import exceptions
 
