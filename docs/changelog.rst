@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Changes in Version 4.2.1
+------------------------
+* Add retries for certain exceptions.
+    - exceptions.HTTPServiceUnavailable
+    - requests.exceptions.ConnectionError
+
 Changes in Version 4.2.0
 ------------------------
 * Remove the destCPG during copyVolume operations when it's not an online
