@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Changes in Version 3.3.2
+------------------------
+* Add retries for certain exceptions.
+    - exceptions.HTTPServiceUnavailable
+    - requests.exceptions.ConnectionError
+
 Changes in Version 3.3.1
 ------------------------
 * Changes the exception isinstance check to look for basestring/str instead of

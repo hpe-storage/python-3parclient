@@ -58,6 +58,13 @@ class HTTPJSONRESTClient(object):
     http_log_debug = False
     _logger = logging.getLogger(__name__)
 
+    # Retry constants
+    retry_exceptions = (exceptions.HTTPServiceUnavailable,
+                        requests.exceptions.ConnectionError)
+    tries = 5
+    delay = 0
+    backoff = 2
+
     def __init__(self, api_url, secure=False, http_log_debug=False,
                  suppress_ssl_warnings=False):
         if suppress_ssl_warnings:
@@ -195,58 +202,80 @@ class HTTPJSONRESTClient(object):
         http_method = args[1]
 
         self._http_log_req(args, kwargs)
-        try:
-            r = requests.request(http_method, http_url, data=payload,
-                                 headers=kwargs['headers'], verify=self.secure)
-        except requests.exceptions.SSLError as err:
-            HTTPJSONRESTClient._logger.error("SSL certificate verification"
-                                             " failed: (%s). You must have a"
-                                             " valid SSL certificate or"
-                                             " disable SSL verification.", err)
-            raise exceptions.SSLCertFailed("SSL Certificate Verification"
-                                           " Failed")
-        except requests.exceptions.RequestException as err:
-            raise exceptions.RequestException("Request Exception: %s" % err)
-        except requests.exceptions.ConnectionError as err:
-            raise exceptions.ConnectionError("Connection Error: %s" % err)
-        except requests.exceptions.HTTPError as err:
-            raise exceptions.HTTPError("HTTP Error: %s" % err)
-        except requests.exceptions.URLRequired as err:
-            raise exceptions.URLRequired("URL Required: %s" % err)
-        except requests.exceptions.TooManyRedirects as err:
-            raise exceptions.TooManyRedirects("Too Many Redirects: %s" % err)
-        except requests.exceptions.Timeout as err:
-            raise exceptions.Timeout("Timeout: %s" % err)
-
-        resp = r.headers
-        body = r.text
-        if isinstance(body, bytes):
-            body = body.decode('utf-8')
-
-        # resp['status'], status['content-location'], and resp.status need to
-        # be manually set as Python Requests doesnt provide them automatically
-        resp['status'] = str(r.status_code)
-        resp.status = r.status_code
-        if 'location' not in resp:
-            resp['content-location'] = r.url
-
-        r.close()
-        self._http_log_resp(resp, body)
-
-        # Try and conver the body response to an object
-        # This assumes the body of the reply is JSON
-        if body:
+        r = None
+        resp = None
+        body = None
+        while r is None and self.tries > 0:
             try:
-                body = json.loads(body)
-            except ValueError:
-                pass
-        else:
-            body = None
+                # Check to see if the request is being retried. If it is, we
+                # want to delay.
+                if self.delay:
+                    time.sleep(self.delay)
 
-        if resp.status >= 400:
-            if body and 'message' in body:
-                body['desc'] = body['message']
-            raise exceptions.from_response(resp, body)
+                r = requests.request(http_method, http_url, data=payload,
+                                     headers=kwargs['headers'],
+                                     verify=self.secure)
+
+                resp = r.headers
+                body = r.text
+                if isinstance(body, bytes):
+                    body = body.decode('utf-8')
+
+                # resp['status'], status['content-location'], and resp.status
+                # need to be manually set as Python Requests doesn't provide
+                # them automatically.
+                resp['status'] = str(r.status_code)
+                resp.status = r.status_code
+                if 'location' not in resp:
+                    resp['content-location'] = r.url
+
+                r.close()
+                self._http_log_resp(resp, body)
+
+                # Try and convert the body response to an object
+                # This assumes the body of the reply is JSON
+                if body:
+                    try:
+                        body = json.loads(body)
+                    except ValueError:
+                        pass
+                else:
+                    body = None
+
+                if resp.status >= 400:
+                    if body and 'message' in body:
+                        body['desc'] = body['message']
+
+                    raise exceptions.from_response(resp, body)
+            except self.retry_exceptions as ex:
+                # If we catch an exception where we want to retry, we need to
+                # decrement the retry count prepare to try again.
+                r = None
+                self.tries -= 1
+                self.delay = self.delay * self.backoff + 1
+
+                # Raise exception, we have exhausted all retries.
+                if self.tries is 0:
+                    raise ex
+            except requests.exceptions.SSLError as err:
+                HTTPJSONRESTClient._logger.error(
+                    "SSL certificate verification failed: (%s). You must have "
+                    "a valid SSL certificate or disable SSL "
+                    "verification.", err)
+                raise exceptions.SSLCertFailed("SSL Certificate Verification "
+                                               "Failed.")
+            except requests.exceptions.RequestException as err:
+                raise exceptions.RequestException(
+                    "Request Exception: %s" % err)
+            except requests.exceptions.HTTPError as err:
+                raise exceptions.HTTPError("HTTP Error: %s" % err)
+            except requests.exceptions.URLRequired as err:
+                raise exceptions.URLRequired("URL Required: %s" % err)
+            except requests.exceptions.TooManyRedirects as err:
+                raise exceptions.TooManyRedirects(
+                    "Too Many Redirects: %s" % err)
+            except requests.exceptions.Timeout as err:
+                raise exceptions.Timeout("Timeout: %s" % err)
 
         return resp, body
 
