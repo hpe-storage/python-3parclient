@@ -398,6 +398,22 @@ class HP3ParClientVolumeTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
         self.printFooter('copy_volume')
 
+    def test_6_copy_volume_invalid_volume(self):
+        self.printHeader('copy_volume_invalid')
+
+        # TODO: Add support for ssh/stopPhysical copy in mock mode
+        if self.unitTest:
+            self.printFooter('copy_volume')
+            return
+
+        self.assertRaises(
+            exceptions.HTTPNotFound,
+            self.cl.stopOnlinePhysicalCopy,
+            "fake-volume"
+        )
+
+        self.printFooter('copy_volume_invalid')
+
     def test_7_copy_volume_failure(self):
         self.printHeader('copy_volume_failure')
 

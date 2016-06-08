@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Changes in Version 3.3.3
+------------------------
+* Fixed online physical copy logic.
+
 Changes in Version 3.3.2
 ------------------------
 * Add retries for certain exceptions.
