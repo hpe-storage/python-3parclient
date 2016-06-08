@@ -864,6 +864,7 @@ class HPE3ParClient(object):
         task_id = None
         if task is None:
             # couldn't find the task
+            self.deleteVolume(name)
             msg = "Couldn't find the copy task for '%s'" % name
             raise exceptions.HTTPNotFound(error={'desc': msg})
         else:
@@ -874,6 +875,7 @@ class HPE3ParClient(object):
             cmd = ['canceltask', '-f', task_id]
             self._run(cmd)
         else:
+            self.deleteVolume(name)
             msg = "Couldn't find the copy task for '%s'" % name
             raise exceptions.HTTPNotFound(error={'desc': msg})
 
@@ -889,11 +891,13 @@ class HPE3ParClient(object):
         # now cleanup the dead snapshots
         vol = self.getVolume(name)
         if vol:
-            snap1 = self.getVolume(vol['copyOf'])
-            snap2 = self.getVolume(snap1['copyOf'])
+            if 'copyOf' in vol:
+                snap1 = self.getVolume(vol['copyOf'])
+                snap2 = self.getVolume(snap1['copyOf'])
             self.deleteVolume(name)
-            self.deleteVolume(snap1['name'])
-            self.deleteVolume(snap2['name'])
+            if 'copyOf' in vol:
+                self.deleteVolume(snap1['name'])
+                self.deleteVolume(snap2['name'])
 
     def getAllTasks(self):
         """Get the list of all Tasks

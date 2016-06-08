@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Changes in Version 4.2.2
+------------------------
+* Fixed online physical copy logic.
+
 Changes in Version 4.2.1
 ------------------------
 * Add retries for certain exceptions.
