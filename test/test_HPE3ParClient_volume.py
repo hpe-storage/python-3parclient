@@ -33,6 +33,7 @@ DOMAIN = 'UNIT_TEST_DOMAIN'
 VOLUME_SET_NAME1 = 'VOLUME_SET1_UNIT_TEST' + hpe3parbase.TIME
 VOLUME_SET_NAME2 = 'VOLUME_SET2_UNIT_TEST' + hpe3parbase.TIME
 VOLUME_SET_NAME3 = 'VOLUME_SET3_UNIT_TEST' + hpe3parbase.TIME
+VOLUME_SET_NAME4 = 'VSET_' + hpe3parbase.TIME
 SIZE = 512
 REMOTE_COPY_GROUP_NAME1 = 'RCG1_UNIT_TEST' + hpe3parbase.TIME
 REMOTE_COPY_GROUP_NAME2 = 'RCG2_UNIT_TEST' + hpe3parbase.TIME
@@ -2016,6 +2017,24 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         snapshots = self.cl.getVolumeSnapshots("BAD_VOL")
         # An empty list is returned if the volume does not exist
         self.assertEqual([], snapshots)
+
+    def test_24_set_qos(self):
+        self.printHeader('set_qos')
+        self.cl.createVolumeSet(VOLUME_SET_NAME4,
+                                comment="Unit test volume set 4")
+
+        self.assertRaises(
+            exceptions.SetQOSRuleException,
+            self.cl.setQOSRule,
+            VOLUME_SET_NAME4)
+
+        max_io = 300
+        max_bw = 1024
+        self.cl.setQOSRule(VOLUME_SET_NAME4, max_io, max_bw)
+        self.cl.setQOSRule(VOLUME_SET_NAME4, max_io)
+        self.cl.setQOSRule(VOLUME_SET_NAME4, max_bw)
+
+        self.printFooter('set_qos')
 
 # testing
 # suite = unittest.TestLoader().

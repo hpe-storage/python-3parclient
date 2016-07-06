@@ -2501,7 +2501,7 @@ class HPE3ParClient(object):
             cmd.extend(['-io', '%s' % max_io])
         if max_bw is not None:
             cmd.extend(['-bw', '%sM' % max_bw])
-            cmd.append('vvset:' + set_name)
+        cmd.append('vvset:' + set_name)
         result = self._run(cmd)
 
         if result:

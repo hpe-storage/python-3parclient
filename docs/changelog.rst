@@ -4,6 +4,7 @@ Changelog
 Changes in Version 4.2.2
 ------------------------
 * Fixed online physical copy logic.
+* Fixed setQOSRule doesn't work if max_bw is not defined
 
 Changes in Version 4.2.1
 ------------------------

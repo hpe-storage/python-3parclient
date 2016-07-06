@@ -693,6 +693,57 @@ Id,Name,Prov,Type,CopyOf,BsId,Rd,-Detailed_State-,Adm,Snp,Usr,VSize\r\n
 
         return cli_out
 
+    def do_cli_setqos(self, *args):
+        parser = CliArgumentParser(prog=args[0])
+        parser.add_argument(
+            '-pri', default='normal',
+            help='Set the QoS scheduling priority of the QoS rule (of this '
+                 'target object).The default priority is "normal".')
+        parser.add_argument(
+            '-io',
+            help='Sets the I/O issue count Min goal and Max limit for QoS '
+            'throttling. If only <MaxLimit> is given, sets both I/O issue '
+            'count rate Min goal and Max limit to the given value. If "none" '
+            'is specified, there is no limit on I/O issue count.  Note even '
+            'when there is no limit for I/O issue count, I/O-bandwidth-count '
+            'based throttling (-bw) can still dynamically put a limit on it.')
+        parser.add_argument(
+            '-bw',
+            help='Sets the I/O issue bandwidth rate  Min goal and Max limit '
+            'for QoS throttling. If only <MaxLimit> is given, sets both I/O '
+            'issue bandwidth rate Min goal and Max limit to the given value. '
+            'If "none" is specified, there is no limit on I/O issue bandwidth '
+            'rate. Note even when there is no limit for I/O issue count, '
+            'I/O-bandwidth-rate based throttling (-io) can still dynamically '
+            'put a limit on it. The default unit is byte. The integer can '
+            'optionally be followed with k or K to indicate a multiple of '
+            '1000, m or M to indicate a multiple of 1,000,000, or g or G to '
+            'indicate a multiple of 1,000,000,000.')
+        parser.add_argument(
+            "name",
+            help="The target object name of QoS setting.")
+
+        self.logger.log(
+            logging.INFO,
+            "setqos with argparser args %s" % ','.join(args))
+
+        opts = parser.parse_args(*args)
+
+        if ":" not in opts.name:
+            return "Invalid QoS rule patterns"
+
+        if not (opts.io or opts.bw):
+            return '''
+setqos: At least one option must be specified
+SYNTAX
+    setqos [options] [{{vvset|domain}:{<name>|<pattern>}|sys:all_others}]...
+'''
+
+        if "VSET_" in opts.name:
+            return ''
+        else:
+            return "no matching QoS target found"
+
     def process_command(self, cmd):
         self.logger.log(logging.INFO, cmd)
         if cmd is None:
