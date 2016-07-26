@@ -5,6 +5,7 @@ Changes in Version 4.2.2
 ------------------------
 * Fixed online physical copy logic.
 * Fixed setQOSRule doesn't work if max_bw is not defined
+* Fixed bug with ssh client creation with privatekey argument passed explicitly
 
 Changes in Version 4.2.1
 ------------------------

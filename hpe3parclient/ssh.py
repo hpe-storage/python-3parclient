@@ -56,7 +56,7 @@ class HPE3PARSSHClient(object):
         self.ssh_conn_timeout = conn_timeout
         self.san_login = login
         self.san_password = password
-        self.san_private_key = privatekey
+        self.san_privatekey = privatekey
 
         self._create_ssh(**kwargs)
 
