@@ -6,6 +6,7 @@ Changes in Version 4.2.2
 * Fixed online physical copy logic.
 * Fixed setQOSRule doesn't work if max_bw is not defined
 * Fixed bug with ssh client creation with privatekey argument passed explicitly
+* Fixed bug where get_description() needs to be invoked on exceptions instead of Exception. Refer bug 1586266
 
 Changes in Version 4.2.1
 ------------------------

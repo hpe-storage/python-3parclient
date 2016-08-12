@@ -198,7 +198,7 @@ class HPE3ParClient(object):
 
         try:
             api_version = self.getWsApiVersion()
-        except Exception as ex:
+        except exceptions as ex:
             ex_desc = ex.get_description()
 
             if (ex_desc and ("Unable to find the server at" in ex_desc or
