@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Changes in Version 4.2.3
+------------------------
+* Fixed bug with ssh client creation with privatekey argument passed explicitly
+
 Changes in Version 4.2.2
 ------------------------
 * Fixed online physical copy logic.
