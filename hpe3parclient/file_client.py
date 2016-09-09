@@ -227,7 +227,9 @@ class HPE3ParFilePersonaClient(client.HPE3ParClient):
         elif key == 'vfsip' and value:
             # Expand the sub-fsips like in getfsip.
             interface = self.gettpdinterface()['getfsipInd']
-            dictionary[key] = self._create_member(interface, value[0])
+            dictionary[key] = []
+            for vfsip in value:
+                dictionary[key].append(self._create_member(interface, vfsip))
         else:
             dictionary[key] = value
 
