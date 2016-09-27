@@ -15,6 +15,7 @@ INV_USER_PASS = 5
 INV_INPUT = 12
 EXISTENT_CPG = 14
 NON_EXISTENT_CPG = 15
+NON_EXISTENT_AOCFG = 293
 EXISTENT_HOST = 16
 NON_EXISTENT_HOST = 17
 NON_EXISTENT_VLUN = 19
@@ -257,6 +258,26 @@ def get_cpg(cpg_name):
 
     throw_error(404, NON_EXISTENT_CPG, "CPG '%s' doesn't exist" % cpg_name)
 
+# AOCFG
+@app.route('/api/v1/aoconfigurations', methods=['GET'])
+def get_aocfgs():
+    debugRequest(flask.request)
+
+    # should get it from global aocfgs
+    resp = flask.make_response(json.dumps(aocfgs), 200)
+    return resp
+
+
+@app.route('/api/v1/aoconfigurations/<aocfg_name>', methods=['GET'])
+def get_aocfg(aocfg_name):
+    debugRequest(flask.request)
+
+    for aocfg in aocfgs['members']:
+        if aocfg['name'] == aocfg_name:
+            resp = flask.make_response(json.dumps(aocfg), 200)
+            return resp
+
+    throw_error(404, NON_EXISTENT_AOCFG, "AOCFG '%s' doesn't exist" % aocfg_name)
 
 @app.route('/api/v1/spacereporter', methods=['POST'])
 def get_cpg_available_space():
@@ -797,11 +818,31 @@ def getPort(portPos):
     print(port)
     return port
 
+def get_vluns_for_filter(filter):
+    ret = []
+    regexp=re.compile('(?:(volumeWWN|remoteName|hostname|volumeName)(?:\ *EQ\ +)([a-zA-Z_0-9]+)(?:\ +OR\ +)*)')
+    for match in regexp.finditer(filter):
+        (condition,value) = match.groups()
+        if condition == 'volumeName':
+            ret.extend(get_vluns_for_volume(value))
+        elif condition == 'hostname':
+            ret.extend(get_vluns_for_host(value))
+    return ret
+   
 
 @app.route('/api/v1/vluns', methods=['GET'])
 def get_vluns():
     debugRequest(flask.request)
-    resp = flask.make_response(json.dumps(vluns), 200)
+    query = flask.request.args.get('query')
+    if query is not None:
+        vollist = get_vluns_for_filter(query)
+        if not vollist:
+             throw_error(404, NON_EXISTENT_VLUN,
+                "The vlun(s) corresponding with filter '%s' doesn't exist" % query)
+        vluns_filtered = { 'total': len(vollist), 'members': vollist }
+        resp = flask.make_response(json.dumps(vluns_filtered), 200)
+    else:      
+        resp = flask.make_response(json.dumps(vluns), 200)
     return resp
 
 
@@ -812,6 +853,12 @@ def get_vluns_for_host(host_name):
             ret.append(vlun)
     return ret
 
+def get_vluns_for_volume(volume_name):
+    ret = []
+    for vlun in vluns['members']:
+        if vlun['volumeName'] == volume_name:
+            ret.append(vlun)
+    return ret
 
 # VOLUMES & SNAPSHOTS
 
@@ -1466,7 +1513,7 @@ def get_wsapi_configuration():
               "httpPort": 8008,
               "httpsState": "Enabled",
               "httpsPort": 8080,
-              "version": "1.3",
+              "version": "1.5",
               "sessionsInUse": 0,
               "systemResourceUsage": 144}
 
@@ -1479,7 +1526,7 @@ def get_system():
 
     system_info = {"id": 12345,
                    "name": "Flask",
-                   "systemVersion": "3.2.1.46",
+                   "systemVersion": "3.2.2.390",
                    "IPv4Addr": "10.10.10.10",
                    "model": "HP_3PAR 7400",
                    "serialNumber": "1234567",
@@ -1661,8 +1708,8 @@ def get_overall_capacity():
 def get_version():
     debugRequest(flask.request)
     version = {'major': 1,
-               'minor': 3,
-               'build': 30201256}
+               'minor': 5,
+               'build': 30202390}
     resp = flask.make_response(json.dumps(version), 200)
     return resp
 
@@ -1969,6 +2016,29 @@ if __name__ == "__main__":
               'state': 1,
               'uuid': 'f9b018cc-7cb6-4358-a0bf-93243f853d97'}],
             'total': 2}
+
+    # fake AO configurations
+    global aocfgs
+    aocfgs = {'links': [{'href': 'http://localhost:5000/api/v1/aoconfigurations',
+                'rel': 'self'}],
+              'members': [{'id': 1,
+                           'links': [{'href': 'http://localhost:5000/api/v1/aoconfigurations/UnitTestAOCFG',
+                             'rel': 'self'},
+                            {'href': 'http://localhost:5000/api/v1/cpgs/UnitTestCPG`',
+                             'rel': 't0cpg'},
+                            {'href': 'http://localhost:5000/api/v1/cpgs/UnitTestCPG2',
+                             'rel': 't1cpg'}],
+                           'mode': 3,
+                           'name': 'UnitTestAOCFG',
+                           't0CPG': {'id': 0,
+                                       'maxSpaceUtilizationMiB': 0,
+                                       'minSpaceUtilizationMiB': 15728640,
+                                       'name': 'UnitTestCPG'},
+                           't1CPG': {'id': 1,
+                                       'maxSpaceUtilizationMiB': 0,
+                                       'minSpaceUtilizationMiB': 0,
+                                       'name': 'UnitTestCPG1'}}],
+              'total': 1}
 
     # fake  volumes
     global volumes
