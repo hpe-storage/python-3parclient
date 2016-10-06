@@ -561,6 +561,33 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
         self.printFooter('create_volume_set_dup')
 
+    def test_7_add_remove_volume_in_volume_set(self):
+        self.printHeader('add_remove_volume_in_volume_set')
+
+        optional = {'comment': 'test volume 1', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+
+        self.cl.createVolumeSet(VOLUME_SET_NAME1, domain=self.DOMAIN,
+                                comment="Unit test volume set 1",
+                                setmembers=None)
+
+        # Add volume to volume set
+        self.cl.addVolumeToVolumeSet(VOLUME_SET_NAME1, VOLUME_NAME1)
+
+        resp = self.cl.getVolumeSet(VOLUME_SET_NAME1)
+        self.assertIsNotNone(resp)
+        resp_members = resp['setmembers']
+        self.assertIn(VOLUME_NAME1, resp_members)
+
+        # Remove volume from volume set
+        self.cl.removeVolumeFromVolumeSet(VOLUME_SET_NAME1, VOLUME_NAME1)
+
+        # Check that None is returned if no volume sets are found.
+        result = self.cl.findVolumeSet(VOLUME_NAME1)
+        self.assertIsNone(result)
+
+        self.printFooter('add_remove_volume_in_volume_set')
+
     def test_8_get_volume_sets(self):
         self.printHeader('get_volume_sets')
 

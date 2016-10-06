@@ -69,6 +69,10 @@ class Cli(object):
         self.logger.log(logging.INFO, command_string)
         return None
 
+    def do_cli_createhost(self, *args):
+        str = 'Host ' + args[1] + ' already used by host '
+        return str
+
     def do_cli_removefpg(self, *args):
 
         parser = CliArgumentParser(prog=args[0])

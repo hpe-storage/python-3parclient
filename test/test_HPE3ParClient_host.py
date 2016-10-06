@@ -39,7 +39,7 @@ IQN2 = 'iqn.bogus.org.debian:01:0000' + hpe3parbase.TIME
 class HPE3ParClientHostTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
     def setUp(self):
-        super(HPE3ParClientHostTestCase, self).setUp()
+        super(HPE3ParClientHostTestCase, self).setUp(withSSH=True)
 
     def tearDown(self):
         try:
@@ -644,3 +644,17 @@ class HPE3ParClientHostTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.assertIn(HOST_NAME1, [host['name'] for host in hosts['members']])
         self.assertIn(HOST_NAME2, [host['name'] for host in hosts['members']])
         self.printFooter('query_host_iqn_and_wwn')
+
+    def test_6_find_host(self):
+        self.printHeader('find_host_wwn')
+
+        hosts = self.cl.findHost(wwn=WWN1)
+
+        if hosts is not None:
+            # host found
+            self.assertIsNotNone(hosts)
+        else:
+            # host not found
+            self.assertIsNone(hosts)
+
+        self.printFooter('find_host_wwn')

@@ -384,7 +384,11 @@ def modify_host_set(host_set_name):
                     # 1 is memAdd - Adds a member to the set
                     if 'setmembers' not in host_set:
                         host_set['setmembers'] = []
-                    host_set['setmembers'].extend(members)
+                    if member not in host_set['setmembers']:
+                        host_set['setmembers'].extend(members)
+                    else:
+                        throw_error(409, HOST_IN_SET,
+                                    "The object is already part of the set")
                 elif 2 == data['action']:
                     # 2 is memRemove- Removes a member from the set
                     for member in members:

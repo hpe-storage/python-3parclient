@@ -207,6 +207,13 @@ class HPE3ParClientHostSetTestCase(HPE3ParClient_base
         host_set_id = self.cl.createHostSet(
             host_set_name, self.DOMAIN,
             unittest.TestCase.shortDescription(self), [host_name])
+
+        # Adding same host again to test add host in host set
+        try:
+            self.cl.addHostToHostSet(host_set_id, host_name)
+        except exceptions.HTTPConflict:
+            pass
+
         self.assertEqual(host_set_name, host_set_id)
 
         # Create CPG
