@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Changes in Version 4.2.3
+------------------------
+* Fixed exceptions invocation order.
+
 Changes in Version 4.2.2
 ------------------------
 * Fixed online physical copy logic.

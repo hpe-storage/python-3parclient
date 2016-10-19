@@ -256,6 +256,13 @@ class HTTPJSONRESTClient(object):
                         body['desc'] = body['message']
 
                     raise exceptions.from_response(resp, body)
+            except requests.exceptions.SSLError as err:
+                HTTPJSONRESTClient._logger.error(
+                    "SSL certificate verification failed: (%s). You must have "
+                    "a valid SSL certificate or disable SSL "
+                    "verification.", err)
+                raise exceptions.SSLCertFailed("SSL Certificate Verification "
+                                               "Failed.")
             except self.retry_exceptions as ex:
                 # If we catch an exception where we want to retry, we need to
                 # decrement the retry count prepare to try again.
@@ -266,16 +273,6 @@ class HTTPJSONRESTClient(object):
                 # Raise exception, we have exhausted all retries.
                 if self.tries is 0:
                     raise ex
-            except requests.exceptions.SSLError as err:
-                HTTPJSONRESTClient._logger.error(
-                    "SSL certificate verification failed: (%s). You must have "
-                    "a valid SSL certificate or disable SSL "
-                    "verification.", err)
-                raise exceptions.SSLCertFailed("SSL Certificate Verification "
-                                               "Failed.")
-            except requests.exceptions.RequestException as err:
-                raise exceptions.RequestException(
-                    "Request Exception: %s" % err)
             except requests.exceptions.HTTPError as err:
                 raise exceptions.HTTPError("HTTP Error: %s" % err)
             except requests.exceptions.URLRequired as err:
@@ -285,6 +282,9 @@ class HTTPJSONRESTClient(object):
                     "Too Many Redirects: %s" % err)
             except requests.exceptions.Timeout as err:
                 raise exceptions.Timeout("Timeout: %s" % err)
+            except requests.exceptions.RequestException as err:
+                raise exceptions.RequestException(
+                    "Request Exception: %s" % err)
 
         return resp, body
 
