@@ -1,6 +1,6 @@
 nose
 nose-testconfig
-flask==0.10.1
+flask
 flake8
 mock
 sphinx

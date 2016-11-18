@@ -110,9 +110,10 @@ def make_json_app(import_name, **kwargs):
     app.secret_key = id_generator(24)
 
     for code in list(default_exceptions.keys()):
-        app.error_handler_spec[None][code] = make_json_error
+        app.errorhandler(code)(make_json_error)
 
     return app
+
 
 app = make_json_app(__name__)
 session_key = id_generator(24)
