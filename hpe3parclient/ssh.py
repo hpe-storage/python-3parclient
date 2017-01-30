@@ -40,6 +40,13 @@ except NameError:
     basestring = str
     python3 = True
 
+# Commands that require Tpd::rtpd prefix
+tpd_commands = [
+    'createfstore',
+    'getfstore',
+    'getfsquota',
+]
+
 
 class HPE3PARSSHClient(object):
     """This class is used to execute SSH commands on a 3PAR."""
@@ -228,6 +235,9 @@ class HPE3PARSSHClient(object):
         # It might be broken into multiple lines, so loop and
         # append until we find the whole prompt plus command.
         command_string = ' '.join(cmd)
+        if re.match('|'.join(tpd_commands), command_string):
+            escp_command_string = command_string.replace('"', '\\"')
+            command_string = "Tpd::rtpd " + '"' + escp_command_string + '"'
         seek = ' '.join((prompt, command_string))
         found = ''
         for i, line in enumerate(output):
@@ -270,6 +280,9 @@ class HPE3PARSSHClient(object):
         We first have to issue a command to tell the CLI that we want the
         output to be formatted in CSV, then we issue the real command.
         """
+        if re.match('|'.join(tpd_commands), cmd):
+            cmd = 'Tpd::rtpd "' + cmd.replace('"', '\\"') + '"'
+
         self._logger.debug('Running cmd (SSH): %s', cmd)
 
         channel = self.ssh.invoke_shell()
