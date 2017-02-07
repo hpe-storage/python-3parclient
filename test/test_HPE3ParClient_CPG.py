@@ -61,8 +61,14 @@ class HPE3ParClientCPGTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         if self.CPG_LDLAYOUT_HA is None:
             more_optional = {'LDLayout': {'RAIDType': 2}}
         else:
-            more_optional = {'LDLayout': {'RAIDType': 2,
-                                          'HA': self.CPG_LDLAYOUT_HA}}
+            if self.DISK_TYPE is None:
+                more_optional = {'LDLayout': {'RAIDType': 2,
+                                 'HA': self.CPG_LDLAYOUT_HA}}
+            else:
+                more_optional = {'LDLayout': {'RAIDType': 2,
+                                              'HA': self.CPG_LDLAYOUT_HA,
+                                              'diskPatterns':
+                                              [{'diskType': self.DISK_TYPE}]}}
         optional2.update(more_optional)
         self.cl.createCPG(name, optional2)
 
@@ -77,7 +83,11 @@ class HPE3ParClientCPGTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
     def test_1_create_CPG_badDomain(self):
         self.printHeader('create_CPG_badDomain')
 
-        optional = {'domain': 'BAD_DOMAIN'}
+        if self.DISK_TYPE is None:
+            optional = {'domain': 'BAD_DOMAIN'}
+        else:
+            optional = {'LDLayout': {'diskPatterns': [{
+                        'diskType': self.DISK_TYPE}]}, 'domain': 'BAD_DOMAIN'}
         self.assertRaises(exceptions.HTTPNotFound, self.cl.createCPG,
                           CPG_NAME1, optional)
 

@@ -71,7 +71,15 @@ class HPE3ParClientBaseTestCase(unittest.TestCase):
 
     if 'cpg_ldlayout_ha' in config['TEST']:
         CPG_LDLAYOUT_HA = int(config['TEST']['cpg_ldlayout_ha'])
-        CPG_OPTIONS = {'domain': DOMAIN, 'LDLayout': {'HA': CPG_LDLAYOUT_HA}}
+        if 'disk_type' in config['TEST']:
+            DISK_TYPE = int(config['TEST']['disk_type'])
+            CPG_OPTIONS = {'domain': DOMAIN,
+                           'LDLayout': {'HA': CPG_LDLAYOUT_HA,
+                                        'diskPatterns': [{'diskType':
+                                                         DISK_TYPE}]}}
+        else:
+            CPG_OPTIONS = {'domain': DOMAIN,
+                           'LDLayout': {'HA': CPG_LDLAYOUT_HA}}
     else:
         CPG_LDLAYOUT_HA = None
         CPG_OPTIONS = {'domain': DOMAIN}
