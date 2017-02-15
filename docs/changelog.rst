@@ -4,6 +4,7 @@ Changelog
 Changes in Version 4.2.3
 ------------------------
 * Fixed exceptions invocation order.
+* Fix invocations for CLI commands createfstore, getfstore, getfsquota in Inform OS 3.3.1 (Real madrid)
 
 Changes in Version 4.2.2
 ------------------------
