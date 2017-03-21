@@ -29,6 +29,7 @@ This client requires and works with 3PAR InForm 3.1.3 MU1 firmware
 import re
 import time
 import uuid
+import copy
 
 try:
     # For Python 3.0 and later
@@ -38,7 +39,7 @@ except ImportError:
     from urllib2 import quote
 
 from hp3parclient import exceptions, http, ssh
-
+from showport_parser import ShowportParser
 
 class HP3ParClient(object):
 
@@ -1787,6 +1788,24 @@ class HP3ParClient(object):
 
         """
         response, body = self.http.get('/ports')
+
+        #if any of the ports are iSCSI ports and are vlan tagged
+        #then we need to get the iscsi ports and append them to
+        #the list of
+        if self.ssh is not None:
+            if any([port['protocol'] == self.PORT_PROTO_ISCSI and 
+                    port['iSCSIPortInfo']['vlan'] == 1
+                    for port in body['members']]):
+
+                self.ssh.open()
+                iscsi_vlan_data = self.ssh.run(['showport', '-iscsivlans'])
+                self.ssh.close()
+                port_parser     = ShowportParser()
+                iscsi_ports     = port_parser.parseShowport(iscsi_vlan_data)
+                expanded_ports  = self._cloneISCSIPorts(body, iscsi_ports)
+                body['members'].extend(expanded_ports)
+                body['total'] = len(body['members'])
+
         return body
 
     def _getProtocolPorts(self, protocol, state=None):
@@ -1801,6 +1820,30 @@ class HP3ParClient(object):
                         return_ports.append(port)
 
         return return_ports
+
+    def _cloneISCSIPorts(self, real_ports, vlan_ports):
+        cloned_ports = []
+        for port in vlan_ports:
+            matching_ports = [
+                              x for x in real_ports['members'] 
+                              if  (x['protocol'] == self.PORT_PROTO_ISCSI and
+                              x['iSCSIPortInfo']['vlan'] == 1 and
+                              x['portPos'] == port['portPos'])
+                             ]
+
+            #should only be one
+            if (len(matching_ports) > 1):
+                err = ("Found {} matching ports for vlan tagged iSCSI port "
+                       "{}.  There should only be one.")
+                raise exceptions.NoUniqueMatch(err.format(len(matching_ports)
+                              ,port))
+            
+            if (len(matching_ports) == 1):
+                new_port = copy.deepcopy(matching_ports[0])
+                new_port.update(port)
+                cloned_ports.append(new_port)
+
+        return cloned_ports
 
     def getFCPorts(self, state=None):
         """Get a list of Fibre Channel Ports.
