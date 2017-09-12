@@ -119,6 +119,8 @@ Capabilities
 * Recover a Remote Copy Group from a Disaster
 * Enable/Disable Config Mirroring on a Remote Copy Target
 
+* Promote Virtual Copy
+
 File Persona Capabilities
 =========================
 * Get File Services Info

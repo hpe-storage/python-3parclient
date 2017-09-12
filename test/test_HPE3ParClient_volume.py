@@ -2063,6 +2063,132 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
         self.printFooter('set_qos')
 
+    def test_25_promote_virtual_copy(self):
+        self.printHeader('promote_virtual_copy')
+
+        optional = {'snapCPG': CPG_NAME1}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+        # add one
+        self.cl.createSnapshot(SNAP_NAME1, VOLUME_NAME1)
+        # no API to get and check
+
+        resp = self.cl.promoteVirtualCopy(SNAP_NAME1)
+        self.assertIsNotNone(resp['taskid'])
+
+        self.printFooter('promote_virtual_copy')
+
+    @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
+    def test_25_promote_virtual_copy_on_replicated_volume(self):
+        self.printHeader('promote_virtual_copy_on_replicated_volume')
+
+        # Create empty remote copy group
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      REMOTE_COPY_TARGETS,
+                                      optional={"domain": DOMAIN})
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Create volume
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(RC_VOLUME_NAME, CPG_NAME1, SIZE, optional)
+
+        # Add volume to remote copy group
+        self.cl.addVolumeToRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                           RC_VOLUME_NAME,
+                                           REMOTE_COPY_TARGETS)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        volumes = resp['volumes']
+        self.assertEqual(RC_VOLUME_NAME, volumes[0]['name'])
+
+        self.cl.createSnapshot(SNAP_NAME1, RC_VOLUME_NAME)
+
+        # Stop remote copy for the group
+        self.cl.stopRemoteCopy(REMOTE_COPY_GROUP_NAME1)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        self.assertEqual(RCOPY_STOPPED, targets[0]['state'])
+
+        optional = {'allowRemoteCopyParent': True}
+        resp = self.cl.promoteVirtualCopy(SNAP_NAME1, optional)
+        self.assertIsNotNone(resp['taskid'])
+
+        # Start remote copy for the group
+        self.cl.startRemoteCopy(REMOTE_COPY_GROUP_NAME1)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        self.assertEqual(RCOPY_STARTED, targets[0]['state'])
+
+        self.printFooter('promote_virtual_copy_on_replicated_volume')
+
+    @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
+    def test_25_promote_virtual_copy_with_bad_param(self):
+        self.printHeader('promote_virtual_copy_with_bad_param')
+
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE)
+        # add one
+        self.cl.createSnapshot(SNAP_NAME1, VOLUME_NAME1)
+        # no API to get and check
+
+        optional = {'online': True,
+                    'allowRemoteCopyParent': True,
+                    'priority': 1}
+        self.assertRaises(
+            exceptions.HTTPConflict,
+            self.cl.promoteVirtualCopy,
+            SNAP_NAME1,
+            optional
+        )
+
+        self.printFooter('promote_virtual_copy_with_bad_param')
+
+    @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
+    def test_25_promote_vcopy_on_rep_vol_with_bad_param(self):
+        self.printHeader('promote_vcopy_on_rep_vol_with_bad_param')
+
+        # Create empty remote copy group
+        self.cl.createRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                      REMOTE_COPY_TARGETS,
+                                      optional={"domain": DOMAIN})
+
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        self.assertEqual(REMOTE_COPY_GROUP_NAME1, resp['name'])
+
+        # Create volume
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(RC_VOLUME_NAME, CPG_NAME1, SIZE, optional)
+
+        # Add volume to remote copy group
+        self.cl.addVolumeToRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
+                                           RC_VOLUME_NAME,
+                                           REMOTE_COPY_TARGETS)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        volumes = resp['volumes']
+        self.assertEqual(RC_VOLUME_NAME, volumes[0]['name'])
+
+        self.cl.createSnapshot(SNAP_NAME1, RC_VOLUME_NAME)
+
+        # Stop remote copy for the group
+        self.cl.stopRemoteCopy(REMOTE_COPY_GROUP_NAME1)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        self.assertEqual(RCOPY_STOPPED, targets[0]['state'])
+
+        self.assertRaises(
+            exceptions.HTTPForbidden,
+            self.cl.promoteVirtualCopy,
+            SNAP_NAME1,
+            optional
+        )
+
+        # Start remote copy for the group
+        self.cl.startRemoteCopy(REMOTE_COPY_GROUP_NAME1)
+        resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
+        targets = resp['targets']
+        self.assertEqual(RCOPY_STARTED, targets[0]['state'])
+
+        self.printFooter('promote_vcopy_on_rep_vol_with_bad_param')
+
 # testing
 # suite = unittest.TestLoader().
 #   loadTestsFromTestCase(HPE3ParClientVolumeTestCase)

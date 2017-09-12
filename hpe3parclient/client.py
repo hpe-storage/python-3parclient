@@ -85,6 +85,7 @@ class HPE3ParClient(object):
     STOP_PHYSICAL_COPY = 1
     RESYNC_PHYSICAL_COPY = 2
     GROW_VOLUME = 3
+    PROMOTE_VIRTUAL_COPY = 4
 
     TARGET_TYPE_VVSET = 1
     TARGET_TYPE_SYS = 2
@@ -709,6 +710,80 @@ class HPE3ParClient(object):
                 'sizeMiB': amount}
 
         response, body = self.http.put('/volumes/%s' % name, body=info)
+        return body
+
+    def promoteVirtualCopy(self, snapshot, optional=None):
+        """Revert a volume to snapshot.
+
+        :param snapshot: the snapshot name
+        :type snapshot: str
+        :param optional: Dictionary of optional params
+        :type optional: dict
+
+        .. code-block:: python
+
+            optional = {
+                'online': False,                # should execute promote
+                                                # operation on online volume?
+                'allowRemoteCopyParent': 'False',
+                                                # allow promote operation if
+                                                # volume is in remote copy
+                                                # volume group?
+                'priority': 1                   # taskPriorityEnum (does not
+                                                # apply to online copy)
+            }
+
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - VV_NOT_STARTED - Volume is not started.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - VV_IS_BEING_REMOVED - The volume is being removed.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - VV_IN_STALE_STATE - The volume is in a stale state.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_CANNOT_STOP_ONLINE_PROMOTE - The online
+            promote cannot be stopped.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+            - INV_OPERATION_VV_BASE_VOLUME - The volume is a base volume.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+            - INV_OPERATION_VV_PCOPY_IN_PROGRESS - The destination volume has
+            a physical copy in progress.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_PARENT_PCOPY_IN_PROGRESS - The parent is involved
+            in a physical copy.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+            - INV_OPERATION_VV_TUNE_IN_PROGRESS - Volume tuning is in
+            progress.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_IN_REMOTE_COPY - The volume is involved in
+            Remote Copy.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_PARENT_VV_EXPORTED - Parent volume is exported.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_EXPORTED - Parent volume is exported.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_PROMOTE_TARGET_NOT_BASE_VV - The promote target is
+            not a base volume.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+            - INV_OPERATION_PARENT_SIZE_HAS_INCREASED - The parent volume size
+            has increased.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+            - INV_OPERATION_PARAM_CONFLICT - Parameters cannot be present at
+            the same time.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+            - INV_OPERATION_VV_IS_BUSY - Volume is currently busy.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+            - INV_OPERATION_VV_PROMOTE_IN_PROGRESS - Volume promotion is in
+            progress.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+            - INV_OPERATION_VV_PROMOTE_IS_NOT_IN_PROGRESS - Volume promotion
+            is not in progress.
+
+        """
+        info = {'action': self.PROMOTE_VIRTUAL_COPY}
+        if optional:
+            info = self._mergeDict(info, optional)
+
+        response, body = self.http.put('/volumes/%s' % snapshot, body=info)
         return body
 
     def copyVolume(self, src_name, dest_name, dest_cpg, optional=None):

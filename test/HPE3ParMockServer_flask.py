@@ -43,6 +43,7 @@ EXISTENT_SET = 101
 EXISTENT_QOS_RULE = 114
 INV_INPUT_BELOW_RANGE = 115
 INV_INPUT_QOS_TARGET_OBJECT = 117
+INV_OPERATION_VV_IN_REMOTE_COPY = 120
 NON_EXISTENT_TASK = 145
 INV_INPUT_VV_GROW_SIZE = 152
 VV_NEW_SIZE_EXCEED_CPG_LIMIT = 153
@@ -1035,6 +1036,23 @@ def modify_volume(volume_name):
             break
 
     data = json.loads(flask.request.data.decode('utf-8'))
+
+    if 'online' in data and 'priority' in data:
+        throw_error(409, INV_INPUT_PARAM_CONFLICT,
+                    "invalid input: parameters cannot be present at the"
+                    " same time")
+
+    if len(remote_copy_groups['members']) != 0:
+        if data.get('action') == 4:
+            if data.get('allowRemoteCopyParent') is not True:
+                throw_error(403, INV_OPERATION_VV_IN_REMOTE_COPY,
+                            "Volume is involved in remote copy")
+
+    if data.get('action') == 4:
+        task['taskid'] = '12345'
+        resp = flask.make_response(json.dumps(task), 200)
+        return resp
+
     _grow_volume(volume, data)
 
     # do volume renames last
@@ -2187,6 +2205,9 @@ if __name__ == "__main__":
     global qos_db
     qos_db = {'members': [],
               'total': 0}
+
+    global task
+    task = {"taskid": ''}
 
     global tasks
     tasks = {"total": 2, "members":

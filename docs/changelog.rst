@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Changes in Version 4.2.4
+------------------------
+* Added promote virtual copy support.
+
 Changes in Version 4.2.3
 ------------------------
 * Fixed exceptions invocation order.
