@@ -4108,3 +4108,39 @@ class HPE3ParClient(object):
             'avg_busy_perc': float(line[15])
         }
         return formatted
+
+    def getVersion(self, opt_a=False, opt_b=False, opt_s=False):
+        """Get the output of the showversion command
+
+        :param opt_a: Specify option -a (Show all component versions)
+        :param opt_b: Specify option -b (Show build levels)
+        :param opt_b: Specify option -s (Show release version number only)
+        :returns: dict with total and members
+                  (see convert_cli_output_to_collection_like_wsapi())
+
+        """
+        cmd = ['showversion']
+        if opt_a:
+            cmd.append('-a')
+        if opt_b:
+            cmd.append('-b')
+        if opt_s:
+            cmd.append('-s')
+        return self._convert_cli_output_to_collection_like_wsapi(
+            self._run(cmd))
+
+    def getLicense(self, opt_raw=False):
+        """Get all the output of the license command
+        
+        :param opt_raw: Specifies that the license key originally entered (the raw license) be displayed
+        :returns: dict with total and members
+                  (see convert_cli_output_to_collection_like_wsapi())
+
+        """
+        cmd = ['showlicense']
+        if opt_raw:
+            cmd.append('-raw')
+        return self._convert_cli_output_to_collection_like_wsapi(
+            self._run(cmd))
+
+
