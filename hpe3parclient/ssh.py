@@ -45,6 +45,7 @@ tpd_commands = [
     'createfstore',
     'getfstore',
     'getfsquota',
+    'getfshare'
 ]
 
 

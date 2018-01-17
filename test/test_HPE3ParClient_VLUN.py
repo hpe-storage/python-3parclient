@@ -92,11 +92,11 @@ class HPE3ParClientVLUNTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
             pass
         try:
             self.cl.deleteVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2)
-        except:
+        except Exception:
             pass
         try:
             self.cl.deleteVLUN(VOLUME_NAME2, LUN_2, HOST_NAME2, self.port)
-        except:
+        except Exception:
             pass
         try:
             self.cl.deleteVolume(VOLUME_NAME1)

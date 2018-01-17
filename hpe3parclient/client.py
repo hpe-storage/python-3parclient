@@ -4108,3 +4108,25 @@ class HPE3ParClient(object):
             'avg_busy_perc': float(line[15])
         }
         return formatted
+
+    def getSnapshotsOfVolume(self, cpgName, volName):
+        """Gets list of snapshots of a volume.
+
+        :param cpgName: The name of the CPG in which the volume
+                        is present
+        :type name: str
+        :param volName: The volume name for which the list of
+                        snapshots needs to be retrieved
+        :type volName: str
+
+        :returns: list of snapshots of volName
+
+        """
+        uri = '/volumes?query="snapCPG EQ %s"' % (cpgName)
+        response, body = self.http.get(uri)
+        snapshots = []
+        for volume in body['members']:
+            if 'copyOf' in volume:
+                if volume['copyOf'] == volName:
+                    snapshots.append(volume['name'])
+        return snapshots

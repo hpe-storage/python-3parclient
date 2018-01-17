@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Changes in Version 4.2.5
+------------------------
+* Fixed problem with getfshare command with Manila operations on 3.3.1 MU1 update
+* Added a function definition for retrieving snapshots of a volume using REST
+
 Changes in Version 4.2.4
 ------------------------
 * Added promote virtual copy support.
