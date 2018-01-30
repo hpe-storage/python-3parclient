@@ -86,6 +86,7 @@ class HPE3ParClient(object):
     RESYNC_PHYSICAL_COPY = 2
     GROW_VOLUME = 3
     PROMOTE_VIRTUAL_COPY = 4
+    VIRTUAL_COPY = 3
 
     TARGET_TYPE_VVSET = 1
     TARGET_TYPE_SYS = 2
@@ -4109,12 +4110,12 @@ class HPE3ParClient(object):
         }
         return formatted
 
-    def getSnapshotsOfVolume(self, cpgName, volName):
+    def getSnapshotsOfVolume(self, snapcpgName, volName):
         """Gets list of snapshots of a volume.
 
-        :param cpgName: The name of the CPG in which the volume
-                        is present
-        :type name: str
+        :param snapcpgName: The name of the CPG in which the volume
+                        snapshot(s) are present
+        :type snapcpgName: str
         :param volName: The volume name for which the list of
                         snapshots needs to be retrieved
         :type volName: str
@@ -4122,11 +4123,12 @@ class HPE3ParClient(object):
         :returns: list of snapshots of volName
 
         """
-        uri = '/volumes?query="snapCPG EQ %s"' % (cpgName)
+        uri = '/volumes?query="snapCPG EQ %s"' % (snapcpgName)
         response, body = self.http.get(uri)
         snapshots = []
         for volume in body['members']:
             if 'copyOf' in volume:
-                if volume['copyOf'] == volName:
+                if(volume['copyOf'] == volName and
+                   volume['copyType'] == self.VIRTUAL_COPY):
                     snapshots.append(volume['name'])
         return snapshots
