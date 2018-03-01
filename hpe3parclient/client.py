@@ -86,6 +86,10 @@ class HPE3ParClient(object):
     RESYNC_PHYSICAL_COPY = 2
     GROW_VOLUME = 3
     PROMOTE_VIRTUAL_COPY = 4
+    STOP_PROMOTE_VIRTUAL_COPY = 5
+    TUNE_VOLUME = 6
+    UPDATE_VIRTUAL_COPY = 7
+    SNAPSHOT_ENUM_ACTION = 8
 
     TARGET_TYPE_VVSET = 1
     TARGET_TYPE_SYS = 2
@@ -784,6 +788,13 @@ class HPE3ParClient(object):
             info = self._mergeDict(info, optional)
 
         response, body = self.http.put('/volumes/%s' % snapshot, body=info)
+        return body
+        
+    def tuneVolume(self, volName, tune_operation, optional = None):
+        info = { 'action': self.TUNE_VOLUME, 'tuneOperation': tune_operation }
+        if optional:
+            info =  self._mergeDict(info, optional)
+        response, body = self.http.put('/volumes/%s' % volName, body=info)
         return body
 
     def copyVolume(self, src_name, dest_name, dest_cpg, optional=None):
