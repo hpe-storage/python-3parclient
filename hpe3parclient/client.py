@@ -86,6 +86,10 @@ class HPE3ParClient(object):
     RESYNC_PHYSICAL_COPY = 2
     GROW_VOLUME = 3
     PROMOTE_VIRTUAL_COPY = 4
+    STOP_PROMOTE_VIRTUAL_COPY = 5
+    TUNE_VOLUME = 6
+    UPDATE_VIRTUAL_COPY = 7
+    SNAPSHOT_ENUM_ACTION = 8
 
     TARGET_TYPE_VVSET = 1
     TARGET_TYPE_SYS = 2
@@ -784,6 +788,37 @@ class HPE3ParClient(object):
             info = self._mergeDict(info, optional)
 
         response, body = self.http.put('/volumes/%s' % snapshot, body=info)
+        return body
+        
+    def tuneVolume(self, volName, tune_operation, optional = None):
+        """Tune volume.
+
+        :param volName: the volume name
+        :type volName: str
+        :param tune_operation: Enum of tune operation - 1: Change User CPG, 2: Change snap CPG
+        :type tune_operation: Integer
+        :type optional: dict
+
+        .. code-block:: python
+
+            optional = {
+                'userCPG' => 'user_cpg',        # Specifies the new user
+                                                # CPG to which the volume
+                                                # will be tuned.
+                'snapCPG' => 'snap_cpg',        # Specifies the snap CPG to
+                                                # which the volume will be
+                                                # tuned.
+                'conversionOperation' => 1,     # conversion operation enum. 
+                'keepVV' => 'new_volume',       # Name of the new volume
+                                                # where the original logical disks are saved.
+                'compression' => true           # Enables (true) or disables (false) compression.
+                                                # You cannot compress a fully provisioned volume.
+            }
+        """
+        info = { 'action': self.TUNE_VOLUME, 'tuneOperation': tune_operation }
+        if optional:
+            info =  self._mergeDict(info, optional)
+        response, body = self.http.put('/volumes/%s' % volName, body=info)
         return body
 
     def copyVolume(self, src_name, dest_name, dest_cpg, optional=None):
