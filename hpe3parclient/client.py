@@ -791,6 +791,30 @@ class HPE3ParClient(object):
         return body
         
     def tuneVolume(self, volName, tune_operation, optional = None):
+        """Tune volume.
+
+        :param volName: the volume name
+        :type volName: str
+        :param tune_operation: Enum of tune operation - 1: Change User CPG, 2: Change snap CPG
+        :type tune_operation: Integer
+        :type optional: dict
+
+        .. code-block:: python
+
+            optional = {
+                'userCPG' => 'user_cpg',        # Specifies the new user
+                                                # CPG to which the volume
+                                                # will be tuned.
+                'snapCPG' => 'snap_cpg',        # Specifies the snap CPG to
+                                                # which the volume will be
+                                                # tuned.
+                'conversionOperation' => 1,     # conversion operation enum. 
+                'keepVV' => 'new_volume',       # Name of the new volume
+                                                # where the original logical disks are saved.
+                'compression' => true           # Enables (true) or disables (false) compression.
+                                                # You cannot compress a fully provisioned volume.
+            }
+        """
         info = { 'action': self.TUNE_VOLUME, 'tuneOperation': tune_operation }
         if optional:
             info =  self._mergeDict(info, optional)
