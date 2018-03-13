@@ -4181,3 +4181,13 @@ class HPE3ParClient(object):
            - NON_EXISTENT_FLASH_CACHE - The Flash Cache does not exist.
         """
         self.http.delete('/flashcache')
+        
+    def resyncPhysicalCopy(self, volume_name):
+        """Resynchronizes a physical copy.
+
+        :param name - The name of the volume
+        :type - string
+        """
+        info = { 'action': self.RESYNC_PHYSICAL_COPY }
+        response = self.http.put("/volumes/%s" % (volume_name), body=info)
+        return response[1]
