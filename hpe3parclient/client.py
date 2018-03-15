@@ -185,8 +185,8 @@ class HPE3ParClient(object):
     RC_ACTION_CHANGE_TO_NATURUAL_DIRECTION = 10
     RC_ACTION_OVERRIDE_FAIL_SAFE = 11
 
-    def __init__(self, api_url, debug=False, secure=False, timeout=None,
-                 suppress_ssl_warnings=False):
+    def __init__(self, api_url, debug=True, secure=False, timeout=None,
+                 suppress_ssl_warnings=True, app_type='python-3parclient'):
         self.api_url = api_url
         self.http = http.HTTPJSONRESTClient(
             self.api_url, secure=secure,
@@ -194,7 +194,7 @@ class HPE3ParClient(object):
         api_version = None
         self.ssh = None
         self.vlun_query_supported = False
-
+        self.app_type = app_type
         self.debug_rest(debug)
 
         try:
@@ -491,7 +491,7 @@ class HPE3ParClient(object):
             - EXISTENT_SV - Volume Exists already
 
         """
-        info = {'name': name, 'cpg': cpgName, 'sizeMiB': sizeMiB}
+        info = {'name': name, 'cpg': cpgName, 'sizeMiB': sizeMiB, 'objectKeyValues': [{'key': 'type', 'value': self.app_type}]}
         if optional:
             info = self._mergeDict(info, optional)
 
@@ -518,6 +518,20 @@ class HPE3ParClient(object):
             - IN_USE - The volume is in use by VV set, VLUN, etc
 
         """
+        MAX_COUNT = 2
+        count = 0
+        Flag = True
+        while Flag:
+	    try:
+            self.http.delete('/volumes/%s/objectKeyValues' % name)
+            Flag = False
+          except:
+            if (count == MAX_COUNT):
+              break
+            else:
+              count += 1
+              pass
+
         response, body = self.http.delete('/volumes/%s' % name)
         return body
 
@@ -632,7 +646,11 @@ class HPE3ParClient(object):
             snapshot.
 
         """
-        response = self.http.put('/volumes/%s' % name, body=volumeMods)
+        self.http.put('/volumes/%s' % name, body=volumeMods)
+        if 'newName' in volumeMods and volumeMods['newName']:
+          name = volumeMods['newName']
+       
+        response = self.setVolumeMetaData(name, 'type', self.app_type)
         return response
 
     def growVolume(self, name, amount):
@@ -2852,6 +2870,7 @@ class HPE3ParClient(object):
             - NON_EXISTENT_VOL - The volume does not exist
 
         """
+
         key_exists = False
         info = {
             'key': key,
