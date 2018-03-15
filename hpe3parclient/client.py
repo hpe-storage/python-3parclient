@@ -185,8 +185,8 @@ class HPE3ParClient(object):
     RC_ACTION_CHANGE_TO_NATURUAL_DIRECTION = 10
     RC_ACTION_OVERRIDE_FAIL_SAFE = 11
 
-    def __init__(self, api_url, debug=True, secure=False, timeout=None,
-                 suppress_ssl_warnings=True, app_type='python-3parclient'):
+    def __init__(self, api_url, debug=False, secure=False, timeout=None,
+                 suppress_ssl_warnings=False, app_type='python-3parclient'):
         self.api_url = api_url
         self.http = http.HTTPJSONRESTClient(
             self.api_url, secure=secure,
