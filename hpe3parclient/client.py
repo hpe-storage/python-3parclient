@@ -523,14 +523,13 @@ class HPE3ParClient(object):
         Flag = True
         while Flag:
 	    try:
-            self.http.delete('/volumes/%s/objectKeyValues' % name)
-            Flag = False
-          except:
-            if (count == MAX_COUNT):
-              break
-            else:
-              count += 1
-              pass
+                self.http.delete('/volumes/%s/objectKeyValues' % name)
+                Flag = False
+            except:
+                if (count == MAX_COUNT):
+                    break
+                else:
+                    count += 1
 
         response, body = self.http.delete('/volumes/%s' % name)
         return body
@@ -648,7 +647,7 @@ class HPE3ParClient(object):
         """
         self.http.put('/volumes/%s' % name, body=volumeMods)
         if 'newName' in volumeMods and volumeMods['newName']:
-          name = volumeMods['newName']
+            name = volumeMods['newName']
        
         response = self.setVolumeMetaData(name, 'type', self.app_type)
         return response
