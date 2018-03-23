@@ -4142,3 +4142,66 @@ class HPE3ParClient(object):
                    volume['copyType'] == self.VIRTUAL_COPY):
                     snapshots.append(volume['name'])
         return snapshots
+
+    def getFlashCache(self):
+        """Get information about flash cache on the 3Par array.
+        :returns: list of Hosts
+        """
+        response, body = self.http.get('/flashcache')
+        return body
+
+    def createFlashCache(self, sizeInGib, mode):
+        """Creates a new FlashCache
+
+        :param sizeInGib: Specifies the node pair size of the Flash Cache on
+                          the system.
+        :type: int
+        :param: mode    : Simulator: 1
+                          Real: 2 (default)
+        :type: int
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+            - NO_SPACE - Not enough space is available for the operation.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+            - INV_INPUT_EXCEEDS_RANGE - A JSON input object contains a
+            name-value pair with a numeric value that exceeds the expected
+            range. Flash Cache exceeds the expected range. The HTTP ref
+            member contains the name.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+           - EXISTENT_FLASH_CACHE - The Flash Cache already exists.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - FLASH_CACHE_NOT_SUPPORTED - Flash Cache is not supported.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+            - INV_FLASH_CACHE_SIZE - Invalid Flash Cache size. The size
+            must be a multiple of 16 G.
+        """
+        flash_cache = {'sizeGiB': sizeInGib}
+
+        if mode is not None:
+            mode = {'mode': mode}
+            flash_cache = self._mergeDict(flash_cache, mode)
+
+        info = {'flashCache': flash_cache}
+        response, body = self.http.post('/', body=info)
+        return body
+
+    def deleteFlashCache(self):
+        """Deletes an existing Flash Cache
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - FLASH_CACHE_IS_BEING_REMOVED - Unable to delete the
+            Flash Cache, the Flash Cache is being removed.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - FLASH_CACHE_NOT_SUPPORTED - Flash Cache is not supported
+            on this system.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+           - NON_EXISTENT_FLASH_CACHE - The Flash Cache does not exist.
+        """
+        self.http.delete('/flashcache')
+
+    def resyncPhysicalCopy(self, volume_name):
+        """Resynchronizes a physical copy.
+        :param name - The name of the volume
+        :type - string
+        """
+        info = {'action': self.RESYNC_PHYSICAL_COPY}
+        response = self.http.put("/volumes/%s" % (volume_name), body=info)
+        return response[1]
