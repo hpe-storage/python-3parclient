@@ -194,6 +194,7 @@ class HPE3ParClient(object):
         api_version = None
         self.ssh = None
         self.vlun_query_supported = False
+
         self.debug_rest(debug)
 
         try:
@@ -520,7 +521,7 @@ class HPE3ParClient(object):
         response, body = self.http.delete('/volumes/%s' % name)
         return body
 
-    def modifyVolume(self, name, volumeMods):
+    def modifyVolume(self, name, volumeMods, appType=None):
         """Modify a volume.
 
         :param name: the name of the volume
@@ -631,11 +632,14 @@ class HPE3ParClient(object):
             snapshot.
 
         """
-        self.http.put('/volumes/%s' % name, body=volumeMods)
-        if 'newName' in volumeMods and volumeMods['newName']:
-            name = volumeMods['newName']
-       
-        response = self.setVolumeMetaData(name, 'type', volumeMods['objectKeyValues'])
+        response = self.http.put('/volumes/%s' % name, body=volumeMods)
+
+        if appType is not None:
+            if 'newName' in volumeMods and volumeMods['newName']:
+                name = volumeMods['newName']
+
+            response = self.setVolumeMetaData(name, 'type', appType)
+
         return response
 
     def growVolume(self, name, amount):
@@ -2855,7 +2859,6 @@ class HPE3ParClient(object):
             - NON_EXISTENT_VOL - The volume does not exist
 
         """
-
         key_exists = False
         info = {
             'key': key,
