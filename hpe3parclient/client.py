@@ -186,7 +186,7 @@ class HPE3ParClient(object):
     RC_ACTION_OVERRIDE_FAIL_SAFE = 11
 
     def __init__(self, api_url, debug=False, secure=False, timeout=None,
-                 suppress_ssl_warnings=False, app_type='python-3parclient'):
+                 suppress_ssl_warnings=False):
         self.api_url = api_url
         self.http = http.HTTPJSONRESTClient(
             self.api_url, secure=secure,
@@ -194,7 +194,6 @@ class HPE3ParClient(object):
         api_version = None
         self.ssh = None
         self.vlun_query_supported = False
-        self.app_type = app_type
         self.debug_rest(debug)
 
         try:
@@ -491,7 +490,7 @@ class HPE3ParClient(object):
             - EXISTENT_SV - Volume Exists already
 
         """
-        info = {'name': name, 'cpg': cpgName, 'sizeMiB': sizeMiB, 'objectKeyValues': [{'key': 'type', 'value': self.app_type}]}
+        info = {'name': name, 'cpg': cpgName, 'sizeMiB': sizeMiB}
         if optional:
             info = self._mergeDict(info, optional)
 
@@ -518,19 +517,6 @@ class HPE3ParClient(object):
             - IN_USE - The volume is in use by VV set, VLUN, etc
 
         """
-        MAX_COUNT = 2
-        count = 0
-        Flag = True
-        while Flag:
-	    try:
-                self.http.delete('/volumes/%s/objectKeyValues' % name)
-                Flag = False
-            except:
-                if (count == MAX_COUNT):
-                    break
-                else:
-                    count += 1
-
         response, body = self.http.delete('/volumes/%s' % name)
         return body
 
@@ -649,7 +635,7 @@ class HPE3ParClient(object):
         if 'newName' in volumeMods and volumeMods['newName']:
             name = volumeMods['newName']
        
-        response = self.setVolumeMetaData(name, 'type', self.app_type)
+        response = self.setVolumeMetaData(name, 'type', volumeMods['objectKeyValues'])
         return response
 
     def growVolume(self, name, amount):
