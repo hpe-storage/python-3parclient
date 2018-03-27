@@ -194,6 +194,7 @@ class HPE3ParClient(object):
         api_version = None
         self.ssh = None
         self.vlun_query_supported = False
+
         self.debug_rest(debug)
 
         try:
@@ -2861,7 +2862,6 @@ class HPE3ParClient(object):
             - NON_EXISTENT_VOL - The volume does not exist
 
         """
-
         key_exists = False
         info = {
             'key': key,
