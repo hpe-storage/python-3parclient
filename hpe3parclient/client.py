@@ -520,7 +520,7 @@ class HPE3ParClient(object):
         response, body = self.http.delete('/volumes/%s' % name)
         return body
 
-    def modifyVolume(self, name, volumeMods):
+    def modifyVolume(self, name, volumeMods, appType=None):
         """Modify a volume.
 
         :param name: the name of the volume
@@ -631,11 +631,17 @@ class HPE3ParClient(object):
             snapshot.
 
         """
-        self.http.put('/volumes/%s' % name, body=volumeMods)
-        if 'newName' in volumeMods and volumeMods['newName']:
-            name = volumeMods['newName']
-       
-        response = self.setVolumeMetaData(name, 'type', volumeMods['objectKeyValues'])
+        response = self.http.put('/volumes/%s' % name, body=volumeMods)
+
+        if appType is not None:
+            if 'newName' in volumeMods and volumeMods['newName']:
+                name = volumeMods['newName']
+
+            try:
+                self.setVolumeMetaData(name, 'type', appType)
+            except Exception:
+                pass
+
         return response
 
     def growVolume(self, name, amount):
