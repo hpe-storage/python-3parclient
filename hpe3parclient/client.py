@@ -637,7 +637,6 @@ class HPE3ParClient(object):
         if appType is not None:
             if 'newName' in volumeMods and volumeMods['newName']:
                 name = volumeMods['newName']
-
             try:
                 self.setVolumeMetaData(name, 'type', appType)
             except Exception:
