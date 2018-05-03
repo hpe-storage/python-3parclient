@@ -5,11 +5,14 @@ try:
 except ImportError:
     from distutils.core import setup, find_packages
 
+with open('README.rst') as f:
+    readme = f.read()
 
 setup(
   name='python-3parclient',
   version=hpe3parclient.version,
   description="HPE 3PAR HTTP REST Client",
+  long_description=readme,
   author="Walter A. Boring IV",
   author_email="walter.boring@hpe.com",
   maintainer="Walter A. Boring IV",
