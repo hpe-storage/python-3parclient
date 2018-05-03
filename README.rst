@@ -104,6 +104,7 @@ Capabilities
 * Stop Online Physical Copy
 * Query Online Physical Copy Status
 * Stop Offline Physical Copy
+* Resync Physical Copy
 
 * Query Remote Copy Info
 * Query a Remote Copy Group
@@ -120,6 +121,10 @@ Capabilities
 * Enable/Disable Config Mirroring on a Remote Copy Target
 
 * Promote Virtual Copy
+
+* Get a Flash Cache
+* Create a Flash Cache
+* Delete a Flash Cache
 
 File Persona Capabilities
 =========================
