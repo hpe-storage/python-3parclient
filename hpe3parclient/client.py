@@ -2197,6 +2197,9 @@ class HPE3ParClient(object):
 
         if hostname:
             vlun += ",%s" % hostname
+        else:
+            if port:
+                vlun += ","
 
         if port:
             vlun += ",%s:%s:%s" % (port['node'],

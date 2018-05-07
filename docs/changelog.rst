@@ -1,6 +1,18 @@
 Changelog
 =========
 
+Changes in Version 4.2.7
+------------------------
+* Fixed an issue while deleting VLUN when port is present but the host is not
+
+Changes in Version 4.2.6
+------------------------
+* Added a support to getFlashCache()
+* Added a support to createFlashCache()
+* Added a support to deleteFlashCache()
+* Added a support to resyncPhysicalCopy()
+* Added a support to set volume metadata in modifyVolume()
+
 Changes in Version 4.2.5
 ------------------------
 * Fixed problem with getfshare command with Manila operations on 3.3.1 MU1 update
