@@ -4223,14 +4223,14 @@ class HPE3ParClient(object):
             cmd = ['admitrcopylink', targetName, source_target_port_pair]
             response=self._run(cmd)
             if response != []:
-                raise Exception(str(response))
-        except Exception as ex:
-            msg = "admitrcopylink fail for: %s Error:%s" %(targetName, ex) 
-            raise Exception(msg)
+                response = response[0]
+                raise exceptions.SSHException(response)
+        except exceptions.SSHException as ex:
+            raise exceptions.SSHException(ex)
         return response
 
     def dismissRemoteCopyLinks(self, targetName, source_port, target_port_wwn_or_ip):
-        """Adding remote copy link from soure to target.
+        """Dismiss remote copy link from soure to target.
         :param targetName - The name of target system
         :type - string
         :source_port - Source ethernet/Fibre channel port
@@ -4243,10 +4243,10 @@ class HPE3ParClient(object):
             cmd = ['dismissrcopylink', targetName, source_target_port_pair]
             response=self._run(cmd)
             if response != []:
-                raise Exception(str(response))
-        except Exception as ex:
-            msg = "dismissrcopylink fail for: %s Error:%s" %(targetName, ex) 
-            raise Exception(msg)
+                response = response[0]
+                raise exceptions.SSHException(response)
+        except exceptions.SSHException as ex:
+            raise exceptions.SSHException(ex)
         return response
 
     def startrCopy(self):
@@ -4257,9 +4257,9 @@ class HPE3ParClient(object):
             cmd = ['startrcopy']
             response=self._run(cmd)
             if response != []:
-                raise Exception(str(response))
-        except Exception as ex:
-            msg = "startrcopy failed Error:%s" %(ex)
-            raise Exception(msg)
+                response = response[0]
+                raise exceptions.SSHException(response)
+        except exceptions.SSHException as ex:
+            raise exceptions.SSHException(ex)
         return response
 
