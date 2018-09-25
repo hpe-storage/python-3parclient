@@ -4209,55 +4209,57 @@ class HPE3ParClient(object):
         response = self.http.put("/volumes/%s" % (volume_name), body=info)
         return response[1]
 
-    def admitRemoteCopyLinks(self, targetName, port_address):
+    def admitRemoteCopyLinks(self, targetName, source_port, target_port_wwn_or_ip):
         """Adding remote copy link from soure to target.
         :param targetName - The name of target system
         :type - string
-        :port_address - Target system port address
+        :source_port - Source ethernet/Fibre channel port
         :type- string
+        :target_port_wwn_or_ip- Target system's peer port WWN/IP
+        :type- string 
         """
-        cmd = ['admitrcopylink', targetName, port_address]
-        return self._run(cmd)
+        source_target_port_pair=source_port + ':' + target_port_wwn_or_ip
+        try:
+            cmd = ['admitrcopylink', targetName, source_target_port_pair]
+            response=self._run(cmd)
+            if response != []:
+                raise Exception(str(response))
+        except Exception as ex:
+            msg = "admitrcopylink fail for: %s Error:%s" %(targetName, ex) 
+            raise Exception(msg)
+        return response
 
-    def dismissRemoteCopyLinks(self, targetName, port_address):
+    def dismissRemoteCopyLinks(self, targetName, source_port, target_port_wwn_or_ip):
         """Adding remote copy link from soure to target.
         :param targetName - The name of target system
         :type - string
-        :port_address - Target system port address
+        :source_port - Source ethernet/Fibre channel port
         :type- string
+        :target_port_wwn_or_ip- Target system's peer port WWN/IP
+        :type- string 
         """
-        cmd = ['dismissrcopylink', targetName, port_address]
-        return self._run(cmd)
+        source_target_port_pair=source_port + ':' + target_port_wwn_or_ip
+        try:
+            cmd = ['dismissrcopylink', targetName, source_target_port_pair]
+            response=self._run(cmd)
+            if response != []:
+                raise Exception(str(response))
+        except Exception as ex:
+            msg = "dismissrcopylink fail for: %s Error:%s" %(targetName, ex) 
+            raise Exception(msg)
+        return response
 
-    def admitRemoteCopyTarget(self, targetName, mode, remote_copy_group_name, volumes_in_rcg=False, source_target_volume_pairs_list=None):
-        """Adding target to remote copy group
-        :param targetName - The name of target system
-        :type - string
-        :mode - synchronization mode
-        :type - string
-        :remote_copy_group_name
-        :type - string
-        :volumes_in_rcg
-        :type - boolean
-        :source_target_volume_pairs_list: list of primary and remote copy volumes
-        :type - list
+    def startrCopy(self):
+        """Starting remote copy service
+        :param No
         """
-        if not volumes_in_rcg:
-            cmd = ['admitrcopytarget', targetName, mode, remote_copy_group_name]
-        else:
-            cmd = ['admitrcopytarget', targetName, mode, remote_copy_group_name]
-            for volume_pair in source_target_volume_pairs_list:
-                cmd.append(volume_pair)
-        return self._run(cmd)
-
-    def dismissRemoteCopyTarget(self, targetName, remote_copy_group_name):
-        """Removing target from remote copy group
-        :param targetName - The name of target system
-        :type - string
-        :remote_copy_group_name
-        :type - string
-        """
-        option='-f'
-        cmd = ['dismissrcopytarget', option, targetName, remote_copy_group_name]
-        return self._run(cmd)
+        try:
+            cmd = ['startrcopy']
+            response=self._run(cmd)
+            if response != []:
+                raise Exception(str(response))
+        except Exception as ex:
+            msg = "startrcopy failed Error:%s" %(ex)
+            raise Exception(msg)
+        return response
 
