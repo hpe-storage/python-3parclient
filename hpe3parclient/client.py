@@ -4263,3 +4263,22 @@ class HPE3ParClient(object):
             raise exceptions.SSHException(ex)
         return response
 
+    def rcopyLinkExists(self,targetName,local_port,target_system_peer_port):
+        """Checking remote copy link from soure to target.
+        :param targetName - The name of target system
+        :type - string
+        :source_port - Source ethernet/Fibre channel port
+        :type- string
+        :target_port_wwn_or_ip- Target system's peer port WWN/IP
+        :type- string 
+        :returns: True if remote copy link exists 
+        :         False if remote copy link doesn't exist
+        """
+        cmd = ['showrcopy']
+        response=self._run(cmd)
+        rcopy_link=targetName + ',' + local_port + ',' + target_system_peer_port
+        remote_link_exist=False
+        for item in response:
+            if rcopy_link in item:
+                remote_link_exist=True
+        return remote_link_exist
