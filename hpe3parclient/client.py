@@ -4282,3 +4282,34 @@ class HPE3ParClient(object):
             if rcopy_link in item:
                 remote_link_exist=True
         return remote_link_exist
+
+    def admitRemoteCopyTarget(self, targetName, mode, remote_copy_group_name, source_target_volume_pairs_list=[]):
+        """Adding target to remote copy group
+        :param targetName - The name of target system
+        :type - string
+        :mode - synchronization mode
+        :type - string
+        :remote_copy_group_name
+        :type - string
+        :source_target_volume_pairs_list: list of pairs of primary and remote copy volumes
+        :type - list
+        """
+        if source_target_volume_pairs_list == []:
+            cmd = ['admitrcopytarget', targetName, mode, remote_copy_group_name]
+        else:
+            cmd = ['admitrcopytarget', targetName, mode, remote_copy_group_name]
+            for volume_pair in source_target_volume_pairs_list:
+                cmd.append(volume_pair)
+        return self._run(cmd)
+
+    def dismissRemoteCopyTarget(self, targetName, remote_copy_group_name):
+        """Removing target from remote copy group
+        :param targetName - The name of target system
+        :type - string
+        :remote_copy_group_name
+        :type - string
+        """
+        option='-f'
+        cmd = ['dismissrcopytarget', option, targetName, remote_copy_group_name]
+        return self._run(cmd)
+
