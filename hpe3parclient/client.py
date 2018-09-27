@@ -4263,6 +4263,18 @@ class HPE3ParClient(object):
             raise exceptions.SSHException(ex)
         return response
 
+    def rcopyServiceExists(self):
+        """Checking remote copy service status.
+        :returns: True if remote copy service status is 'Started' 
+        :         False if remote copy service status is 'Stopped'
+        """
+        cmd = ['showrcopy']
+        response=self._run(cmd)
+        rcopyservice_status=False
+        if 'Started' in response[2]:
+            rcopyservice_status=True
+        return rcopyservice_status
+
     def rcopyLinkExists(self,targetName,local_port,target_system_peer_port):
         """Checking remote copy link from soure to target.
         :param targetName - The name of target system
