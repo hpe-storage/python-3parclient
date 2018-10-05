@@ -7,9 +7,9 @@ branches:
 
 # command to install dependencies
 install:
-  - pip install -r requirements.txt
-  - pip install -r test-requirements.txt
-  - pip install tox
+  - sudo pip install -r requirements.txt
+  - sudo pip install -r test-requirements.txt
+  - sudo pip install tox
 # command to run tests
 script:
-  - tox -r -e py27
+  - sudo tox -r -e py27
