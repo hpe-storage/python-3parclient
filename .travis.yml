@@ -4,4 +4,6 @@ python:
     - "2.7"
     - "3.4"
 install: sudo pip install tox-travis
-script: sudo tox
+script: 
+  - sudo tox
+  - sudo -r -e pep8
