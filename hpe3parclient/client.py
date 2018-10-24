@@ -4211,7 +4211,7 @@ class HPE3ParClient(object):
 
     def check_response(self, resp):
         for r in resp:
-            if 'error' in str.lower(r) or 'invalid' in str.lower(r):
+            if 'error' in str.lower(r) or 'invalid' in str.lower(r) or 'The schedule format' in str.lower(r):
                 err_resp = r.strip()
                 return err_resp
 
@@ -4236,15 +4236,7 @@ class HPE3ParClient(object):
 
             err_resp = self.check_response(resp)
             if err_resp:
-                err = (("Create snapschedule failed Error is"
-                         " '%(err_resp)s' ") %
-                       {'err_resp': err_resp})
-                raise exceptions.SSHException(reason=err)
-            else:
-                for r in resp:
-                    if 'The schedule format' in r:
-                       raise exceptions.SSHException(r)
-
+                raise exceptions.SSHException(err_resp)
         except exceptions.SSHException as ex:
             raise exceptions.SSHException(ex)
 
@@ -4315,14 +4307,7 @@ class HPE3ParClient(object):
 
             err_resp = self.check_response(resp)
             if err_resp:
-                err = (("Modify schedule failed Error is"
-                         " '%(err_resp)s' ") %
-                       {'err_resp': err_resp})
-                raise exceptions.SSHException(err)
-            else:
-                for r in resp:
-                    if 'The schedule format' in r:
-                       raise exceptions.SSHException(r)
+                raise exceptions.SSHException(err_resp)
         except exceptions.SSHException as ex:
             raise exceptions.SSHException(ex)
 
