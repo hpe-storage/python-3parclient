@@ -4211,7 +4211,7 @@ class HPE3ParClient(object):
 
     def check_response(self, resp):
         for r in resp:
-            if 'error' in str.lower(r) or 'invalid' in str.lower(r) or 'The schedule format' in str.lower(r):
+            if 'error' in str.lower(r) or 'invalid' in str.lower(r) or 'the schedule format' in str.lower(r):
                 err_resp = r.strip()
                 return err_resp
 
