@@ -6,6 +6,7 @@ python:
 install: 
   - sudo pip install tox-travis
 
-script: 
+script:
+  - ssh-keygen -f ~/.ssh/id_rsa -t rsa -N '' 
   - tox
 
