@@ -27,6 +27,7 @@
 import logging
 import requests
 import time
+import ast
 
 try:
     import json
@@ -167,9 +168,12 @@ class HTTPJSONRESTClient(object):
             string_parts.append(header)
 
         HTTPJSONRESTClient._logger.debug("\nREQ: %s\n" % "".join(string_parts))
+        HTTPJSONRESTClient._logger.debug("\nREQ: %s\n" % "".join(string_parts))
         if 'body' in kwargs:
             if 'password' in kwargs['body']:
-                kwargs['body']['password'] = "********"
+                import ast
+                body_dict = ast.literal_eval(kwargs['body'])
+                body_dict['password'] = "********"
             HTTPJSONRESTClient._logger.debug("REQ BODY: %s\n" %
                                              (kwargs['body']))
 
