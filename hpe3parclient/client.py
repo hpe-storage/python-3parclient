@@ -4286,7 +4286,6 @@ class HPE3ParClient(object):
             cmd = ['admitrcopylink', targetName, source_target_port_pair]
             response = self._run(cmd)
             if response != []:
-                response = response[0]
                 raise exceptions.SSHException(response)
         except exceptions.SSHException as ex:
             raise exceptions.SSHException(ex)
@@ -4307,7 +4306,6 @@ class HPE3ParClient(object):
             cmd = ['dismissrcopylink', targetName, source_target_port_pair]
             response = self._run(cmd)
             if response != []:
-                response = response[0]
                 raise exceptions.SSHException(response)
         except exceptions.SSHException as ex:
             raise exceptions.SSHException(ex)
@@ -4321,7 +4319,6 @@ class HPE3ParClient(object):
             cmd = ['startrcopy']
             response = self._run(cmd)
             if response != []:
-                response = response[0]
                 raise exceptions.SSHException(response)
         except exceptions.SSHException as ex:
             raise exceptions.SSHException(ex)
@@ -4394,7 +4391,6 @@ class HPE3ParClient(object):
         try:
             response = self._run(cmd)
             if response != []:
-                response = response[0]
                 raise exceptions.SSHException(response)
         except exceptions.SSHException as ex:
             raise exceptions.SSHException(ex)
@@ -4413,7 +4409,6 @@ class HPE3ParClient(object):
         try:
             response = self._run(cmd)
             if response != []:
-                response = response[0]
                 raise exceptions.SSHException(response)
         except exceptions.SSHException as ex:
             raise exceptions.SSHException(ex)
