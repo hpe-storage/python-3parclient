@@ -640,7 +640,7 @@ class HPE3ParClient(object):
                 name = volumeMods['newName']
 
             try:
-                self.setVolumeMetaData(name, 'type', appType)
+                self.setVolumeMetaData(name, 'hpe_ecosystem_product', appType)
             except Exception:
                 pass
 
@@ -3049,6 +3049,33 @@ class HPE3ParClient(object):
         response, body = self.http.get('/remotecopygroups/%s' % name)
         return body
 
+    def getRemoteCopyGroupVolumes(self, remoteCopyGroupName):
+        """
+        Returns information on all volumes in a Remote Copy Groups
+         :param remoteCopyGroupName: the remote copy group name
+        :type name: str
+         :returns: list of volumes in a Remote Copy Groups
+         """
+        response, body = self.http.get(
+            '/remotecopygroups/%s/volumes' % (remoteCopyGroupName)
+        )
+        return body
+
+    def getRemoteCopyGroupVolume(self, remoteCopyGroupName, volumeName):
+        """
+        Returns information on one volume of a Remote Copy Group
+         :param remoteCopyGroupName: the remote copy group name
+        :type name: str
+        :param volumeName: the remote copy group name
+        :type name: str
+         :returns: RemoteVolume
+         """
+        response, body = self.http.get(
+            '/remotecopygroups/%s/volumes/%s' %
+            (remoteCopyGroupName, volumeName)
+        )
+        return body
+
     def createRemoteCopyGroup(self, name, targets, optional=None):
         """
         Creates a remote copy group
@@ -3394,7 +3421,7 @@ class HPE3ParClient(object):
         return body
 
     def addVolumeToRemoteCopyGroup(self, name, volumeName, targets,
-                                   optional=None):
+                                   optional=None, useHttpPost=False):
         """
         Adds a volume to a remote copy group
 
@@ -3601,19 +3628,30 @@ class HPE3ParClient(object):
             group is in the failover state. Both systems are in the primary
             state.
         """
-        parameters = {'action': 1,
-                      'volumeName': volumeName,
-                      'targets': targets}
-        if optional:
-            parameters = self._mergeDict(parameters, optional)
+        if not useHttpPost:
+            parameters = {'action': 1,
+                          'volumeName': volumeName,
+                          'targets': targets}
+            if optional:
+                parameters = self._mergeDict(parameters, optional)
 
-        response, body = self.http.put('/remotecopygroups/%s' % name,
-                                       body=parameters)
+            response, body = self.http.put('/remotecopygroups/%s' % name,
+                                           body=parameters)
+        else:
+            parameters = {'volumeName': volumeName,
+                          'targets': targets}
+            if optional:
+                parameters = self._mergeDict(parameters, optional)
+            response, body = self.http.post(
+                '/remotecopygroups/%s/volumes' %
+                name, body=parameters
+            )
         return body
 
     def removeVolumeFromRemoteCopyGroup(self, name, volumeName,
                                         optional=None,
-                                        removeFromTarget=False):
+                                        removeFromTarget=False,
+                                        useHttpDelete=False):
         """
         Removes a volume from a remote copy group
 
@@ -3669,27 +3707,45 @@ class HPE3ParClient(object):
         """
         # If removeFromTarget is set to True, we need to issue the command via
         # ssh due to this feature not being supported in the WSAPI.
-        if removeFromTarget:
-            if optional:
-                keep_snap = optional.get('keepSnap', False)
-            else:
-                keep_snap = False
+        if not useHttpDelete:
+            # If removeFromTarget is set to True, we need to issue the
+            # command via ssh due to this feature not being supported
+            # in the WSAPI.
+            if removeFromTarget:
+                if optional:
+                    keep_snap = optional.get('keepSnap', False)
+                else:
+                    keep_snap = False
 
-            if keep_snap:
-                cmd = ['dismissrcopyvv', '-f', '-keepsnap', '-removevv',
-                       volumeName, name]
+                if keep_snap:
+                    cmd = ['dismissrcopyvv', '-f', '-keepsnap', '-removevv',
+                           volumeName, name]
+                else:
+                    cmd = ['dismissrcopyvv', '-f', '-removevv', volumeName,
+                           name]
+                self._run(cmd)
             else:
-                cmd = ['dismissrcopyvv', '-f', '-removevv', volumeName, name]
-            self._run(cmd)
+                parameters = {'action': 2,
+                              'volumeName': volumeName}
+                if optional:
+                    parameters = self._mergeDict(parameters, optional)
+
+                response, body = self.http.put('/remotecopygroups/%s' % name,
+                                               body=parameters)
         else:
-            parameters = {'action': 2,
-                          'volumeName': volumeName}
-            if optional:
-                parameters = self._mergeDict(parameters, optional)
-
-            response, body = self.http.put('/remotecopygroups/%s' % name,
-                                           body=parameters)
-            return body
+            option = None
+            if optional and optional.get('keepSnap') and removeFromTarget:
+                raise Exception("keepSnap and removeFromTarget cannot be both\
+                    true while removing the volume from remote copy group")
+            elif optional and optional.get('keepSnap'):
+                option = 'keepSnap'
+            elif removeFromTarget:
+                option = 'removeSecondaryVolume'
+            delete_url = '/remotecopygroups/%s/volumes/%s' % (name, volumeName)
+            if option:
+                delete_url += '?%s=true' % option
+            response, body = self.http.delete(delete_url)
+        return body
 
     def startRemoteCopy(self, name, optional=None):
         """
@@ -4208,3 +4264,153 @@ class HPE3ParClient(object):
         info = {'action': self.RESYNC_PHYSICAL_COPY}
         response = self.http.put("/volumes/%s" % (volume_name), body=info)
         return response[1]
+
+    def admitRemoteCopyLinks(
+            self, targetName, source_port, target_port_wwn_or_ip):
+        """Adding remote copy link from soure to target.
+        :param targetName - The name of target system
+        :type - string
+        :source_port - Source ethernet/Fibre channel port
+        :type- string
+        :target_port_wwn_or_ip- Target system's peer port WWN/IP
+        :type- string
+        """
+        source_target_port_pair = source_port + ':' + target_port_wwn_or_ip
+
+        cmd = ['admitrcopylink', targetName, source_target_port_pair]
+        response = self._run(cmd)
+        if response != []:
+            raise exceptions.SSHException(response)
+        return response
+
+    def dismissRemoteCopyLinks(
+            self, targetName, source_port, target_port_wwn_or_ip):
+        """Dismiss remote copy link from soure to target.
+        :param targetName - The name of target system
+        :type - string
+        :source_port - Source ethernet/Fibre channel port
+        :type- string
+        :target_port_wwn_or_ip- Target system's peer port WWN/IP
+        :type- string
+        """
+        source_target_port_pair = source_port + ':' + target_port_wwn_or_ip
+
+        cmd = ['dismissrcopylink', targetName, source_target_port_pair]
+        response = self._run(cmd)
+        if response != []:
+            raise exceptions.SSHException(response)
+        return response
+
+    def startrCopy(self):
+        """Starting remote copy service
+        :param No
+        """
+        cmd = ['startrcopy']
+        response = self._run(cmd)
+        if response != []:
+            raise exceptions.SSHException(response)
+        return response
+
+    def rcopyServiceExists(self):
+        """Checking remote copy service status.
+        :returns: True if remote copy service status is 'Started'
+        :         False if remote copy service status is 'Stopped'
+        """
+        cmd = ['showrcopy']
+        response = self._run(cmd)
+        rcopyservice_status = False
+        if 'Started' in response[2]:
+            rcopyservice_status = True
+        return rcopyservice_status
+
+    def getRemoteCopyLink(self, link_name):
+        """
+        Querying specific remote copy link
+        :returns: Specific remote copy link info
+        """
+        response, body = self.http.get('/remotecopylinks/%s' % link_name)
+        return body
+
+    def rcopyLinkExists(self, targetName, local_port, target_system_peer_port):
+        """Checking remote copy link from soure to target.
+        :param targetName - The name of target system
+        :type - string
+        :source_port - Source ethernet/Fibre channel port
+        :type- string
+        :target_port_wwn_or_ip- Target system's peer port WWN/IP
+        :type- string
+        :returns: True if remote copy link exists
+        :         False if remote copy link doesn't exist
+        """
+        rcopylink_exits = False
+        link_name = targetName + '_' + local_port.replace(':', '_')
+        try:
+            response = self.getRemoteCopyLink(link_name)
+            if response and response['address'] == target_system_peer_port:
+                rcopylink_exits = True
+        except exceptions.HTTPNotFound:
+            pass
+        return rcopylink_exits
+
+    def admitRemoteCopyTarget(self, targetName, mode, remote_copy_group_name,
+                              source_target_volume_pairs_list=[]):
+        """Adding target to remote copy group
+        :param targetName - The name of target system
+        :type - string
+        :mode - synchronization mode
+        :type - string
+        :remote_copy_group_name
+        :type - string
+        :source_target_volume_pairs_list: list of pairs of primary
+        :       and remote copy volumes
+        :type - list
+        """
+        if source_target_volume_pairs_list == []:
+            cmd = ['admitrcopytarget', targetName,
+                   mode, remote_copy_group_name]
+        else:
+            cmd = ['admitrcopytarget', targetName,
+                   mode, remote_copy_group_name]
+            for volume_pair_tuple in source_target_volume_pairs_list:
+                source_target_pair = volume_pair_tuple[0] +\
+                    ':' + volume_pair_tuple[1]
+                cmd.append(source_target_pair)
+
+        response = self._run(cmd)
+        if response != []:
+            raise exceptions.SSHException(response)
+        return response
+
+    def dismissRemoteCopyTarget(self, targetName, remote_copy_group_name):
+        """Removing target from remote copy group
+        :param targetName - The name of target system
+        :type - string
+        :remote_copy_group_name
+        :type - string
+        """
+        option = '-f'
+        cmd = ['dismissrcopytarget', option, targetName,
+               remote_copy_group_name]
+
+        response = self._run(cmd)
+        if response != []:
+            raise exceptions.SSHException(response)
+        return response
+
+    def targetInRemoteCopyGroupExists(
+            self, target_name, remote_copy_group_name):
+        """Determines whether target is present in remote copy group.
+         :param name: target_name
+        :type name: str
+        :remote_copy_group_name
+        :type key: str
+         :returns: bool
+         """
+        try:
+            contents = self.getRemoteCopyGroup(remote_copy_group_name)
+            for item in contents['targets']:
+                if item['target'] == target_name:
+                    return True
+        except Exception:
+            pass
+        return False
