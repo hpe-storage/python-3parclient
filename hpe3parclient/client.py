@@ -4414,3 +4414,149 @@ class HPE3ParClient(object):
         except Exception:
             pass
         return False
+
+    def check_response(self, resp):
+        for r in resp:
+            if 'error' in str.lower(r) or 'invalid' in str.lower(r):
+                err_resp = r.strip()
+                return err_resp
+
+    def createSchedule(self, schedule_name, task, taskfreq):
+        """Create Schedule for volume snapshot.
+        :param schedule_name - The name of the schedule
+        :type - string
+        :param task - command to for which schedule is created
+        :type - string
+        :param taskfreq - frequency of schedule
+        :type - string
+        """
+        cmd = ['createsched']
+        cmd.append("\"" + task + "\"")
+        if '@' not in taskfreq:
+            cmd.append("\"" + taskfreq + "\"")
+        else:
+            cmd.append(taskfreq)
+        cmd.append(schedule_name)
+        try:
+            resp = self._run(cmd)
+
+            err_resp = self.check_response(resp)
+            if err_resp:
+                raise exceptions.SSHException(err_resp)
+            else:
+                for r in resp:
+                    if str.lower('The schedule format is <minute> <hour> <dom>\
+ <month> <dow> or by @hourly @daily @monthly @weekly @monthly \
+@yearly') in str.lower(r):
+                        raise exceptions.SSHException(r.strip())
+        except exceptions.SSHException as ex:
+            raise exceptions.SSHException(ex)
+
+    def deleteSchedule(self, schedule_name):
+        """Delete Schedule
+        :param schedule_name - The name of the schedule to delete
+        :type - string
+        """
+        cmd = ['removesched', '-f', schedule_name]
+        try:
+            resp = self._run(cmd)
+
+            err_resp = self.check_response(resp)
+            if err_resp:
+                err = (("Delete snapschedule failed Error is\
+ '%(err_resp)s' ") % {'err_resp': err_resp})
+                raise exceptions.SSHException(reason=err)
+        except exceptions.SSHException as ex:
+            raise exceptions.SSHException(reason=ex)
+
+    def getSchedule(self, schedule_name):
+        """Get Schedule
+        :param schedule_name - The name of the schedule to get information
+        :type - string
+        """
+        cmd = ['showsched ', schedule_name]
+        try:
+            result = self._run(cmd)
+            for r in result:
+                if 'No scheduled tasks ' in r:
+                    msg = "Couldn't find the schedule '%s'" % schedule_name
+                    raise exceptions.SSHNotFoundException(msg)
+        except exceptions.SSHNotFoundException as ex:
+            raise exceptions.SSHNotFoundException(ex)
+        return result
+
+    def modifySchedule(self, name, schedule_opt):
+        """Modify Schedule.
+        :param name - The name of the schedule
+        :type - string
+        :param schedule_opt -
+        :type schedule_opt - dictionary of option to be modified
+        .. code-block:: python
+            mod_request = {
+                'newName': 'myNewName',         # New name of the schedule
+                'taskFrequency': '0 * * * *'    # String containing cron or
+                                                # @monthly, @hourly, @daily,
+                                                # @yearly and @weekly.
+        }
+        """
+
+        cmd = ['setsched']
+        if 'newName' in schedule_opt:
+            cmd.append('-name')
+            cmd.append(schedule_opt['newName'])
+
+        if 'taskFrequency' in schedule_opt:
+            cmd.append('-s')
+            if '@' not in schedule_opt['taskFrequency']:
+                cmd.append("\"" + schedule_opt['taskFrequency'] + "\"")
+            else:
+                cmd.append(schedule_opt['taskFrequency'])
+        cmd.append(name)
+        try:
+            resp = self._run(cmd)
+
+            err_resp = self.check_response(resp)
+            if err_resp:
+                raise exceptions.SSHException(err_resp)
+            else:
+                for r in resp:
+                    if str.lower('The schedule format is <minute> <hour> \
+<dom> <month> <dow> or by @hourly @daily @monthly @weekly @monthly \
+@yearly') in str.lower(r):
+                        raise exceptions.SSHException(r.strip())
+
+        except exceptions.SSHException as ex:
+            raise exceptions.SSHException(ex)
+
+    def suspendSchedule(self, schedule_name):
+        """Suspend Schedule
+        :param schedule_name - The name of the schedule to get information
+        :type - string
+        """
+        cmd = ['setsched', '-suspend', schedule_name]
+        try:
+            resp = self._run(cmd)
+            err_resp = self.check_response(resp)
+            if err_resp:
+                err = (("Schedule suspend failed Error is\
+ '%(err_resp)s' ") % {'err_resp': err_resp})
+                raise exceptions.SSHException(reason=err)
+        except exceptions.SSHException as ex:
+            raise exceptions.SSHException(reason=ex)
+
+    def resumeSchedule(self, schedule_name):
+        """Resume Schedule
+        :param schedule_name - The name of the schedule to get information
+        :type - string
+        """
+        cmd = ['setsched', '-resume', schedule_name]
+        try:
+            resp = self._run(cmd)
+            err_resp = self.check_response(resp)
+            if err_resp:
+                err = (("Schedule resume failed Error is\
+ '%(err_resp)s' ") % {'err_resp': err_resp})
+                raise exceptions.SSHException(reason=err)
+        except exceptions.SSHException as ex:
+            raise exceptions.SSHException(reason=ex)
+

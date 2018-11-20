@@ -73,6 +73,30 @@ class Cli(object):
         str = 'Host ' + args[1] + ' already used by host '
         return str
 
+    def do_cli_admitrcopylink(self, *args):
+        return []
+
+    def do_cli_dismissrcopylink(self, *args):
+        return []
+
+    def do_cli_startrcopy(self, *args):
+        return []
+
+    def do_cli_admitrcopytarget(self, *args):
+        return []
+
+    def do_cli_dismissrcopytarget(self, *args):
+        return []
+
+    def do_cli_createsched(self, *args):
+        return []
+
+    def do_cli_removesched(self, *args):
+        return []
+
+    def do_cli_setsched(self, *args):
+        return []
+
     def do_cli_removefpg(self, *args):
 
         parser = CliArgumentParser(prog=args[0])
