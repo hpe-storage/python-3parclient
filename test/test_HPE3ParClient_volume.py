@@ -17,7 +17,6 @@
 import time
 import unittest
 from testconfig import config
-import mock
 from test import HPE3ParClient_base as hpe3parbase
 
 from hpe3parclient import exceptions
