@@ -4420,6 +4420,29 @@ class HPE3ParClient(object):
             pass
         return False
 
+    def remoteCopyGroupStatusCheck(
+            self, remote_copy_group_name):
+        """
+        Determines whether all volumes syncStatus is synced or not
+        when remote copy group status is started. If all volumes
+        syncStatus is 'synced' then it will return true else false
+        :param remote_copy_group_name - Remote copy group name
+        :type remote_copy_group_name: str
+        :return: True: If remote copy group is started and all
+        :              volume syncStatus is 'synced' i.e. 3
+        :        False: If remote copy group is started and some
+        :              volume status is not 'synced'.
+        """
+        response = self.getRemoteCopyGroup(remote_copy_group_name)
+        for target in response['targets']:
+            if target['state'] != 3:
+                return False
+        for volume in response['volumes']:
+            for each_target_volume in volume['remoteVolumes']:
+                if each_target_volume['syncStatus'] != 3:
+                    return False
+        return True
+
     def check_response_for_admittarget(self, resp):
         """
         Checks whether command response having valid output
@@ -4429,7 +4452,7 @@ class HPE3ParClient(object):
             if 'error' in str.lower(r) or 'invalid' in str.lower(r) \
                or 'must specify a mapping' in str.lower(r) \
                or 'not exist' in str.lower(r) or 'no target' in str.lower(r) \
-               or 'group contains' in str.lower(r):
+               or 'group contains' in str.lower(r)\
                 return r
 
     def check_response(self, resp):
