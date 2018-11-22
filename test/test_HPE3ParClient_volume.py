@@ -2199,16 +2199,18 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
     @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
     def test26_admit_rcopy_link(self):
         self.printHeader('admit_rcopy_link_test')
-        res = self.cl.admitRemoteCopyLinks(
-            TARGET_NAME, SOURCE_PORT, TARGET_PORT)
+        res = self.cl.admitRemoteCopyLinks(TARGET_NAME,
+                                           SOURCE_PORT,
+                                           TARGET_PORT)
         self.assertEqual(res, [])
         self.printFooter('admit_rcopy_link_test')
 
     @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
     def test27_dismiss_rcopy_link(self):
         self.printHeader('dismiss_rcopy_link_test')
-        res = self.cl.dismissRemoteCopyLinks(
-            TARGET_NAME, SOURCE_PORT, TARGET_PORT)
+        res = self.cl.dismissRemoteCopyLinks(TARGET_NAME,
+                                             SOURCE_PORT,
+                                             TARGET_PORT)
         self.assertEqual(res, [])
         self.printFooter('dismiss_rcopy_link_test')
 
@@ -2222,24 +2224,27 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
     @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
     def test29_admit_rcopy_target(self):
         self.printHeader('admit_rcopy_target_test')
-        res = self.cl.admitRemoteCopyTarget(
-            TARGET_NAME, MODE, REMOTE_COPY_GROUP_NAME1)
+        res = self.cl.admitRemoteCopyTarget(TARGET_NAME,
+                                            MODE,
+                                            REMOTE_COPY_GROUP_NAME1)
         self.assertEqual(res, [])
         self.printFooter('admit_rcopy_target_test')
 
     @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
     def test30_admit_rcopy_target(self):
         self.printHeader('admit_rcopy_target_test')
-        res = self.cl.admitRemoteCopyTarget(
-            TARGET_NAME, MODE, REMOTE_COPY_GROUP_NAME1, VOLUME_PAIR_LIST)
+        res = self.cl.admitRemoteCopyTarget(TARGET_NAME,
+                                            MODE,
+                                            REMOTE_COPY_GROUP_NAME1,
+                                            VOLUME_PAIR_LIST)
         self.assertEqual(res, [])
         self.printFooter('admit_rcopy_target_test')
 
     @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
     def test31_dismiss_rcopy_target(self):
         self.printHeader('dismiss_rcopy_target_test')
-        res = self.cl.dismissRemoteCopyTarget(
-            TARGET_NAME, REMOTE_COPY_GROUP_NAME1)
+        res = self.cl.dismissRemoteCopyTarget(TARGET_NAME,
+                                              REMOTE_COPY_GROUP_NAME1)
         self.assertEqual(res, [])
         self.printFooter('dismiss_rcopy_target_test')
 
@@ -2261,8 +2266,8 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
     @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
     def test34_modify_schedule(self):
         self.printHeader('modify_schedule_test')
-        res = self.cl.modifySchedule(
-            SCHEDULE_NAME1, {'newName': SCHEDULE_NAME2})
+        res = self.cl.modifySchedule(SCHEDULE_NAME1,
+                                     {'newName': SCHEDULE_NAME2})
         self.assertEqual(res, None)
         self.printFooter('modify_schedule_test')
 
