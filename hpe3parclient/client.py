@@ -4353,7 +4353,7 @@ class HPE3ParClient(object):
         return rcopylink_exits
 
     def admitRemoteCopyTarget(self, targetName, mode, remote_copy_group_name,
-                              source_target_volumes_dict=None):
+                              optional=None):
         """Adding target to remote copy group
         :param targetName - The name of target system
         :type - string
@@ -4361,22 +4361,31 @@ class HPE3ParClient(object):
         :type - string
         :remote_copy_group_name
         :type - string
-        :source_target_volume_pairs_list: list of pairs of primary
-        :       and remote copy volumes
+        :optional
         :type - dict
-        """
-        if source_target_volumes_dict is None:
-            source_target_volumes_dict = {}
-        if not source_target_volumes_dict:
-            cmd = ['admitrcopytarget', targetName,
-                   mode, remote_copy_group_name]
-        else:
-            cmd = ['admitrcopytarget', targetName,
-                   mode, remote_copy_group_name]
-            for source_vol, target_vol in source_target_volumes_dict.iteritems():
-                source_target_pair = source_vol + ':' + target_vol
-                cmd.append(source_target_pair)
 
+        .. code-block:: python
+
+            optional = {
+                "volumePairs": [{
+                    "sourceVolumeName": "source_name",  # The target volume
+                                                        # name associated with
+                                                        # this group.
+                    "targetVolumeName": "target_name"   # The target volume
+                                                        # name associated with
+                                                        # this group.
+                }]
+            }
+        """
+
+        cmd = ['admitrcopytarget', targetName,
+               mode, remote_copy_group_name]
+        if optional:
+            volumePairs = optional.get('volumePairs')
+            if volumePairs is not None:
+                for volumePair in volumePairs:
+                    source_target_pair = volumePair['sourceVolumeName'] + ':' + volumePair['targetVolumeName']
+                    cmd.append(source_target_pair)
         response = self._run(cmd)
         err_resp = self.check_response_for_admittarget(response)
         if err_resp:
@@ -4452,7 +4461,9 @@ class HPE3ParClient(object):
             if 'error' in str.lower(r) or 'invalid' in str.lower(r) \
                or 'must specify a mapping' in str.lower(r) \
                or 'not exist' in str.lower(r) or 'no target' in str.lower(r) \
-               or 'group contains' in str.lower(r)\
+               or 'group contains' in str.lower(r) \
+               or 'Target is already in this group.' in str(r) \
+               or 'A group may have only a single synchronous target.' in str(r):
                 return r
 
     def check_response(self, resp):
