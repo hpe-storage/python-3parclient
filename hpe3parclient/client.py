@@ -4384,7 +4384,8 @@ class HPE3ParClient(object):
             volumePairs = optional.get('volumePairs')
             if volumePairs is not None:
                 for volumePair in volumePairs:
-                    source_target_pair = volumePair['sourceVolumeName'] + ':' + volumePair['targetVolumeName']
+                    source_target_pair = volumePair['sourceVolumeName'] + \
+                        ':' + volumePair['targetVolumeName']
                     cmd.append(source_target_pair)
         response = self._run(cmd)
         err_resp = self.check_response_for_admittarget(response)
@@ -4463,7 +4464,10 @@ class HPE3ParClient(object):
                or 'not exist' in str.lower(r) or 'no target' in str.lower(r) \
                or 'group contains' in str.lower(r) \
                or 'Target is already in this group.' in str(r) \
-               or 'A group may have only a single synchronous target.' in str(r):
+               or 'A group may have only a single synchronous target.' \
+               in str(r) or \
+               'cannot have groups with more than one synchronization mode' \
+               in str.lower(r):
                 return r
 
     def check_response(self, resp):
@@ -4610,4 +4614,3 @@ class HPE3ParClient(object):
                 raise exceptions.SSHException(reason=err)
         except exceptions.SSHException as ex:
             raise exceptions.SSHException(reason=ex)
-
