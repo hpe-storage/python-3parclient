@@ -2243,8 +2243,8 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.printFooter('admit_rcopy_target_test')
 
     # TODO: Fix this later
-    #@unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
-    #def test31_dismiss_rcopy_target(self):
+    # @unittest.skipIf(is_live_test(), SKIP_RCOPY_MESSAGE)
+    # def test31_dismiss_rcopy_target(self):
     #    self.printHeader('dismiss_rcopy_target_test')
     #    res = self.cl.dismissRemoteCopyTarget(TARGET_NAME,
     #                                          REMOTE_COPY_GROUP_NAME1)
