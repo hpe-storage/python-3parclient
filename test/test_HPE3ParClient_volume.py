@@ -59,6 +59,7 @@ VOLUME_PAIR_LIST = {'volumePairs': [{'sourceVolumeName': 'primary_vol1',
                                     {'sourceVolumeName': 'primary_vol2',
                                      'targetVolumeName': 'secondary_vol2'}]}
 
+
 def is_live_test():
     return config['TEST']['unit'].lower() == 'false'
 
