@@ -4614,3 +4614,47 @@ class HPE3ParClient(object):
                 raise exceptions.SSHException(reason=err)
         except exceptions.SSHException as ex:
             raise exceptions.SSHException(reason=ex)
+
+    def remoteCopyGroupStatusStartedCheck(
+            self, remote_copy_group_name):
+        """
+        Checks whether remote copy group status is started or not
+        :param remote_copy_group_name - Remote copy group name
+        :type remote_copy_group_name: str
+        :return: True: If remote copy group is in started
+        :              state i.e. 3
+        :        False: If remote copy group is not in started
+        :              state
+        """
+        response = self.getRemoteCopyGroup(remote_copy_group_name)
+        status_started_counter = 0
+        for target in response['targets']:
+            if target['state'] == 3:
+                status_started_counter += 1
+
+        if status_started_counter == len(response['targets']):
+            return True
+        else:
+            return False
+
+    def remoteCopyGroupStatusStoppedCheck(
+            self, remote_copy_group_name):
+        """
+        Checks whether remote copy group status is stopped or not
+        :param remote_copy_group_name - Remote copy group name
+        :type remote_copy_group_name: str
+        :return: True: If remote copy group is in stopped
+        :              state i.e. 5
+        :        False: If remote copy group is not in started
+        :              state
+        """
+        response = self.getRemoteCopyGroup(remote_copy_group_name)
+        status_stopped_counter = 0
+        for target in response['targets']:
+            if target['state'] == 5:
+                status_stopped_counter += 1
+
+        if status_stopped_counter == len(response['targets']):
+            return True
+        else:
+            return False
