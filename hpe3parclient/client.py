@@ -4353,7 +4353,7 @@ class HPE3ParClient(object):
         return rcopylink_exits
 
     def admitRemoteCopyTarget(self, targetName, mode, remote_copy_group_name,
-                              source_target_volume_pairs_list=[]):
+                              optional=None):
         """Adding target to remote copy group
         :param targetName - The name of target system
         :type - string
@@ -4361,24 +4361,38 @@ class HPE3ParClient(object):
         :type - string
         :remote_copy_group_name
         :type - string
-        :source_target_volume_pairs_list: list of pairs of primary
-        :       and remote copy volumes
-        :type - list
-        """
-        if source_target_volume_pairs_list == []:
-            cmd = ['admitrcopytarget', targetName,
-                   mode, remote_copy_group_name]
-        else:
-            cmd = ['admitrcopytarget', targetName,
-                   mode, remote_copy_group_name]
-            for volume_pair_tuple in source_target_volume_pairs_list:
-                source_target_pair = volume_pair_tuple[0] +\
-                    ':' + volume_pair_tuple[1]
-                cmd.append(source_target_pair)
+        :optional
+        :type - dict
 
+        .. code-block:: python
+
+            optional = {
+                "volumePairs": [{
+                    "sourceVolumeName": "source_name",  # The target volume
+                                                        # name associated with
+                                                        # this group.
+                    "targetVolumeName": "target_name"   # The target volume
+                                                        # name associated with
+                                                        # this group.
+                }]
+            }
+        """
+
+        cmd = ['admitrcopytarget', targetName,
+               mode, remote_copy_group_name]
+        if optional:
+            volumePairs = optional.get('volumePairs')
+            if volumePairs is not None:
+                for volumePair in volumePairs:
+                    source_target_pair = volumePair['sourceVolumeName'] + \
+                        ':' + volumePair['targetVolumeName']
+                    cmd.append(source_target_pair)
         response = self._run(cmd)
-        if response != []:
-            raise exceptions.SSHException(response)
+        err_resp = self.check_response_for_admittarget(response)
+        if err_resp:
+            err = (("Admit remote copy target failed Error is\
+ '%(err_resp)s' ") % {'err_resp': err_resp})
+            raise exceptions.SSHException(err)
         return response
 
     def dismissRemoteCopyTarget(self, targetName, remote_copy_group_name):
@@ -4393,9 +4407,10 @@ class HPE3ParClient(object):
                remote_copy_group_name]
 
         response = self._run(cmd)
-        if response != []:
-            raise exceptions.SSHException(response)
-        return response
+        for message in response:
+            if "has been dismissed from group" in message:
+                return response
+        raise exceptions.SSHException(response)
 
     def targetInRemoteCopyGroupExists(
             self, target_name, remote_copy_group_name):
@@ -4414,6 +4429,46 @@ class HPE3ParClient(object):
         except Exception:
             pass
         return False
+
+    def remoteCopyGroupStatusCheck(
+            self, remote_copy_group_name):
+        """
+        Determines whether all volumes syncStatus is synced or not
+        when remote copy group status is started. If all volumes
+        syncStatus is 'synced' then it will return true else false
+        :param remote_copy_group_name - Remote copy group name
+        :type remote_copy_group_name: str
+        :return: True: If remote copy group is started and all
+        :              volume syncStatus is 'synced' i.e. 3
+        :        False: If remote copy group is started and some
+        :              volume status is not 'synced'.
+        """
+        response = self.getRemoteCopyGroup(remote_copy_group_name)
+        for target in response['targets']:
+            if target['state'] != 3:
+                return False
+        for volume in response['volumes']:
+            for each_target_volume in volume['remoteVolumes']:
+                if each_target_volume['syncStatus'] != 3:
+                    return False
+        return True
+
+    def check_response_for_admittarget(self, resp):
+        """
+        Checks whether command response having valid output
+        or not if output is invalid then return that response.
+        """
+        for r in resp:
+            if 'error' in str.lower(r) or 'invalid' in str.lower(r) \
+               or 'must specify a mapping' in str.lower(r) \
+               or 'not exist' in str.lower(r) or 'no target' in str.lower(r) \
+               or 'group contains' in str.lower(r) \
+               or 'Target is already in this group.' in str(r) \
+               or 'A group may have only a single synchronous target.' \
+               in str(r) or \
+               'cannot have groups with more than one synchronization mode' \
+               in str.lower(r):
+                return r
 
     def check_response(self, resp):
         for r in resp:
@@ -4559,3 +4614,47 @@ class HPE3ParClient(object):
                 raise exceptions.SSHException(reason=err)
         except exceptions.SSHException as ex:
             raise exceptions.SSHException(reason=ex)
+
+    def remoteCopyGroupStatusStartedCheck(
+            self, remote_copy_group_name):
+        """
+        Checks whether remote copy group status is started or not
+        :param remote_copy_group_name - Remote copy group name
+        :type remote_copy_group_name: str
+        :return: True: If remote copy group is in started
+        :              state i.e. 3
+        :        False: If remote copy group is not in started
+        :              state
+        """
+        response = self.getRemoteCopyGroup(remote_copy_group_name)
+        status_started_counter = 0
+        for target in response['targets']:
+            if target['state'] == 3:
+                status_started_counter += 1
+
+        if status_started_counter == len(response['targets']):
+            return True
+        else:
+            return False
+
+    def remoteCopyGroupStatusStoppedCheck(
+            self, remote_copy_group_name):
+        """
+        Checks whether remote copy group status is stopped or not
+        :param remote_copy_group_name - Remote copy group name
+        :type remote_copy_group_name: str
+        :return: True: If remote copy group is in stopped
+        :              state i.e. 5
+        :        False: If remote copy group is not in started
+        :              state
+        """
+        response = self.getRemoteCopyGroup(remote_copy_group_name)
+        status_stopped_counter = 0
+        for target in response['targets']:
+            if target['state'] == 5:
+                status_stopped_counter += 1
+
+        if status_stopped_counter == len(response['targets']):
+            return True
+        else:
+            return False
