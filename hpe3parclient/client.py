@@ -4659,7 +4659,7 @@ class HPE3ParClient(object):
         else:
             return False
 
-    def scheduleStatusActiveCheck(
+    def isScheduleActive(
             self, schedule_name):
         """
         Checks whether schedule status is active or not.
@@ -4674,11 +4674,11 @@ class HPE3ParClient(object):
             for r in result:
                 if 'active' in r:
                    return True
-        except Exception:
+        except exceptions.SSHException:
             pass
         return False
 
-    def scheduleStatusSuspendedCheck(
+    def isScheduleSuspended(
             self, schedule_name):
         """
         Checks whether schedule status is suspended or not.
@@ -4693,6 +4693,6 @@ class HPE3ParClient(object):
             for r in result:
                 if 'suspended' in r:
                    return True
-        except Exception:
+        except exceptions.SSHException:
             pass
         return False
