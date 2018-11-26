@@ -4673,7 +4673,7 @@ class HPE3ParClient(object):
             result = self._run(cmd)
             for r in result:
                 if 'active' in r:
-                   return True
+                    return True
         except exceptions.SSHException:
             pass
         return False
@@ -4692,7 +4692,7 @@ class HPE3ParClient(object):
             result = self._run(cmd)
             for r in result:
                 if 'suspended' in r:
-                   return True
+                    return True
         except exceptions.SSHException:
             pass
         return False
