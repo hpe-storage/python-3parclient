@@ -4464,6 +4464,7 @@ class HPE3ParClient(object):
                or 'not exist' in str.lower(r) or 'no target' in str.lower(r) \
                or 'group contains' in str.lower(r) \
                or 'Target is already in this group.' in str(r) \
+               or 'could not locate an indicated volume.' in str(r) \
                or 'A group may have only a single synchronous target.' \
                in str(r) or \
                'cannot have groups with more than one synchronization mode' \
