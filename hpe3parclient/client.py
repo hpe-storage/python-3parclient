@@ -4658,3 +4658,41 @@ class HPE3ParClient(object):
             return True
         else:
             return False
+
+    def scheduleStatusActiveCheck(
+            self, schedule_name):
+        """
+        Checks whether schedule status is active or not.
+        :param schedule_name - Schedule name
+        :type schedule_name: str
+        :return: True: If schedule status is 'active'
+        :        False: If schedule status in not 'active'
+        """
+        cmd = ['showsched ', schedule_name]
+        try:
+            result = self._run(cmd)
+            for r in result:
+                if 'active' in r:
+                   return True
+        except Exception:
+            pass
+        return False
+
+    def scheduleStatusSuspendedCheck(
+            self, schedule_name):
+        """
+        Checks whether schedule status is suspended or not.
+        :param schedule_name - Schedule name
+        :type schedule_name: str
+        :return: True: If schedule status is 'suspended'
+        :        False: If schedule status in not 'suspended'
+        """
+        cmd = ['showsched ', schedule_name]
+        try:
+            result = self._run(cmd)
+            for r in result:
+                if 'suspended' in r:
+                   return True
+        except Exception:
+            pass
+        return False
