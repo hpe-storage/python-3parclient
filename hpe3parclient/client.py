@@ -4669,13 +4669,10 @@ class HPE3ParClient(object):
         :        False: If schedule status in not 'active'
         """
         cmd = ['showsched ', schedule_name]
-        try:
-            result = self._run(cmd)
-            for r in result:
-                if 'active' in r:
-                    return True
-        except exceptions.SSHException:
-            pass
+        result = self._run(cmd)
+        for r in result:
+            if 'active' in r:
+                return True
         return False
 
     def isScheduleSuspended(
@@ -4688,11 +4685,8 @@ class HPE3ParClient(object):
         :        False: If schedule status in not 'suspended'
         """
         cmd = ['showsched ', schedule_name]
-        try:
-            result = self._run(cmd)
-            for r in result:
-                if 'suspended' in r:
-                    return True
-        except exceptions.SSHException:
-            pass
+        result = self._run(cmd)
+        for r in result:
+            if 'suspended' in r:
+                return True
         return False
