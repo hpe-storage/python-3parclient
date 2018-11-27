@@ -640,7 +640,7 @@ class HPE3ParClient(object):
                 name = volumeMods['newName']
 
             try:
-                self.setVolumeMetaData(name, 'type', appType)
+                self.setVolumeMetaData(name, 'hpe_ecosystem_product', appType)
             except Exception:
                 pass
 
@@ -3052,13 +3052,10 @@ class HPE3ParClient(object):
     def getRemoteCopyGroupVolumes(self, remoteCopyGroupName):
         """
         Returns information on all volumes in a Remote Copy Groups
-
-        :param remoteCopyGroupName: the remote copy group name
+         :param remoteCopyGroupName: the remote copy group name
         :type name: str
-
-        :returns: list of volumes in a Remote Copy Groups
-
-        """
+         :returns: list of volumes in a Remote Copy Groups
+         """
         response, body = self.http.get(
             '/remotecopygroups/%s/volumes' % (remoteCopyGroupName)
         )
@@ -3067,15 +3064,12 @@ class HPE3ParClient(object):
     def getRemoteCopyGroupVolume(self, remoteCopyGroupName, volumeName):
         """
         Returns information on one volume of a Remote Copy Group
-
-        :param remoteCopyGroupName: the remote copy group name
+         :param remoteCopyGroupName: the remote copy group name
         :type name: str
         :param volumeName: the remote copy group name
         :type name: str
-
-        :returns: RemoteVolume
-
-        """
+         :returns: RemoteVolume
+         """
         response, body = self.http.get(
             '/remotecopygroups/%s/volumes/%s' %
             (remoteCopyGroupName, volumeName)
@@ -3648,7 +3642,6 @@ class HPE3ParClient(object):
                           'targets': targets}
             if optional:
                 parameters = self._mergeDict(parameters, optional)
-
             response, body = self.http.post(
                 '/remotecopygroups/%s/volumes' %
                 name, body=parameters
@@ -3712,6 +3705,8 @@ class HPE3ParClient(object):
             - RCOPY_TARGET_IS_NOT_READY - The remote-copy group target is
             not ready.
         """
+        # If removeFromTarget is set to True, we need to issue the command via
+        # ssh due to this feature not being supported in the WSAPI.
         if not useHttpDelete:
             # If removeFromTarget is set to True, we need to issue the
             # command via ssh due to this feature not being supported
@@ -3737,11 +3732,10 @@ class HPE3ParClient(object):
 
                 response, body = self.http.put('/remotecopygroups/%s' % name,
                                                body=parameters)
-
         else:
             option = None
             if optional and optional.get('keepSnap') and removeFromTarget:
-                raise Exception("keepSnap and removeFromTarget cannot be bpoth\
+                raise Exception("keepSnap and removeFromTarget cannot be both\
                     true while removing the volume from remote copy group")
             elif optional and optional.get('keepSnap'):
                 option = 'keepSnap'
@@ -4282,13 +4276,11 @@ class HPE3ParClient(object):
         :type- string
         """
         source_target_port_pair = source_port + ':' + target_port_wwn_or_ip
-        try:
-            cmd = ['admitrcopylink', targetName, source_target_port_pair]
-            response = self._run(cmd)
-            if response != []:
-                raise exceptions.SSHException(response)
-        except exceptions.SSHException as ex:
-            raise exceptions.SSHException(ex)
+
+        cmd = ['admitrcopylink', targetName, source_target_port_pair]
+        response = self._run(cmd)
+        if response != []:
+            raise exceptions.SSHException(response)
         return response
 
     def dismissRemoteCopyLinks(
@@ -4302,26 +4294,21 @@ class HPE3ParClient(object):
         :type- string
         """
         source_target_port_pair = source_port + ':' + target_port_wwn_or_ip
-        try:
-            cmd = ['dismissrcopylink', targetName, source_target_port_pair]
-            response = self._run(cmd)
-            if response != []:
-                raise exceptions.SSHException(response)
-        except exceptions.SSHException as ex:
-            raise exceptions.SSHException(ex)
+
+        cmd = ['dismissrcopylink', targetName, source_target_port_pair]
+        response = self._run(cmd)
+        if response != []:
+            raise exceptions.SSHException(response)
         return response
 
     def startrCopy(self):
         """Starting remote copy service
         :param No
         """
-        try:
-            cmd = ['startrcopy']
-            response = self._run(cmd)
-            if response != []:
-                raise exceptions.SSHException(response)
-        except exceptions.SSHException as ex:
-            raise exceptions.SSHException(ex)
+        cmd = ['startrcopy']
+        response = self._run(cmd)
+        if response != []:
+            raise exceptions.SSHException(response)
         return response
 
     def rcopyServiceExists(self):
@@ -4366,7 +4353,7 @@ class HPE3ParClient(object):
         return rcopylink_exits
 
     def admitRemoteCopyTarget(self, targetName, mode, remote_copy_group_name,
-                              source_target_volume_pairs_list=[]):
+                              optional=None):
         """Adding target to remote copy group
         :param targetName - The name of target system
         :type - string
@@ -4374,26 +4361,38 @@ class HPE3ParClient(object):
         :type - string
         :remote_copy_group_name
         :type - string
-        :source_target_volume_pairs_list: list of pairs of primary
-        :       and remote copy volumes
-        :type - list
+        :optional
+        :type - dict
+
+        .. code-block:: python
+
+            optional = {
+                "volumePairs": [{
+                    "sourceVolumeName": "source_name",  # The target volume
+                                                        # name associated with
+                                                        # this group.
+                    "targetVolumeName": "target_name"   # The target volume
+                                                        # name associated with
+                                                        # this group.
+                }]
+            }
         """
-        if source_target_volume_pairs_list == []:
-            cmd = ['admitrcopytarget', targetName,
-                   mode, remote_copy_group_name]
-        else:
-            cmd = ['admitrcopytarget', targetName,
-                   mode, remote_copy_group_name]
-            for volume_pair_tuple in source_target_volume_pairs_list:
-                source_target_pair = volume_pair_tuple[0] +\
-                    ':' + volume_pair_tuple[1]
-                cmd.append(source_target_pair)
-        try:
-            response = self._run(cmd)
-            if response != []:
-                raise exceptions.SSHException(response)
-        except exceptions.SSHException as ex:
-            raise exceptions.SSHException(ex)
+
+        cmd = ['admitrcopytarget', targetName,
+               mode, remote_copy_group_name]
+        if optional:
+            volumePairs = optional.get('volumePairs')
+            if volumePairs is not None:
+                for volumePair in volumePairs:
+                    source_target_pair = volumePair['sourceVolumeName'] + \
+                        ':' + volumePair['targetVolumeName']
+                    cmd.append(source_target_pair)
+        response = self._run(cmd)
+        err_resp = self.check_response_for_admittarget(response)
+        if err_resp:
+            err = (("Admit remote copy target failed Error is\
+ '%(err_resp)s' ") % {'err_resp': err_resp})
+            raise exceptions.SSHException(err)
         return response
 
     def dismissRemoteCopyTarget(self, targetName, remote_copy_group_name):
@@ -4406,26 +4405,22 @@ class HPE3ParClient(object):
         option = '-f'
         cmd = ['dismissrcopytarget', option, targetName,
                remote_copy_group_name]
-        try:
-            response = self._run(cmd)
-            if response != []:
-                raise exceptions.SSHException(response)
-        except exceptions.SSHException as ex:
-            raise exceptions.SSHException(ex)
-        return response
+
+        response = self._run(cmd)
+        for message in response:
+            if "has been dismissed from group" in message:
+                return response
+        raise exceptions.SSHException(response)
 
     def targetInRemoteCopyGroupExists(
             self, target_name, remote_copy_group_name):
         """Determines whether target is present in remote copy group.
-
-        :param name: target_name
+         :param name: target_name
         :type name: str
         :remote_copy_group_name
         :type key: str
-
-        :returns: bool
-
-        """
+         :returns: bool
+         """
         try:
             contents = self.getRemoteCopyGroup(remote_copy_group_name)
             for item in contents['targets']:
@@ -4434,3 +4429,232 @@ class HPE3ParClient(object):
         except Exception:
             pass
         return False
+
+    def remoteCopyGroupStatusCheck(
+            self, remote_copy_group_name):
+        """
+        Determines whether all volumes syncStatus is synced or not
+        when remote copy group status is started. If all volumes
+        syncStatus is 'synced' then it will return true else false
+        :param remote_copy_group_name - Remote copy group name
+        :type remote_copy_group_name: str
+        :return: True: If remote copy group is started and all
+        :              volume syncStatus is 'synced' i.e. 3
+        :        False: If remote copy group is started and some
+        :              volume status is not 'synced'.
+        """
+        response = self.getRemoteCopyGroup(remote_copy_group_name)
+        for target in response['targets']:
+            if target['state'] != 3:
+                return False
+        for volume in response['volumes']:
+            for each_target_volume in volume['remoteVolumes']:
+                if each_target_volume['syncStatus'] != 3:
+                    return False
+        return True
+
+    def check_response_for_admittarget(self, resp):
+        """
+        Checks whether command response having valid output
+        or not if output is invalid then return that response.
+        """
+        for r in resp:
+            if 'error' in str.lower(r) or 'invalid' in str.lower(r) \
+               or 'must specify a mapping' in str.lower(r) \
+               or 'not exist' in str.lower(r) or 'no target' in str.lower(r) \
+               or 'group contains' in str.lower(r) \
+               or 'Target is already in this group.' in str(r) \
+               or 'A group may have only a single synchronous target.' \
+               in str(r) or \
+               'cannot have groups with more than one synchronization mode' \
+               in str.lower(r):
+                return r
+
+    def check_response(self, resp):
+        for r in resp:
+            if 'error' in str.lower(r) or 'invalid' in str.lower(r):
+                err_resp = r.strip()
+                return err_resp
+
+    def createSchedule(self, schedule_name, task, taskfreq):
+        """Create Schedule for volume snapshot.
+        :param schedule_name - The name of the schedule
+        :type - string
+        :param task - command to for which schedule is created
+        :type - string
+        :param taskfreq - frequency of schedule
+        :type - string
+        """
+        cmd = ['createsched']
+        cmd.append("\"" + task + "\"")
+        if '@' not in taskfreq:
+            cmd.append("\"" + taskfreq + "\"")
+        else:
+            cmd.append(taskfreq)
+        cmd.append(schedule_name)
+        try:
+            resp = self._run(cmd)
+
+            err_resp = self.check_response(resp)
+            if err_resp:
+                raise exceptions.SSHException(err_resp)
+            else:
+                for r in resp:
+                    if str.lower('The schedule format is <minute> <hour> <dom>\
+ <month> <dow> or by @hourly @daily @monthly @weekly @monthly \
+@yearly') in str.lower(r):
+                        raise exceptions.SSHException(r.strip())
+        except exceptions.SSHException as ex:
+            raise exceptions.SSHException(ex)
+
+    def deleteSchedule(self, schedule_name):
+        """Delete Schedule
+        :param schedule_name - The name of the schedule to delete
+        :type - string
+        """
+        cmd = ['removesched', '-f', schedule_name]
+        try:
+            resp = self._run(cmd)
+
+            err_resp = self.check_response(resp)
+            if err_resp:
+                err = (("Delete snapschedule failed Error is\
+ '%(err_resp)s' ") % {'err_resp': err_resp})
+                raise exceptions.SSHException(reason=err)
+        except exceptions.SSHException as ex:
+            raise exceptions.SSHException(reason=ex)
+
+    def getSchedule(self, schedule_name):
+        """Get Schedule
+        :param schedule_name - The name of the schedule to get information
+        :type - string
+        """
+        cmd = ['showsched ', schedule_name]
+        try:
+            result = self._run(cmd)
+            for r in result:
+                if 'No scheduled tasks ' in r:
+                    msg = "Couldn't find the schedule '%s'" % schedule_name
+                    raise exceptions.SSHNotFoundException(msg)
+        except exceptions.SSHNotFoundException as ex:
+            raise exceptions.SSHNotFoundException(ex)
+        return result
+
+    def modifySchedule(self, name, schedule_opt):
+        """Modify Schedule.
+        :param name - The name of the schedule
+        :type - string
+        :param schedule_opt -
+        :type schedule_opt - dictionary of option to be modified
+        .. code-block:: python
+            mod_request = {
+                'newName': 'myNewName',         # New name of the schedule
+                'taskFrequency': '0 * * * *'    # String containing cron or
+                                                # @monthly, @hourly, @daily,
+                                                # @yearly and @weekly.
+        }
+        """
+
+        cmd = ['setsched']
+        if 'newName' in schedule_opt:
+            cmd.append('-name')
+            cmd.append(schedule_opt['newName'])
+
+        if 'taskFrequency' in schedule_opt:
+            cmd.append('-s')
+            if '@' not in schedule_opt['taskFrequency']:
+                cmd.append("\"" + schedule_opt['taskFrequency'] + "\"")
+            else:
+                cmd.append(schedule_opt['taskFrequency'])
+        cmd.append(name)
+        try:
+            resp = self._run(cmd)
+
+            err_resp = self.check_response(resp)
+            if err_resp:
+                raise exceptions.SSHException(err_resp)
+            else:
+                for r in resp:
+                    if str.lower('The schedule format is <minute> <hour> \
+<dom> <month> <dow> or by @hourly @daily @monthly @weekly @monthly \
+@yearly') in str.lower(r):
+                        raise exceptions.SSHException(r.strip())
+
+        except exceptions.SSHException as ex:
+            raise exceptions.SSHException(ex)
+
+    def suspendSchedule(self, schedule_name):
+        """Suspend Schedule
+        :param schedule_name - The name of the schedule to get information
+        :type - string
+        """
+        cmd = ['setsched', '-suspend', schedule_name]
+        try:
+            resp = self._run(cmd)
+            err_resp = self.check_response(resp)
+            if err_resp:
+                err = (("Schedule suspend failed Error is\
+ '%(err_resp)s' ") % {'err_resp': err_resp})
+                raise exceptions.SSHException(reason=err)
+        except exceptions.SSHException as ex:
+            raise exceptions.SSHException(reason=ex)
+
+    def resumeSchedule(self, schedule_name):
+        """Resume Schedule
+        :param schedule_name - The name of the schedule to get information
+        :type - string
+        """
+        cmd = ['setsched', '-resume', schedule_name]
+        try:
+            resp = self._run(cmd)
+            err_resp = self.check_response(resp)
+            if err_resp:
+                err = (("Schedule resume failed Error is\
+ '%(err_resp)s' ") % {'err_resp': err_resp})
+                raise exceptions.SSHException(reason=err)
+        except exceptions.SSHException as ex:
+            raise exceptions.SSHException(reason=ex)
+
+    def remoteCopyGroupStatusStartedCheck(
+            self, remote_copy_group_name):
+        """
+        Checks whether remote copy group status is started or not
+        :param remote_copy_group_name - Remote copy group name
+        :type remote_copy_group_name: str
+        :return: True: If remote copy group is in started
+        :              state i.e. 3
+        :        False: If remote copy group is not in started
+        :              state
+        """
+        response = self.getRemoteCopyGroup(remote_copy_group_name)
+        status_started_counter = 0
+        for target in response['targets']:
+            if target['state'] == 3:
+                status_started_counter += 1
+
+        if status_started_counter == len(response['targets']):
+            return True
+        else:
+            return False
+
+    def remoteCopyGroupStatusStoppedCheck(
+            self, remote_copy_group_name):
+        """
+        Checks whether remote copy group status is stopped or not
+        :param remote_copy_group_name - Remote copy group name
+        :type remote_copy_group_name: str
+        :return: True: If remote copy group is in stopped
+        :              state i.e. 5
+        :        False: If remote copy group is not in started
+        :              state
+        """
+        response = self.getRemoteCopyGroup(remote_copy_group_name)
+        status_stopped_counter = 0
+        for target in response['targets']:
+            if target['state'] == 5:
+                status_stopped_counter += 1
+
+        if status_stopped_counter == len(response['targets']):
+            return True
+        else:
+            return False

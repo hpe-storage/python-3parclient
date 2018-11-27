@@ -1,7 +1,7 @@
 nose
 nose-testconfig
 flask
-flake8
+flake8==3.5.0
 mock
 sphinx
 coverage
