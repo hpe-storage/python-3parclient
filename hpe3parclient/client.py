@@ -4342,15 +4342,16 @@ class HPE3ParClient(object):
         :returns: True if remote copy link exists
         :         False if remote copy link doesn't exist
         """
-        rcopylink_exits = False
-        link_name = targetName + '_' + local_port.replace(':', '_')
-        try:
-            response = self.getRemoteCopyLink(link_name)
-            if response and response['address'] == target_system_peer_port:
-                rcopylink_exits = True
-        except exceptions.HTTPNotFound:
-            pass
-        return rcopylink_exits
+        cmd = ['showrcopy', 'links']
+        response = self._run(cmd)
+        for item in response:
+            if item.startswith(targetName):
+                link_info = item.split(',')
+                if link_info[0] == targetName and \
+                   link_info[1] == local_port and \
+                   link_info[2] == target_system_peer_port:
+                    return True
+        return False
 
     def admitRemoteCopyTarget(self, targetName, mode, remote_copy_group_name,
                               optional=None):
