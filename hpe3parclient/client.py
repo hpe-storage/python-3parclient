@@ -4659,3 +4659,19 @@ class HPE3ParClient(object):
             return True
         else:
             return False
+
+    def getScheduleStatus(self, schedule_name):
+        """
+        Checks schedule status active/suspended and returns it.
+        :param schedule_name - Schedule name
+        :type schedule_name: str
+        :return: active/suspended
+        """
+        result = self.getSchedule(schedule_name)
+        for r in result:
+            if 'suspended' in r:
+                return 'suspended'
+            elif 'active' in r:
+                return 'active'
+        msg = "Couldn't find the schedule '%s' status" % schedule_name
+        raise exceptions.SSHException(reason=msg)
