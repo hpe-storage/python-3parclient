@@ -4389,7 +4389,7 @@ class HPE3ParClient(object):
                         ':' + volumePair['targetVolumeName']
                     cmd.append(source_target_pair)
         response = self._run(cmd)
-        err_resp = self.check_response_for_admittarget(response)
+        err_resp = self.check_response_for_admittarget(response, targetName)
         if err_resp:
             err = (("Admit remote copy target failed Error is\
  '%(err_resp)s' ") % {'err_resp': err_resp})
@@ -4454,7 +4454,7 @@ class HPE3ParClient(object):
                     return False
         return True
 
-    def check_response_for_admittarget(self, resp):
+    def check_response_for_admittarget(self, resp, targetName):
         """
         Checks whether command response having valid output
         or not if output is invalid then return that response.
@@ -4466,6 +4466,11 @@ class HPE3ParClient(object):
                or 'group contains' in str.lower(r) \
                or 'Target is already in this group.' in str(r) \
                or 'could not locate an indicated volume.' in str(r) \
+               or 'Target system %s could not be contacted' % targetName \
+               in str(r) \
+               or 'Target %s could not get info on secondary target' \
+               % targetName in str(r) \
+               or 'Target %s is not up and ready' % targetName in str(r) \
                or 'A group may have only a single synchronous target.' \
                in str(r) or \
                'cannot have groups with more than one synchronization mode' \
