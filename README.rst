@@ -119,6 +119,28 @@ Capabilities
 * Synchronize a Remote Copy Group
 * Recover a Remote Copy Group from a Disaster
 * Enable/Disable Config Mirroring on a Remote Copy Target
+* Get Remote Copy Group Volumes
+* Get Remote Copy Group Volume
+* Admit Remote Copy Link
+* Dismiss Remote Copy Link
+* Start Remote Copy
+* Remote Copy Service Exists Check
+* Get Remote Copy Link
+* Remote Copy Link Exists Check
+* Admit Remote Copy Target
+* Dismiss Remote Copy Target
+* Target In Remote Copy Group Exists Check
+* Remote Copy Group Status Check
+* Remote Copy Group Status Started Check
+* Remote Copy Group Status Stopped Check
+
+* Create Schedule
+* Delete Schedule
+* Get Schedule
+* Modify Schedule
+* Suspend Schedule
+* Resume Schedule
+* Get Schedule Status
 
 * Promote Virtual Copy
 
