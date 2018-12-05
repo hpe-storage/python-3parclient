@@ -3414,6 +3414,14 @@ class HPE3ParClient(object):
         """
         parameters = {}
         if optional:
+            for target_dict in optional['targets']:
+                for key in target_dict.keys():
+                    if key == 'syncPeriod' or key == 'snapFrequency':
+                        if target_dict[key] and target_dict[key] not in \
+                           range(300, 31622401):
+                            msg = "%s range is 300–31622400 seconds" % key
+                            raise exceptions.HTTPBadRequest(msg)
+
             parameters = self._mergeDict(parameters, optional)
 
         response, body = self.http.put('/remotecopygroups/%s' % name,
