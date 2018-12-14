@@ -2022,6 +2022,61 @@ class HPE3ParClient(object):
         response, body = self.http.post('/cpgs', body=info)
         return body
 
+    def modifyCPG(self, name, optional=None):
+        """Create a CPG.
+
+        :param name: CPG Name
+        :type name: str
+        :param optional: Optional parameters
+        :type optional: dict
+
+        .. code-block:: python
+
+            optional = {
+                'growthIncrementMiB': 100,    # Growth increment in MiB for
+                                              # each auto-grown operation
+                'growthLimitMiB': 1024,       # Auto-grow operation is limited
+                                              # to specified storage amount
+                'usedLDWarningAlertMiB': 200, # Threshold to trigger warning
+                                              # of used logical disk space
+                'domain': 'MyDomain',         # Name of the domain object
+                'LDLayout': {
+                    'RAIDType': 1,            # Disk Raid Type
+                    'setSize': 100,           # Size in number of chunklets
+                    'HA': 0,                  # Layout supports failure of
+                                              # one port pair (1),
+                                              # one cage (2),
+                                              # or one magazine (3)
+                    'chunkletPosPref': 2,     # Chunklet location perference
+                                              # characteristics.
+                                              # Lowest Number/Fastest transfer
+                                              # = 1
+                                              # Higher Number/Slower transfer
+                                              # = 2
+                    'diskPatterns': []}       # Patterns for candidate disks
+            }
+
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+            - INV_INPUT Invalid URI Syntax.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+            - NON_EXISTENT_DOMAIN - Domain doesn't exist.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+            - NO_SPACE - Not Enough space is available.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+            - BAD_CPG_PATTERN  A Pattern in a CPG specifies illegal values.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - PERM_DENIED - Permission denied
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+            - EXISTENT_CPG - CPG Exists already
+
+        """
+        info = {}
+        if optional:
+            info = self._mergeDict(info, optional)
+
+        response, body = self.http.put('/cpgs/%s' % name, body=info)
+        return body
+
     def deleteCPG(self, name):
         """Delete a CPG.
 
