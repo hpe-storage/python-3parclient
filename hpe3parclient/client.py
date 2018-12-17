@@ -2023,7 +2023,7 @@ class HPE3ParClient(object):
         return body
 
     def modifyCPG(self, name, optional=None):
-        """Create a CPG.
+        """Modify a CPG.
 
         :param name: CPG Name
         :type name: str
@@ -2039,7 +2039,6 @@ class HPE3ParClient(object):
                                               # to specified storage amount
                 'usedLDWarningAlertMiB': 200, # Threshold to trigger warning
                                               # of used logical disk space
-                'domain': 'MyDomain',         # Name of the domain object
                 'LDLayout': {
                     'RAIDType': 1,            # Disk Raid Type
                     'setSize': 100,           # Size in number of chunklets
@@ -2054,20 +2053,27 @@ class HPE3ParClient(object):
                                               # Higher Number/Slower transfer
                                               # = 2
                     'diskPatterns': []}       # Patterns for candidate disks
+                'newName': 'TestNewName',     # Specifies the name of the
+                                              # CPG to update.
+                'disableAutoGrow': false,     # Enables (false) or disables
+                                              # (true) CPG auto grow. Defaults
+                                              # to false.
+                'rmGrowthLimit': false,       # Enables (false) or disables
+                                              # (true) auto grow limit.
+                                              # Defaults to false.
+                'rmWarningAlert': false       # Enables (false) or disables
+                                              # (true) warning limit enforce-
+                                              # ment. Defaults to false.
             }
 
         :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - INV_INPUT Invalid URI Syntax.
-        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
-            - NON_EXISTENT_DOMAIN - Domain doesn't exist.
         :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - NO_SPACE - Not Enough space is available.
         :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - BAD_CPG_PATTERN  A Pattern in a CPG specifies illegal values.
         :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - PERM_DENIED - Permission denied
-        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
-            - EXISTENT_CPG - CPG Exists already
 
         """
         info = {}
