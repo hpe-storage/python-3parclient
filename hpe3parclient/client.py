@@ -1886,6 +1886,7 @@ class HPE3ParClient(object):
         #the list of
         if self.ssh is not None:
             if any([port['protocol'] == self.PORT_PROTO_ISCSI and
+                    'iSCSIPortInfo' in port and
                     port['iSCSIPortInfo']['vlan'] == 1
                     for port in body['members']]):
 

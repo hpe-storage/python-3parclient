@@ -14,12 +14,12 @@
 
 """Test class of 3PAR Client handling parsing of showport commands."""
 
-from test import HP3ParClient_base as hp3parbase
+from test import HPE3ParClient_base as hp3parbase
 from hpe3parclient import client
-from hpe3parclient.client import  ShowportParser
+#from hpe3parclient.client import ShowportParser
+from hpe3parclient import showport_parser
 
-
-class HP3ParClientShowportTestCase(hp3parbase.HP3ParClientBaseTestCase):
+class HP3ParClientShowportTestCase(hp3parbase.HPE3ParClientBaseTestCase):
 
     def setUp(self):
         super(HP3ParClientShowportTestCase, self).setUp()
@@ -29,7 +29,7 @@ class HP3ParClientShowportTestCase(hp3parbase.HP3ParClientBaseTestCase):
 
     def test_parse_showport_iscsivlans(self):
 
-        parsed_ports = ShowportParser().parseShowport(ports_iscsivlan)
+        parsed_ports = showport_parser.ShowportParser().parseShowport(ports_iscsivlan)
     
         if(parsed_ports != parsed_ports_key):
             err_msg = 'parsed ports does not match key output: {}'
@@ -42,7 +42,7 @@ class HP3ParClientShowportTestCase(hp3parbase.HP3ParClientBaseTestCase):
                  '---------------------------------------------------------------------------------------', 
                  '0,,,,,,,,,']
 
-        parsed_ports = ShowportParser().parseShowport(ports)
+        parsed_ports = showport_parser.ShowportParser().parseShowport(ports)
 
         if (len(parsed_ports) != 0):
             err_msg = 'Parsed ports should be empty but contains data: {}'
@@ -51,13 +51,13 @@ class HP3ParClientShowportTestCase(hp3parbase.HP3ParClientBaseTestCase):
         return
 
     def test_clone_ports(self):
-        parsed_ports = ShowportParser().parseShowport(ports_iscsivlan)
+        parsed_ports = showport_parser.ShowportParser().parseShowport(ports_iscsivlan)
 
         expanded_ports = self.cl._cloneISCSIPorts(real_ports, parsed_ports)
 
         if (expanded_ports != expanded_ports_key):
             err_msg = 'combined ports output does not match test key: {}'
-            return self.fail(err_msg.format(total_ports))
+            return self.fail(err_msg.format(expanded_ports))
 
         return
 
