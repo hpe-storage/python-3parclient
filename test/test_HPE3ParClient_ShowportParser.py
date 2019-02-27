@@ -419,86 +419,87 @@ class HP3ParClientShowportTestCase(hp3parbase.HPE3ParClientBaseTestCase):
                ]
             }
 
-
     global parsed_ports_key
-    parsed_ports_key =[  
-               {  
-                  'IPAddr':'172.20.0.150',
-                  'portPos':{  
-                 'node':0,
-                 'slot':2,
-                 'cardPort':1
-                  },
-                  'iSCSIPortInfo':{  
-                 'iSNSAddr':'0.0.0.0',
-                 'vlan':101,
-                 'IPAddr':'172.20.0.150',
-                 'mtu':9000,
-                 'stgt':1024,
-                 'netmask':'255.255.255.0',
-                 'tpgt':1024,
-                 'iSNSPort':3205,
-                 'gateway':'172.20.0.1'
-                  }
-               },
-               {  
-                  'IPAddr':'172.20.1.150',
-                  'portPos':{  
-                 'node':0,
-                 'slot':2,
-                 'cardPort':2
-                  },
-                  'iSCSIPortInfo':{  
-                 'iSNSAddr':'0.0.0.0',
-                 'vlan':102,
-                 'IPAddr':'172.20.1.150',
-                 'mtu':9000,
-                 'stgt':1025,
-                 'netmask':'255.255.255.0',
-                 'tpgt':1025,
-                 'iSNSPort':3205,
-                 'gateway':'172.20.1.1'
-                  }
-               },
-               {  
-                  'IPAddr':'172.20.0.151',
-                  'portPos':{  
-                 'node':1,
-                 'slot':2,
-                 'cardPort':1
-                  },
-                  'iSCSIPortInfo':{  
-                 'iSNSAddr':'0.0.0.0',
-                 'vlan':101,
-                 'IPAddr':'172.20.0.151',
-                 'mtu':9000,
-                 'stgt':1026,
-                 'netmask':'255.255.255.0',
-                 'tpgt':1026,
-                 'iSNSPort':3205,
-                 'gateway':'172.20.0.1'
-                  }
-               },
-               {  
-                  'IPAddr':'172.20.1.151',
-                  'portPos':{  
-                 'node':1,
-                 'slot':2,
-                 'cardPort':2
-                  },
-                  'iSCSIPortInfo':{  
-                 'iSNSAddr':'0.0.0.0',
-                 'vlan':102,
-                 'IPAddr':'172.20.1.151',
-                 'mtu':9000,
-                 'stgt':1027,
-                 'netmask':'255.255.255.0',
-                 'tpgt':1027,
-                 'iSNSPort':3205,
-                 'gateway':'172.20.1.1'
-                  }
-               }
-              ]
+
+    parsed_ports_key = [
+        {
+            'IPAddr': '172.20.0.150',
+            'portPos': {
+                'node': 0,
+                'slot': 2,
+                'cardPort': 1
+            },
+            'iSCSIPortInfo': {
+                'iSNSAddr': '0.0.0.0',
+                'vlan': '101',
+                'IPAddr': '172.20.0.150',
+                'mtu': 9000,
+                'stgt': 1024,
+                'netmask': '255.255.255.0',
+                'tpgt': 1024,
+                'iSNSPort': 3205,
+                'gateway': '172.20.0.1'
+            }
+        },
+        {
+            'IPAddr': '172.20.1.150',
+            'portPos': {
+                'node': 0,
+                'slot': 2,
+                'cardPort': 2
+            },
+            'iSCSIPortInfo': {
+                'iSNSAddr': '0.0.0.0',
+                'vlan': '102',
+                'IPAddr': '172.20.1.150',
+                'mtu': 9000,
+                'stgt': 1025,
+                'netmask': '255.255.255.0',
+                'tpgt': 1025,
+                'iSNSPort': 3205,
+                'gateway': '172.20.1.1'
+            }
+        },
+        {
+            'IPAddr': '172.20.0.151',
+            'portPos': {
+                'node': 1,
+                'slot': 2,
+                'cardPort': 1
+            },
+            'iSCSIPortInfo': {
+                'iSNSAddr': '0.0.0.0',
+                'vlan': '101',
+                'IPAddr': '172.20.0.151',
+                'mtu': 9000,
+                'stgt': 1026,
+                'netmask': '255.255.255.0',
+                'tpgt': 1026,
+                'iSNSPort': 3205,
+                'gateway': '172.20.0.1'
+            }
+        },
+        {
+            'IPAddr': '172.20.1.151',
+            'portPos': {
+                'node': 1,
+                'slot': 2,
+                'cardPort': 2
+            },
+            'iSCSIPortInfo': {
+                'iSNSAddr': '0.0.0.0',
+                'vlan': '102',
+                'IPAddr': '172.20.1.151',
+                'mtu': 9000,
+                'stgt': 1027,
+                'netmask': '255.255.255.0',
+                'tpgt': 1027,
+                'iSNSPort': 3205,
+                'gateway': '172.20.1.1'
+            }
+        }
+    ]
+
 
     global expanded_ports_key
     expanded_ports_key = [  
@@ -518,7 +519,7 @@ class HP3ParClientShowportTestCase(hp3parbase.HPE3ParClientBaseTestCase):
                                  u'slot':2
                               },
                               u'iSCSIPortInfo':{  
-                                 'vlan':101,
+                                 'vlan':'101',
                                  'gateway':'172.20.0.1',
                                  'iSNSPort':3205,
                                  'mtu':9000,
@@ -552,7 +553,7 @@ class HP3ParClientShowportTestCase(hp3parbase.HPE3ParClientBaseTestCase):
                                  u'slot':2
                               },
                               u'iSCSIPortInfo':{  
-                                 'vlan':102,
+                                 'vlan':'102',
                                  'gateway':'172.20.1.1',
                                  'iSNSPort':3205,
                                  'mtu':9000,
@@ -586,7 +587,7 @@ class HP3ParClientShowportTestCase(hp3parbase.HPE3ParClientBaseTestCase):
                                  u'slot':2
                               },
                               u'iSCSIPortInfo':{  
-                                 'vlan':101,
+                                 'vlan':'101',
                                  'gateway':'172.20.0.1',
                                  'iSNSPort':3205,
                                  'mtu':9000,
@@ -620,7 +621,7 @@ class HP3ParClientShowportTestCase(hp3parbase.HPE3ParClientBaseTestCase):
                                  u'slot':2
                               },
                               u'iSCSIPortInfo':{  
-                                 'vlan':102,
+                                 'vlan':'102',
                                  'gateway':'172.20.1.1',
                                  'iSNSPort':3205,
                                  'mtu':9000,
@@ -639,3 +640,4 @@ class HP3ParClientShowportTestCase(hp3parbase.HPE3ParClientBaseTestCase):
                               u'mode':2
                            }
                         ]
+
