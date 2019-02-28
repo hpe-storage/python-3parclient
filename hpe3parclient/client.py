@@ -26,10 +26,10 @@ also supports running actions on the 3PAR that use SSH.
 This client requires and works with 3PAR InForm 3.1.3 MU1 firmware
 
 """
+import copy
 import re
 import time
 import uuid
-import copy
 
 try:
     # For Python 3.0 and later
@@ -1890,7 +1890,7 @@ class HPE3ParClient(object):
                     'iSCSIPortInfo' in port and
                     port['iSCSIPortInfo']['vlan'] == 1
                     for port in body['members']]):
-                iscsi_vlan_data = self._getISCSIVlans()
+                iscsi_vlan_data = self._run(['showport', '-iscsivlans'])
                 port_parser = showport_parser.ShowportParser()
                 iscsi_ports = port_parser.parseShowport(iscsi_vlan_data)
                 expanded_ports = self._cloneISCSIPorts(body, iscsi_ports)
@@ -1936,11 +1936,11 @@ class HPE3ParClient(object):
 
         return cloned_ports
 
-    def _getISCSIVlans(self):
-        self.ssh.open()
-        iscsi_vlan_data = self.ssh.run(['showport', '-iscsivlans'])
-        self.ssh.close()
-        return iscsi_vlan_data
+    #def _getISCSIVlans(self):
+    #    self.ssh.open()
+    #    iscsi_vlan_data = self.ssh.run(['showport', '-iscsivlans'])
+    #    self.ssh.close()
+    #    return iscsi_vlan_data
 
     def getFCPorts(self, state=None):
         """Get a list of Fibre Channel Ports.

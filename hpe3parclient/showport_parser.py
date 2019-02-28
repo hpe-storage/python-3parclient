@@ -29,7 +29,7 @@ class ShowportParser:
     """ Parses the following showport commands on an HP 3par array
         showport
         showport -iscsi
-        showpoer -iscsivlan
+        showport -iscsivlan
     """
 
     def __init__(self):
