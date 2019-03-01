@@ -4342,15 +4342,16 @@ class HPE3ParClient(object):
         :returns: True if remote copy link exists
         :         False if remote copy link doesn't exist
         """
-        rcopylink_exits = False
-        link_name = targetName + '_' + local_port.replace(':', '_')
-        try:
-            response = self.getRemoteCopyLink(link_name)
-            if response and response['address'] == target_system_peer_port:
-                rcopylink_exits = True
-        except exceptions.HTTPNotFound:
-            pass
-        return rcopylink_exits
+        cmd = ['showrcopy', 'links']
+        response = self._run(cmd)
+        for item in response:
+            if item.startswith(targetName):
+                link_info = item.split(',')
+                if link_info[0] == targetName and \
+                   link_info[1] == local_port and \
+                   link_info[2] == target_system_peer_port:
+                    return True
+        return False
 
     def admitRemoteCopyTarget(self, targetName, mode, remote_copy_group_name,
                               optional=None):
@@ -4388,7 +4389,7 @@ class HPE3ParClient(object):
                         ':' + volumePair['targetVolumeName']
                     cmd.append(source_target_pair)
         response = self._run(cmd)
-        err_resp = self.check_response_for_admittarget(response)
+        err_resp = self.check_response_for_admittarget(response, targetName)
         if err_resp:
             err = (("Admit remote copy target failed Error is\
  '%(err_resp)s' ") % {'err_resp': err_resp})
@@ -4453,7 +4454,7 @@ class HPE3ParClient(object):
                     return False
         return True
 
-    def check_response_for_admittarget(self, resp):
+    def check_response_for_admittarget(self, resp, targetName):
         """
         Checks whether command response having valid output
         or not if output is invalid then return that response.
@@ -4464,6 +4465,12 @@ class HPE3ParClient(object):
                or 'not exist' in str.lower(r) or 'no target' in str.lower(r) \
                or 'group contains' in str.lower(r) \
                or 'Target is already in this group.' in str(r) \
+               or 'could not locate an indicated volume.' in str(r) \
+               or 'Target system %s could not be contacted' % targetName \
+               in str(r) \
+               or 'Target %s could not get info on secondary target' \
+               % targetName in str(r) \
+               or 'Target %s is not up and ready' % targetName in str(r) \
                or 'A group may have only a single synchronous target.' \
                in str(r) or \
                'cannot have groups with more than one synchronization mode' \
@@ -4658,3 +4665,19 @@ class HPE3ParClient(object):
             return True
         else:
             return False
+
+    def getScheduleStatus(self, schedule_name):
+        """
+        Checks schedule status active/suspended and returns it.
+        :param schedule_name - Schedule name
+        :type schedule_name: str
+        :return: active/suspended
+        """
+        result = self.getSchedule(schedule_name)
+        for r in result:
+            if 'suspended' in r:
+                return 'suspended'
+            elif 'active' in r:
+                return 'active'
+        msg = "Couldn't find the schedule '%s' status" % schedule_name
+        raise exceptions.SSHException(reason=msg)

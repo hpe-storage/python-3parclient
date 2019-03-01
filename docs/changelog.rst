@@ -1,6 +1,35 @@
 Changelog
 =========
 
+Changes in Version 4.2.8
+------------------------
+* Added further support for Remote Copy Operations:
+    - getRemoteCopyGroupVolumes
+    - getRemoteCopyGroupVolume
+    - admitRemoteCopyLinks
+    - dismissRemoteCopyLinks
+    - startrCopy
+    - rcopyServiceExists
+    - getRemoteCopyLink
+    - rcopyLinkExists
+    - admitRemoteCopyTarget
+    - dismissRemoteCopyTarget
+    - targetInRemoteCopyGroupExists
+    - remoteCopyGroupStatusCheck
+    - remoteCopyGroupStatusStartedCheck
+    - remoteCopyGroupStatusStoppedCheck
+* Added support for Scheduling:
+    - createSchedule
+    - deleteSchedule
+    - getSchedule
+    - modifySchedule
+    - suspendSchedule
+    - resumeSchedule
+    - getScheduleStatus
+* Added option to use HTTP POST in addVolumeToRemoteCopyGroup
+* Added option to use HTTP DELETE in removeVolumeFromRemoteCopyGroup
+* Fixed an issue where password masking was causing errors when debug mode is true
+
 Changes in Version 4.2.7
 ------------------------
 * Fixed an issue while deleting VLUN when port is present but the host is not
