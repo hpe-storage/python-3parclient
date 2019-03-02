@@ -1936,7 +1936,7 @@ class HPE3ParClient(object):
 
         return cloned_ports
 
-    #def _getISCSIVlans(self):
+    # def _getISCSIVlans(self):
     #    self.ssh.open()
     #    iscsi_vlan_data = self.ssh.run(['showport', '-iscsivlans'])
     #    self.ssh.close()
