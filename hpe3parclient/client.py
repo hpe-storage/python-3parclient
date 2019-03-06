@@ -1894,7 +1894,15 @@ class HPE3ParClient(object):
                 port_parser = showport_parser.ShowportParser()
                 iscsi_ports = port_parser.parseShowport(iscsi_vlan_data)
                 expanded_ports = self._cloneISCSIPorts(body, iscsi_ports)
-                body['members'].extend(expanded_ports)
+                for cli_port in expanded_ports:
+                    for wsapi_port in body[u'members']:
+                        if wsapi_port['portPos']['node'] == \
+                                cli_port['portPos']['node']  \
+                           and wsapi_port['portPos']['slot'] == \
+                                cli_port['portPos']['slot'] \
+                           and wsapi_port['portPos']['cardPort'] == \
+                                cli_port['portPos']['cardPort']:
+                            port_parser._merge_dict(wsapi_port, cli_port)
                 body['total'] = len(body['members'])
 
         return body
