@@ -1883,8 +1883,8 @@ class HPE3ParClient(object):
         """
         response, body = self.http.get('/ports')
         # if any of the ports are iSCSI ports and are vlan tagged
-        # then we need to get the iscsi ports and append them to
-        # the list of
+        # then we need to get the iscsi ports and merge them to
+        # the list of cli output
         if self.ssh is not None:
             if any([port['protocol'] == self.PORT_PROTO_ISCSI and
                     'iSCSIPortInfo' in port and
@@ -1943,12 +1943,6 @@ class HPE3ParClient(object):
                 cloned_ports.append(new_port)
 
         return cloned_ports
-
-    # def _getISCSIVlans(self):
-    #    self.ssh.open()
-    #    iscsi_vlan_data = self.ssh.run(['showport', '-iscsivlans'])
-    #    self.ssh.close()
-    #    return iscsi_vlan_data
 
     def getFCPorts(self, state=None):
         """Get a list of Fibre Channel Ports.
