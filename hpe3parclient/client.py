@@ -1882,9 +1882,10 @@ class HPE3ParClient(object):
 
         """
         response, body = self.http.get('/ports')
-        # if any of the ports are iSCSI ports and are vlan tagged
-        # then we need to get the iscsi ports and merge them to
-        # the list of cli output
+        # if any of the ports are iSCSI ports and
+        # are vlan tagged (as shown by showport -iscsivlans), then
+        # the port information is merged with the WSAPI
+        # returned port information.
         if self.ssh is not None:
             if any([port['protocol'] == self.PORT_PROTO_ISCSI and
                     'iSCSIPortInfo' in port and
