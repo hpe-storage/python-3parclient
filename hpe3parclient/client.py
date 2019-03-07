@@ -3782,6 +3782,7 @@ class HPE3ParClient(object):
 
                 response, body = self.http.put('/remotecopygroups/%s' % name,
                                                body=parameters)
+                return body
         else:
             option = None
             if optional and optional.get('keepSnap') and removeFromTarget:
@@ -3795,7 +3796,7 @@ class HPE3ParClient(object):
             if option:
                 delete_url += '?%s=true' % option
             response, body = self.http.delete(delete_url)
-        return body
+            return body
 
     def startRemoteCopy(self, name, optional=None):
         """
