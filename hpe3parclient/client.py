@@ -1893,11 +1893,7 @@ class HPE3ParClient(object):
                 iscsi_vlan_data = self._run(['showport', '-iscsivlans'])
                 port_parser = showport_parser.ShowportParser()
                 iscsi_ports = port_parser.parseShowport(iscsi_vlan_data)
-                print('body')
-                print(body)
                 expanded_ports = self._cloneISCSIPorts(body, iscsi_ports)
-                print("asif")
-                print(expanded_ports)
                 for cli_port in expanded_ports:
                     for wsapi_port in body[u'members']:
                         if wsapi_port['portPos']['node'] == \
