@@ -26,6 +26,7 @@ also supports running actions on the 3PAR that use SSH.
 This client requires and works with 3PAR InForm 3.1.3 MU1 firmware
 
 """
+import copy
 import re
 import time
 import uuid
@@ -38,10 +39,10 @@ except ImportError:
     from urllib2 import quote
 
 from hpe3parclient import exceptions, http, ssh
+from hpe3parclient import showport_parser
 
 
 class HPE3ParClient(object):
-
     """ The 3PAR REST API Client.
 
     :param api_url: The url to the WSAPI service on 3PAR
@@ -140,23 +141,23 @@ class HPE3ParClient(object):
     VLUN_MULTIPATH_ROUND_ROBIN = 2
     VLUN_MULTIPATH_FAILOVER = 3
 
-    CPG_RAID_R0 = 1     # RAID 0
-    CPG_RAID_R1 = 2     # RAID 1
-    CPG_RAID_R5 = 3     # RAID 5
-    CPG_RAID_R6 = 4     # RAID 6
+    CPG_RAID_R0 = 1  # RAID 0
+    CPG_RAID_R1 = 2  # RAID 1
+    CPG_RAID_R5 = 3  # RAID 5
+    CPG_RAID_R6 = 4  # RAID 6
 
-    CPG_HA_PORT = 1     # Support failure of a port.
-    CPG_HA_CAGE = 2     # Support failure of a drive cage.
-    CPG_HA_MAG = 3      # Support failure of a drive magazine.
+    CPG_HA_PORT = 1  # Support failure of a port.
+    CPG_HA_CAGE = 2  # Support failure of a drive cage.
+    CPG_HA_MAG = 3  # Support failure of a drive magazine.
 
     # Lowest numbered available chunklets, where transfer rate is the fastest.
     CPG_CHUNKLET_POS_PREF_FIRST = 1
     # Highest numbered available chunklets, where transfer rate is the slowest.
     CPG_CHUNKLET_POS_PREF_LAST = 2
 
-    CPG_DISK_TYPE_FC = 1        # Fibre Channel
-    CPG_DISK_TYPE_NL = 2        # Near Line
-    CPG_DISK_TYPE_SSD = 3       # SSD
+    CPG_DISK_TYPE_FC = 1  # Fibre Channel
+    CPG_DISK_TYPE_NL = 2  # Near Line
+    CPG_DISK_TYPE_SSD = 3  # SSD
 
     HOST_EDIT_ADD = 1
     HOST_EDIT_REMOVE = 2
@@ -219,14 +220,14 @@ class HPE3ParClient(object):
         # e.g. 30102422 is 3 01 02 422
         # therefore all we need to compare is the build
         if (api_version is None or
-           api_version['build'] < self.HPE3PAR_WS_MIN_BUILD_VERSION):
+                api_version['build'] < self.HPE3PAR_WS_MIN_BUILD_VERSION):
             raise exceptions.UnsupportedVersion(
                 'Invalid 3PAR WS API, requires version, %s' %
                 self.HPE3PAR_WS_MIN_BUILD_VERSION_DESC)
 
         # Check for VLUN query support.
         if (api_version['build'] >=
-           self.HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY):
+                self.HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY):
             self.vlun_query_supported = True
 
     def setSSHOptions(self, ip, login, password, port=22,
@@ -1748,6 +1749,7 @@ class HPE3ParClient(object):
         :type wwn: str
 
         """
+
         # for now there is no search in the REST API
         # so we can do a create looking for a specific
         # error.  If we don't get that error, we nuke the
@@ -1880,6 +1882,30 @@ class HPE3ParClient(object):
 
         """
         response, body = self.http.get('/ports')
+        # if any of the ports are iSCSI ports and
+        # are vlan tagged (as shown by showport -iscsivlans), then
+        # the port information is merged with the WSAPI
+        # returned port information.
+        if self.ssh is not None:
+            if any([port['protocol'] == self.PORT_PROTO_ISCSI and
+                    'iSCSIPortInfo' in port and
+                    port['iSCSIPortInfo']['vlan'] == 1
+                    for port in body['members']]):
+                iscsi_vlan_data = self._run(['showport', '-iscsivlans'])
+                port_parser = showport_parser.ShowportParser()
+                iscsi_ports = port_parser.parseShowport(iscsi_vlan_data)
+                expanded_ports = self._cloneISCSIPorts(body, iscsi_ports)
+                for cli_port in expanded_ports:
+                    for wsapi_port in body[u'members']:
+                        if wsapi_port['portPos']['node'] == \
+                                cli_port['portPos']['node']  \
+                           and wsapi_port['portPos']['slot'] == \
+                                cli_port['portPos']['slot'] \
+                           and wsapi_port['portPos']['cardPort'] == \
+                                cli_port['portPos']['cardPort']:
+                            port_parser._merge_dict(wsapi_port, cli_port)
+                body['total'] = len(body['members'])
+
         return body
 
     def _getProtocolPorts(self, protocol, state=None):
@@ -1894,6 +1920,30 @@ class HPE3ParClient(object):
                         return_ports.append(port)
 
         return return_ports
+
+    def _cloneISCSIPorts(self, real_ports, vlan_ports):
+        cloned_ports = []
+        for port in vlan_ports:
+            matching_ports = [
+                x for x in real_ports['members']
+                if (x['protocol'] == self.PORT_PROTO_ISCSI and
+                    x['iSCSIPortInfo']['vlan'] == 1 and
+                    x['portPos'] == port['portPos'])
+            ]
+
+            # should only be one
+            if len(matching_ports) > 1:
+                err = ("Found {} matching ports for vlan tagged iSCSI port "
+                       "{}.  There should only be one.")
+                raise exceptions.\
+                    NoUniqueMatch(err.format(len(matching_ports), port))
+
+            if len(matching_ports) == 1:
+                new_port = copy.deepcopy(matching_ports[0])
+                new_port.update(port)
+                cloned_ports.append(new_port)
+
+        return cloned_ports
 
     def getFCPorts(self, state=None):
         """Get a list of Fibre Channel Ports.
@@ -2087,7 +2137,7 @@ class HPE3ParClient(object):
 
         raise exceptions.HTTPNotFound({'code': 'NON_EXISTENT_VLUN',
                                        'desc': "VLUN '%s' was not found" %
-                                       volumeName})
+                                               volumeName})
 
     def createVLUN(self, volumeName, lun=None, hostname=None, portPos=None,
                    noVcn=None, overrideLowerPriority=None, auto=False):
@@ -4197,8 +4247,8 @@ class HPE3ParClient(object):
         snapshots = []
         for volume in body['members']:
             if 'copyOf' in volume:
-                if(volume['copyOf'] == volName and
-                   volume['copyType'] == self.VIRTUAL_COPY):
+                if (volume['copyOf'] == volName and
+                        volume['copyType'] == self.VIRTUAL_COPY):
                     snapshots.append(volume['name'])
         return snapshots
 
@@ -4348,8 +4398,8 @@ class HPE3ParClient(object):
             if item.startswith(targetName):
                 link_info = item.split(',')
                 if link_info[0] == targetName and \
-                   link_info[1] == local_port and \
-                   link_info[2] == target_system_peer_port:
+                        link_info[1] == local_port and \
+                        link_info[2] == target_system_peer_port:
                     return True
         return False
 
@@ -4385,8 +4435,9 @@ class HPE3ParClient(object):
             volumePairs = optional.get('volumePairs')
             if volumePairs is not None:
                 for volumePair in volumePairs:
-                    source_target_pair = volumePair['sourceVolumeName'] + \
-                        ':' + volumePair['targetVolumeName']
+                    source_target_pair = \
+                        volumePair['sourceVolumeName'] + ':' + \
+                        volumePair['targetVolumeName']
                     cmd.append(source_target_pair)
         response = self._run(cmd)
         err_resp = self.check_response_for_admittarget(response, targetName)
@@ -4461,20 +4512,22 @@ class HPE3ParClient(object):
         """
         for r in resp:
             if 'error' in str.lower(r) or 'invalid' in str.lower(r) \
-               or 'must specify a mapping' in str.lower(r) \
-               or 'not exist' in str.lower(r) or 'no target' in str.lower(r) \
-               or 'group contains' in str.lower(r) \
-               or 'Target is already in this group.' in str(r) \
-               or 'could not locate an indicated volume.' in str(r) \
-               or 'Target system %s could not be contacted' % targetName \
-               in str(r) \
-               or 'Target %s could not get info on secondary target' \
-               % targetName in str(r) \
-               or 'Target %s is not up and ready' % targetName in str(r) \
-               or 'A group may have only a single synchronous target.' \
-               in str(r) or \
-               'cannot have groups with more than one synchronization mode' \
-               in str.lower(r):
+                    or 'must specify a mapping' in str.lower(r) \
+                    or 'not exist' in str.lower(r) \
+                    or 'no target' in str.lower(r) \
+                    or 'group contains' in str.lower(r) \
+                    or 'Target is already in this group.' in str(r) \
+                    or 'could not locate an indicated volume.' in str(r) \
+                    or 'Target system %s could not be contacted' % targetName \
+                    in str(r) \
+                    or 'Target %s could not get info on secondary target' \
+                    % targetName in str(r) \
+                    or 'Target %s is not up and ready' % targetName in str(r) \
+                    or 'A group may have only a single synchronous target.' \
+                    in str(r) or \
+                    'cannot have groups with more than one ' \
+                    'synchronization mode' \
+                    in str.lower(r):
                 return r
 
     def check_response(self, resp):

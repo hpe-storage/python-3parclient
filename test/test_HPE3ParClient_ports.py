@@ -16,6 +16,83 @@
 
 from test import HPE3ParClient_base as hpe3parbase
 
+iscsi_ports = [{
+    'IPAddr': '192.168.1.1',
+    'portPos': {
+        'node': 0,
+        'slot': 2,
+        'cardPort': 1
+    },
+    'iSCSIPortInfo': {
+        'iSNSAddr': '0.0.0.0',
+        'vlan': '100',
+        'IPAddr': '192.168.1.1',
+        'mtu': 1500,
+        'stgt': 21,
+        'netmask': '255.255.192.0',
+        'tpgt': 1024,
+        'iSNSPort': 3205,
+        'gateway': '0.0.0.0'
+    }
+}]
+
+body = {
+    u'total': 14,
+    u'members': [{
+        u'portPos': {
+            u'node': 0,
+            u'slot': 2,
+            u'cardPort': 1
+        },
+        u'protocol': 2,
+        u'iSCSIPortInfo': {
+            u'iSNSAddr': u'0.0.0.0',
+            u'vlan': 1,
+            u'IPAddr': u'0.0.0.0',
+            u'rate': u'10Gbps',
+            u'mtu': 1500,
+            u'stgt': 21,
+            u'netmask': u'0.0.0.0',
+            u'iSCSIName': u'iqn.2000-05.com.3pardata:20210002ac01db31',
+            u'tpgt': 21,
+            u'iSNSPort': 3205,
+            u'gateway': u'0.0.0.0'
+        },
+        u'partnerPos': {
+            u'node': 1,
+            u'slot': 2,
+            u'cardPort': 1
+        },
+        u'IPAddr': u'0.0.0.0',
+        u'linkState': 4,
+        u'device': [
+
+        ],
+        u'iSCSIName': u'iqn.2000-05.com.3pardata:20210002ac01db31',
+        u'failoverState': 1,
+        u'mode': 2,
+        u'HWAddr': u'70106FCE921A',
+        u'type': 8,
+        u'iSCSIVlans': [
+            {
+                u'iSNSAddr': u'0.0.0.0',
+                u'IPAddr': u'192.168.1.1',
+                u'mtu': 1500,
+                u'stgt': 21,
+                u'netmask': u'255.255.192.0',
+                u'tpgt': 1024,
+                u'iSNSPort': 3205,
+                u'gateway': u'0.0.0.0',
+                u'vlanTag': 100
+            }
+        ]
+    }]
+}
+
+user = "u"
+password = "p"
+ip = "10.10.22.241"
+
 
 class HPE3ParClientPortTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
@@ -34,6 +111,34 @@ class HPE3ParClientPortTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
                 return
             else:
                 self.fail('Number of ports in invalid.')
+        else:
+            self.fail('Cannot retrieve ports.')
+
+    def test_cloned_iscsi_ports(self):
+        self.printHeader('get_vlan_tagged_iscsi_port_info')
+        iscsi_port = self.cl._cloneISCSIPorts(body, iscsi_ports)
+        if iscsi_port:
+            if iscsi_port[0]['iSCSIPortInfo']['IPAddr'] ==\
+                    iscsi_ports[0]['IPAddr']:
+                self.printFooter('get_vlan_tagged_iscsi_port_info')
+                return
+            else:
+                self.fail('iSCSIVlan IPAddr is not found')
+        else:
+            self.fail('Cannot retrieve ports')
+
+    def test_get_ports_ssh(self):
+        self.printHeader('get_ports_cli')
+        self.cl.setSSHOptions(ip,
+                              user,
+                              password)
+        ports = self.cl.getPorts()
+        if ports:
+            if len(ports['members']) == ports['total']:
+                self.printFooter('get_ports_cli')
+                return
+            else:
+                self.fail('Number of ports is invalid.')
         else:
             self.fail('Cannot retrieve ports.')
 

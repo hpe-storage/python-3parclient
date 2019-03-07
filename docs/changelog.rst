@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Changes in Version 4.2.9
+------------------------
+* Added support for querying iscsi vlan tagged ports in getPorts call
+
 Changes in Version 4.2.8
 ------------------------
 * Added further support for Remote Copy Operations:
