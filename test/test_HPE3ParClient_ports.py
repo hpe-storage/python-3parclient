@@ -89,6 +89,10 @@ body = {
     }]
 }
 
+user = "u"
+password = "p"
+ip = "10.10.22.241"
+
 
 class HPE3ParClientPortTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
@@ -125,7 +129,9 @@ class HPE3ParClientPortTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
     def test_get_ports_ssh(self):
         self.printHeader('get_ports_cli')
-        self.cl.setSSHOptions('192.168.67.7', '3paradm', '3pardata')
+        self.cl.setSSHOptions(ip,
+                              user,
+                              password)
         ports = self.cl.getPorts()
         if ports:
             if len(ports['members']) == ports['total']:
