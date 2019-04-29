@@ -88,6 +88,7 @@ class HPE3ParClient(object):
     GROW_VOLUME = 3
     PROMOTE_VIRTUAL_COPY = 4
     VIRTUAL_COPY = 3
+    UPDATE_VIRTUAL_COPY = 7
 
     TARGET_TYPE_VVSET = 1
     TARGET_TYPE_SYS = 2
@@ -796,6 +797,29 @@ class HPE3ParClient(object):
             info = self._mergeDict(info, optional)
 
         response, body = self.http.put('/volumes/%s' % snapshot, body=info)
+        return body
+
+    def updateVirtualCopy(self, snapshots, readOnly=False):
+        """Update a virtual volume snapshot
+
+        :param snapshots: the list of snapshot names
+
+        :param readOnly: Specifies that if the virtual copy is read-write, the command
+           updates the read-only parent volume also
+
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - UNLICENSED_FEATURE: This system is not licensed with promote
+        """
+        if isinstance(snapshots, str):
+            snapshots = [snapshots, ]
+        info = {
+            'action': self.UPDATE_VIRTUAL_COPY,
+            'parameters': {
+                'volumeSnapshotList': snapshots,
+                'readOnly': readOnly
+            }
+        }
+        response, body = self.http.post('/volumes/', body=info)
         return body
 
     def copyVolume(self, src_name, dest_name, dest_cpg, optional=None):
