@@ -804,8 +804,8 @@ class HPE3ParClient(object):
 
         :param snapshots: the list of snapshot names
 
-        :param readOnly: Specifies that if the virtual copy is read-write, the command
-           updates the read-only parent volume also
+        :param readOnly: Specifies that if the virtual copy is read-write, the
+           command updates the read-only parent volume also
 
         :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - UNLICENSED_FEATURE: This system is not licensed with promote
