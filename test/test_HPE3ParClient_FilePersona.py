@@ -19,7 +19,7 @@ import re
 import time
 import unittest
 
-from testconfig import config
+from pytest_testconfig import config
 from functools import wraps
 
 from test import HPE3ParClient_base as hpe3parbase

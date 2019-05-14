@@ -18,7 +18,7 @@ from test import HPE3ParClient_base as hpe3parbase
 import random
 import mock
 import unittest
-from testconfig import config
+from pytest_testconfig import config
 
 from hpe3parclient import client
 from hpe3parclient import exceptions

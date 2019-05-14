@@ -1,5 +1,6 @@
-nose
-nose-testconfig
+pytest
+pytest-testconfig
+pytest-cov
 flask
 flake8==3.5.0
 mock

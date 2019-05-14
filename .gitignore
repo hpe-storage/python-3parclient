@@ -7,4 +7,7 @@ docs/html
 test_bogus_known_hosts_file
 .coverage
 cover
+htmlcov
+paramiko_server.log
+.eggs
 test/tpdinterface/interface.save
