@@ -131,6 +131,10 @@ class HPE3ParClient(object):
     HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY = 30201292
     HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY_DESC = '3.2.1 MU2'
 
+    # Minimum build version needed for AOCFG query support
+    HPE3PAR_WS_MIN_BUILD_VERSION_AOCFG_QUERY = 30202390
+    HPE3PAR_WS_MIN_BUILD_VERSION_AOCFG_QUERY_DESC = '3.2.2 MU2'
+
     VLUN_TYPE_EMPTY = 1
     VLUN_TYPE_PORT = 2
     VLUN_TYPE_HOST = 3
@@ -158,6 +162,29 @@ class HPE3ParClient(object):
     CPG_DISK_TYPE_FC = 1  # Fibre Channel
     CPG_DISK_TYPE_NL = 2  # Near Line
     CPG_DISK_TYPE_SSD = 3  # SSD
+
+
+    VV_PROV_TYPE_FULL = 1
+    VV_PROV_TYPE_TPVV = 2
+    VV_PROV_TYPE_SNP = 3
+    VV_PROV_TYPE_PEER = 4
+    VV_PROV_TYPE_UNKOWN = 5
+    VV_PROV_TYPE_TDVV = 6
+
+    VV_STATE_NORMAL = 1
+    VV_STATE_DEGRADED = 2
+    VV_STATE_FAILED = 3
+    VV_PROV_TYPE_FULL = 1
+    VV_PROV_TYPE_TPVV = 2
+    VV_PROV_TYPE_SNP = 3
+    VV_PROV_TYPE_PEER = 4
+    VV_PROV_TYPE_UNKOWN = 5
+    VV_PROV_TYPE_TDVV = 6
+
+    VV_STATE_NORMAL = 1
+    VV_STATE_DEGRADED = 2
+    VV_STATE_FAILED = 3
+
 
     HOST_EDIT_ADD = 1
     HOST_EDIT_REMOVE = 2
@@ -196,6 +223,7 @@ class HPE3ParClient(object):
         api_version = None
         self.ssh = None
         self.vlun_query_supported = False
+        self.aocfg_query_supported = False
 
         self.debug_rest(debug)
 
@@ -222,13 +250,17 @@ class HPE3ParClient(object):
         if (api_version is None or
                 api_version['build'] < self.HPE3PAR_WS_MIN_BUILD_VERSION):
             raise exceptions.UnsupportedVersion(
-                'Invalid 3PAR WS API, requires version, %s' %
-                self.HPE3PAR_WS_MIN_BUILD_VERSION_DESC)
+                'Invalid 3PAR WS API: %s, requires version at least: %s' %
+                (api_version['build'],self.HPE3PAR_WS_MIN_BUILD_VERSION_DESC))
 
         # Check for VLUN query support.
         if (api_version['build'] >=
                 self.HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY):
             self.vlun_query_supported = True
+        # Check for AOCFG query support.
+        if (api_version['build'] >=
+           self.HPE3PAR_WS_MIN_BUILD_VERSION_AOCFG_QUERY):
+            self.aocfg_query_supported = True
 
     def setSSHOptions(self, ip, login, password, port=22,
                       conn_timeout=None, privatekey=None,
@@ -2087,6 +2119,38 @@ class HPE3ParClient(object):
 
         """
         response, body = self.http.delete('/cpgs/%s' % name)
+
+
+    # AOCFG methods
+    def getAOCFGs(self):
+        """Get AOCFGs.
+
+        :returns: Array of CPGs
+
+        """
+        if self.aocfg_query_supported:
+            response, body = self.http.get('/aoconfigurations')
+            return body
+        else:
+            raise exceptions.UnsupportedVersion(
+                'Invalid 3PAR WS API %s, requires version, %s' % (self.getWsApiVersion()['build'],self.HPE3PAR_WS_MIN_BUILD_VERSION_AOCFG_QUERY_DESC))
+
+    def getAOCFG(self,aoconfigName):
+        """Get information about a CPG.
+
+        :param aocfgName: The AO configuration to find
+        :type name: str
+
+        :returns: AOCFG
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+            -  NON_EXISTENT_AOCFG - AOCFG doesn't exist
+        """
+        if self.aocfg_query_supported:
+            response, body = self.http.get('/aoconfigurations/%s' % aoconfigName)
+            return body
+        else:
+            raise exceptions.UnsupportedVersion(
+                'Invalid 3PAR WS API %s, requires version, %s' % (self.getWsApiVersion()['build'],self.HPE3PAR_WS_MIN_BUILD_VERSION_AOCFG_QUERY_DESC))
 
     # VLUN methods
     #
