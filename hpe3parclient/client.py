@@ -30,6 +30,7 @@ import copy
 import re
 import time
 import uuid
+import logging
 
 try:
     # For Python 3.0 and later
@@ -41,6 +42,7 @@ except ImportError:
 from hpe3parclient import exceptions, http, ssh
 from hpe3parclient import showport_parser
 
+logger = logging.getLogger(__name__)
 
 class HPE3ParClient(object):
     """ The 3PAR REST API Client.
@@ -127,6 +129,9 @@ class HPE3ParClient(object):
     HPE3PAR_WS_MIN_BUILD_VERSION = 30103230
     HPE3PAR_WS_MIN_BUILD_VERSION_DESC = '3.1.3 MU1'
 
+    HPE3PAR_WS_MERLIN_MIN_BUILD_VERSION = 40000128
+    HPE3PAR_WS_MERLIN_MIN_BUILD_VERSIONDESC = '4.2.0'
+    
     # Minimum build version needed for VLUN query support.
     HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY = 30201292
     HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY_DESC = '3.2.1 MU2'
@@ -196,6 +201,7 @@ class HPE3ParClient(object):
         api_version = None
         self.ssh = None
         self.vlun_query_supported = False
+        self.merlin_supported = False
 
         self.debug_rest(debug)
 
@@ -229,6 +235,10 @@ class HPE3ParClient(object):
         if (api_version['build'] >=
                 self.HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY):
             self.vlun_query_supported = True
+
+        if (api_version['build'] >=
+                self.HPE3PAR_WS_MERLIN_MIN_BUILD_VERSION):
+            self.merlin_supported = True
 
     def setSSHOptions(self, ip, login, password, port=22,
                       conn_timeout=None, privatekey=None,
@@ -494,8 +504,35 @@ class HPE3ParClient(object):
 
         """
         info = {'name': name, 'cpg': cpgName, 'sizeMiB': sizeMiB}
+        # For merlin array there is no compression and tdvv fields, removing tdvv and replacing compression with reduce field
+        if not optional and self.merlin_supported:
+            optional={}
+            optional['tpvv'] = True
         if optional:
+            if self.merlin_supported:
+                if 'tdvv' in optional:
+                    optional.pop('tdvv')
+
+                if optional.get('tpvv') and optional.get('compression'):
+                    optional['reduce']=True
+
+                if not optional.get('tpvv') and not optional.get('compression'):
+                    optional['tpvv'] = True
+
+                if 'compression' in optional:
+                   if optional.get('compression'):
+                      optional['reduce'] = True
+                   else:
+                      optional['reduce']= False
+
+                   optional.pop('compression')
+
+                if optional.get('tpvv') and optional.get('reduce'):
+                   optional.pop('tpvv')
             info = self._mergeDict(info, optional)
+
+
+        logger.debug("Parameters passed for create volume %s" % info)
 
         response, body = self.http.post('/volumes', body=info)
         return body
@@ -912,8 +949,30 @@ class HPE3ParClient(object):
         """
         # Virtual volume sets are not supported with the -online option
         parameters = {'destVolume': dest_name,
-                      'destCPG': dest_cpg}
+                      'destCPG': dest_cpg} 
+        # For merlin array there is no compression and tdvv fields, removing tdvv and replacing compression with reduce field
         if optional:
+            if self.merlin_supported:
+                if 'tdvv' in optional:
+                    optional.pop('tdvv')
+
+                if optional.get('tpvv') and optional.get('compression'):
+                    optional['reduce']=True
+
+                if not optional.get('tpvv') and not optional.get('compression'):
+                    optional['tpvv'] = True
+
+                if 'compression' in optional:
+                   if optional.get('compression'):
+                      optional['reduce'] = True
+                   else:
+                      optional['reduce']= False
+
+                   optional.pop('compression')
+
+                if optional.get('tpvv') and optional.get('reduce'):
+                   optional.pop('tpvv')
+
             parameters = self._mergeDict(parameters, optional)
 
         if 'online' not in parameters or not parameters['online']:
@@ -922,7 +981,7 @@ class HPE3ParClient(object):
 
         info = {'action': 'createPhysicalCopy',
                 'parameters': parameters}
-
+        logger.debug("Parameters passed for copy volume %s" % info)
         response, body = self.http.post('/volumes/%s' % src_name, body=info)
         return body
 
