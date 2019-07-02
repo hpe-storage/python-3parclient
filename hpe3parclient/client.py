@@ -131,7 +131,7 @@ class HPE3ParClient(object):
 
     HPE3PAR_WS_MERLIN_MIN_BUILD_VERSION = 40000128
     HPE3PAR_WS_MERLIN_MIN_BUILD_VERSIONDESC = '4.2.0'
-    
+
     # Minimum build version needed for VLUN query support.
     HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY = 30201292
     HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY_DESC = '3.2.1 MU2'
@@ -504,9 +504,10 @@ class HPE3ParClient(object):
 
         """
         info = {'name': name, 'cpg': cpgName, 'sizeMiB': sizeMiB}
-        # For merlin array there is no compression and tdvv fields, removing tdvv and replacing compression with reduce field
+        # For merlin array there is no compression and tdvv fields
+        # removing tdvv and replacing compression with reduce field
         if not optional and self.merlin_supported:
-            optional={}
+            optional = {}
             optional['tpvv'] = True
         if optional:
             if self.merlin_supported:
@@ -514,24 +515,22 @@ class HPE3ParClient(object):
                     optional.pop('tdvv')
 
                 if optional.get('tpvv') and optional.get('compression'):
-                    optional['reduce']=True
+                    optional['reduce'] = True
 
                 if not optional.get('tpvv') and not optional.get('compression'):
                     optional['tpvv'] = True
 
                 if 'compression' in optional:
-                   if optional.get('compression'):
-                      optional['reduce'] = True
-                   else:
-                      optional['reduce']= False
+                    if optional.get('compression'):
+                        optional['reduce'] = True
+                    else:
+                        optional['reduce'] = False
 
-                   optional.pop('compression')
+                    optional.pop('compression')
 
                 if optional.get('tpvv') and optional.get('reduce'):
-                   optional.pop('tpvv')
+                    optional.pop('tpvv')
             info = self._mergeDict(info, optional)
-
-
         logger.debug("Parameters passed for create volume %s" % info)
 
         response, body = self.http.post('/volumes', body=info)
@@ -949,28 +948,31 @@ class HPE3ParClient(object):
         """
         # Virtual volume sets are not supported with the -online option
         parameters = {'destVolume': dest_name,
-                      'destCPG': dest_cpg} 
-        # For online copy, there has to be tpvv/tdvv(Non merlin array) and tpvv/reduce(merlin array) has to be passed from caller side
-        # For offline copy, parameters tpvv/tdvv/reduce are invalid, has to be taken care by caller side 
+                      'destCPG': dest_cpg}
+        # For online copy, there has to be tpvv/tdvv(Non merlin array)
+        # and tpvv/reduce(merlin array) has to be passed from caller side
+        # For offline copy, parameters tpvv/tdvv/reduce are invalid,
+        # has to be taken care by caller side
         if optional:
             if self.merlin_supported:
-            # For merlin array there is no compression and tdvv parameters, removing tdvv and replacing compression with reduce field
+                # For merlin array there is no compression and tdvv parameters,
+                # removing tdvv and replacing compression with reduce field
                 if 'tdvv' in optional:
                     optional.pop('tdvv')
 
                 if optional.get('tpvv') and optional.get('compression'):
-                    optional['reduce']=True
+                    optional['reduce'] = True
 
                 if 'compression' in optional:
-                   if optional.get('compression'):
-                      optional['reduce'] = True
-                   else:
-                      optional['reduce']= False
+                    if optional.get('compression'):
+                        optional['reduce'] = True
+                    else:
+                        optional['reduce'] = False
 
-                   optional.pop('compression')
+                    optional.pop('compression')
 
                 if optional.get('tpvv') and optional.get('reduce'):
-                   optional.pop('tpvv')
+                    optional.pop('tpvv')
 
             parameters = self._mergeDict(parameters, optional)
 

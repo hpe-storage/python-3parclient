@@ -2292,7 +2292,8 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
     def test37_create_volume_with_merlin_support_with_no_option(self):
         self.printHeader('create_volume')
         self.cl.merlin_supported = True
-        # add volume with no options specified, it should create bydefault tpvv volume
+        # add volume with no options specified,
+        # it should create bydefault tpvv volume
         self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE)
         # check
         vol1 = self.cl.getVolume(VOLUME_NAME1)
@@ -2333,7 +2334,7 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
     def test_39_offline_copy_volume_merlin_support(self):
         self.printHeader('copy_volume')
-        self.cl.merlin_supported=True
+        self.cl.merlin_supported = True
         # add one
         optional = {'comment': 'test volume', 'tpvv': True,
                     'snapCPG': CPG_NAME1}
@@ -2346,11 +2347,10 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         volName = vol2['name']
         self.assertEqual(VOLUME_NAME2, volName)
         self.printFooter('copy_volume')
-        
-    
+
     def test_40_online_copy_volume_merlin_support(self):
         self.printHeader('copy_volume')
-        self.cl.merlin_supported=True
+        self.cl.merlin_supported = True
         # TODO: Add support for ssh/stopPhysical copy in mock mode
         if self.unitTest:
             self.printFooter('copy_volume')
@@ -2361,15 +2361,16 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
 
         # copy it
-        optional = {'online': True, 'tpvv': True} # for online copy we need to specify the tpvv/reduce for merlin
+        # for online copy we need to specify the tpvv/reduce for merlin
+        optional = {'online': True, 'tpvv': True}
         self.cl.copyVolume(VOLUME_NAME1, VOLUME_NAME2, CPG_NAME1, optional)
-        self.cl.getVolume(VOLUME_NAME2)
+        vol2 = self.cl.getVolume(VOLUME_NAME2)
         volName = vol2['name']
         self.assertEqual(VOLUME_NAME2, volName)
-        
+
     def test_41_copy_volume_interrupted_merlin_support(self):
         self.printHeader('copy_volume')
-        self.cl.merlin_supported=True
+        self.cl.merlin_supported = True
         # TODO: Add support for ssh/stopPhysical copy in mock mode
         if self.unitTest:
             self.printFooter('copy_volume')
@@ -2380,7 +2381,7 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
 
         # copy it
-        optional = {'online': True,'tpvv': True}
+        optional = {'online': True, 'tpvv': True}
         self.cl.copyVolume(VOLUME_NAME1, VOLUME_NAME2, CPG_NAME1, optional)
         self.cl.getVolume(VOLUME_NAME2)
         self.cl.stopOnlinePhysicalCopy(VOLUME_NAME2)
