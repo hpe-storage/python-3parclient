@@ -950,17 +950,16 @@ class HPE3ParClient(object):
         # Virtual volume sets are not supported with the -online option
         parameters = {'destVolume': dest_name,
                       'destCPG': dest_cpg} 
-        # For merlin array there is no compression and tdvv fields, removing tdvv and replacing compression with reduce field
+        # For online copy, there has to be tpvv/tdvv(Non merlin array) and tpvv/reduce(merlin array) has to be passed from caller side
+        # For offline copy, parameters tpvv/tdvv/reduce are invalid, has to be taken care by caller side 
         if optional:
             if self.merlin_supported:
+            # For merlin array there is no compression and tdvv parameters, removing tdvv and replacing compression with reduce field
                 if 'tdvv' in optional:
                     optional.pop('tdvv')
 
                 if optional.get('tpvv') and optional.get('compression'):
                     optional['reduce']=True
-
-                if not optional.get('tpvv') and not optional.get('compression'):
-                    optional['tpvv'] = True
 
                 if 'compression' in optional:
                    if optional.get('compression'):

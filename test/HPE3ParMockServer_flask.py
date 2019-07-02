@@ -852,7 +852,7 @@ def create_snapshot(volume_name):
         valid_online_param_keys = {'online': None, 'destCPG': None,
                                    'tpvv': None, 'tdvv': None,
                                    'snapCPG': None, 'saveSnapshot': None,
-                                   'priority': None}
+                                   'priority': None, 'reduce': None}
         params = data['parameters']
         if 'online' in params and params['online']:
             # we are checking online copy
@@ -950,8 +950,8 @@ def create_volumes():
                   'tpvv': None, 'usrSpcAllocWarningPct': None,
                   'usrSpcAllocLimitPct': None, 'isCopy': None,
                   'copyOfName': None, 'copyRO': None, 'expirationHours': None,
-                  'retentionHours': None}
-
+                  'retentionHours': None, 'reduce': None}
+    
     for key in list(data.keys()):
         if key not in list(valid_keys.keys()):
             throw_error(400, INV_INPUT, "Invalid Parameter '%s'" % key)
