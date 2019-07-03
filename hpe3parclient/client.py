@@ -44,6 +44,7 @@ from hpe3parclient import showport_parser
 
 logger = logging.getLogger(__name__)
 
+
 class HPE3ParClient(object):
     """ The 3PAR REST API Client.
 
@@ -517,7 +518,8 @@ class HPE3ParClient(object):
                 if optional.get('tpvv') and optional.get('compression'):
                     optional['reduce'] = True
 
-                if not optional.get('tpvv') and not optional.get('compression'):
+                if not optional.get('tpvv') \
+                        and not optional.get('compression'):
                     optional['tpvv'] = True
 
                 if 'compression' in optional:
