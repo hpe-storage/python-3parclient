@@ -2330,9 +2330,133 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.assertEqual(VOLUME_NAME2, volName)
         self.assertEqual("test volume2", comment)
         self.assertEqual(True, reduced)
+
+        # add another volume
+        optional = {'comment': 'test volume3', 'tpvv': None,
+                    'compression': None}
+        self.cl.createVolume(VOLUME_NAME3, CPG_NAME2, 1024, optional)
+        # check
+        vol3 = self.cl.getVolume(VOLUME_NAME3)
+        self.assertIsNotNone(vol3)
+        volName = vol3['name']
+        comment = vol3['comment']
+        self.assertEqual(VOLUME_NAME3, volName)
+        self.assertEqual("test volume3", comment)
         self.printFooter('create_volume')
 
-    def test_39_offline_copy_volume_merlin_support(self):
+    def test38_create_volume_with_merlin_support_with_option_None(self):
+        self.printHeader('create_volume')
+        self.cl.merlin_supported = True
+        # add one
+        optional = {'comment': 'test volume', 'tpvv': None,
+                    'compression': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 16384, optional)
+        # check
+        vol1 = self.cl.getVolume(VOLUME_NAME1)
+        self.assertIsNotNone(vol1)
+        volName = vol1['name']
+        reduced = vol1['reduce']
+        comment = vol1['comment']
+        self.assertEqual(VOLUME_NAME1, volName)
+        self.assertEqual("test volume", comment)
+        self.assertEqual(True, reduced)
+        # add another one
+        optional = {'comment': 'test volume2', 'tpvv': True,
+                    'compression': None}
+        self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, SIZE, optional)
+
+        # check
+        vol2 = self.cl.getVolume(VOLUME_NAME2)
+        self.assertIsNotNone(vol2)
+        volName = vol2['name']
+        comment = vol2['comment']
+        self.assertEqual(VOLUME_NAME2, volName)
+        self.assertEqual("test volume2", comment)
+        self.printFooter('create_volume')
+
+    def test_39_create_volume_badParams(self):
+        self.printHeader('create_volume_badParams')
+        self.cl.merlin_supported = True
+        optional = {'comment': 'test volume', 'tpvv': "junk"}
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.createVolume,
+            VOLUME_NAME1,
+            CPG_NAME1,
+            SIZE,
+            optional)
+        self.printFooter('create_volume_badParams')
+
+    def test_40_create_volume_badParams(self):
+        self.printHeader('create_volume_badParams')
+        self.cl.merlin_supported = True
+        optional = {'comment': 'test volume', 'compression': "junk"}
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.createVolume,
+            VOLUME_NAME1,
+            CPG_NAME1,
+            SIZE,
+            optional)
+        self.printFooter('create_volume_badParams')
+
+    def test_41_create_volume_junk_values(self):
+        self.printHeader('create_volume_junkParams')
+        self.cl.merlin_supported = True
+        optional = {'comment': 'test volume', 'tpvv': "junk",
+                    'compression': "junk"}
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.createVolume,
+            VOLUME_NAME1,
+            CPG_NAME1,
+            SIZE,
+            optional)
+        self.printHeader('create_volume_junkParams')
+
+    def test_42_create_volume_junk_compression(self):
+        self.printHeader('create_volume_badParams')
+        self.cl.merlin_supported = True
+        optional = {'comment': 'test volume', 'tpvv': None,
+                    'compression': "junk"}
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.createVolume,
+            VOLUME_NAME1,
+            CPG_NAME1,
+            SIZE,
+            optional)
+        self.printHeader('create_volume_junkParams')
+
+    def test_43_create_volume_parameter_absent(self):
+        self.printHeader('create_volume_noParams')
+        self.cl.merlin_supported = True
+        optional = {'comment': 'test volume',
+                    'compression': False}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+        # check
+        vol1 = self.cl.getVolume(VOLUME_NAME1)
+        self.assertIsNotNone(vol1)
+        volName = vol1['name']
+        comment = vol1['comment']
+        self.assertEqual(VOLUME_NAME1, volName)
+        self.assertEqual("test volume", comment)
+        self.printHeader('create_volume')
+
+        # add another one
+        optional = {'comment': 'test volume2',
+                    'tpvv': False}
+        self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, SIZE, optional)
+        # check
+        vol2 = self.cl.getVolume(VOLUME_NAME2)
+        self.assertIsNotNone(vol2)
+        volName = vol2['name']
+        comment = vol2['comment']
+        self.assertEqual(VOLUME_NAME2, volName)
+        self.assertEqual("test volume2", comment)
+        self.printHeader('create_volume')
+
+    def test_44_offline_copy_volume_merlin_support(self):
         self.printHeader('copy_volume')
         self.cl.merlin_supported = True
         # add one
@@ -2348,7 +2472,7 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.assertEqual(VOLUME_NAME2, volName)
         self.printFooter('copy_volume')
 
-    def test_40_online_copy_volume_merlin_support(self):
+    def test_45_online_copy_volume_merlin_support(self):
         self.printHeader('copy_volume')
         self.cl.merlin_supported = True
         # TODO: Add support for ssh/stopPhysical copy in mock mode
@@ -2368,7 +2492,7 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         volName = vol2['name']
         self.assertEqual(VOLUME_NAME2, volName)
 
-    def test_41_copy_volume_interrupted_merlin_support(self):
+    def test_46_copy_volume_interrupted_merlin_support(self):
         self.printHeader('copy_volume')
         self.cl.merlin_supported = True
         # TODO: Add support for ssh/stopPhysical copy in mock mode

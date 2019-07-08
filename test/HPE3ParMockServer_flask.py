@@ -976,6 +976,11 @@ def create_volumes():
             throw_error(400, TOO_LARGE,
                         'Volume size is above architectural limit : 16TiB')
 
+    if 'tpvv' in list(data.keys()):
+        if data['tpvv'] not in [True, False, None]:
+            throw_error(400, INV_INPUT_WRONG_TYPE,
+                        'Invalid input:wrong type for value - tpvv')
+
     if 'id' in list(data.keys()):
         for vol in volumes['members']:
             if vol['id'] == data['id']:

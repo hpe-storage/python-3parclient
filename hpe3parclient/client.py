@@ -515,7 +515,8 @@ class HPE3ParClient(object):
                 if 'tdvv' in optional:
                     optional.pop('tdvv')
 
-                if optional.get('tpvv') and optional.get('compression'):
+                if optional.get('tpvv') is True \
+                        and optional.get('compression') is True:
                     optional['reduce'] = True
 
                 if not optional.get('tpvv') \
@@ -523,14 +524,21 @@ class HPE3ParClient(object):
                     optional['tpvv'] = True
 
                 if 'compression' in optional:
-                    if optional.get('compression'):
-                        optional['reduce'] = True
-                    else:
-                        optional['reduce'] = False
+                    if optional.get('compression') is not None:
+                        if optional.get('compression') is True:
+                            optional['reduce'] = True
+                        elif optional.get('compression') is False:
+                            optional['reduce'] = False
+                        else:
+                            # raising exception for junk compression input
+                            ex_desc = "39 - invalid input: wrong type for value \
+                                       - compression"
+                            raise exceptions.HTTPBadRequest(ex_desc)
 
                     optional.pop('compression')
 
-                if optional.get('tpvv') and optional.get('reduce'):
+                if optional.get('tpvv') is True \
+                        and optional.get('reduce') is True:
                     optional.pop('tpvv')
             info = self._mergeDict(info, optional)
         logger.debug("Parameters passed for create volume %s" % info)
@@ -952,8 +960,8 @@ class HPE3ParClient(object):
         parameters = {'destVolume': dest_name,
                       'destCPG': dest_cpg}
         # For online copy, there has to be tpvv/tdvv(Non merlin array)
-        # and tpvv/reduce(merlin array) has to be passed from caller side
-        # For offline copy, parameters tpvv/tdvv/reduce are invalid,
+        # and tpvv/compression(merlin array) has to be passed from caller side
+        # For offline copy, parameters tpvv/tdvv/compression are invalid,
         # has to be taken care by caller side
         if optional:
             if self.merlin_supported:
