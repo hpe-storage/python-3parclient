@@ -970,18 +970,26 @@ class HPE3ParClient(object):
                 if 'tdvv' in optional:
                     optional.pop('tdvv')
 
-                if optional.get('tpvv') and optional.get('compression'):
+                if optional.get('tpvv') is True \
+                        and optional.get('compression') is True:
                     optional['reduce'] = True
 
                 if 'compression' in optional:
-                    if optional.get('compression'):
-                        optional['reduce'] = True
-                    else:
-                        optional['reduce'] = False
+                    if optional.get('compression') is not None:
+                        if optional.get('compression') is True:
+                            optional['reduce'] = True
+                        elif optional.get('compression') is False:
+                            optional['reduce'] = False
+                        else:
+                            # raising exception for junk compression input
+                            ex_desc = "39 - invalid input: wrong type for value \
+                                       - compression"
+                            raise exceptions.HTTPBadRequest(ex_desc)
 
                     optional.pop('compression')
 
-                if optional.get('tpvv') and optional.get('reduce'):
+                if optional.get('tpvv') is True \
+                        and optional.get('reduce') is True:
                     optional.pop('tpvv')
 
             parameters = self._mergeDict(parameters, optional)

@@ -2412,10 +2412,10 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
             CPG_NAME1,
             SIZE,
             optional)
-        self.printHeader('create_volume_junkParams')
+        self.printFooter('create_volume_junkParams')
 
     def test_42_create_volume_junk_compression(self):
-        self.printHeader('create_volume_badParams')
+        self.printHeader('create_volume_junkParams')
         self.cl.merlin_supported = True
         optional = {'comment': 'test volume', 'tpvv': None,
                     'compression': "junk"}
@@ -2426,7 +2426,7 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
             CPG_NAME1,
             SIZE,
             optional)
-        self.printHeader('create_volume_junkParams')
+        self.printFooter('create_volume_junkParams')
 
     def test_43_create_volume_parameter_absent(self):
         self.printHeader('create_volume_noParams')
@@ -2441,7 +2441,6 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         comment = vol1['comment']
         self.assertEqual(VOLUME_NAME1, volName)
         self.assertEqual("test volume", comment)
-        self.printHeader('create_volume')
 
         # add another one
         optional = {'comment': 'test volume2',
@@ -2454,7 +2453,7 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         comment = vol2['comment']
         self.assertEqual(VOLUME_NAME2, volName)
         self.assertEqual("test volume2", comment)
-        self.printHeader('create_volume')
+        self.printFooter('create_volume_noParams')
 
     def test_44_offline_copy_volume_merlin_support(self):
         self.printHeader('copy_volume')
@@ -2491,6 +2490,7 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         vol2 = self.cl.getVolume(VOLUME_NAME2)
         volName = vol2['name']
         self.assertEqual(VOLUME_NAME2, volName)
+        self.printFooter('copy_volume')
 
     def test_46_copy_volume_interrupted_merlin_support(self):
         self.printHeader('copy_volume')
