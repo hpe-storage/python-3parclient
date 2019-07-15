@@ -2289,9 +2289,9 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.assertEqual(res, None)
         self.printFooter('resume_schedule_test')
 
-    def test37_create_volume_with_merlin_support_with_no_option(self):
+    def test37_create_volume_with_primera_support_with_no_option(self):
         self.printHeader('create_volume')
-        self.cl.merlin_supported = True
+        self.cl.primera_supported = True
         # add volume with no options specified,
         # it should create bydefault tpvv volume
         self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE)
@@ -2302,9 +2302,9 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.assertEqual(VOLUME_NAME1, volName)
         self.printFooter('create_volume')
 
-    def test38_create_volume_with_merlin_support_with_option(self):
+    def test38_create_volume_with_primera_support_with_option(self):
         self.printHeader('create_volume')
-        self.cl.merlin_supported = True
+        self.cl.primera_supported = True
         # add one
         optional = {'comment': 'test volume', 'tpvv': True}
         self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
@@ -2344,9 +2344,9 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.assertEqual("test volume3", comment)
         self.printFooter('create_volume')
 
-    def test38_create_volume_with_merlin_support_with_option_None(self):
+    def test38_create_volume_with_primera_support_with_option_None(self):
         self.printHeader('create_volume')
-        self.cl.merlin_supported = True
+        self.cl.primera_supported = True
         # add one
         optional = {'comment': 'test volume', 'tpvv': None,
                     'compression': True}
@@ -2389,7 +2389,7 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
     def test_40_create_volume_badParams(self):
         self.printHeader('create_volume_badParams')
-        self.cl.merlin_supported = True
+        self.cl.primera_supported = True
         optional = {'comment': 'test volume', 'compression': "junk"}
         self.assertRaises(
             exceptions.HTTPBadRequest,
@@ -2402,7 +2402,7 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
     def test_41_create_volume_junk_values(self):
         self.printHeader('create_volume_junkParams')
-        self.cl.merlin_supported = True
+        self.cl.primera_supported = True
         optional = {'comment': 'test volume', 'tpvv': "junk",
                     'compression': "junk"}
         self.assertRaises(
@@ -2416,7 +2416,7 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
     def test_42_create_volume_junk_compression(self):
         self.printHeader('create_volume_junkParams')
-        self.cl.merlin_supported = True
+        self.cl.primera_supported = True
         optional = {'comment': 'test volume', 'tpvv': None,
                     'compression': "junk"}
         self.assertRaises(
@@ -2430,7 +2430,7 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
     def test_43_create_volume_parameter_absent(self):
         self.printHeader('create_volume_noParams')
-        self.cl.merlin_supported = True
+        self.cl.primera_supported = True
         optional = {'comment': 'test volume',
                     'compression': False}
         self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
@@ -2455,9 +2455,9 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.assertEqual("test volume2", comment)
         self.printFooter('create_volume_noParams')
 
-    def test_44_offline_copy_volume_merlin_support(self):
+    def test_44_offline_copy_volume_primera_support(self):
         self.printHeader('copy_volume')
-        self.cl.merlin_supported = True
+        self.cl.primera_supported = True
         # add one
         optional = {'comment': 'test volume', 'tpvv': True,
                     'snapCPG': CPG_NAME1}
@@ -2471,9 +2471,9 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.assertEqual(VOLUME_NAME2, volName)
         self.printFooter('copy_volume')
 
-    def test_45_online_copy_volume_merlin_support(self):
+    def test_45_online_copy_volume_primera_support(self):
         self.printHeader('copy_volume')
-        self.cl.merlin_supported = True
+        self.cl.primera_supported = True
         # TODO: Add support for ssh/stopPhysical copy in mock mode
         if self.unitTest:
             self.printFooter('copy_volume')
@@ -2492,9 +2492,9 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.assertEqual(VOLUME_NAME2, volName)
         self.printFooter('copy_volume')
 
-    def test_46_copy_volume_interrupted_merlin_support(self):
+    def test_46_copy_volume_interrupted_primera_support(self):
         self.printHeader('copy_volume')
-        self.cl.merlin_supported = True
+        self.cl.primera_supported = True
         # TODO: Add support for ssh/stopPhysical copy in mock mode
         if self.unitTest:
             self.printFooter('copy_volume')

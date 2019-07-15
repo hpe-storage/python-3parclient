@@ -130,8 +130,8 @@ class HPE3ParClient(object):
     HPE3PAR_WS_MIN_BUILD_VERSION = 30103230
     HPE3PAR_WS_MIN_BUILD_VERSION_DESC = '3.1.3 MU1'
 
-    HPE3PAR_WS_MERLIN_MIN_BUILD_VERSION = 40000128
-    HPE3PAR_WS_MERLIN_MIN_BUILD_VERSIONDESC = '4.2.0'
+    HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSION = 40000128
+    HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSIONDESC = '4.2.0'
 
     # Minimum build version needed for VLUN query support.
     HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY = 30201292
@@ -202,7 +202,7 @@ class HPE3ParClient(object):
         api_version = None
         self.ssh = None
         self.vlun_query_supported = False
-        self.merlin_supported = False
+        self.primera_supported = False
 
         self.debug_rest(debug)
 
@@ -238,8 +238,11 @@ class HPE3ParClient(object):
             self.vlun_query_supported = True
 
         if (api_version['build'] >=
-                self.HPE3PAR_WS_MERLIN_MIN_BUILD_VERSION):
-            self.merlin_supported = True
+                self.HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSION):
+            self.primera_supported = True
+
+    def is_primera_array(self):
+        return self.primera_supported
 
     def setSSHOptions(self, ip, login, password, port=22,
                       conn_timeout=None, privatekey=None,
@@ -505,13 +508,13 @@ class HPE3ParClient(object):
 
         """
         info = {'name': name, 'cpg': cpgName, 'sizeMiB': sizeMiB}
-        # For merlin array there is no compression and tdvv fields
+        # For primera array there is no compression and tdvv fields
         # removing tdvv and replacing compression with reduce field
-        if not optional and self.merlin_supported:
+        if not optional and self.primera_supported:
             optional = {}
             optional['tpvv'] = True
         if optional:
-            if self.merlin_supported:
+            if self.primera_supported:
                 if 'tdvv' in optional:
                     optional.pop('tdvv')
 
@@ -959,13 +962,13 @@ class HPE3ParClient(object):
         # Virtual volume sets are not supported with the -online option
         parameters = {'destVolume': dest_name,
                       'destCPG': dest_cpg}
-        # For online copy, there has to be tpvv/tdvv(Non merlin array)
-        # and tpvv/compression(merlin array) has to be passed from caller side
+        # For online copy, there has to be tpvv/tdvv(Non primera array)
+        # and tpvv/compression(primera array) has to be passed from caller side
         # For offline copy, parameters tpvv/tdvv/compression are invalid,
         # has to be taken care by caller side
         if optional:
-            if self.merlin_supported:
-                # For merlin array there is no compression and tdvv parameters,
+            if self.primera_supported:
+                # For primera array there is no compression and tdvv parameters
                 # removing tdvv and replacing compression with reduce field
                 if 'tdvv' in optional:
                     optional.pop('tdvv')
