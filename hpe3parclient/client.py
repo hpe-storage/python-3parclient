@@ -30,6 +30,7 @@ import copy
 import re
 import time
 import uuid
+import logging
 
 try:
     # For Python 3.0 and later
@@ -40,6 +41,8 @@ except ImportError:
 
 from hpe3parclient import exceptions, http, ssh
 from hpe3parclient import showport_parser
+
+logger = logging.getLogger(__name__)
 
 
 class HPE3ParClient(object):
@@ -127,6 +130,9 @@ class HPE3ParClient(object):
     HPE3PAR_WS_MIN_BUILD_VERSION = 30103230
     HPE3PAR_WS_MIN_BUILD_VERSION_DESC = '3.1.3 MU1'
 
+    HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSION = 40000128
+    HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSIONDESC = '4.2.0'
+
     # Minimum build version needed for VLUN query support.
     HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY = 30201292
     HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY_DESC = '3.2.1 MU2'
@@ -196,6 +202,7 @@ class HPE3ParClient(object):
         api_version = None
         self.ssh = None
         self.vlun_query_supported = False
+        self.primera_supported = False
 
         self.debug_rest(debug)
 
@@ -229,6 +236,13 @@ class HPE3ParClient(object):
         if (api_version['build'] >=
                 self.HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY):
             self.vlun_query_supported = True
+
+        if (api_version['build'] >=
+                self.HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSION):
+            self.primera_supported = True
+
+    def is_primera_array(self):
+        return self.primera_supported
 
     def setSSHOptions(self, ip, login, password, port=22,
                       conn_timeout=None, privatekey=None,
@@ -494,8 +508,43 @@ class HPE3ParClient(object):
 
         """
         info = {'name': name, 'cpg': cpgName, 'sizeMiB': sizeMiB}
+        # For primera array there is no compression and tdvv fields
+        # removing tdvv and replacing compression with reduce field
+        if not optional and self.primera_supported:
+            optional = {}
+            optional['tpvv'] = True
         if optional:
+            if self.primera_supported:
+                if 'tdvv' in optional:
+                    optional.pop('tdvv')
+
+                if optional.get('tpvv') is True \
+                        and optional.get('compression') is True:
+                    optional['reduce'] = True
+
+                if not optional.get('tpvv') \
+                        and not optional.get('compression'):
+                    optional['tpvv'] = True
+
+                if 'compression' in optional:
+                    if optional.get('compression') is not None:
+                        if optional.get('compression') is True:
+                            optional['reduce'] = True
+                        elif optional.get('compression') is False:
+                            optional['reduce'] = False
+                        else:
+                            # raising exception for junk compression input
+                            ex_desc = "39 - invalid input: wrong type for value \
+                                       - compression"
+                            raise exceptions.HTTPBadRequest(ex_desc)
+
+                    optional.pop('compression')
+
+                if optional.get('tpvv') is True \
+                        and optional.get('reduce') is True:
+                    optional.pop('tpvv')
             info = self._mergeDict(info, optional)
+        logger.debug("Parameters passed for create volume %s" % info)
 
         response, body = self.http.post('/volumes', body=info)
         return body
@@ -913,7 +962,39 @@ class HPE3ParClient(object):
         # Virtual volume sets are not supported with the -online option
         parameters = {'destVolume': dest_name,
                       'destCPG': dest_cpg}
+        # For online copy, there has to be tpvv/tdvv(Non primera array)
+        # and tpvv/compression(primera array) has to be passed from caller side
+        # For offline copy, parameters tpvv/tdvv/compression are invalid,
+        # has to be taken care by caller side
         if optional:
+            if self.primera_supported:
+                # For primera array there is no compression and tdvv parameters
+                # removing tdvv and replacing compression with reduce field
+                if 'tdvv' in optional:
+                    optional.pop('tdvv')
+
+                if optional.get('tpvv') is True \
+                        and optional.get('compression') is True:
+                    optional['reduce'] = True
+
+                if 'compression' in optional:
+                    if optional.get('compression') is not None:
+                        if optional.get('compression') is True:
+                            optional['reduce'] = True
+                        elif optional.get('compression') is False:
+                            optional['reduce'] = False
+                        else:
+                            # raising exception for junk compression input
+                            ex_desc = "39 - invalid input: wrong type for value \
+                                       - compression"
+                            raise exceptions.HTTPBadRequest(ex_desc)
+
+                    optional.pop('compression')
+
+                if optional.get('tpvv') is True \
+                        and optional.get('reduce') is True:
+                    optional.pop('tpvv')
+
             parameters = self._mergeDict(parameters, optional)
 
         if 'online' not in parameters or not parameters['online']:
@@ -922,7 +1003,7 @@ class HPE3ParClient(object):
 
         info = {'action': 'createPhysicalCopy',
                 'parameters': parameters}
-
+        logger.debug("Parameters passed for copy volume %s" % info)
         response, body = self.http.post('/volumes/%s' % src_name, body=info)
         return body
 
