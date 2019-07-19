@@ -522,6 +522,12 @@ class HPE3ParClient(object):
                         ex_desc = "39 - invalid input: wrong type for value"
                         raise exceptions.HTTPBadRequest(ex_desc)
 
+                combination = ['tdvv', 'compression']
+                len_diff = len(set(combination) - set(optional.keys()))
+                if len_diff == 1:
+                    raise exceptions.HTTPBadRequest("Invalid input:For \
+                        Deco volumes, both 'tdvv' and 'compression' \
+                        must be specified")
                 if optional.get('tdvv') is True \
                         and optional.get('compression') is True:
                     optional['reduce'] = True
@@ -534,7 +540,7 @@ class HPE3ParClient(object):
                         and optional.get('compression') is True:
                     raise exceptions.HTTPBadRequest("For enabling the \
                         compression for primera tdvv and compression \
-                        both are true")
+                        both flags must be true")
 
                 if optional.get('tdvv') is True \
                         and optional.get('compression') is False:

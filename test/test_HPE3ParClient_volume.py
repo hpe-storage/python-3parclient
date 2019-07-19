@@ -2350,7 +2350,7 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.assertEqual(True, reduced)
         # add another one
         optional = {'comment': 'test volume2', 'tpvv': True,
-                    'compression': None}
+                    'compression': None, 'tdvv': None}
         self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, SIZE, optional)
 
         # check
