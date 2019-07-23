@@ -519,15 +519,16 @@ class HPE3ParClient(object):
                     option = optional.get(key)
                     if option and option not in [True, False]:
                         # raising exception for junk compression input
-                        ex_desc = "39 - invalid input: wrong type for value"
+                        ex_desc = "39 - invalid input: wrong type for key " \
+                            "[%s], Valid values are[True, False]" % key
                         raise exceptions.HTTPBadRequest(ex_desc)
 
                 combination = ['tdvv', 'compression']
                 len_diff = len(set(combination) - set(optional.keys()))
                 if len_diff == 1:
-                    raise exceptions.HTTPBadRequest("Invalid input:For \
-                        Deco volumes, both 'tdvv' and 'compression' \
-                        must be specified")
+                    raise exceptions.HTTPBadRequest(
+                        "Invalid input:For Deco volumes, "
+                        "both 'tdvv' and 'compression' must be specified")
                 if optional.get('tdvv') is True \
                         and optional.get('compression') is True:
                     optional['reduce'] = True
@@ -538,15 +539,15 @@ class HPE3ParClient(object):
 
                 if optional.get('tdvv') is False \
                         and optional.get('compression') is True:
-                    raise exceptions.HTTPBadRequest("For enabling the \
-                        compression for primera tdvv and compression \
-                        both flags must be true")
+                    raise exceptions.HTTPBadRequest(
+                        "Invalid input:For Deco volumes, "
+                        "both 'tdvv' and 'compression' must be specified")
 
                 if optional.get('tdvv') is True \
                         and optional.get('compression') is False:
-                    raise exceptions.HTTPBadRequest("For enabling the \
-                        compression for primera tdvv and compression \
-                        both are true")
+                    raise exceptions.HTTPBadRequest(
+                        "Invalid input:For Deco volumes, "
+                        "both 'tdvv' and 'compression' must be specified")
 
                 if 'compression' in optional:
                     optional.pop('compression')
@@ -560,13 +561,13 @@ class HPE3ParClient(object):
         except Exception as ex:
             if self.primera_supported:
                 ex_desc = ex.get_description()
-                if re.search("invalid input: one of the parameters is \
-                        required - tpvv,reduce", ex_desc):
-                    ex_desc = "invalid input: one of the parameters is \
-                        required - tpvv,compression"
+                if re.search("invalid input: one of the parameters is "
+                             "required - tpvv,reduce", ex_desc):
+                    ex_desc = "Invalid input:Either tpvv must be True "\
+                              "OR tdvv and compression must be True."\
+                              "Both cannot be False."
                     raise exceptions.HTTPBadRequest(ex_desc)
-            else:
-                raise ex
+            raise ex
 
     def deleteVolume(self, name):
         """Delete a volume.
@@ -991,9 +992,16 @@ class HPE3ParClient(object):
                     option = optional.get(key)
                     if option and option not in [True, False]:
                         # raising exception for junk compression input
-                        ex_desc = "39 - invalid input: wrong type for value"
+                        ex_desc = "39 - invalid input: wrong type for key " \
+                            "[%s], Valid values are[True, False]" % key
                         raise exceptions.HTTPBadRequest(ex_desc)
 
+                combination = ['tdvv', 'compression']
+                len_diff = len(set(combination) - set(optional.keys()))
+                if len_diff == 1:
+                    raise exceptions.HTTPBadRequest(
+                        "Invalid input:For Deco volumes, "
+                        "both 'tdvv' and 'compression' must be specified")
                 if optional.get('tdvv') is True \
                         and optional.get('compression') is True:
                     optional['reduce'] = True
@@ -1004,15 +1012,15 @@ class HPE3ParClient(object):
 
                 if optional.get('tdvv') is False \
                         and optional.get('compression') is True:
-                    raise exceptions.HTTPBadRequest("For enabling the \
-                        compression for primera tdvv and compression \
-                        both are true")
+                    raise exceptions.HTTPBadRequest(
+                        "Invalid input:For Deco volumes, "
+                        "both 'tdvv' and 'compression' must be specified")
 
                 if optional.get('tdvv') is True \
                         and optional.get('compression') is False:
-                    raise exceptions.HTTPBadRequest("For enabling the \
-                        compression for primera tdvv and compression \
-                        both are true")
+                    raise exceptions.HTTPBadRequest(
+                        "Invalid input:For Deco volumes, "
+                        "both 'tdvv' and 'compression' must be specified")
 
                 if 'compression' in optional:
                     optional.pop('compression')
