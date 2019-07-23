@@ -4816,3 +4816,28 @@ class HPE3ParClient(object):
                 return 'active'
         msg = "Couldn't find the schedule '%s' status" % schedule_name
         raise exceptions.SSHException(reason=msg)
+
+    @staticmethod
+    def getPortNumber(ip, login, password, port=22,
+                      conn_timeout=None, privatekey=None,
+                      **kwargs):
+        """Set SSH Options for ssh calls.
+
+        This is used to set the SSH credentials for calls
+        that use SSH instead of REST HTTP.
+
+        :param 3PAR credentials
+        :return: 443: If build version starts with 4.x.x
+        :        8080: If build version not starts with 4.x
+        """
+        ssh_client = ssh.HPE3PARSSHClient(ip, login, password, port,
+                                        conn_timeout, privatekey,
+                                        **kwargs)
+        ssh_client.open()
+        cmd = ['showversion', '-b']
+        version=ssh_client.run(cmd)
+        port_number=8080
+        build_version = ''.join(version[0].split(" ")[2].split('-')[0].split('.'))
+        if build_version.startswith('4'):
+            port_number=443
+        return port_number
