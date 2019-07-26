@@ -4923,8 +4923,7 @@ class HPE3ParClient(object):
         """Get port number from showwsapi output
 
         :param 3PAR credentials
-        :return: 443: If port 443 is in showwsapi output
-        :        8080: If port 8080 is in showwsapi output
+        :return: HTTPS_Port column value
         """
         ssh_client = ssh.HPE3PARSSHClient(ip, login, password, port,
                                           conn_timeout, privatekey,
