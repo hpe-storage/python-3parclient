@@ -451,6 +451,9 @@ class HPE3ParClient(object):
 
     def createVolume(self, name, cpgName, sizeMiB, optional=None):
         """Create a new volume.
+        For the primera array there is support for only thin and DECO volume.
+        To create DECO volume 'tdvv' and 'compression' both must be True.
+        If only one of them is specified, it results in HTTPBadRequest.
 
         :param name: the name of the volume
         :type name: str
@@ -526,7 +529,7 @@ class HPE3ParClient(object):
                 combination = ['tdvv', 'compression']
                 len_diff = len(set(combination) - set(optional.keys()))
                 msg = "invalid input: For Deco volumes both 'tdvv' and " \
-                      "'compression' must be specified"
+                      "'compression' must be specified as true"
                 if len_diff == 1:
                     raise exceptions.HTTPBadRequest(msg)
                 if optional.get('tdvv') is True \
@@ -563,7 +566,7 @@ class HPE3ParClient(object):
                    ex.get_description() == ex_desc and \
                    ex.get_ref() == 'tpvv,reduce':
                     new_ex_desc = "invalid input: Either tpvv must be True "\
-                                  "OR tdvv and compression must be True. "\
+                                  "OR 'tdvv' and 'compression' must be True. "\
                                   "Both cannot be False."
                     raise exceptions.HTTPBadRequest(new_ex_desc)
             raise ex
