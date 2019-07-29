@@ -20,6 +20,7 @@ import unittest
 from test import HPE3ParClient_base
 from hpe3parclient import exceptions
 from hpe3parclient import ssh
+import hpe3parclient
 
 # Python 3+ override
 try:
@@ -247,3 +248,24 @@ class HPE3ParClientMockSSHTestCase(HPE3ParClient_base
                   'totals']
         result = ssh.HPE3PARSSHClient.strip_input_from_output(cmd, output)
         self.assertEqual(['out1', 'out2', 'out3'], result)
+
+    @mock.patch('hpe3parclient.client.HPE3ParClient.getPortNumber')
+    def do_mock_get_port(self, known_hosts_file, missing_key_policy,
+                         mock_get_port):
+        """Verify that params are getting forwarded to getPortNumber."""
+
+        hpe3parclient.client.HPE3ParClient.getPortNumber(
+            ip, user, password,
+            22, None, None,
+            known_hosts_file=known_hosts_file,
+            missing_key_policy=missing_key_policy)
+
+        mock_get_port.assert_called_with(
+            ip, user, password, 22, None, None,
+            missing_key_policy=missing_key_policy,
+            known_hosts_file=known_hosts_file)
+
+    def test_verify_get_port_parameters(self):
+        known_hosts_file = "test_bogus_known_hosts_file"
+        missing_key_policy = "AutoAddPolicy"
+        self.do_mock_get_port(known_hosts_file, missing_key_policy)
