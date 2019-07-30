@@ -269,3 +269,23 @@ class HPE3ParClientMockSSHTestCase(HPE3ParClient_base
         known_hosts_file = "test_bogus_known_hosts_file"
         missing_key_policy = "AutoAddPolicy"
         self.do_mock_get_port(known_hosts_file, missing_key_policy)
+
+    @mock.patch('hpe3parclient.client.HPE3ParClient')
+    def do_mock_get_port_return(self, known_hosts_file, missing_key_policy,
+                                mock_hpe3par_client):
+        """Verify that params are getting forwarded to getPortNumber."""
+
+        mock_hpe3par_client.getPortNumber.return_value = 443
+        mock_hpe3par_client.convert_cli_output_to_wsapi_format.return_value = {
+            'members': [{'HTTPS_Port': 443}]}
+        result = hpe3parclient.client.HPE3ParClient.getPortNumber(
+            ip, user, password,
+            22, None, None,
+            known_hosts_file=known_hosts_file,
+            missing_key_policy=missing_key_policy)
+        self.assertEqual(443, result)
+
+    def test_verify_get_port_return(self):
+        known_hosts_file = "test_bogus_known_hosts_file"
+        missing_key_policy = "AutoAddPolicy"
+        self.do_mock_get_port_return(known_hosts_file, missing_key_policy)
