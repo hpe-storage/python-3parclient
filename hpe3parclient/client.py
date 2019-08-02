@@ -91,6 +91,7 @@ class HPE3ParClient(object):
     GROW_VOLUME = 3
     PROMOTE_VIRTUAL_COPY = 4
     VIRTUAL_COPY = 3
+    TUNE_VOLUME = 6
 
     TARGET_TYPE_VVSET = 1
     TARGET_TYPE_SYS = 2
@@ -136,6 +137,8 @@ class HPE3ParClient(object):
     # Minimum build version needed for VLUN query support.
     HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY = 30201292
     HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY_DESC = '3.2.1 MU2'
+
+    WSAPI_MIN_VERSION_COMPRESSION_SUPPORT = '1.6.0'
 
     VLUN_TYPE_EMPTY = 1
     VLUN_TYPE_PORT = 2
@@ -203,6 +206,7 @@ class HPE3ParClient(object):
         self.ssh = None
         self.vlun_query_supported = False
         self.primera_supported = False
+        self.compression_supported = False
 
         self.debug_rest(debug)
 
@@ -240,6 +244,12 @@ class HPE3ParClient(object):
         if (api_version['build'] >=
                 self.HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSION):
             self.primera_supported = True
+
+        current_wsapi_version = '{}.{}.{}'.format(api_version['major'],
+                                                  api_version['minor'],
+                                                  api_version['revision'])
+        if current_wsapi_version >= self.WSAPI_MIN_VERSION_COMPRESSION_SUPPORT:
+            self.compression_supported = True
 
     def is_primera_array(self):
         return self.primera_supported
@@ -4843,3 +4853,37 @@ class HPE3ParClient(object):
         wsapi_collection = HPE3ParClient.convert_cli_output_to_wsapi_format(
             cli_output)
         return wsapi_collection['members'][0]['HTTPS_Port']
+
+    def tuneVolume(self, volName, tune_operation, optional=None):
+        info = {'action': self.TUNE_VOLUME, 'tuneOperation': tune_operation}
+        if optional is not None and not self.compression_supported:
+            if 'compression' in optional.keys():
+                del optional['compression']
+        if optional:
+            if self.primera_supported:
+                msg = "invalid input: For Deco volumes 'conversionOperation' "\
+                      "should be 3(TDVV) and 'compression' must be specified"\
+                      " as true"
+                msg1 = "invalid input:'conversionOperation' value 2(FPVV) is "\
+                       "not supported"
+                if optional.get('conversionOperation') == 3 \
+                        and optional.get('compression') is True:
+                    optional['conversionOperation'] = 4
+
+                if optional.get('conversionOperation') == 3 \
+                        and optional.get('compression') is False:
+                    raise exceptions.HTTPBadRequest(msg)
+
+                if optional.get('conversionOperation') == 2:
+                    raise exceptions.HTTPBadRequest(msg1)
+
+                if optional.get('conversionOperation') == 1 \
+                        and optional.get('compression') is True:
+                    raise exceptions.HTTPBadRequest(msg)
+
+                if 'compression' in optional:
+                    optional.pop('compression')
+            info = self._mergeDict(info, optional)
+        response, body = self.http.put(
+            '/volumes/%s' % volName, body=info)
+        return self.getTask(body['taskid'])
