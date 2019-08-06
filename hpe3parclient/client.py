@@ -245,9 +245,9 @@ class HPE3ParClient(object):
                 self.HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSION):
             self.primera_supported = True
 
-        current_wsapi_version = '{}.{}.{}'.format(api_version['major'],
-                                                  api_version['minor'],
-                                                  api_version['revision'])
+        current_wsapi_version = '{}.{}.{}'.format(api_version.get('major'),
+                                                  api_version.get('minor'),
+                                                  api_version.get('revision'))
         if current_wsapi_version >= self.WSAPI_MIN_VERSION_COMPRESSION_SUPPORT:
             self.compression_supported = True
 
@@ -4855,35 +4855,118 @@ class HPE3ParClient(object):
         return wsapi_collection['members'][0]['HTTPS_Port']
 
     def tuneVolume(self, volName, tune_operation, optional=None):
+        """Tune a volume.
+
+        :param name: the name of the volume
+        :type name: str
+        :param name: tune_operation 1 for USR_CPG 2 for SNP_CPG
+        :type name: int
+        :param optional: dictionary of volume attributes to change
+        :type optional: dict
+        .. code-block:: python
+
+            optional = {
+             'action': 6,                  # For tuneVolume operation
+             'tuneOperation': 1,           # 1 for USR_CPG,2 for SNP_CPG
+             'userCPG': 'User CPG name',   # Required if tuneOperation is 1
+             'snapCPG': 'Snap CPG name',   # Required if tuneOperation is 2
+             'conversionOperation': 1,     # For TPVV 1, For FPVV 2, For TDVV
+                                           # 3, for CONVERT_TO_DECO 4
+             'compression': False,         # compression is not supported for
+                                           # FPVV
+            }
+
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - CPG_NOT_IN_SAME_DOMAIN - Snap CPG is not in the same domain as
+            the user CPG.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+            - INV_INPUT_ILLEGAL_CHAR - Invalid VV name or CPG name.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_INPUT_VV_IS_FPVV - The volume is already fully provisioned.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_INPUT_VV_IS_TDVV - The volume is already deduplicated.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_INPUT_VV_IS_TPVV - The volume is already thinly provisioned.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_UNSUPPORTED_VV_TYPE - Invalid operation: Cannot
+            grow this type of volume.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_MODIFY_USR_CPG_TDVV - Cannot change USR CPG of
+            a TDVV to a different CPG..
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_NON_BASE_VOLUME - The destination volume
+            is not a base volume.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_SYS_VOLUME - The volume is a system volume. This
+            operation is not allowed on a system volume.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_CLEANUP_IN_PROGRESS - Internal volume cleanup is
+            in progress.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_INTERNAL_VOLUME - Cannot modify an internal
+            volume
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+            - INV_OPERATION_VV_VOLUME_CONV_IN_PROGRESS - Invalid operation: VV
+            conversion is in progress.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_NOT_IN_NORMAL_STATE - Volume state is not normal
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_PEER_VOLUME - Cannot modify a peer volume.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+            - INV_OPERATION_VV_TASK_CANCEL_IN_PROGRESS - Invalid operation:
+            A task involving the volume is being canceled..
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+            - INV_OPERATION_VV_PROMOTE_IN_PROGRESS - Invalid operation: Volume
+            promotion is in progress.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+            - INV_OPERATION_VV_TUNE_IN_PROGRESS - Invalid operation: Volume
+            tuning is in progress.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+            - NO_SPACE - Not Enough space is available
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - NODE_DOWN - The node is down.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_CPG - The CPG does not exists.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_VOL - volume doesn't exist
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - VV_IN_INCONSISTENT_STATE - The volume has an internal consistency
+            error.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - VV_IS_BEING_REMOVED - The volume is being removed.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - VV_NEEDS_TO_BE_CHECKED - The volume needs to be checked.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - VV_NOT_STARTED - Volume is not started.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_INPUT_VV_IS_FPVV - A fully provisioned volume cannot be
+            compressed.
+
+        """
         info = {'action': self.TUNE_VOLUME, 'tuneOperation': tune_operation}
         if optional is not None and not self.compression_supported:
             if 'compression' in optional.keys():
                 del optional['compression']
         if optional:
             if self.primera_supported:
-                msg = "invalid input: For Deco volumes 'conversionOperation' "\
-                      "should be 3(TDVV) and 'compression' must be specified"\
-                      " as true"
-                msg1 = "invalid input:'conversionOperation' value 2(FPVV) is "\
-                       "not supported"
                 if optional.get('conversionOperation') == 3 \
                         and optional.get('compression') is True:
                     optional['conversionOperation'] = 4
 
-                if optional.get('conversionOperation') == 3 \
-                        and optional.get('compression') is False:
-                    raise exceptions.HTTPBadRequest(msg)
-
+                if (optional.get('conversionOperation') == 3 and
+                        optional.get('compression') is False) or\
+                   (optional.get('conversionOperation') == 1 and
+                        optional.get('compression') is True):
+                    raise exceptions.HTTPBadRequest("invalid input: For Deco\
+ volumes 'conversionOperation' should be 3(TDVV) and 'compression' must be\
+ specified as true")
                 if optional.get('conversionOperation') == 2:
-                    raise exceptions.HTTPBadRequest(msg1)
-
-                if optional.get('conversionOperation') == 1 \
-                        and optional.get('compression') is True:
-                    raise exceptions.HTTPBadRequest(msg)
+                    raise exceptions.HTTPBadRequest("invalid input:\
+ 'conversionOperation' value 2(FPVV) is not supported")
 
                 if 'compression' in optional:
                     optional.pop('compression')
             info = self._mergeDict(info, optional)
         response, body = self.http.put(
             '/volumes/%s' % volName, body=info)
-        return self.getTask(body['taskid'])
+        return body
