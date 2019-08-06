@@ -522,31 +522,35 @@ class HPE3ParClient(object):
                     option = optional.get(key)
                     if option and option not in [True, False]:
                         # raising exception for junk compression input
-                        ex_desc = "39 - invalid input: wrong type for key " \
+                        ex_desc = "39 - invalid input: wrong type for key "\
                             "[%s]. Valid values are [True, False]" % key
                         raise exceptions.HTTPBadRequest(ex_desc)
 
-                combination = ['tdvv', 'compression']
-                len_diff = len(set(combination) - set(optional.keys()))
-                msg = "invalid input: For Deco volumes both 'tdvv' and " \
-                      "'compression' must be specified as true"
-                if len_diff == 1:
-                    raise exceptions.HTTPBadRequest(msg)
-                if optional.get('tdvv') is True \
-                        and optional.get('compression') is True:
-                    optional['reduce'] = True
+                if optional.get('compression') is True:
+                    combination = ['tdvv', 'compression']
+                    len_diff = len(set(combination) - set(optional.keys()))
+                    msg = "invalid input: For compressed and deduplicated "\
+                          "volumes both 'compression' and " \
+                          "'tdvv' must be specified as true"
+                    if len_diff == 1:
+                        raise exceptions.HTTPBadRequest(msg)
+                    if optional.get('tdvv') is True \
+                            and optional.get('compression') is True:
+                        optional['reduce'] = True
 
-                if optional.get('tdvv') is False \
-                        and optional.get('compression') is False:
-                    optional['reduce'] = False
-
-                if optional.get('tdvv') is False \
-                        and optional.get('compression') is True:
-                    raise exceptions.HTTPBadRequest(msg)
-
-                if optional.get('tdvv') is True \
-                        and optional.get('compression') is False:
-                    raise exceptions.HTTPBadRequest(msg)
+                    if optional.get('tdvv') is False \
+                            and optional.get('compression') is True:
+                        raise exceptions.HTTPBadRequest(msg)
+                else:
+                    msg = "invalid input: For compressed and deduplicated "\
+                          "volumes both 'compression' and "\
+                          "'tdvv' must be specified as true"
+                    if optional.get('tdvv') is False \
+                            and optional.get('compression') is False:
+                        optional['reduce'] = False
+                    if optional.get('tdvv') is True \
+                            and optional.get('compression') is False:
+                        raise exceptions.HTTPBadRequest(msg)
 
                 if 'compression' in optional:
                     optional.pop('compression')
@@ -554,6 +558,7 @@ class HPE3ParClient(object):
                     optional.pop('tdvv')
             info = self._mergeDict(info, optional)
         logger.debug("Parameters passed for create volume %s" % info)
+
         try:
             response, body = self.http.post('/volumes', body=info)
             return body
@@ -565,9 +570,10 @@ class HPE3ParClient(object):
                 if ex_code == 78 and \
                    ex.get_description() == ex_desc and \
                    ex.get_ref() == 'tpvv,reduce':
-                    new_ex_desc = "invalid input: Either tpvv must be True "\
-                                  "OR 'tdvv' and 'compression' must be True. "\
-                                  "Both cannot be False."
+                    new_ex_desc = "invalid input: Either tpvv must be true "\
+                                  "OR for compressed and deduplicated "\
+                                  "volumes both 'compression' and 'tdvv' "\
+                                  "must be specified as true"
                     raise exceptions.HTTPBadRequest(new_ex_desc)
             raise ex
 
@@ -998,27 +1004,31 @@ class HPE3ParClient(object):
                             "[%s]. Valid values are [True, False]" % key
                         raise exceptions.HTTPBadRequest(ex_desc)
 
-                combination = ['tdvv', 'compression']
-                len_diff = len(set(combination) - set(optional.keys()))
-                msg = "invalid input: For Deco volumes both 'tdvv' and " \
-                      "'compression' must be specified"
-                if len_diff == 1:
-                    raise exceptions.HTTPBadRequest(msg)
-                if optional.get('tdvv') is True \
-                        and optional.get('compression') is True:
-                    optional['reduce'] = True
+                if optional.get('compression') is True:
+                    combination = ['tdvv', 'compression']
+                    len_diff = len(set(combination) - set(optional.keys()))
+                    msg = "invalid input: For compressed and deduplicated "\
+                          "volumes both 'compression' and " \
+                          "'tdvv' must be specified as true"
+                    if len_diff == 1:
+                        raise exceptions.HTTPBadRequest(msg)
+                    if optional.get('tdvv') is True \
+                            and optional.get('compression') is True:
+                        optional['reduce'] = True
 
-                if optional.get('tdvv') is False \
-                        and optional.get('compression') is False:
-                    optional['reduce'] = False
-
-                if optional.get('tdvv') is False \
-                        and optional.get('compression') is True:
-                    raise exceptions.HTTPBadRequest(msg)
-
-                if optional.get('tdvv') is True \
-                        and optional.get('compression') is False:
-                    raise exceptions.HTTPBadRequest(msg)
+                    if optional.get('tdvv') is False \
+                            and optional.get('compression') is True:
+                        raise exceptions.HTTPBadRequest(msg)
+                else:
+                    msg = "invalid input: For compressed and deduplicated "\
+                          "volumes both 'compression' and "\
+                          "'tdvv' must be specified as true"
+                    if optional.get('tdvv') is False \
+                            and optional.get('compression') is False:
+                        optional['reduce'] = False
+                    if optional.get('tdvv') is True \
+                            and optional.get('compression') is False:
+                        raise exceptions.HTTPBadRequest(msg)
 
                 if 'compression' in optional:
                     optional.pop('compression')
@@ -1046,9 +1056,10 @@ class HPE3ParClient(object):
                 if ex_code == 78 and \
                    ex.get_description() == ex_desc and \
                    ex.get_ref() == 'tpvv,reduce':
-                    new_ex_desc = "invalid input: Either tpvv must be True "\
-                                  "OR tdvv and compression must be True. "\
-                                  "Both cannot be False."
+                    new_ex_desc = "invalid input: Either tpvv must be true "\
+                                  "OR for compressed and deduplicated "\
+                                  "volumes both 'compression' and 'tdvv' "\
+                                  "must be specified as true."
                     raise exceptions.HTTPBadRequest(new_ex_desc)
             raise ex
 
