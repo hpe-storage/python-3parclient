@@ -2417,6 +2417,33 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
             optional)
         self.printFooter('create_volume_junkParams')
 
+    def test_43_create_volume_parameter_absent(self):
+        self.printHeader('create_volume_noParams')
+        self.cl.primera_supported = True
+        optional = {'comment': 'test volume',
+                    'compression': False}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+        # check
+        vol1 = self.cl.getVolume(VOLUME_NAME1)
+        self.assertIsNotNone(vol1)
+        volName = vol1['name']
+        comment = vol1['comment']
+        self.assertEqual(VOLUME_NAME1, volName)
+        self.assertEqual("test volume", comment)
+
+        # add another one
+        optional = {'comment': 'test volume2',
+                    'tpvv': False}
+        self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, SIZE, optional)
+        # check
+        vol2 = self.cl.getVolume(VOLUME_NAME2)
+        self.assertIsNotNone(vol2)
+        volName = vol2['name']
+        comment = vol2['comment']
+        self.assertEqual(VOLUME_NAME2, volName)
+        self.assertEqual("test volume2", comment)
+        self.printFooter('create_volume_noParams')
+
     def test_44_offline_copy_volume_primera_support(self):
         self.printHeader('copy_volume')
         self.cl.primera_supported = True
@@ -2479,6 +2506,19 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         )
 
         self.printFooter('copy_volume')
+
+    def test_47_create_default_volume(self):
+        self.printHeader('create_volume')
+        self.cl.primera_supported = True
+        # add one
+        optional = {'comment': 'test volume', 'tpvv': True,
+                    'compression': False}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+        # check
+        vol1 = self.cl.getVolume(VOLUME_NAME1)
+        self.assertIsNotNone(vol1)
+        volName = vol1['name']
+        self.assertEqual(VOLUME_NAME1, volName)
 
 # testing
 # suite = unittest.TestLoader().
