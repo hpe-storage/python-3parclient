@@ -200,9 +200,13 @@ File Persona Capabilities
 Installation
 ============
 
-To install::
+To install from source::
 
  $ sudo pip install .
+
+To install from http://pypi.org::
+
+ $ sudo pip install python-3parclient
 
 Unit Tests
 ==========
@@ -257,3 +261,16 @@ manually before running unit tests also allows you to watch the debug output.
 
   $ python test/HPE3ParMockServer_ssh.py [port]
 
+Building wheel dist
+===================
+
+This client now supports building via the new python WHEELS standard.  Take
+a look at http://pythonwheels.com
+
+* building::
+
+  $ python setup.py bdist_wheel
+
+* building and uploading::
+
+  $ python setup.py sdist bdist_wheel upload
