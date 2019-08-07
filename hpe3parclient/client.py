@@ -451,6 +451,9 @@ class HPE3ParClient(object):
 
     def createVolume(self, name, cpgName, sizeMiB, optional=None):
         """Create a new volume.
+        For the primera array there is support for only thin and DECO volume.
+        To create DECO volume 'tdvv' and 'compression' both must be True.
+        If only one of them is specified, it results in HTTPBadRequest.
 
         :param name: the name of the volume
         :type name: str
@@ -508,46 +511,71 @@ class HPE3ParClient(object):
 
         """
         info = {'name': name, 'cpg': cpgName, 'sizeMiB': sizeMiB}
-        # For primera array there is no compression and tdvv fields
-        # removing tdvv and replacing compression with reduce field
+        # For primera array there is no compression and tdvv keys
+        # removing tdvv, compression and
+        # replacing compression+tdvv with reduce key for DECO
         if not optional and self.primera_supported:
-            optional = {}
-            optional['tpvv'] = True
+            optional = {'tpvv': True}
         if optional:
             if self.primera_supported:
-                if 'tdvv' in optional:
-                    optional.pop('tdvv')
+                for key in ['tpvv', 'compression', 'tdvv']:
+                    option = optional.get(key)
+                    if option and option not in [True, False]:
+                        # raising exception for junk compression input
+                        ex_desc = "39 - invalid input: wrong type for key "\
+                            "[%s]. Valid values are [True, False]" % key
+                        raise exceptions.HTTPBadRequest(ex_desc)
 
-                if optional.get('tpvv') is True \
-                        and optional.get('compression') is True:
-                    optional['reduce'] = True
+                if optional.get('compression') is True:
+                    combination = ['tdvv', 'compression']
+                    len_diff = len(set(combination) - set(optional.keys()))
+                    msg = "invalid input: For compressed and deduplicated "\
+                          "volumes both 'compression' and " \
+                          "'tdvv' must be specified as true"
+                    if len_diff == 1:
+                        raise exceptions.HTTPBadRequest(msg)
+                    if optional.get('tdvv') is True \
+                            and optional.get('compression') is True:
+                        optional['reduce'] = True
 
-                if not optional.get('tpvv') \
-                        and not optional.get('compression'):
-                    optional['tpvv'] = True
+                    if optional.get('tdvv') is False \
+                            and optional.get('compression') is True:
+                        raise exceptions.HTTPBadRequest(msg)
+                else:
+                    msg = "invalid input: For compressed and deduplicated "\
+                          "volumes both 'compression' and "\
+                          "'tdvv' must be specified as true"
+                    if optional.get('tdvv') is False \
+                            and optional.get('compression') is False:
+                        optional['reduce'] = False
+                    if optional.get('tdvv') is True \
+                            and optional.get('compression') is False:
+                        raise exceptions.HTTPBadRequest(msg)
 
                 if 'compression' in optional:
-                    if optional.get('compression') is not None:
-                        if optional.get('compression') is True:
-                            optional['reduce'] = True
-                        elif optional.get('compression') is False:
-                            optional['reduce'] = False
-                        else:
-                            # raising exception for junk compression input
-                            ex_desc = "39 - invalid input: wrong type for value \
-                                       - compression"
-                            raise exceptions.HTTPBadRequest(ex_desc)
-
                     optional.pop('compression')
-
-                if optional.get('tpvv') is True \
-                        and optional.get('reduce') is True:
-                    optional.pop('tpvv')
+                if 'tdvv' in optional:
+                    optional.pop('tdvv')
             info = self._mergeDict(info, optional)
         logger.debug("Parameters passed for create volume %s" % info)
 
-        response, body = self.http.post('/volumes', body=info)
-        return body
+        try:
+            response, body = self.http.post('/volumes', body=info)
+            return body
+        except exceptions.HTTPBadRequest as ex:
+            if self.primera_supported:
+                ex_desc = 'invalid input: one of the parameters is required'
+                ex_code = ex.get_code()
+                # INV_INPUT_ONE_REQUIRED => 78
+                if ex_code == 78 and \
+                   ex.get_description() == ex_desc and \
+                   ex.get_ref() == 'tpvv,reduce':
+                    new_ex_desc = "invalid input: Either tpvv must be true "\
+                                  "OR for compressed and deduplicated "\
+                                  "volumes both 'compression' and 'tdvv' "\
+                                  "must be specified as true"
+                    raise exceptions.HTTPBadRequest(new_ex_desc)
+            raise ex
 
     def deleteVolume(self, name):
         """Delete a volume.
@@ -968,32 +996,44 @@ class HPE3ParClient(object):
         # has to be taken care by caller side
         if optional:
             if self.primera_supported:
-                # For primera array there is no compression and tdvv parameters
-                # removing tdvv and replacing compression with reduce field
-                if 'tdvv' in optional:
-                    optional.pop('tdvv')
+                for key in ['tpvv', 'compression', 'tdvv']:
+                    option = optional.get(key)
+                    if option and option not in [True, False]:
+                        # raising exception for junk compression input
+                        ex_desc = "39 - invalid input: wrong type for key " \
+                            "[%s]. Valid values are [True, False]" % key
+                        raise exceptions.HTTPBadRequest(ex_desc)
 
-                if optional.get('tpvv') is True \
-                        and optional.get('compression') is True:
-                    optional['reduce'] = True
+                if optional.get('compression') is True:
+                    combination = ['tdvv', 'compression']
+                    len_diff = len(set(combination) - set(optional.keys()))
+                    msg = "invalid input: For compressed and deduplicated "\
+                          "volumes both 'compression' and " \
+                          "'tdvv' must be specified as true"
+                    if len_diff == 1:
+                        raise exceptions.HTTPBadRequest(msg)
+                    if optional.get('tdvv') is True \
+                            and optional.get('compression') is True:
+                        optional['reduce'] = True
+
+                    if optional.get('tdvv') is False \
+                            and optional.get('compression') is True:
+                        raise exceptions.HTTPBadRequest(msg)
+                else:
+                    msg = "invalid input: For compressed and deduplicated "\
+                          "volumes both 'compression' and "\
+                          "'tdvv' must be specified as true"
+                    if optional.get('tdvv') is False \
+                            and optional.get('compression') is False:
+                        optional['reduce'] = False
+                    if optional.get('tdvv') is True \
+                            and optional.get('compression') is False:
+                        raise exceptions.HTTPBadRequest(msg)
 
                 if 'compression' in optional:
-                    if optional.get('compression') is not None:
-                        if optional.get('compression') is True:
-                            optional['reduce'] = True
-                        elif optional.get('compression') is False:
-                            optional['reduce'] = False
-                        else:
-                            # raising exception for junk compression input
-                            ex_desc = "39 - invalid input: wrong type for value \
-                                       - compression"
-                            raise exceptions.HTTPBadRequest(ex_desc)
-
                     optional.pop('compression')
-
-                if optional.get('tpvv') is True \
-                        and optional.get('reduce') is True:
-                    optional.pop('tpvv')
+                if 'tdvv' in optional:
+                    optional.pop('tdvv')
 
             parameters = self._mergeDict(parameters, optional)
 
@@ -1004,8 +1044,24 @@ class HPE3ParClient(object):
         info = {'action': 'createPhysicalCopy',
                 'parameters': parameters}
         logger.debug("Parameters passed for copy volume %s" % info)
-        response, body = self.http.post('/volumes/%s' % src_name, body=info)
-        return body
+        try:
+            response, body = self.http.post('/volumes/%s' % src_name,
+                                            body=info)
+            return body
+        except exceptions.HTTPBadRequest as ex:
+            if self.primera_supported:
+                ex_desc = 'invalid input: one of the parameters is required'
+                ex_code = ex.get_code()
+                # INV_INPUT_ONE_REQUIRED => 78
+                if ex_code == 78 and \
+                   ex.get_description() == ex_desc and \
+                   ex.get_ref() == 'tpvv,reduce':
+                    new_ex_desc = "invalid input: Either tpvv must be true "\
+                                  "OR for compressed and deduplicated "\
+                                  "volumes both 'compression' and 'tdvv' "\
+                                  "must be specified as true."
+                    raise exceptions.HTTPBadRequest(new_ex_desc)
+            raise ex
 
     def isOnlinePhysicalCopy(self, name):
         """Is the volume being created by process of online copy?
