@@ -4867,7 +4867,6 @@ class HPE3ParClient(object):
 
             optional = {
              'action': 6,                  # For tuneVolume operation
-             'tuneOperation': 1,           # 1 for USR_CPG,2 for SNP_CPG
              'userCPG': 'User CPG name',   # Required if tuneOperation is 1
              'snapCPG': 'Snap CPG name',   # Required if tuneOperation is 2
              'conversionOperation': 1,     # For TPVV 1, For FPVV 2, For TDVV
