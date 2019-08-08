@@ -16,7 +16,7 @@
 
 import time
 import unittest
-from testconfig import config
+from pytest_testconfig import config
 from test import HPE3ParClient_base as hpe3parbase
 
 from hpe3parclient import exceptions
@@ -2316,7 +2316,8 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.assertEqual(VOLUME_NAME1, volName)
 
         # add another compressed volume
-        optional = {'comment': 'test volume2', 'compression': True}
+        optional = {'comment': 'test volume2', 'compression': True,
+                    'tdvv': True}
         self.cl.createVolume(VOLUME_NAME2, CPG_NAME2, 16384, optional)
 
         # check
@@ -2331,25 +2332,12 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.assertEqual("test volume2", comment)
         self.assertEqual(True, reduced)
 
-        # add another volume
-        optional = {'comment': 'test volume3', 'tpvv': None,
-                    'compression': None}
-        self.cl.createVolume(VOLUME_NAME3, CPG_NAME2, 1024, optional)
-        # check
-        vol3 = self.cl.getVolume(VOLUME_NAME3)
-        self.assertIsNotNone(vol3)
-        volName = vol3['name']
-        comment = vol3['comment']
-        self.assertEqual(VOLUME_NAME3, volName)
-        self.assertEqual("test volume3", comment)
-        self.printFooter('create_volume')
-
     def test38_create_volume_with_primera_support_with_option_None(self):
         self.printHeader('create_volume')
         self.cl.primera_supported = True
         # add one
         optional = {'comment': 'test volume', 'tpvv': None,
-                    'compression': True}
+                    'compression': True, 'tdvv': True}
         self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 16384, optional)
         # check
         vol1 = self.cl.getVolume(VOLUME_NAME1)
@@ -2362,7 +2350,7 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.assertEqual(True, reduced)
         # add another one
         optional = {'comment': 'test volume2', 'tpvv': True,
-                    'compression': None}
+                    'compression': None, 'tdvv': None}
         self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, SIZE, optional)
 
         # check
@@ -2390,7 +2378,8 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
     def test_40_create_volume_badParams(self):
         self.printHeader('create_volume_badParams')
         self.cl.primera_supported = True
-        optional = {'comment': 'test volume', 'compression': "junk"}
+        optional = {'comment': 'test volume', 'compression': "junk",
+                    'tdvv': "junk"}
         self.assertRaises(
             exceptions.HTTPBadRequest,
             self.cl.createVolume,
@@ -2517,7 +2506,20 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         )
 
         self.printFooter('copy_volume')
-
+        
+    def test_47_create_default_volume(self):
+        self.printHeader('create_volume')
+        self.cl.primera_supported = True
+        # add one
+        optional = {'comment': 'test volume', 'tpvv': True,
+                    'compression': False}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+        # check
+        vol1 = self.cl.getVolume(VOLUME_NAME1)
+        self.assertIsNotNone(vol1)
+        volName = vol1['name']
+        self.assertEqual(VOLUME_NAME1, volName)
+        
     def test_48_tune_volume_to_dedupe_compressed_on_primera(self):
         self.printHeader('convert_to_deco')
         self.cl.primera_supported = True

@@ -20,7 +20,7 @@ import unittest
 import subprocess
 import time
 import inspect
-from testconfig import config
+from pytest_testconfig import config
 import datetime
 from functools import wraps
 from hpe3parclient import client, file_client
