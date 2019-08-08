@@ -91,7 +91,12 @@ class HPE3ParClient(object):
     GROW_VOLUME = 3
     PROMOTE_VIRTUAL_COPY = 4
     VIRTUAL_COPY = 3
+
     TUNE_VOLUME = 6
+    TPVV = 1
+    FPVV = 2
+    TDVV = 3
+    CONVERT_TO_DECO = 4
 
     TARGET_TYPE_VVSET = 1
     TARGET_TYPE_SYS = 2
@@ -4832,6 +4837,15 @@ class HPE3ParClient(object):
         return {'total': len(members), 'members': members}
 
     @staticmethod
+    def _getSshClient(ip, login, password, port=22,
+                      conn_timeout=None, privatekey=None,
+                      **kwargs):
+        ssh_client = ssh.HPE3PARSSHClient(ip, login, password, port,
+                                          conn_timeout, privatekey,
+                                          **kwargs)
+        return ssh_client
+
+    @staticmethod
     def getPortNumber(ip, login, password, port=22,
                       conn_timeout=None, privatekey=None,
                       **kwargs):
@@ -4840,19 +4854,21 @@ class HPE3ParClient(object):
         :param 3PAR credentials
         :return: HTTPS_Port column value
         """
-        ssh_client = ssh.HPE3PARSSHClient(ip, login, password, port,
-                                          conn_timeout, privatekey,
-                                          **kwargs)
-        if ssh_client is None:
-            raise exceptions.SSHException('SSH is not initialized. Initialize'
-                                          ' it by calling "setSSHOptions".')
-        ssh_client.open()
-        cli_output = ssh_client.run(['showwsapi'])
-        if ssh_client:
-            ssh_client.close()
-        wsapi_collection = HPE3ParClient.convert_cli_output_to_wsapi_format(
-            cli_output)
-        return wsapi_collection['members'][0]['HTTPS_Port']
+        try:
+            ssh_client = HPE3ParClient._getSshClient(ip, login, password, port,
+                                                     conn_timeout, privatekey,
+                                                     **kwargs)
+            if ssh_client is None:
+                raise exceptions.SSHException("SSH is not initialized.\
+ Initialize it by calling 'setSSHOptions'.")
+            ssh_client.open()
+            cli_output = ssh_client.run(['showwsapi'])
+            wsapi_dict = HPE3ParClient.convert_cli_output_to_wsapi_format(
+                cli_output)
+            return wsapi_dict['members'][0]['HTTPS_Port']
+        finally:
+            if ssh_client:
+                ssh_client.close()
 
     def tuneVolume(self, volName, tune_operation, optional=None):
         """Tune a volume.
@@ -4948,18 +4964,18 @@ class HPE3ParClient(object):
                 del optional['compression']
         if optional:
             if self.primera_supported:
-                if optional.get('conversionOperation') == 3 \
+                if optional.get('conversionOperation') == self.TDVV \
                         and optional.get('compression') is True:
-                    optional['conversionOperation'] = 4
+                    optional['conversionOperation'] = self.CONVERT_TO_DECO
 
-                if (optional.get('conversionOperation') == 3 and
+                if (optional.get('conversionOperation') == self.TDVV and
                         optional.get('compression') is False) or\
-                   (optional.get('conversionOperation') == 1 and
+                   (optional.get('conversionOperation') == self.TPVV and
                         optional.get('compression') is True):
-                    raise exceptions.HTTPBadRequest("invalid input: For Deco\
- volumes 'conversionOperation' should be 3(TDVV) and 'compression' must be\
- specified as true")
-                if optional.get('conversionOperation') == 2:
+                    raise exceptions.HTTPBadRequest("invalid input: For\
+ compression and deduplicated volume 'conversionOperation' should be\
+ 3(TDVV) and 'compression' must be specified as true")
+                if optional.get('conversionOperation') == self.FPVV:
                     raise exceptions.HTTPBadRequest("invalid input:\
  'conversionOperation' value 2(FPVV) is not supported")
 

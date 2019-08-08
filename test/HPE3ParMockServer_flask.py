@@ -1058,6 +1058,20 @@ def modify_volume(volume_name):
         resp = flask.make_response(json.dumps(task), 200)
         return resp
 
+    if data.get('action') == 6:
+        conversion_operation = data.get('conversionOperation')
+        if conversion_operation == 1:
+            volume_type = 'tpvv'
+        elif conversion_operation == 2:
+            volume_type = 'fpvv'
+        elif conversion_operation == 3:
+            volume_type = 'tdvv'
+        elif conversion_operation == 4:
+            volume_type = 'deco'
+        if volume.get(volume_type) is None or volume.get(volume_type) is False:
+            volume[volume_type] = True
+        resp = flask.make_response(json.dumps(volume), 200)
+        return resp
     _grow_volume(volume, data)
 
     # do volume renames last

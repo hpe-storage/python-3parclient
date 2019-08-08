@@ -20,7 +20,7 @@ import unittest
 from test import HPE3ParClient_base
 from hpe3parclient import exceptions
 from hpe3parclient import ssh
-import hpe3parclient
+from hpe3parclient import client
 
 # Python 3+ override
 try:
@@ -249,43 +249,22 @@ class HPE3ParClientMockSSHTestCase(HPE3ParClient_base
         result = ssh.HPE3PARSSHClient.strip_input_from_output(cmd, output)
         self.assertEqual(['out1', 'out2', 'out3'], result)
 
-    @mock.patch('hpe3parclient.client.HPE3ParClient.getPortNumber')
-    def do_mock_get_port(self, known_hosts_file, missing_key_policy,
-                         mock_get_port):
-        """Verify that params are getting forwarded to getPortNumber."""
-
-        hpe3parclient.client.HPE3ParClient.getPortNumber(
-            ip, user, password,
-            22, None, None,
-            known_hosts_file=known_hosts_file,
-            missing_key_policy=missing_key_policy)
-
-        mock_get_port.assert_called_with(
-            ip, user, password, 22, None, None,
-            missing_key_policy=missing_key_policy,
-            known_hosts_file=known_hosts_file)
-
-    def test_verify_get_port_parameters(self):
+    @mock.patch('hpe3parclient.client.ssh.HPE3PARSSHClient', spec=True)
+    def test_verify_get_port(self, mock_ssh_client):
         known_hosts_file = "test_bogus_known_hosts_file"
         missing_key_policy = "AutoAddPolicy"
-        self.do_mock_get_port(known_hosts_file, missing_key_policy)
-
-    @mock.patch('hpe3parclient.client.HPE3ParClient')
-    def do_mock_get_port_return(self, known_hosts_file, missing_key_policy,
-                                mock_hpe3par_client):
-        """Verify that params are getting forwarded to getPortNumber."""
-
-        mock_hpe3par_client.getPortNumber.return_value = 443
-        mock_hpe3par_client.convert_cli_output_to_wsapi_format.return_value = {
-            'members': [{'HTTPS_Port': 443}]}
-        result = hpe3parclient.client.HPE3ParClient.getPortNumber(
-            ip, user, password,
-            22, None, None,
-            known_hosts_file=known_hosts_file,
-            missing_key_policy=missing_key_policy)
-        self.assertEqual(443, result)
-
-    def test_verify_get_port_return(self):
-        known_hosts_file = "test_bogus_known_hosts_file"
-        missing_key_policy = "AutoAddPolicy"
-        self.do_mock_get_port_return(known_hosts_file, missing_key_policy)
+        cli_output = ["-Service-,-State-,HTTPS_Port,-Version-,"
+                      "------------------API_URL-------------------",
+                      "Enabled,Active,443,1.7.0,"
+                      "https://vp2-157.in.rdlabs.hpecorp.net/api/v1"]
+        with mock.patch.object(client.HPE3ParClient,
+                               "_getSshClient") as mock_get_ssh_client:
+            mock_get_ssh_client.return_value = mock_ssh_client
+            mock_ssh_client.open.return_value = True
+            mock_ssh_client.run.return_value = cli_output
+            result = client.HPE3ParClient.getPortNumber(
+                ip, user, password,
+                22, None, None,
+                known_hosts_file=known_hosts_file,
+                missing_key_policy=missing_key_policy)
+            self.assertEqual('443', result)
