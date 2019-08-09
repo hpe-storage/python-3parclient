@@ -1096,10 +1096,18 @@ def modify_volume(volume_name):
             volume_type = 'fpvv'
         elif conversion_operation == 3:
             volume_type = 'tdvv'
-        elif conversion_operation == 4:
-            volume_type = 'deco'
-        if volume.get(volume_type) is None or volume.get(volume_type) is False:
-            volume[volume_type] = True
+
+        if conversion_operation == 4:
+            if (volume.get('tdvv') is None or
+                    volume.get('tdvv') is False) and \
+               (volume.get('compression') is None or
+                    volume.get('compression') is False):
+                volume['tdvv'] = True
+                volume['compression'] = True
+        else:
+            if volume.get(volume_type) is None or \
+               volume.get(volume_type) is False:
+                volume[volume_type] = True
         resp = flask.make_response(json.dumps(volume), 200)
         return resp
     _grow_volume(volume, data)
