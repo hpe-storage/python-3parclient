@@ -1059,6 +1059,36 @@ def modify_volume(volume_name):
         return resp
 
     if data.get('action') == 6:
+        valid_keys = {'action': None, 'tuneOperation': None, 'userCPG': None,
+                      'snapCPG': None, 'conversionOperation': None,
+                      'keepVV': None, 'compression': None}
+
+        for key in list(data.keys()):
+            if key not in list(valid_keys.keys()):
+                throw_error(400, INV_INPUT, "Invalid Parameter '%s'" % key)
+
+        if 'conversionOperation' in list(data.keys()):
+            if data['conversionOperation'] not in [1, 2, 3, 4]:
+                throw_error(400, INV_INPUT_WRONG_TYPE,
+                            "Invalid input:wrong type for value"
+                            " - conversionOperation")
+
+        if 'compression' in list(data.keys()):
+            if data['compression'] not in [True, False, None]:
+                throw_error(400, INV_INPUT_WRONG_TYPE,
+                            "Invalid input:wrong type for value"
+                            " - compression")
+
+        if 'tuneOperation' in list(data.keys()):
+            if data['tuneOperation'] not in [1, 2]:
+                throw_error(400, INV_INPUT_WRONG_TYPE,
+                            "Invalid input:wrong type for value"
+                            " - tuneOperation")
+
+        if 'keepVV' in list(data.keys()) and len(data['keepVV']) > 31:
+            throw_error(400, INV_INPUT_EXCEEDS_LENGTH,
+                        'Invalid Input: String length exceeds limit : keepVV')
+
         conversion_operation = data.get('conversionOperation')
         if conversion_operation == 1:
             volume_type = 'tpvv'

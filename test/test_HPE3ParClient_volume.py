@@ -2506,7 +2506,7 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         )
 
         self.printFooter('copy_volume')
-        
+
     def test_47_create_default_volume(self):
         self.printHeader('create_volume')
         self.cl.primera_supported = True
@@ -2519,7 +2519,7 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.assertIsNotNone(vol1)
         volName = vol1['name']
         self.assertEqual(VOLUME_NAME1, volName)
-        
+
     def test_48_tune_volume_to_dedupe_compressed_on_primera(self):
         self.printHeader('convert_to_deco')
         self.cl.primera_supported = True
@@ -2592,6 +2592,101 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
             usr_cpg,
             optional)
         self.printFooter('convert_to_thin_compressed')
+
+    def test_52_tune_volume_with_bad_parameter_primera(self):
+        self.printHeader('tune_volume_with_bad_param')
+        self.cl.primera_supported = True
+        self.cl.compression_supported = True
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+        usr_cpg = 1
+        optional = {'xyz': "UserCPG",
+                    'conversionOperation': 1,
+                    'keepVV': "keep_vv",
+                    'compression': True}
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.tuneVolume,
+            VOLUME_NAME1,
+            usr_cpg,
+            optional)
+        self.printFooter('tune_volume_with_bad_param')
+
+    def test_53_tune_volume_with_invalid_conversion_operation(self):
+        self.printHeader('tune_volume_with_invalid_conversion_operation')
+        self.cl.primera_supported = True
+        self.cl.compression_supported = True
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+        usr_cpg = 1
+        optional = {'userCPG': "UserCPG",
+                    'conversionOperation': 5,
+                    'keepVV': "keep_vv",
+                    'compression': True}
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.tuneVolume,
+            VOLUME_NAME1,
+            usr_cpg,
+            optional)
+        self.printFooter('tune_volume_with_invalid_conversion_operation')
+
+    def test_54_tune_volume_with_invalid_compression_value(self):
+        self.printHeader('tune_volume_with_invalid_compression_value')
+        self.cl.primera_supported = True
+        self.cl.compression_supported = True
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+        usr_cpg = 1
+        optional = {'userCPG': "UserCPG",
+                    'conversionOperation': 2,
+                    'keepVV': "keep_vv",
+                    'compression': "xyz"}
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.tuneVolume,
+            VOLUME_NAME1,
+            usr_cpg,
+            optional)
+        self.printFooter('tune_volume_with_invalid_compression_value')
+
+    def test_55_tune_volume_with_invalid_usercpg_value(self):
+        self.printHeader('tune_volume_with_invalid_usercpg_value')
+        self.cl.primera_supported = True
+        self.cl.compression_supported = True
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+        usr_cpg = 3
+        optional = {'userCPG': "UserCPG",
+                    'conversionOperation': 2,
+                    'keepVV': "keep_vv",
+                    'compression': False}
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.tuneVolume,
+            VOLUME_NAME1,
+            usr_cpg,
+            optional)
+        self.printFooter('tune_volume_with_invalid_usercpg_value')
+
+    def test_56_tune_volume_with_exceeded_length_of_keepvv(self):
+        self.printHeader('tune_volume_with_exceeded_length_of_keepvv')
+        self.cl.primera_supported = True
+        self.cl.compression_supported = True
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+        usr_cpg = 3
+        optional = {'userCPG': "UserCPG",
+                    'conversionOperation': 2,
+                    'keepVV': "asdfjslfjsldkjfasdjlksjdflsdjakjsdlkfjsdjdsdlf",
+                    'compression': False}
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.tuneVolume,
+            VOLUME_NAME1,
+            usr_cpg,
+            optional)
+        self.printFooter('tune_volume_with_exceeded_length_of_keepvv')
 # testing
 # suite = unittest.TestLoader().
 #   loadTestsFromTestCase(HPE3ParClientVolumeTestCase)
