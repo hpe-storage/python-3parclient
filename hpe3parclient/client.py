@@ -5020,23 +5020,30 @@ class HPE3ParClient(object):
                 del optional['compression']
         if optional:
             if self.primera_supported:
-                if optional.get('conversionOperation') == self.TDVV \
-                        and optional.get('compression') is True:
-                    optional['conversionOperation'] = self.CONVERT_TO_DECO
-
-                if (optional.get('conversionOperation') == self.TDVV and
-                        optional.get('compression') is False) or\
-                   (optional.get('conversionOperation') == self.TPVV and
-                        optional.get('compression') is True):
-                    raise exceptions.HTTPBadRequest("invalid input: For\
+                if optional.get('compression') is True:
+                    if optional.get('conversionOperation') == self.TDVV:
+                        optional['conversionOperation'] = self.CONVERT_TO_DECO
+                        optional.pop('compression')
+                    else:
+                        raise exceptions.HTTPBadRequest("invalid input: On\
+ primera supported array along with compression set to true\
+ 'conversionOperation' must be 3(TDVV) or for deco operation user can set\
+ 'conversionOperation' to 4(CONVERT_TO_DECO)")
+                else:
+                    if optional.get('conversionOperation') == self.TDVV:
+                        raise exceptions.HTTPBadRequest("invalid input: For\
  compression and deduplicated volume 'conversionOperation' should be\
  3(TDVV) and 'compression' must be specified as true")
-                if optional.get('conversionOperation') == self.FPVV:
-                    raise exceptions.HTTPBadRequest("invalid input:\
+                    elif optional.get('conversionOperation') == self.TPVV:
+                        if 'compression' in optional.keys():
+                            optional.pop('compression')
+                    elif optional.get('conversionOperation') ==\
+                            self.CONVERT_TO_DECO:
+                        if 'compression' in optional.keys():
+                            optional.pop('compression')
+                    else:
+                        raise exceptions.HTTPBadRequest("invalid input:\
  'conversionOperation' value 2(FPVV) is not supported")
-
-                if 'compression' in optional:
-                    optional.pop('compression')
             info = self._mergeDict(info, optional)
         response, body = self.http.put(
             '/volumes/%s' % volName, body=info)
