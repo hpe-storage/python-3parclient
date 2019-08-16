@@ -5041,7 +5041,7 @@ class HPE3ParClient(object):
                             self.CONVERT_TO_DECO:
                         if 'compression' in optional.keys():
                             optional.pop('compression')
-                    else:
+                    elif optional.get('conversionOperation') == self.FPVV:
                         raise exceptions.HTTPBadRequest("invalid input:\
  'conversionOperation' value 2(FPVV) is not supported")
             info = self._mergeDict(info, optional)
