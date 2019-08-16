@@ -5016,7 +5016,8 @@ class HPE3ParClient(object):
         """
         info = {'action': self.TUNE_VOLUME, 'tuneOperation': tune_operation}
         if optional is not None and not self.compression_supported:
-            if 'compression' in optional.keys():
+            if 'compression' in optional.keys() \
+                    and optional.get('compression') is False:
                 del optional['compression']
         if optional:
             if self.primera_supported:
