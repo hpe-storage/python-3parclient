@@ -5027,14 +5027,12 @@ class HPE3ParClient(object):
                         optional.pop('compression')
                     else:
                         raise exceptions.HTTPBadRequest("invalid input: On\
- primera supported array along with compression set to true\
- 'conversionOperation' must be 3(TDVV) or for deco operation user can set\
- 'conversionOperation' to 4(CONVERT_TO_DECO)")
+ primera array, with 'compression' set to true 'tdvv' must be true")
                 else:
                     if optional.get('conversionOperation') == self.TDVV:
-                        raise exceptions.HTTPBadRequest("invalid input: For\
- compression and deduplicated volume 'conversionOperation' should be\
- 3(TDVV) and 'compression' must be specified as true")
+                        raise exceptions.HTTPBadRequest("invalid input: On\
+ primera array, for compression and deduplicated volume 'tdvv' should be true\
+ and 'compression' must be specified as true")
                     elif optional.get('conversionOperation') == self.TPVV:
                         if 'compression' in optional.keys():
                             optional.pop('compression')
@@ -5044,7 +5042,7 @@ class HPE3ParClient(object):
                             optional.pop('compression')
                     elif optional.get('conversionOperation') == self.FPVV:
                         raise exceptions.HTTPBadRequest("invalid input:\
- 'conversionOperation' value 2(FPVV) is not supported")
+ On primera array 'fpvv' is not supported")
             info = self._mergeDict(info, optional)
         response, body = self.http.put(
             '/volumes/%s' % volName, body=info)
