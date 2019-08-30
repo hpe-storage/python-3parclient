@@ -30,6 +30,7 @@ import copy
 import re
 import time
 import uuid
+import logging
 
 try:
     # For Python 3.0 and later
@@ -40,6 +41,8 @@ except ImportError:
 
 from hpe3parclient import exceptions, http, ssh
 from hpe3parclient import showport_parser
+
+logger = logging.getLogger(__name__)
 
 
 class HPE3ParClient(object):
@@ -127,6 +130,9 @@ class HPE3ParClient(object):
     HPE3PAR_WS_MIN_BUILD_VERSION = 30103230
     HPE3PAR_WS_MIN_BUILD_VERSION_DESC = '3.1.3 MU1'
 
+    HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSION = 40000128
+    HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSIONDESC = '4.2.0'
+
     # Minimum build version needed for VLUN query support.
     HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY = 30201292
     HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY_DESC = '3.2.1 MU2'
@@ -196,6 +202,7 @@ class HPE3ParClient(object):
         api_version = None
         self.ssh = None
         self.vlun_query_supported = False
+        self.primera_supported = False
 
         self.debug_rest(debug)
 
@@ -229,6 +236,13 @@ class HPE3ParClient(object):
         if (api_version['build'] >=
                 self.HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY):
             self.vlun_query_supported = True
+
+        if (api_version['build'] >=
+                self.HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSION):
+            self.primera_supported = True
+
+    def is_primera_array(self):
+        return self.primera_supported
 
     def setSSHOptions(self, ip, login, password, port=22,
                       conn_timeout=None, privatekey=None,
@@ -437,6 +451,9 @@ class HPE3ParClient(object):
 
     def createVolume(self, name, cpgName, sizeMiB, optional=None):
         """Create a new volume.
+        For the primera array there is support for only thin and DECO volume.
+        To create DECO volume 'tdvv' and 'compression' both must be True.
+        If only one of them is specified, it results in HTTPBadRequest.
 
         :param name: the name of the volume
         :type name: str
@@ -494,11 +511,71 @@ class HPE3ParClient(object):
 
         """
         info = {'name': name, 'cpg': cpgName, 'sizeMiB': sizeMiB}
+        # For primera array there is no compression and tdvv keys
+        # removing tdvv, compression and
+        # replacing compression+tdvv with reduce key for DECO
+        if not optional and self.primera_supported:
+            optional = {'tpvv': True}
         if optional:
-            info = self._mergeDict(info, optional)
+            if self.primera_supported:
+                for key in ['tpvv', 'compression', 'tdvv']:
+                    option = optional.get(key)
+                    if option and option not in [True, False]:
+                        # raising exception for junk compression input
+                        ex_desc = "39 - invalid input: wrong type for key "\
+                            "[%s]. Valid values are [True, False]" % key
+                        raise exceptions.HTTPBadRequest(ex_desc)
 
-        response, body = self.http.post('/volumes', body=info)
-        return body
+                if optional.get('compression') is True:
+                    combination = ['tdvv', 'compression']
+                    len_diff = len(set(combination) - set(optional.keys()))
+                    msg = "invalid input: For compressed and deduplicated "\
+                          "volumes both 'compression' and " \
+                          "'tdvv' must be specified as true"
+                    if len_diff == 1:
+                        raise exceptions.HTTPBadRequest(msg)
+                    if optional.get('tdvv') is True \
+                            and optional.get('compression') is True:
+                        optional['reduce'] = True
+
+                    if optional.get('tdvv') is False \
+                            and optional.get('compression') is True:
+                        raise exceptions.HTTPBadRequest(msg)
+                else:
+                    msg = "invalid input: For compressed and deduplicated "\
+                          "volumes both 'compression' and "\
+                          "'tdvv' must be specified as true"
+                    if optional.get('tdvv') is False \
+                            and optional.get('compression') is False:
+                        optional['reduce'] = False
+                    if optional.get('tdvv') is True \
+                            and optional.get('compression') is False:
+                        raise exceptions.HTTPBadRequest(msg)
+
+                if 'compression' in optional:
+                    optional.pop('compression')
+                if 'tdvv' in optional:
+                    optional.pop('tdvv')
+            info = self._mergeDict(info, optional)
+        logger.debug("Parameters passed for create volume %s" % info)
+
+        try:
+            response, body = self.http.post('/volumes', body=info)
+            return body
+        except exceptions.HTTPBadRequest as ex:
+            if self.primera_supported:
+                ex_desc = 'invalid input: one of the parameters is required'
+                ex_code = ex.get_code()
+                # INV_INPUT_ONE_REQUIRED => 78
+                if ex_code == 78 and \
+                   ex.get_description() == ex_desc and \
+                   ex.get_ref() == 'tpvv,reduce':
+                    new_ex_desc = "invalid input: Either tpvv must be true "\
+                                  "OR for compressed and deduplicated "\
+                                  "volumes both 'compression' and 'tdvv' "\
+                                  "must be specified as true"
+                    raise exceptions.HTTPBadRequest(new_ex_desc)
+            raise ex
 
     def deleteVolume(self, name):
         """Delete a volume.
@@ -913,7 +990,51 @@ class HPE3ParClient(object):
         # Virtual volume sets are not supported with the -online option
         parameters = {'destVolume': dest_name,
                       'destCPG': dest_cpg}
+        # For online copy, there has to be tpvv/tdvv(Non primera array)
+        # and tpvv/compression(primera array) has to be passed from caller side
+        # For offline copy, parameters tpvv/tdvv/compression are invalid,
+        # has to be taken care by caller side
         if optional:
+            if self.primera_supported:
+                for key in ['tpvv', 'compression', 'tdvv']:
+                    option = optional.get(key)
+                    if option and option not in [True, False]:
+                        # raising exception for junk compression input
+                        ex_desc = "39 - invalid input: wrong type for key " \
+                            "[%s]. Valid values are [True, False]" % key
+                        raise exceptions.HTTPBadRequest(ex_desc)
+
+                if optional.get('compression') is True:
+                    combination = ['tdvv', 'compression']
+                    len_diff = len(set(combination) - set(optional.keys()))
+                    msg = "invalid input: For compressed and deduplicated "\
+                          "volumes both 'compression' and " \
+                          "'tdvv' must be specified as true"
+                    if len_diff == 1:
+                        raise exceptions.HTTPBadRequest(msg)
+                    if optional.get('tdvv') is True \
+                            and optional.get('compression') is True:
+                        optional['reduce'] = True
+
+                    if optional.get('tdvv') is False \
+                            and optional.get('compression') is True:
+                        raise exceptions.HTTPBadRequest(msg)
+                else:
+                    msg = "invalid input: For compressed and deduplicated "\
+                          "volumes both 'compression' and "\
+                          "'tdvv' must be specified as true"
+                    if optional.get('tdvv') is False \
+                            and optional.get('compression') is False:
+                        optional['reduce'] = False
+                    if optional.get('tdvv') is True \
+                            and optional.get('compression') is False:
+                        raise exceptions.HTTPBadRequest(msg)
+
+                if 'compression' in optional:
+                    optional.pop('compression')
+                if 'tdvv' in optional:
+                    optional.pop('tdvv')
+
             parameters = self._mergeDict(parameters, optional)
 
         if 'online' not in parameters or not parameters['online']:
@@ -922,9 +1043,25 @@ class HPE3ParClient(object):
 
         info = {'action': 'createPhysicalCopy',
                 'parameters': parameters}
-
-        response, body = self.http.post('/volumes/%s' % src_name, body=info)
-        return body
+        logger.debug("Parameters passed for copy volume %s" % info)
+        try:
+            response, body = self.http.post('/volumes/%s' % src_name,
+                                            body=info)
+            return body
+        except exceptions.HTTPBadRequest as ex:
+            if self.primera_supported:
+                ex_desc = 'invalid input: one of the parameters is required'
+                ex_code = ex.get_code()
+                # INV_INPUT_ONE_REQUIRED => 78
+                if ex_code == 78 and \
+                   ex.get_description() == ex_desc and \
+                   ex.get_ref() == 'tpvv,reduce':
+                    new_ex_desc = "invalid input: Either tpvv must be true "\
+                                  "OR for compressed and deduplicated "\
+                                  "volumes both 'compression' and 'tdvv' "\
+                                  "must be specified as true."
+                    raise exceptions.HTTPBadRequest(new_ex_desc)
+            raise ex
 
     def isOnlinePhysicalCopy(self, name):
         """Is the volume being created by process of online copy?

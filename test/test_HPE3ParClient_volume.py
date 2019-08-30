@@ -21,6 +21,7 @@ from test import HPE3ParClient_base as hpe3parbase
 
 from hpe3parclient import exceptions
 
+
 CPG_NAME1 = 'CPG1_UNIT_TEST' + hpe3parbase.TIME
 CPG_NAME2 = 'CPG2_UNIT_TEST' + hpe3parbase.TIME
 VOLUME_NAME1 = 'VOLUME1_UNIT_TEST' + hpe3parbase.TIME
@@ -2287,6 +2288,237 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         res = self.cl.resumeSchedule(SCHEDULE_NAME1)
         self.assertEqual(res, None)
         self.printFooter('resume_schedule_test')
+
+    def test37_create_volume_with_primera_support_with_no_option(self):
+        self.printHeader('create_volume')
+        self.cl.primera_supported = True
+        # add volume with no options specified,
+        # it should create bydefault tpvv volume
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE)
+        # check
+        vol1 = self.cl.getVolume(VOLUME_NAME1)
+        self.assertIsNotNone(vol1)
+        volName = vol1['name']
+        self.assertEqual(VOLUME_NAME1, volName)
+        self.printFooter('create_volume')
+
+    def test38_create_volume_with_primera_support_with_option(self):
+        self.printHeader('create_volume')
+        self.cl.primera_supported = True
+        # add one
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+
+        # check
+        vol1 = self.cl.getVolume(VOLUME_NAME1)
+        self.assertIsNotNone(vol1)
+        volName = vol1['name']
+        self.assertEqual(VOLUME_NAME1, volName)
+
+        # add another compressed volume
+        optional = {'comment': 'test volume2', 'compression': True,
+                    'tdvv': True}
+        self.cl.createVolume(VOLUME_NAME2, CPG_NAME2, 16384, optional)
+
+        # check
+        vol2 = self.cl.getVolume(VOLUME_NAME2)
+        self.assertIsNotNone(vol2)
+
+        volName = vol2['name']
+        comment = vol2['comment']
+        reduced = vol2['reduce']
+
+        self.assertEqual(VOLUME_NAME2, volName)
+        self.assertEqual("test volume2", comment)
+        self.assertEqual(True, reduced)
+
+    def test38_create_volume_with_primera_support_with_option_None(self):
+        self.printHeader('create_volume')
+        self.cl.primera_supported = True
+        # add one
+        optional = {'comment': 'test volume', 'tpvv': None,
+                    'compression': True, 'tdvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 16384, optional)
+        # check
+        vol1 = self.cl.getVolume(VOLUME_NAME1)
+        self.assertIsNotNone(vol1)
+        volName = vol1['name']
+        reduced = vol1['reduce']
+        comment = vol1['comment']
+        self.assertEqual(VOLUME_NAME1, volName)
+        self.assertEqual("test volume", comment)
+        self.assertEqual(True, reduced)
+        # add another one
+        optional = {'comment': 'test volume2', 'tpvv': True,
+                    'compression': None, 'tdvv': None}
+        self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, SIZE, optional)
+
+        # check
+        vol2 = self.cl.getVolume(VOLUME_NAME2)
+        self.assertIsNotNone(vol2)
+        volName = vol2['name']
+        comment = vol2['comment']
+        self.assertEqual(VOLUME_NAME2, volName)
+        self.assertEqual("test volume2", comment)
+        self.printFooter('create_volume')
+
+    def test_39_create_volume_badParams(self):
+        self.printHeader('create_volume_badParams')
+        self.cl.merlin_supported = True
+        optional = {'comment': 'test volume', 'tpvv': "junk"}
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.createVolume,
+            VOLUME_NAME1,
+            CPG_NAME1,
+            SIZE,
+            optional)
+        self.printFooter('create_volume_badParams')
+
+    def test_40_create_volume_badParams(self):
+        self.printHeader('create_volume_badParams')
+        self.cl.primera_supported = True
+        optional = {'comment': 'test volume', 'compression': "junk",
+                    'tdvv': "junk"}
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.createVolume,
+            VOLUME_NAME1,
+            CPG_NAME1,
+            SIZE,
+            optional)
+        self.printFooter('create_volume_badParams')
+
+    def test_41_create_volume_junk_values(self):
+        self.printHeader('create_volume_junkParams')
+        self.cl.primera_supported = True
+        optional = {'comment': 'test volume', 'tpvv': "junk",
+                    'compression': "junk"}
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.createVolume,
+            VOLUME_NAME1,
+            CPG_NAME1,
+            SIZE,
+            optional)
+        self.printFooter('create_volume_junkParams')
+
+    def test_42_create_volume_junk_compression(self):
+        self.printHeader('create_volume_junkParams')
+        self.cl.primera_supported = True
+        optional = {'comment': 'test volume', 'tpvv': None,
+                    'compression': "junk"}
+        self.assertRaises(
+            exceptions.HTTPBadRequest,
+            self.cl.createVolume,
+            VOLUME_NAME1,
+            CPG_NAME1,
+            SIZE,
+            optional)
+        self.printFooter('create_volume_junkParams')
+
+    def test_43_create_volume_parameter_absent(self):
+        self.printHeader('create_volume_noParams')
+        self.cl.primera_supported = True
+        optional = {'comment': 'test volume',
+                    'compression': False}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+        # check
+        vol1 = self.cl.getVolume(VOLUME_NAME1)
+        self.assertIsNotNone(vol1)
+        volName = vol1['name']
+        comment = vol1['comment']
+        self.assertEqual(VOLUME_NAME1, volName)
+        self.assertEqual("test volume", comment)
+
+        # add another one
+        optional = {'comment': 'test volume2',
+                    'tpvv': False}
+        self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, SIZE, optional)
+        # check
+        vol2 = self.cl.getVolume(VOLUME_NAME2)
+        self.assertIsNotNone(vol2)
+        volName = vol2['name']
+        comment = vol2['comment']
+        self.assertEqual(VOLUME_NAME2, volName)
+        self.assertEqual("test volume2", comment)
+        self.printFooter('create_volume_noParams')
+
+    def test_44_offline_copy_volume_primera_support(self):
+        self.printHeader('copy_volume')
+        self.cl.primera_supported = True
+        # add one
+        optional = {'comment': 'test volume', 'tpvv': True,
+                    'snapCPG': CPG_NAME1}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, 1024, optional)
+        self.cl.createVolume(VOLUME_NAME2, CPG_NAME1, 1024, optional)
+        # copy it
+        optional1 = {'online': False}
+        self.cl.copyVolume(VOLUME_NAME1, VOLUME_NAME2, CPG_NAME1, optional1)
+        vol2 = self.cl.getVolume(VOLUME_NAME2)
+        volName = vol2['name']
+        self.assertEqual(VOLUME_NAME2, volName)
+        self.printFooter('copy_volume')
+
+    def test_45_online_copy_volume_primera_support(self):
+        self.printHeader('copy_volume')
+        self.cl.primera_supported = True
+        # TODO: Add support for ssh/stopPhysical copy in mock mode
+        if self.unitTest:
+            self.printFooter('copy_volume')
+            return
+        # add one
+        optional = {'comment': 'test volume', 'tpvv': True,
+                    'snapCPG': CPG_NAME1}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+
+        # copy it
+        # for online copy we need to specify the tpvv/reduce for merlin
+        optional = {'online': True, 'tpvv': True}
+        self.cl.copyVolume(VOLUME_NAME1, VOLUME_NAME2, CPG_NAME1, optional)
+        vol2 = self.cl.getVolume(VOLUME_NAME2)
+        volName = vol2['name']
+        self.assertEqual(VOLUME_NAME2, volName)
+        self.printFooter('copy_volume')
+
+    def test_46_copy_volume_interrupted_primera_support(self):
+        self.printHeader('copy_volume')
+        self.cl.primera_supported = True
+        # TODO: Add support for ssh/stopPhysical copy in mock mode
+        if self.unitTest:
+            self.printFooter('copy_volume')
+            return
+        # add one
+        optional = {'comment': 'test volume', 'tpvv': True,
+                    'snapCPG': CPG_NAME1}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+
+        # copy it
+        optional = {'online': True, 'tpvv': True}
+        self.cl.copyVolume(VOLUME_NAME1, VOLUME_NAME2, CPG_NAME1, optional)
+        self.cl.getVolume(VOLUME_NAME2)
+        self.cl.stopOnlinePhysicalCopy(VOLUME_NAME2)
+
+        self.assertRaises(
+            exceptions.HTTPNotFound,
+            self.cl.getVolume,
+            VOLUME_NAME2
+        )
+
+        self.printFooter('copy_volume')
+
+    def test_47_create_default_volume(self):
+        self.printHeader('create_volume')
+        self.cl.primera_supported = True
+        # add one
+        optional = {'comment': 'test volume', 'tpvv': True,
+                    'compression': False}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+        # check
+        vol1 = self.cl.getVolume(VOLUME_NAME1)
+        self.assertIsNotNone(vol1)
+        volName = vol1['name']
+        self.assertEqual(VOLUME_NAME1, volName)
 
 # testing
 # suite = unittest.TestLoader().

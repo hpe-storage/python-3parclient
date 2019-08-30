@@ -11,3 +11,5 @@ htmlcov
 paramiko_server.log
 .eggs
 test/tpdinterface/interface.save
+build
+dist

@@ -60,6 +60,9 @@ class ShowportParser:
         # and the number of entries returned.  We don't want those
         port_show_output = port_show_output[0:-2]
 
+        if not port_show_output:
+            return new_ports
+
         # The first array in the
         # ports output list is the headers
         headers = port_show_output.pop(0).split(',')
