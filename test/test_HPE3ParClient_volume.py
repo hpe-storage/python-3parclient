@@ -431,6 +431,22 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
         self.printFooter('grow_volume')
 
+    def test_5_grow_volume_with_float_value(self):
+        self.printHeader('grow_volume_with_float_value')
+
+        # add one
+        optional = {'comment': 'test volume', 'tpvv': True}
+        self.cl.createVolume(VOLUME_NAME1, CPG_NAME1, SIZE, optional)
+
+        # grow it
+        result = self.cl.growVolume(VOLUME_NAME1, 1.0)
+
+        result = self.cl.getVolume(VOLUME_NAME1)
+        size_after = result['sizeMiB']
+        self.assertGreater(size_after, SIZE)
+
+        self.printFooter('grow_volume_with_float_value')
+
     def test_5_grow_volume_bad(self):
         self.printHeader('grow_volume_bad')
 

@@ -811,7 +811,7 @@ class HPE3ParClient(object):
 
         """
         info = {'action': self.GROW_VOLUME,
-                'sizeMiB': amount}
+                'sizeMiB': int(amount)}
 
         response, body = self.http.put('/volumes/%s' % name, body=info)
         return body
