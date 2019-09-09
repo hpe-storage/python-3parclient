@@ -424,7 +424,7 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
         self.printFooter('grow_volume')
 
-   def test_5_grow_volume_with_float_value(self):
+    def test_5_grow_volume_with_float_value(self):
         self.printHeader('grow_volume_with_float_value')
 
         # add one
