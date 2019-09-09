@@ -20,6 +20,7 @@ import unittest
 from test import HPE3ParClient_base
 from hpe3parclient import exceptions
 from hpe3parclient import ssh
+from hpe3parclient import client
 
 # Python 3+ override
 try:
@@ -247,3 +248,23 @@ class HPE3ParClientMockSSHTestCase(HPE3ParClient_base
                   'totals']
         result = ssh.HPE3PARSSHClient.strip_input_from_output(cmd, output)
         self.assertEqual(['out1', 'out2', 'out3'], result)
+
+    @mock.patch('hpe3parclient.client.ssh.HPE3PARSSHClient', spec=True)
+    def test_verify_get_port(self, mock_ssh_client):
+        known_hosts_file = "test_bogus_known_hosts_file"
+        missing_key_policy = "AutoAddPolicy"
+        cli_output = ["-Service-,-State-,HTTPS_Port,-Version-,"
+                      "------------------API_URL-------------------",
+                      "Enabled,Active,443,1.7.0,"
+                      "https://vp2-157.in.rdlabs.hpecorp.net/api/v1"]
+        with mock.patch.object(client.HPE3ParClient,
+                               "_getSshClient") as mock_get_ssh_client:
+            mock_get_ssh_client.return_value = mock_ssh_client
+            mock_ssh_client.open.return_value = True
+            mock_ssh_client.run.return_value = cli_output
+            result = client.HPE3ParClient.getPortNumber(
+                ip, user, password,
+                22, None, None,
+                known_hosts_file=known_hosts_file,
+                missing_key_policy=missing_key_policy)
+            self.assertEqual('443', result)

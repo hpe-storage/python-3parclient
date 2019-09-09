@@ -92,6 +92,12 @@ class HPE3ParClient(object):
     PROMOTE_VIRTUAL_COPY = 4
     VIRTUAL_COPY = 3
 
+    TUNE_VOLUME = 6
+    TPVV = 1
+    FPVV = 2
+    TDVV = 3
+    CONVERT_TO_DECO = 4
+
     TARGET_TYPE_VVSET = 1
     TARGET_TYPE_SYS = 2
 
@@ -136,6 +142,8 @@ class HPE3ParClient(object):
     # Minimum build version needed for VLUN query support.
     HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY = 30201292
     HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY_DESC = '3.2.1 MU2'
+
+    WSAPI_MIN_VERSION_COMPRESSION_SUPPORT = '1.6.0'
 
     VLUN_TYPE_EMPTY = 1
     VLUN_TYPE_PORT = 2
@@ -203,6 +211,7 @@ class HPE3ParClient(object):
         self.ssh = None
         self.vlun_query_supported = False
         self.primera_supported = False
+        self.compression_supported = False
 
         self.debug_rest(debug)
 
@@ -240,6 +249,12 @@ class HPE3ParClient(object):
         if (api_version['build'] >=
                 self.HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSION):
             self.primera_supported = True
+
+        current_wsapi_version = '{}.{}.{}'.format(api_version.get('major'),
+                                                  api_version.get('minor'),
+                                                  api_version.get('revision'))
+        if current_wsapi_version >= self.WSAPI_MIN_VERSION_COMPRESSION_SUPPORT:
+            self.compression_supported = True
 
     def is_primera_array(self):
         return self.primera_supported
@@ -1169,102 +1184,7 @@ class HPE3ParClient(object):
         return result
 
     def _convert_cli_output_to_collection_like_wsapi(self, cli_output):
-        """Convert CLI output into a response that looks the WS-API would.
-
-        Use the first line as coma-separated headers.
-        Build dictionaries for the remaining lines using the headers as keys.
-        Return a dictionary with total and members (the dictionaries).
-
-        If there isn't enough data for headers and data then
-        total is 0 and members is an empty list.
-
-        If you need more validity checking, you might want to do it before this
-        generic routine.  It does minimal checking.
-
-        :param cli_output: The result from the CLI (i.e. from ssh.run(cmd)).
-                           The first row is headers. Following rows are data.
-        :type cli_output: list
-
-        .. code-block:: python
-
-            # Example 1: Typical CLI output with header row and data rows.
-            cli_output =
-                [
-                    'InstallTime,Id,Package,Version',
-                    '2013-08-21 18:06:45 PDT,MU2,Complete,3.1.2.422',
-                    '2013-10-10 15:20:05 PDT,MU3,Complete,3.1.2.484',
-                    '2014-01-30 11:34:20 PST,DEVEL,Complete,3.1.3.170',
-                    '2014-03-26 13:59:42 PDT,GA,Complete,3.1.3.202',
-                    '2014-06-06 14:46:56 PDT,MU1,Complete,3.1.3.230'
-                ]
-
-            # Example 2: Example CLI output for an empty result.
-            cli_output = ['No patch is applied to the system.']
-
-        :returns: dict with total and members. members is list of dicts using
-                  header for keys and data for values.
-        :rtype: dict
-
-        .. code-block:: python
-
-            # Example 1: Converted to total and members list of dictionaries.
-            ret = {
-                'total': 5,
-                'members': [
-                    {
-                        'Package': 'Complete',
-                        'Version': '3.1.2.422',
-                        'InstallTime': '2013-08-21 18:06:45 PDT',
-                        'Id': 'MU2'
-                    },
-                    {
-                        'Package': 'Complete',
-                        'Version': '3.1.2.484',
-                        'InstallTime': '2013-10-10 15:20:05 PDT',
-                        'Id': 'MU3'
-                    },
-                    {
-                        'Package': 'Complete',
-                        'Version': '3.1.3.170',
-                        'InstallTime': '2014-01-30 11:34:20 PST',
-                        'Id': 'DEVEL'
-                    },
-                    {
-                        'Package': 'Complete',
-                        'Version': '3.1.3.202',
-                        'InstallTime': '2014-03-26 13:59:42 PDT',
-                        'Id': 'GA'
-                    },
-                    {
-                        'Package': 'Complete',
-                        'Version': '3.1.3.230',
-                        'InstallTime': '2014-06-06 14:46:56 PDT',
-                        'Id': 'MU1'
-                    }
-                ]
-            }
-
-            # Example 2: No data rows, so zero members.
-            ret = {'total': 0, 'members': []}
-
-        """
-
-        members = []
-        if cli_output and len(cli_output) >= 2:
-            for index, line in enumerate(cli_output):
-                if index == 0:
-                    headers = line.split(',')
-                else:
-                    split = line.split(',')
-                    member = {}
-                    for i, header in enumerate(headers):
-                        try:
-                            member[header] = split[i]
-                        except IndexError:
-                            member[header] = None
-                    members.append(member)
-
-        return {'total': len(members), 'members': members}
+        return HPE3ParClient.convert_cli_output_to_wsapi_format(cli_output)
 
     def getPatches(self, history=True):
         """Get all the patches currently affecting the system.
@@ -4872,3 +4792,258 @@ class HPE3ParClient(object):
                 return 'active'
         msg = "Couldn't find the schedule '%s' status" % schedule_name
         raise exceptions.SSHException(reason=msg)
+
+    @staticmethod
+    def convert_cli_output_to_wsapi_format(cli_output):
+        """Convert CLI output into a response that looks the WS-API would.
+
+        Use the first line as coma-separated headers.
+        Build dictionaries for the remaining lines using the headers as keys.
+        Return a dictionary with total and members (the dictionaries).
+
+        If there isn't enough data for headers and data then
+        total is 0 and members is an empty list.
+
+        If you need more validity checking, you might want to do it before this
+        generic routine.  It does minimal checking.
+
+        :param cli_output: The result from the CLI (i.e. from ssh.run(cmd)).
+                           The first row is headers. Following rows are data.
+        :type cli_output: list
+
+        .. code-block:: python
+
+            # Example 1: Typical CLI output with header row and data rows.
+            cli_output =
+                [
+                    'InstallTime,Id,Package,Version',
+                    '2013-08-21 18:06:45 PDT,MU2,Complete,3.1.2.422',
+                    '2013-10-10 15:20:05 PDT,MU3,Complete,3.1.2.484',
+                    '2014-01-30 11:34:20 PST,DEVEL,Complete,3.1.3.170',
+                    '2014-03-26 13:59:42 PDT,GA,Complete,3.1.3.202',
+                    '2014-06-06 14:46:56 PDT,MU1,Complete,3.1.3.230'
+                ]
+
+            # Example 2: Example CLI output for an empty result.
+            cli_output = ['No patch is applied to the system.']
+
+        :returns: dict with total and members. members is list of dicts using
+                  header for keys and data for values.
+        :rtype: dict
+
+        .. code-block:: python
+
+            # Example 1: Converted to total and members list of dictionaries.
+            ret = {
+                'total': 5,
+                'members': [
+                    {
+                        'Package': 'Complete',
+                        'Version': '3.1.2.422',
+                        'InstallTime': '2013-08-21 18:06:45 PDT',
+                        'Id': 'MU2'
+                    },
+                    {
+                        'Package': 'Complete',
+                        'Version': '3.1.2.484',
+                        'InstallTime': '2013-10-10 15:20:05 PDT',
+                        'Id': 'MU3'
+                    },
+                    {
+                        'Package': 'Complete',
+                        'Version': '3.1.3.170',
+                        'InstallTime': '2014-01-30 11:34:20 PST',
+                        'Id': 'DEVEL'
+                    },
+                    {
+                        'Package': 'Complete',
+                        'Version': '3.1.3.202',
+                        'InstallTime': '2014-03-26 13:59:42 PDT',
+                        'Id': 'GA'
+                    },
+                    {
+                        'Package': 'Complete',
+                        'Version': '3.1.3.230',
+                        'InstallTime': '2014-06-06 14:46:56 PDT',
+                        'Id': 'MU1'
+                    }
+                ]
+            }
+
+            # Example 2: No data rows, so zero members.
+            ret = {'total': 0, 'members': []}
+
+        """
+
+        members = []
+        if cli_output and len(cli_output) >= 2:
+            for index, line in enumerate(cli_output):
+                if index == 0:
+                    headers = line.split(',')
+                else:
+                    split = line.split(',')
+                    member = {}
+                    for i, header in enumerate(headers):
+                        try:
+                            member[header] = split[i]
+                        except IndexError:
+                            member[header] = None
+                    members.append(member)
+
+        return {'total': len(members), 'members': members}
+
+    @staticmethod
+    def _getSshClient(ip, login, password, port=22,
+                      conn_timeout=None, privatekey=None,
+                      **kwargs):
+        ssh_client = ssh.HPE3PARSSHClient(ip, login, password, port,
+                                          conn_timeout, privatekey,
+                                          **kwargs)
+        return ssh_client
+
+    @staticmethod
+    def getPortNumber(ip, login, password, port=22,
+                      conn_timeout=None, privatekey=None,
+                      **kwargs):
+        """Get port number from showwsapi output
+
+        :param 3PAR credentials
+        :return: HTTPS_Port column value
+        """
+        try:
+            ssh_client = HPE3ParClient._getSshClient(ip, login, password, port,
+                                                     conn_timeout, privatekey,
+                                                     **kwargs)
+            if ssh_client is None:
+                raise exceptions.SSHException("SSH is not initialized.\
+ Initialize it by calling 'setSSHOptions'.")
+            ssh_client.open()
+            cli_output = ssh_client.run(['showwsapi'])
+            wsapi_dict = HPE3ParClient.convert_cli_output_to_wsapi_format(
+                cli_output)
+            return wsapi_dict['members'][0]['HTTPS_Port']
+        finally:
+            if ssh_client:
+                ssh_client.close()
+
+    def tuneVolume(self, volName, tune_operation, optional=None):
+        """Tune a volume.
+
+        :param name: the name of the volume
+        :type name: str
+        :param name: tune_operation 1 for USR_CPG 2 for SNP_CPG
+        :type name: int
+        :param optional: dictionary of volume attributes to change
+        :type optional: dict
+        .. code-block:: python
+
+            optional = {
+             'action': 6,                  # For tuneVolume operation
+             'userCPG': 'User CPG name',   # Required if tuneOperation is 1
+             'snapCPG': 'Snap CPG name',   # Required if tuneOperation is 2
+             'conversionOperation': 1,     # For TPVV 1, For FPVV 2, For TDVV
+                                           # 3, for CONVERT_TO_DECO 4
+             'compression': False,         # compression is not supported for
+                                           # FPVV
+            }
+
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - CPG_NOT_IN_SAME_DOMAIN - Snap CPG is not in the same domain as
+            the user CPG.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+            - INV_INPUT_ILLEGAL_CHAR - Invalid VV name or CPG name.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_INPUT_VV_IS_FPVV - The volume is already fully provisioned.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_INPUT_VV_IS_TDVV - The volume is already deduplicated.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_INPUT_VV_IS_TPVV - The volume is already thinly provisioned.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_UNSUPPORTED_VV_TYPE - Invalid operation: Cannot
+            grow this type of volume.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_MODIFY_USR_CPG_TDVV - Cannot change USR CPG of
+            a TDVV to a different CPG..
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_NON_BASE_VOLUME - The destination volume
+            is not a base volume.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_SYS_VOLUME - The volume is a system volume. This
+            operation is not allowed on a system volume.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_CLEANUP_IN_PROGRESS - Internal volume cleanup is
+            in progress.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_INTERNAL_VOLUME - Cannot modify an internal
+            volume
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+            - INV_OPERATION_VV_VOLUME_CONV_IN_PROGRESS - Invalid operation: VV
+            conversion is in progress.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_NOT_IN_NORMAL_STATE - Volume state is not normal
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_PEER_VOLUME - Cannot modify a peer volume.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+            - INV_OPERATION_VV_TASK_CANCEL_IN_PROGRESS - Invalid operation:
+            A task involving the volume is being canceled..
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+            - INV_OPERATION_VV_PROMOTE_IN_PROGRESS - Invalid operation: Volume
+            promotion is in progress.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPConflict`
+            - INV_OPERATION_VV_TUNE_IN_PROGRESS - Invalid operation: Volume
+            tuning is in progress.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+            - NO_SPACE - Not Enough space is available
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - NODE_DOWN - The node is down.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_CPG - The CPG does not exists.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_VOL - volume doesn't exist
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - VV_IN_INCONSISTENT_STATE - The volume has an internal consistency
+            error.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - VV_IS_BEING_REMOVED - The volume is being removed.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - VV_NEEDS_TO_BE_CHECKED - The volume needs to be checked.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - VV_NOT_STARTED - Volume is not started.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_INPUT_VV_IS_FPVV - A fully provisioned volume cannot be
+            compressed.
+
+        """
+        info = {'action': self.TUNE_VOLUME, 'tuneOperation': tune_operation}
+        if optional is not None and not self.compression_supported:
+            if 'compression' in optional.keys() \
+                    and optional.get('compression') is False:
+                del optional['compression']
+        if optional:
+            if self.primera_supported:
+                if optional.get('compression') is True:
+                    if optional.get('conversionOperation') == self.TDVV:
+                        optional['conversionOperation'] = self.CONVERT_TO_DECO
+                        optional.pop('compression')
+                    else:
+                        raise exceptions.HTTPBadRequest("invalid input: On\
+ primera array, with 'compression' set to true 'tdvv' must be true")
+                else:
+                    if optional.get('conversionOperation') == self.TDVV:
+                        raise exceptions.HTTPBadRequest("invalid input: On\
+ primera array, for compression and deduplicated volume 'tdvv' should be true\
+ and 'compression' must be specified as true")
+                    elif optional.get('conversionOperation') == self.TPVV:
+                        if 'compression' in optional.keys():
+                            optional.pop('compression')
+                    elif optional.get('conversionOperation') ==\
+                            self.CONVERT_TO_DECO:
+                        if 'compression' in optional.keys():
+                            optional.pop('compression')
+                    elif optional.get('conversionOperation') == self.FPVV:
+                        raise exceptions.HTTPBadRequest("invalid input:\
+ On primera array 'fpvv' is not supported")
+            info = self._mergeDict(info, optional)
+        response, body = self.http.put(
+            '/volumes/%s' % volName, body=info)
+        return body

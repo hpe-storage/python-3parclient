@@ -1058,6 +1058,58 @@ def modify_volume(volume_name):
         resp = flask.make_response(json.dumps(task), 200)
         return resp
 
+    if data.get('action') == 6:
+        valid_keys = {'action': None, 'tuneOperation': None, 'userCPG': None,
+                      'snapCPG': None, 'conversionOperation': None,
+                      'keepVV': None, 'compression': None}
+
+        for key in list(data.keys()):
+            if key not in list(valid_keys.keys()):
+                throw_error(400, INV_INPUT, "Invalid Parameter '%s'" % key)
+
+        if 'conversionOperation' in list(data.keys()):
+            if data['conversionOperation'] not in [1, 2, 3, 4]:
+                throw_error(400, INV_INPUT_WRONG_TYPE,
+                            "Invalid input:wrong type for value"
+                            " - conversionOperation")
+
+        if 'compression' in list(data.keys()):
+            if data['compression'] not in [True, False, None]:
+                throw_error(400, INV_INPUT_WRONG_TYPE,
+                            "Invalid input:wrong type for value"
+                            " - compression")
+
+        if 'tuneOperation' in list(data.keys()):
+            if data['tuneOperation'] not in [1, 2]:
+                throw_error(400, INV_INPUT_WRONG_TYPE,
+                            "Invalid input:wrong type for value"
+                            " - tuneOperation")
+
+        if 'keepVV' in list(data.keys()) and len(data['keepVV']) > 31:
+            throw_error(400, INV_INPUT_EXCEEDS_LENGTH,
+                        'Invalid Input: String length exceeds limit : keepVV')
+
+        conversion_operation = data.get('conversionOperation')
+        if conversion_operation == 1:
+            volume_type = 'tpvv'
+        elif conversion_operation == 2:
+            volume_type = 'fpvv'
+        elif conversion_operation == 3:
+            volume_type = 'tdvv'
+
+        if conversion_operation == 4:
+            if (volume.get('tdvv') is None or
+                    volume.get('tdvv') is False) and \
+               (volume.get('compression') is None or
+                    volume.get('compression') is False):
+                volume['tdvv'] = True
+                volume['compression'] = True
+        else:
+            if volume.get(volume_type) is None or \
+               volume.get(volume_type) is False:
+                volume[volume_type] = True
+        resp = flask.make_response(json.dumps(volume), 200)
+        return resp
     _grow_volume(volume, data)
 
     # do volume renames last
