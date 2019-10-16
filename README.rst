@@ -6,28 +6,29 @@
     :target: https://pypi.python.org/pypi/python-3parclient
     :alt: Downloads
 
-HPE 3PAR REST Client
-====================
-This is a Client library that can talk to the HPE 3PAR Storage array.  The 3PAR
-storage array has a REST web service interface and a command line interface.
-This client library implements a simple interface for talking with either
-interface, as needed.  The python Requests library is used to communicate
-with the REST interface.  The python paramiko library is used to communicate
-with the command line interface over an SSH connection.
+HPE 3PAR and HPE Primera REST Client
+====================================
+This is a Client library that can talk to the HPE 3PAR and HPE Primera Storage array.
+The HPE 3PAR and HPE Primera storage array has a REST web service interface and a 
+command line interface. This client library implements a simple interface for talking
+with either interface, as needed. The python Requests library is used to communicate
+with the REST interface. The python paramiko library is used to communicate with the
+command line interface over an SSH connection.
 
-This is the new location for the rebranded HP 3PAR Rest Client and will be
+This is the new location for the rebranded HPE 3PAR and HPE Primera Rest Client and will be
 where all future releases are made. It was previously located on PyPi at:
 https://pypi.python.org/pypi/hp3parclient
 
-The GitHub repository for the old HP 3PAR Rest Client is located at:
+The GitHub repository for the old HPE 3PAR and HPE Primera Rest Client is located at:
 https://github.com/hpe-storage/python-3parclient/tree/3.x
 
 The HP 3PAR Rest Client (hp3parclient) is now considered deprecated.
 
 Requirements
 ============
-This branch requires 3.1.3 version MU1 or later of the 3PAR firmware.
-File Persona capabilities require 3PAR firmware 3.2.1 Build 46 or later.
+This branch requires 3.1.3 version MU1 or later of the HPE 3PAR firmware
+This branch requires 4.0.0 version of the HPE Primera firmware
+File Persona capabilities require HPE 3PAR firmware 3.2.1 Build 46 or later.
 
 Capabilities
 ============
