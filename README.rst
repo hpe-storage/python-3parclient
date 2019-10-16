@@ -15,11 +15,11 @@ with either interface, as needed. The python Requests library is used to communi
 with the REST interface. The python paramiko library is used to communicate with the
 command line interface over an SSH connection.
 
-This is the new location for the rebranded HPE 3PAR and HPE Primera Rest Client and will be
+This is the new location for the rebranded HP 3PAR Rest Client and will be
 where all future releases are made. It was previously located on PyPi at:
 https://pypi.python.org/pypi/hp3parclient
 
-The GitHub repository for the old HPE 3PAR and HPE Primera Rest Client is located at:
+The GitHub repository for the old HP 3PAR Rest Client is located at:
 https://github.com/hpe-storage/python-3parclient/tree/3.x
 
 The HP 3PAR Rest Client (hp3parclient) is now considered deprecated.
