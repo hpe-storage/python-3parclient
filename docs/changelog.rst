@@ -1,5 +1,12 @@
 Changelog
 =========
+Changes in Version 4.2.11
+------------------------
+* Added support in growVolume call to take integer value of size
+
+Changes in Version 4.2.10
+------------------------
+* Added support for Primera array
 
 Changes in Version 4.2.9
 ------------------------

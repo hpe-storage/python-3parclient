@@ -14,7 +14,7 @@
 
 """Test class of 3PAR Client System Level APIS."""
 
-from testconfig import config
+from pytest_testconfig import config
 import unittest
 from test import HPE3ParClient_base as hpe3parbase
 

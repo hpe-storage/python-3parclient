@@ -6,14 +6,14 @@
     :target: https://pypi.python.org/pypi/python-3parclient
     :alt: Downloads
 
-HPE 3PAR REST Client
-====================
-This is a Client library that can talk to the HPE 3PAR Storage array.  The 3PAR
-storage array has a REST web service interface and a command line interface.
-This client library implements a simple interface for talking with either
-interface, as needed.  The python Requests library is used to communicate
-with the REST interface.  The python paramiko library is used to communicate
-with the command line interface over an SSH connection.
+HPE 3PAR and HPE Primera REST Client
+====================================
+This is a Client library that can talk to the HPE 3PAR and HPE Primera Storage array.
+The HPE 3PAR and HPE Primera storage array has a REST web service interface and a 
+command line interface. This client library implements a simple interface for talking
+with either interface, as needed. The python Requests library is used to communicate
+with the REST interface. The python paramiko library is used to communicate with the
+command line interface over an SSH connection.
 
 This is the new location for the rebranded HP 3PAR Rest Client and will be
 where all future releases are made. It was previously located on PyPi at:
@@ -26,8 +26,9 @@ The HP 3PAR Rest Client (hp3parclient) is now considered deprecated.
 
 Requirements
 ============
-This branch requires 3.1.3 version MU1 or later of the 3PAR firmware.
-File Persona capabilities require 3PAR firmware 3.2.1 Build 46 or later.
+This branch requires 3.1.3 version MU1 or later of the HPE 3PAR firmware
+This branch requires 4.0.0 version of the HPE Primera firmware
+File Persona capabilities require HPE 3PAR firmware 3.2.1 Build 46 or later.
 
 Capabilities
 ============
@@ -200,9 +201,13 @@ File Persona Capabilities
 Installation
 ============
 
-To install::
+To install from source::
 
  $ sudo pip install .
+
+To install from http://pypi.org::
+
+ $ sudo pip install python-3parclient
 
 Unit Tests
 ==========
@@ -257,3 +262,16 @@ manually before running unit tests also allows you to watch the debug output.
 
   $ python test/HPE3ParMockServer_ssh.py [port]
 
+Building wheel dist
+===================
+
+This client now supports building via the new python WHEELS standard.  Take
+a look at http://pythonwheels.com
+
+* building::
+
+  $ python setup.py bdist_wheel
+
+* building and uploading::
+
+  $ python setup.py sdist bdist_wheel upload

@@ -19,7 +19,8 @@ setup(
   keywords=["hpe", "3par", "rest"],
   requires=['paramiko', 'eventlet', 'requests'],
   install_requires=['paramiko', 'eventlet', 'requests'],
-  tests_require=["nose", "werkzeug", "nose-testconfig", "requests"],
+  tests_require=["pytest", "pytest-runner", "pytest-testconfig",
+                 "flask", "werkzeug", "requests", "pytest-cov"],
   license="Apache License, Version 2.0",
   packages=find_packages(),
   provides=['hpe3parclient'],
@@ -32,7 +33,8 @@ setup(
      'Programming Language :: Python',
      'Programming Language :: Python :: 2.6',
      'Programming Language :: Python :: 2.7',
-     'Programming Language :: Python :: 3.4',
+     'Programming Language :: Python :: 3.6',
+     'Programming Language :: Python :: 3.7',
      'Topic :: Internet :: WWW/HTTP',
 
      ]
