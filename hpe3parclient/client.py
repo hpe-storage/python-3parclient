@@ -298,15 +298,20 @@ class HPE3ParClient(object):
             self.http.set_url(self.api_url)
 
     def debug_rest(self, flag):
-        """This is useful for debugging requests to 3PAR.
+        """Enable/disable log output for the client
 
-        :param flag: set to True to enable debugging
+        By default logs are disabled, even for error messages, enabling debug
+        mode will enable http and ssh logs at debug level.
+
+        This is useful for debugging all requests to 3PAR.
+
+        :param flag: set to True to enable logs, False to disable.
         :type flag: bool
 
         """
         self.http.set_debug_flag(flag)
-        if self.ssh:
-            self.ssh.set_debug_flag(flag)
+        # Call method using the class as self.ssh is not created with instance
+        ssh.HPE3PARSSHClient.set_debug_flag(flag)
 
     def login(self, username, password, optional=None):
         """This authenticates against the 3PAR wsapi server and creates a
