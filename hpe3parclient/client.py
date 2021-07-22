@@ -44,7 +44,6 @@ from hpe3parclient import showport_parser
 
 logger = logging.getLogger(__name__)
 
-
 class HPE3ParClient(object):
     """ The 3PAR REST API Client.
 
@@ -2124,7 +2123,16 @@ class HPE3ParClient(object):
         """
         info = {'name': name}
         if optional:
-            info = self._mergeDict(info, optional)
+           if self.primera_supported:
+               for key, value in dict(optional).items():
+                   if key == 'LDLayout':
+                       ldlayout=value
+                       for keys,val in dict(ldlayout).items():
+                           if keys == 'setSize':
+                               ldlayout.pop(keys)
+                           if keys == 'RAIDType' and ldlayout.get('RAIDType')==1:
+                               ldlayout.pop(keys)
+           info = self._mergeDict(info, optional)
 
         response, body = self.http.post('/cpgs', body=info)
         return body
