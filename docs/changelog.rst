@@ -1,5 +1,9 @@
 Changelog
 =========
+Changes in Version 4.2.12
+-------------------------
+* Added support for Alletra 9000 array
+
 Changes in Version 4.2.11
 ------------------------
 * Added support in growVolume call to take integer value of size
