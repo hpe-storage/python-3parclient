@@ -26,9 +26,9 @@ The HP 3PAR Rest Client (hp3parclient) is now considered deprecated.
 
 Requirements
 ============
-This branch requires 3.1.3 version MU1 or later of the HPE 3PAR firmware
-This branch requires 4.3.1 version of the HPE Primera firmware
-This branch requires 9.3.0 version of the HPE Alletra 9000 firmware
+This branch requires 3.1.3 version MU1 or later of the HPE 3PAR firmware.
+This branch requires 4.3.1 version of the HPE Primera firmware.
+This branch requires 9.3.0 version of the HPE Alletra 9000 firmware.
 File Persona capabilities require HPE 3PAR firmware 3.2.1 Build 46 or later.
 
 Capabilities
