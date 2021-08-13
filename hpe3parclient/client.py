@@ -44,7 +44,6 @@ from hpe3parclient import showport_parser
 
 logger = logging.getLogger(__name__)
 
-
 class HPE3ParClient(object):
     """ The 3PAR REST API Client.
 
@@ -245,7 +244,6 @@ class HPE3ParClient(object):
         if (api_version['build'] >=
                 self.HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY):
             self.vlun_query_supported = True
-
         if (api_version['build'] >=
                 self.HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSION):
             self.primera_supported = True
@@ -1018,7 +1016,6 @@ class HPE3ParClient(object):
                         ex_desc = "39 - invalid input: wrong type for key " \
                             "[%s]. Valid values are [True, False]" % key
                         raise exceptions.HTTPBadRequest(ex_desc)
-
                 if optional.get('compression') is True:
                     combination = ['tdvv', 'compression']
                     len_diff = len(set(combination) - set(optional.keys()))
@@ -1049,9 +1046,7 @@ class HPE3ParClient(object):
                     optional.pop('compression')
                 if 'tdvv' in optional:
                     optional.pop('tdvv')
-
             parameters = self._mergeDict(parameters, optional)
-
         if 'online' not in parameters or not parameters['online']:
             # 3Par won't allow destCPG to be set if it's not an online copy.
             parameters.pop('destCPG', None)
@@ -2163,7 +2158,14 @@ class HPE3ParClient(object):
         """
         info = {'name': name}
         if optional:
-            info = self._mergeDict(info, optional)
+           if self.primera_supported:
+               for key, value in dict(optional).items():
+                   if key == 'LDLayout':
+                       ldlayout = value
+                       for keys, val in dict(ldlayout).items():
+                           if keys == 'setSize' or (keys == 'RAIDType' and ldlayout.get('RAIDType')==1):
+                               ldlayout.pop(keys)
+           info = self._mergeDict(info, optional)
 
         response, body = self.http.post('/cpgs', body=info)
         return body
