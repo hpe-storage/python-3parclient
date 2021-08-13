@@ -1106,8 +1106,7 @@ class HPE3ParClient(object):
 
         # now stop the copy
         if task_id is not None:
-            cmd = ['canceltask', '-f', task_id]
-            self._run(cmd)
+            self._cancelTask(task_id)
         else:
             self.deleteVolume(name)
             msg = "Couldn't find the copy task for '%s'" % name
@@ -1166,17 +1165,57 @@ class HPE3ParClient(object):
         return body
 
     def _findTask(self, name, active=True):
-        cmd = ['showtask']
-        if active:
-            cmd.append('-active')
-        cmd.append(name)
-        result = self._run(cmd)
-        if result and len(result) == 1:
-            if 'No tasks' in result[0]:
-                return None
-        elif len(result) == 2:
-            return result[1].split(',')
-        return result
+        uri = '/tasks'
+        response, body = self.http.get(uri)
+
+        task_type = {1: 'vv_copy', 2: 'phys_copy_resync', 3: 'move_regions',
+            4: 'promote_sv', 5: 'remote_copy_sync', 6: 'remote_copy_reverse',
+            7: 'remote_copy_failover', 8: 'remote_copy_recover',
+            18: 'online_vv_copy'}
+
+        status = {1: 'done', 2: 'active', 3: 'cancelled', 4: 'failed'}
+
+        priority = {1: 'high', 2: 'med', 3: 'low'}
+
+        for task_obj in body['members']:
+            if(task_obj['name'] == name):
+                if(active and task_obj['status'] != 2):
+                    # if active flag is True, but status of task is not True
+                    # then it means task got completed/cancelled/failed
+                    return None
+
+                task_details = []
+                task_details.append(task_obj['id'])
+
+                value = task_obj['type']
+                if value in task_type:
+                    type_str = task_type[value]
+                else:
+                    type_str = 'n/a'
+                task_details.append(type_str)
+
+                task_details.append(task_obj['name'])
+
+                value = task_obj['status']
+                task_details.append(status[value])
+
+                # Phase and Step feilds are not found
+                task_details.append('---')
+                task_details.append('---')
+                task_details.append(task_obj['startTime'])
+                task_details.append(task_obj['finishTime'])
+
+                if('priority' in task_obj):
+                    value = task_obj['priority']
+                    task_details.append(priority[value])
+                else:
+                    task_details.append('n/a')
+
+                task_details.append(task_obj['user'])
+
+                return task_details
+
+        return None
 
     def _convert_cli_output_to_collection_like_wsapi(self, cli_output):
         return HPE3ParClient.convert_cli_output_to_wsapi_format(cli_output)
@@ -3760,14 +3799,14 @@ class HPE3ParClient(object):
     def removeVolumeFromRemoteCopyGroup(self, name, volumeName,
                                         optional=None,
                                         removeFromTarget=False,
-                                        useHttpDelete=False):
+                                        useHttpDelete=True):
         """
         Removes a volume from a remote copy group
 
         :param name: Name of the remote copy group
         :type name: string
         :param volumeName: Specifies the name of the existing virtual
-                           volume to be admitted to an existing remote-copy
+                           volume to be removed from an existing remote-copy
                            group.
         :type volumeName: string
         :param optional: dict of other optional items
@@ -3814,12 +3853,9 @@ class HPE3ParClient(object):
             - RCOPY_TARGET_IS_NOT_READY - The remote-copy group target is
             not ready.
         """
-        # If removeFromTarget is set to True, we need to issue the command via
-        # ssh due to this feature not being supported in the WSAPI.
+        # Now this feature is supported in the WSAPI.
         if not useHttpDelete:
-            # If removeFromTarget is set to True, we need to issue the
-            # command via ssh due to this feature not being supported
-            # in the WSAPI.
+            # Retaining this code (ssh) for backward compatibility only.
             if removeFromTarget:
                 if optional:
                     keep_snap = optional.get('keepSnap', False)
@@ -4167,13 +4203,13 @@ class HPE3ParClient(object):
                               mirroring.
         :type mirror_config: bool
         """
-        if mirror_config:
-            policy = 'mirror_config'
-        else:
-            policy = 'no_mirror_config'
 
-        cmd = ['setrcopytarget', 'pol', policy, target]
-        self._run(cmd)
+        obj = {'mirrorConfig': mirror_config}
+        info = {'policies': obj}
+        try:
+            self.http.put('/remotecopytargets/%s' % target, body=info)
+        except exceptions.HTTPBadRequest as ex:
+            pass
 
     def getVolumeSnapshots(self, name):
         """
@@ -4184,20 +4220,16 @@ class HPE3ParClient(object):
 
         :returns: List of snapshot names
         """
-        cmd = ['showvv', '-p', '-copyof', name]
-        snap_output = self._run(cmd)
+
+        uri = '/volumes?query="copyOf EQ %s"' % (name)
+        response, body = self.http.get(uri)
 
         snapshots = []
-        # Throw out the first two lines
-        for snap in snap_output[2:]:
-            snap_parts = snap.split(',')
-            if len(snap_parts) > 1:
-                snap_name = snap_parts[1]
-                snapshots.append(snap_name)
-            else:
-                # When we reach a line that is not in the expected format,
-                # there are no more snapshot entries.
-                break
+        for volume in body['members']:
+            if 'copyOf' in volume:
+                if (volume['copyOf'] == name and
+                        volume['copyType'] == self.VIRTUAL_COPY):
+                    snapshots.append(volume['name'])
 
         return snapshots
 
@@ -5049,3 +5081,12 @@ class HPE3ParClient(object):
         response, body = self.http.put(
             '/volumes/%s' % volName, body=info)
         return body
+
+    def _cancelTask(self, taskId):
+        info = {'action': 1}
+        try:
+            self.http.put('/tasks/%s' % taskId, body=info)
+        except exceptions.HTTPBadRequest as ex:
+            # it means task cannot be cancelled,
+            # because it is 'done' or already 'cancelled'
+            pass
