@@ -3,6 +3,7 @@ Changelog
 Changes in Version 4.2.12
 -------------------------
 * Added support for Alletra 9000 array
+* Used wsapi call instead of ssh command
 
 Changes in Version 4.2.11
 ------------------------
