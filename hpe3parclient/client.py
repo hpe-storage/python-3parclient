@@ -4231,14 +4231,14 @@ class HPE3ParClient(object):
                     if (volume['copyOf'] == name and
                             volume['copyType'] == self.VIRTUAL_COPY):
                         snapshots.append(volume['name'])
-    
+
             return snapshots
         else:
             snapshots = []
             for volume in body['members']:
                 if re.match('SNAP', volume['name']):
                     snapshots.append(volume['name'])
-        
+
             return snapshots
 
     def _mergeDict(self, dict1, dict2):
