@@ -150,7 +150,8 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
             pass
         try:
             self.cl.removeVolumeFromRemoteCopyGroup(
-                REMOTE_COPY_GROUP_NAME1, RC_VOLUME_NAME, removeFromTarget=True)
+                REMOTE_COPY_GROUP_NAME1, RC_VOLUME_NAME, removeFromTarget=True,
+                useHttpDelete=False)
         except Exception:
             pass
         try:
@@ -1422,7 +1423,8 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
         # Remove volume from remote copy group
         self.cl.removeVolumeFromRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
-                                                RC_VOLUME_NAME)
+                                                RC_VOLUME_NAME,
+                                                useHttpDelete=False)
         resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
         volumes = resp['volumes']
         self.assertEqual([], volumes)
@@ -1816,7 +1818,8 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         # Remove volume from remote copy group
         self.cl.removeVolumeFromRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1,
                                                 RC_VOLUME_NAME,
-                                                removeFromTarget=True)
+                                                removeFromTarget=True,
+                                                useHttpDelete=False)
         resp = self.cl.getRemoteCopyGroup(REMOTE_COPY_GROUP_NAME1)
         volumes = resp['volumes']
         self.assertEqual([], volumes)
@@ -2061,13 +2064,8 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.cl.createSnapshot(SNAP_NAME2, VOLUME_NAME1)
 
         # Get the volumes snapshots
-        snapshots = self.cl.getVolumeSnapshots(VOLUME_NAME1)
-
-        # Set snapshot names. If the test is not against a live array, we
-        # need to add the snapshot suffix.
-        if not is_live_test():
-            snapshots[0] = snapshots[0] + hpe3parbase.TIME
-            snapshots[1] = snapshots[1] + hpe3parbase.TIME
+        live_test = is_live_test()
+        snapshots = self.cl.getVolumeSnapshots(VOLUME_NAME1, live_test)
 
         # If the volume has snapshots, their names will be returned as
         # a list

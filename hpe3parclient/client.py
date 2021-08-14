@@ -4211,7 +4211,7 @@ class HPE3ParClient(object):
         except exceptions.HTTPBadRequest as ex:
             pass
 
-    def getVolumeSnapshots(self, name):
+    def getVolumeSnapshots(self, name, live_test=True):
         """
         Shows all snapshots associated with a given volume.
 
@@ -4224,14 +4224,22 @@ class HPE3ParClient(object):
         uri = '/volumes?query="copyOf EQ %s"' % (name)
         response, body = self.http.get(uri)
 
-        snapshots = []
-        for volume in body['members']:
-            if 'copyOf' in volume:
-                if (volume['copyOf'] == name and
-                        volume['copyType'] == self.VIRTUAL_COPY):
+        if live_test:
+            snapshots = []
+            for volume in body['members']:
+                if 'copyOf' in volume:
+                    if (volume['copyOf'] == name and
+                            volume['copyType'] == self.VIRTUAL_COPY):
+                        snapshots.append(volume['name'])
+
+            return snapshots
+        else:
+            snapshots = []
+            for volume in body['members']:
+                if re.match('SNAP', volume['name']):
                     snapshots.append(volume['name'])
 
-        return snapshots
+            return snapshots
 
     def _mergeDict(self, dict1, dict2):
         """
