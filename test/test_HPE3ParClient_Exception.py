@@ -35,7 +35,7 @@ class HPE3ParClientExceptionTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         fake_response = FakeResponse()
 
         output = exceptions.from_response(fake_response, {}).__str__()
-        self.assertEquals('Internal Server Error (HTTP 500)', output)
+        self.assertEqual('Internal Server Error (HTTP 500)', output)
 
         self.printFooter('from_response')
 
@@ -55,8 +55,8 @@ class HPE3ParClientExceptionTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         client_ex.http_status = 500
         output = client_ex.__str__()
 
-        self.assertEquals("Fake Error (HTTP 500) 999 - Fake Description - "
-                          "Fake Ref (1: 'Fake Debug 1') (2: 'Fake Debug 2')",
-                          output)
+        self.assertEqual("Fake Error (HTTP 500) 999 - Fake Description - "
+                         "Fake Ref (1: 'Fake Debug 1') (2: 'Fake Debug 2')",
+                         output)
 
         self.printFooter('client_exception')

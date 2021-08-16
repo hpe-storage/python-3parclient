@@ -44,6 +44,7 @@ from hpe3parclient import showport_parser
 
 logger = logging.getLogger(__name__)
 
+
 class HPE3ParClient(object):
     """ The 3PAR REST API Client.
 
@@ -1169,9 +1170,9 @@ class HPE3ParClient(object):
         response, body = self.http.get(uri)
 
         task_type = {1: 'vv_copy', 2: 'phys_copy_resync', 3: 'move_regions',
-            4: 'promote_sv', 5: 'remote_copy_sync', 6: 'remote_copy_reverse',
-            7: 'remote_copy_failover', 8: 'remote_copy_recover',
-            18: 'online_vv_copy'}
+                     4: 'promote_sv', 5: 'remote_copy_sync',
+                     6: 'remote_copy_reverse', 7: 'remote_copy_failover',
+                     8: 'remote_copy_recover', 18: 'online_vv_copy'}
 
         status = {1: 'done', 2: 'active', 3: 'cancelled', 4: 'failed'}
 
@@ -2158,14 +2159,16 @@ class HPE3ParClient(object):
         """
         info = {'name': name}
         if optional:
-           if self.primera_supported:
-               for key, value in dict(optional).items():
-                   if key == 'LDLayout':
-                       ldlayout = value
-                       for keys, val in dict(ldlayout).items():
-                           if keys == 'setSize' or (keys == 'RAIDType' and ldlayout.get('RAIDType')==1):
-                               ldlayout.pop(keys)
-           info = self._mergeDict(info, optional)
+            if self.primera_supported:
+                for key, value in dict(optional).items():
+                    if key == 'LDLayout':
+                        ldlayout = value
+                        for keys, val in dict(ldlayout).items():
+                            if keys == 'setSize' or \
+                                    (keys == 'RAIDType' and
+                                     ldlayout.get('RAIDType') == 1):
+                                ldlayout.pop(keys)
+            info = self._mergeDict(info, optional)
 
         response, body = self.http.post('/cpgs', body=info)
         return body
