@@ -877,8 +877,8 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         rule = self.cl.queryQoSRule(VOLUME_SET_NAME1)
 
         self.assertIsNotNone(rule)
-        self.assertEquals(rule['bwMinGoalKB'], qos['bwMinGoalKB'])
-        self.assertEquals(rule['bwMaxLimitKB'], qos['bwMaxLimitKB'])
+        self.assertEqual(rule['bwMinGoalKB'], qos['bwMinGoalKB'])
+        self.assertEqual(rule['bwMaxLimitKB'], qos['bwMaxLimitKB'])
 
         self.printFooter('add_qos')
 
@@ -896,8 +896,8 @@ class HPE3ParClientVolumeTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         rule = self.cl.queryQoSRule(VOLUME_SET_NAME1)
 
         self.assertIsNotNone(rule)
-        self.assertEquals(rule['bwMinGoalKB'], qos_after['bwMinGoalKB'])
-        self.assertEquals(rule['bwMaxLimitKB'], qos_after['bwMaxLimitKB'])
+        self.assertEqual(rule['bwMinGoalKB'], qos_after['bwMinGoalKB'])
+        self.assertEqual(rule['bwMaxLimitKB'], qos_after['bwMaxLimitKB'])
 
         self.printFooter('modify_qos')
 

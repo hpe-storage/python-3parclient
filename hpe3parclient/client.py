@@ -44,6 +44,7 @@ from hpe3parclient import showport_parser
 
 logger = logging.getLogger(__name__)
 
+
 class HPE3ParClient(object):
     """ The 3PAR REST API Client.
 
@@ -535,14 +536,14 @@ class HPE3ParClient(object):
                     option = optional.get(key)
                     if option and option not in [True, False]:
                         # raising exception for junk compression input
-                        ex_desc = "39 - invalid input: wrong type for key "\
-                            "[%s]. Valid values are [True, False]" % key
+                        ex_desc = "39 - invalid input: wrong type for key " \
+                                  "[%s]. Valid values are [True, False]" % key
                         raise exceptions.HTTPBadRequest(ex_desc)
 
                 if optional.get('compression') is True:
                     combination = ['tdvv', 'compression']
                     len_diff = len(set(combination) - set(optional.keys()))
-                    msg = "invalid input: For compressed and deduplicated "\
+                    msg = "invalid input: For compressed and deduplicated " \
                           "volumes both 'compression' and " \
                           "'tdvv' must be specified as true"
                     if len_diff == 1:
@@ -555,8 +556,8 @@ class HPE3ParClient(object):
                             and optional.get('compression') is True:
                         raise exceptions.HTTPBadRequest(msg)
                 else:
-                    msg = "invalid input: For compressed and deduplicated "\
-                          "volumes both 'compression' and "\
+                    msg = "invalid input: For compressed and deduplicated " \
+                          "volumes both 'compression' and " \
                           "'tdvv' must be specified as true"
                     if optional.get('tdvv') is False \
                             and optional.get('compression') is False:
@@ -581,11 +582,11 @@ class HPE3ParClient(object):
                 ex_code = ex.get_code()
                 # INV_INPUT_ONE_REQUIRED => 78
                 if ex_code == 78 and \
-                   ex.get_description() == ex_desc and \
-                   ex.get_ref() == 'tpvv,reduce':
-                    new_ex_desc = "invalid input: Either tpvv must be true "\
-                                  "OR for compressed and deduplicated "\
-                                  "volumes both 'compression' and 'tdvv' "\
+                        ex.get_description() == ex_desc and \
+                        ex.get_ref() == 'tpvv,reduce':
+                    new_ex_desc = "invalid input: Either tpvv must be true " \
+                                  "OR for compressed and deduplicated " \
+                                  "volumes both 'compression' and 'tdvv' " \
                                   "must be specified as true"
                     raise exceptions.HTTPBadRequest(new_ex_desc)
             raise ex
@@ -1014,12 +1015,12 @@ class HPE3ParClient(object):
                     if option and option not in [True, False]:
                         # raising exception for junk compression input
                         ex_desc = "39 - invalid input: wrong type for key " \
-                            "[%s]. Valid values are [True, False]" % key
+                                  "[%s]. Valid values are [True, False]" % key
                         raise exceptions.HTTPBadRequest(ex_desc)
                 if optional.get('compression') is True:
                     combination = ['tdvv', 'compression']
                     len_diff = len(set(combination) - set(optional.keys()))
-                    msg = "invalid input: For compressed and deduplicated "\
+                    msg = "invalid input: For compressed and deduplicated " \
                           "volumes both 'compression' and " \
                           "'tdvv' must be specified as true"
                     if len_diff == 1:
@@ -1032,8 +1033,8 @@ class HPE3ParClient(object):
                             and optional.get('compression') is True:
                         raise exceptions.HTTPBadRequest(msg)
                 else:
-                    msg = "invalid input: For compressed and deduplicated "\
-                          "volumes both 'compression' and "\
+                    msg = "invalid input: For compressed and deduplicated " \
+                          "volumes both 'compression' and " \
                           "'tdvv' must be specified as true"
                     if optional.get('tdvv') is False \
                             and optional.get('compression') is False:
@@ -1064,11 +1065,11 @@ class HPE3ParClient(object):
                 ex_code = ex.get_code()
                 # INV_INPUT_ONE_REQUIRED => 78
                 if ex_code == 78 and \
-                   ex.get_description() == ex_desc and \
-                   ex.get_ref() == 'tpvv,reduce':
-                    new_ex_desc = "invalid input: Either tpvv must be true "\
-                                  "OR for compressed and deduplicated "\
-                                  "volumes both 'compression' and 'tdvv' "\
+                        ex.get_description() == ex_desc and \
+                        ex.get_ref() == 'tpvv,reduce':
+                    new_ex_desc = "invalid input: Either tpvv must be true " \
+                                  "OR for compressed and deduplicated " \
+                                  "volumes both 'compression' and 'tdvv' " \
                                   "must be specified as true."
                     raise exceptions.HTTPBadRequest(new_ex_desc)
             raise ex
@@ -1169,17 +1170,17 @@ class HPE3ParClient(object):
         response, body = self.http.get(uri)
 
         task_type = {1: 'vv_copy', 2: 'phys_copy_resync', 3: 'move_regions',
-            4: 'promote_sv', 5: 'remote_copy_sync', 6: 'remote_copy_reverse',
-            7: 'remote_copy_failover', 8: 'remote_copy_recover',
-            18: 'online_vv_copy'}
+                     4: 'promote_sv', 5: 'remote_copy_sync',
+                     6: 'remote_copy_reverse', 7: 'remote_copy_failover',
+                     8: 'remote_copy_recover', 18: 'online_vv_copy'}
 
         status = {1: 'done', 2: 'active', 3: 'cancelled', 4: 'failed'}
 
         priority = {1: 'high', 2: 'med', 3: 'low'}
 
         for task_obj in body['members']:
-            if(task_obj['name'] == name):
-                if(active and task_obj['status'] != 2):
+            if task_obj['name'] == name:
+                if active and task_obj['status'] != 2:
                     # if active flag is True, but status of task is not True
                     # then it means task got completed/cancelled/failed
                     return None
@@ -1205,7 +1206,7 @@ class HPE3ParClient(object):
                 task_details.append(task_obj['startTime'])
                 task_details.append(task_obj['finishTime'])
 
-                if('priority' in task_obj):
+                if 'priority' in task_obj:
                     value = task_obj['priority']
                     task_details.append(priority[value])
                 else:
@@ -1989,10 +1990,10 @@ class HPE3ParClient(object):
                 for cli_port in expanded_ports:
                     for wsapi_port in body[u'members']:
                         if wsapi_port['portPos']['node'] == \
-                                cli_port['portPos']['node']  \
-                           and wsapi_port['portPos']['slot'] == \
+                                cli_port['portPos']['node'] \
+                                and wsapi_port['portPos']['slot'] == \
                                 cli_port['portPos']['slot'] \
-                           and wsapi_port['portPos']['cardPort'] == \
+                                and wsapi_port['portPos']['cardPort'] == \
                                 cli_port['portPos']['cardPort']:
                             port_parser._merge_dict(wsapi_port, cli_port)
                 body['total'] = len(body['members'])
@@ -2026,7 +2027,7 @@ class HPE3ParClient(object):
             if len(matching_ports) > 1:
                 err = ("Found {} matching ports for vlan tagged iSCSI port "
                        "{}.  There should only be one.")
-                raise exceptions.\
+                raise exceptions. \
                     NoUniqueMatch(err.format(len(matching_ports), port))
 
             if len(matching_ports) == 1:
@@ -2158,14 +2159,16 @@ class HPE3ParClient(object):
         """
         info = {'name': name}
         if optional:
-           if self.primera_supported:
-               for key, value in dict(optional).items():
-                   if key == 'LDLayout':
-                       ldlayout = value
-                       for keys, val in dict(ldlayout).items():
-                           if keys == 'setSize' or (keys == 'RAIDType' and ldlayout.get('RAIDType')==1):
-                               ldlayout.pop(keys)
-           info = self._mergeDict(info, optional)
+            if self.primera_supported:
+                for key, value in dict(optional).items():
+                    if key == 'LDLayout':
+                        ldlayout = value
+                        for keys, val in dict(ldlayout).items():
+                            if keys == 'setSize' or \
+                                    (keys == 'RAIDType' and
+                                     ldlayout.get('RAIDType') == 1):
+                                ldlayout.pop(keys)
+            info = self._mergeDict(info, optional)
 
         response, body = self.http.post('/cpgs', body=info)
         return body
@@ -5078,7 +5081,7 @@ class HPE3ParClient(object):
                     elif optional.get('conversionOperation') == self.TPVV:
                         if 'compression' in optional.keys():
                             optional.pop('compression')
-                    elif optional.get('conversionOperation') ==\
+                    elif optional.get('conversionOperation') == \
                             self.CONVERT_TO_DECO:
                         if 'compression' in optional.keys():
                             optional.pop('compression')

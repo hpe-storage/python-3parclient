@@ -288,7 +288,7 @@ class HPE3ParClientHostTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.cl.createHost(HOST_NAME1, None, fc, optional)
 
         host1 = self.cl.getHost(HOST_NAME1)
-        self.assertEquals(host1['name'], HOST_NAME1)
+        self.assertEqual(host1['name'], HOST_NAME1)
 
         self.printFooter('get_host')
 
@@ -304,7 +304,7 @@ class HPE3ParClientHostTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
         # validate host was created
         host1 = self.cl.getHost(HOST_NAME1)
-        self.assertEquals(host1['name'], HOST_NAME1)
+        self.assertEqual(host1['name'], HOST_NAME1)
 
         # change host name
         mod_request = {'newName': HOST_NAME2}
@@ -312,7 +312,7 @@ class HPE3ParClientHostTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
         # validate host name was changed
         host2 = self.cl.getHost(HOST_NAME2)
-        self.assertEquals(host2['name'], HOST_NAME2)
+        self.assertEqual(host2['name'], HOST_NAME2)
 
         # host 1 name should be history
         self.assertRaises(exceptions.HTTPNotFound, self.cl.getHost, HOST_NAME1)
