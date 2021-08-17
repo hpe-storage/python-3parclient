@@ -11,7 +11,7 @@ with open('README.rst') as f:
 setup(
   name='python-3parclient',
   version=hpe3parclient.version,
-  description="HPE 3PAR HTTP REST Client",
+  description="HPE Alletra 9000 and HPE Primera and HPE 3PAR HTTP REST Client",
   long_description=readme,
   author="Walter A. Boring IV",
   author_email="walter.boring@hpe.com",
