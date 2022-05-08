@@ -4214,6 +4214,34 @@ class HPE3ParClient(object):
         except exceptions.HTTPBadRequest as ex:
             pass
 
+    def createSnapshotOfRemoteCopyGroup(
+            self, name, rcg_name, read_only=False):
+        """Create a snapshot of an existing Remote Copy Group Volume Set.
+
+        :param name: Name of the Snapshot. The vvname pattern is described in
+                     "VV Name Patterns" in the HPE 3PAR Command Line Interface
+                     Reference, which is available at the following
+                     website: http://www.hp.com/go/storage/docs
+
+        :param rcg_name: Name of the remote copy group
+        :type rcg_name: string
+
+        :param read_only: Read-Only
+        :type read_only: bool
+        """
+        cmd = ['createsv', '-rcopy']
+
+        if read_only:
+            cmd.append('-ro')
+
+        cmd.append(name)
+        cmd.append(rcg_name)
+
+        response = self._run(cmd)
+        if response != []:
+            raise exceptions.SSHException(response)
+        return response
+
     def getVolumeSnapshots(self, name, live_test=True):
         """
         Shows all snapshots associated with a given volume.
