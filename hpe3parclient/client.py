@@ -3795,6 +3795,8 @@ class HPE3ParClient(object):
             - RCOPY_GROUP_SECONDARY_DOES_NOT_MATCH_PRIMARY - The remote-copy
             group is in the failover state. Both systems are in the primary
             state.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+            - The target  has Peer Persistence configured which does not support online admission of volumes
         """
         if not useHttpPost:
             parameters = {'action': 1,
