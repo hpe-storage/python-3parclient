@@ -1967,6 +1967,19 @@ class HPE3ParClient(object):
         return vluns
 
     # PORT Methods
+    def _getIscsiVlan(self, nsp):
+        """Get iSCSI VLANs for an iSCSI port
+
+        :param nsp: node slot port Eg. '0:2:1'
+        :type nsp: str
+
+        :returns: list of iSCSI VLANs
+
+        """
+        response, body = self.http.get('/ports/' + nsp + '/iSCSIVlans/')
+
+        return body
+
     def getPorts(self):
         """Get the list of ports on the 3PAR.
 
@@ -1974,29 +1987,23 @@ class HPE3ParClient(object):
 
         """
         response, body = self.http.get('/ports')
+
         # if any of the ports are iSCSI ports and
-        # are vlan tagged (as shown by showport -iscsivlans), then
-        # the port information is merged with the WSAPI
+        # are vlan tagged (as obtained by _getIscsiVlan), then
+        # the vlan information is merged with the
         # returned port information.
-        if self.ssh is not None:
-            if any([port['protocol'] == self.PORT_PROTO_ISCSI and
+        for port in body['members']:
+            if (port['protocol'] == self.PORT_PROTO_ISCSI and
                     'iSCSIPortInfo' in port and
-                    port['iSCSIPortInfo']['vlan'] == 1
-                    for port in body['members']]):
-                iscsi_vlan_data = self._run(['showport', '-iscsivlans'])
-                port_parser = showport_parser.ShowportParser()
-                iscsi_ports = port_parser.parseShowport(iscsi_vlan_data)
-                expanded_ports = self._cloneISCSIPorts(body, iscsi_ports)
-                for cli_port in expanded_ports:
-                    for wsapi_port in body[u'members']:
-                        if wsapi_port['portPos']['node'] == \
-                                cli_port['portPos']['node']  \
-                           and wsapi_port['portPos']['slot'] == \
-                                cli_port['portPos']['slot'] \
-                           and wsapi_port['portPos']['cardPort'] == \
-                                cli_port['portPos']['cardPort']:
-                            port_parser._merge_dict(wsapi_port, cli_port)
-                body['total'] = len(body['members'])
+                    port['iSCSIPortInfo']['vlan'] == 1):
+
+                portPos = port['portPos']
+                nsp_array = [str(portPos['node']), str(portPos['slot']),
+                             str(portPos['cardPort'])]
+                nsp = ":".join(nsp_array)
+                vlan_body = self._getIscsiVlan(nsp)
+                if vlan_body:
+                    port['iSCSIVlans'] = vlan_body['iSCSIVlans']
 
         return body
 
