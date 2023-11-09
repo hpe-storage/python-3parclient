@@ -59,6 +59,8 @@ class HTTPJSONRESTClient(object):
     SESSION_COOKIE_NAME = 'X-Hp3Par-Wsapi-Sessionkey'
     http_log_debug = False
     _logger = logging.getLogger(__name__)
+    _logger.setLevel(logging.INFO)
+    _log_handler = None
 
     # Retry constants
     retry_exceptions = (exceptions.HTTPServiceUnavailable,
@@ -86,19 +88,28 @@ class HTTPJSONRESTClient(object):
         # should be http://<Server:Port>/api/v1
         self.api_url = api_url.rstrip('/')
 
-    def set_debug_flag(self, flag):
-        """
-        This turns on/off http request/response debugging output to console
+    @classmethod
+    def set_debug_flag(cls, flag):
+        """This turns on/off http request/response logs
+
+        By default logs are disabled, even for error messages, enabling debug
+        mode will enable http logs at debug level.
 
         :param flag: Set to True to enable debugging output
         :type flag: bool
 
         """
-        if not HTTPJSONRESTClient.http_log_debug and flag:
-            ch = logging.StreamHandler()
-            HTTPJSONRESTClient._logger.setLevel(logging.DEBUG)
-            HTTPJSONRESTClient._logger.addHandler(ch)
-            HTTPJSONRESTClient.http_log_debug = True
+        flag = bool(flag)  # In case we don't receive a bool instance
+        if flag != cls.http_log_debug:
+            if flag:
+                if cls._log_handler is None:
+                    cls._log_handler = logging.StreamHandler()
+                cls._logger.addHandler(cls._log_handler)
+                cls._logger.setLevel(logging.DEBUG)
+            else:
+                cls._logger.setLevel(logging.INFO)
+                cls._logger.removeHandler(cls._log_handler)
+            cls.http_log_debug = flag
 
     def authenticate(self, user, password, optional=None):
         """
