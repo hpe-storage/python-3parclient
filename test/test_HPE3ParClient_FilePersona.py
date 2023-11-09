@@ -408,7 +408,7 @@ class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         # Validate contents
         if fpgname is not None:
             success_message = None
-            not_found_message = 'Invalid VFS %s\r' % vfsname
+            not_found_message = 'Invalid VFS %s' % vfsname
             self.assertIn(message, (success_message, not_found_message))
         elif total == 0:
             self.assertEqual('', message)
@@ -456,7 +456,7 @@ class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
     @print_header_and_footer
     def test_getfpg_bogus(self):
         result = self.cl.getfpg('bogus1', 'bogus2', 'bogus3')
-        expected_message = 'File Provisioning Group: bogus1 not found\r'
+        expected_message = 'File Provisioning Group: bogus1 not found'
         self.assertEqual(expected_message, result['message'])
         self.assertEqual(0, result['total'])
         self.assertEqual([], result['members'])
@@ -474,7 +474,7 @@ class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         bogus_cpgname = 'thiscpgdoesnotexist'
         result = self.cl.createfpg(bogus_cpgname, fpgname, '1X')
         self.assertEqual(
-            'Error: Invalid CPG name: %s\r' % bogus_cpgname,
+            'Error: Invalid CPG name: %s' % bogus_cpgname,
             result[0])
 
         self.validate_fpg(expected_count=fpg_count)
@@ -498,7 +498,7 @@ class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
         result = self.cl.createfpg(cpgname, fpgname, '1X')
         self.assertEqual(
-            'The suffix, X, for size is invalid.\r', result[0])
+            'The suffix, X, for size is invalid.', result[0])
 
         self.validate_fpg(expected_count=fpg_count)
 
@@ -552,7 +552,7 @@ class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
         # Create same FPG again to test createfpg already exists error
         result = self.cl.createfpg(cpgname, fpgname, '1T', wait=True)
-        expected = ('Error: FPG %s already exists\r' %
+        expected = ('Error: FPG %s already exists' %
                     fpgname)
         self.assertEqual(expected, result[0])
         self.validate_fpg(fpgname=fpgname, expected_count=fpg_count + 1)
@@ -614,7 +614,7 @@ class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
                                    fpg=fpgname,
                                    bgrace='bogus', igrace='60',
                                    wait=True)
-        self.assertEqual('bgrace value should be between 1 and 2147483647\r',
+        self.assertEqual('bgrace value should be between 1 and 2147483647',
                          result[0])
 
     @unittest.skipIf(is_live_test() and skip_file_persona(), SKIP_MSG)
@@ -627,7 +627,7 @@ class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
                                    fpg=fpgname,
                                    bgrace='60', igrace='bogus',
                                    wait=True)
-        self.assertEqual('igrace value should be between 1 and 2147483647\r',
+        self.assertEqual('igrace value should be between 1 and 2147483647',
                          result[0])
 
     def get_fsips(self, fpgname, vfsname):
@@ -654,7 +654,7 @@ class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         result = self.cl.getfsip(vfsname, fpg='bogus')
         self.debug_print(result)
         expected = {
-            'message': 'File Provisioning Group: bogus not found\r',
+            'message': 'File Provisioning Group: bogus not found',
             'total': 0,
             'members': []
         }
@@ -662,7 +662,7 @@ class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         result = self.cl.getfsip('bogus', fpg=fpgname)
         self.debug_print(result)
         expected = {
-            'message': 'Invalid VFS bogus\r',
+            'message': 'Invalid VFS bogus',
             'total': 0,
             'members': []
         }
@@ -736,13 +736,13 @@ class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
 
         # Test error messages with bogus names
         result = self.cl.createfsnap('bogus', fstore, tag, fpg=fpgname)
-        self.assertEqual(['Virtual Server bogus does not exist on FPG %s\r' %
+        self.assertEqual(['Virtual Server bogus does not exist on FPG %s' %
                           fpgname], result)
         result = self.cl.createfsnap(vfsname, 'bogus', tag, fpg=fpgname)
-        self.assertEqual(['File Store bogus does not exist on FPG %s\r' %
+        self.assertEqual(['File Store bogus does not exist on FPG %s' %
                           fpgname], result)
         result = self.cl.createfsnap(vfsname, fstore, tag, fpg='bogus')
-        self.assertEqual(['FPG bogus not found\r'], result)
+        self.assertEqual(['FPG bogus not found'], result)
 
         result = self.cl.getfsnap('bogus',
                                   fpg=fpgname, vfs=vfsname, fstore=fstore,
@@ -754,7 +754,7 @@ class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         expected = {
             'members': [],
             'message': 'SnapShot bogus does not exist on FPG %s path '
-                       '%s/%s\r' % (fpgname, vfsname, fstore),
+                       '%s/%s' % (fpgname, vfsname, fstore),
             'total': 0}
         self.assertEqual(expected, result)
 
@@ -797,7 +797,7 @@ class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.assertEqual([], result)
 
         success = []
-        running = ['Reclamation already running on %s\r' % fpgname]
+        running = ['Reclamation already running on %s' % fpgname]
         expected_in = (success, running)
         # After first one expect 'running', but to avoid timing issues in
         # the test results accept either success or running.
@@ -833,14 +833,14 @@ class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.assertEqual([], result)
 
         result = self.cl.startfsnapclean(fpgname, resume=True)
-        self.assertEqual(['No reclamation task running on FPG %s\r' % fpgname],
+        self.assertEqual(['No reclamation task running on FPG %s' % fpgname],
                          result)
 
     def remove_fstore(self, fpgname, vfsname, fstore):
         self.cl.removefsnap(vfsname, fstore, fpg=fpgname)
         result = self.cl.startfsnapclean(fpgname, reclaimStrategy='maxspeed')
         success = []
-        running = ['Reclamation already running on %s\r' % fpgname]
+        running = ['Reclamation already running on %s' % fpgname]
         expected_in = (success, running)
         self.assertIn(result, expected_in)
 
@@ -855,7 +855,7 @@ class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
                                       fpg=fpgname, fstore=share_name)
         if protocol == 'nfs':
             expected = ['%s Delete Export failed with error: '
-                        'share %s does not exist\r' %
+                        'share %s does not exist' %
                         (protocol.upper(), share_name)]
             self.assertEqual(expected, result)
         else:
@@ -869,9 +869,9 @@ class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         if protocol == 'nfs':
             expected = [
                 '%s Delete Export failed with error: '
-                'File Store bogus was not found\r' % protocol.upper()]
+                'File Store bogus was not found' % protocol.upper()]
         else:
-            expected = ['Could not find Store=bogus\r']
+            expected = ['Could not find Store=bogus']
         self.assertEqual(expected, result)
 
     @unittest.skipIf(skip_file_persona(), SKIP_MSG)
@@ -890,7 +890,7 @@ class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         result = self.cl.createvfs('127.0.0.2', '255.255.255.0', vfsname,
                                    fpg=fpgname,
                                    wait=True)
-        expected = ('VFS "%s" already exists within FPG %s\r' %
+        expected = ('VFS "%s" already exists within FPG %s' %
                     (vfsname, fpgname))
         self.assertEqual(expected, result[0])
         self.validate_vfs(vfsname=vfsname, fpgname=fpgname,
@@ -985,12 +985,12 @@ class HPE3ParFilePersonaClientTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
         self.assertRaises(AttributeError, self.cl.removevfs, None)
         result = self.cl.removevfs('bogus')
         vfs_not_found = ('Virtual file server bogus was not found in any '
-                         'existing file provisioning group.\r')
+                         'existing file provisioning group.')
         self.assertEqual(vfs_not_found, result[0])
         self.assertRaises(AttributeError, self.cl.removevfs, None, fpg='bogus')
 
         result = self.cl.removevfs('bogus', fpg='bogus')
-        fpg_not_found = 'File Provisioning Group: bogus not found\r'
+        fpg_not_found = 'File Provisioning Group: bogus not found'
         self.assertEqual(fpg_not_found, result[0])
 
 # testing

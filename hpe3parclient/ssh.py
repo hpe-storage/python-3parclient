@@ -208,52 +208,54 @@ class HPE3PARSSHClient(object):
         in the output so that it knows what it is stripping (or else it
         raises an exception).
         """
-
-        # Keep output lines after the 'exit'.
-        # 'exit' is the last of the stdin.
+        # Search for the prompt.  It may or may not be the first line, because
+        # on fast connections we get a "dump" of stdin with all the commands
+        # we've sent, but we don't on slow connections.
         for i, line in enumerate(output):
-            if line == 'exit':
+            prompt_pct = line.find('% setclienv csvtable 1')
+            if prompt_pct >= 0:
+                prompt = line[:prompt_pct + 1] + ' '
                 output = output[i + 1:]
                 break
         else:
-            reason = "Did not find 'exit' in output."
-            HPE3PARSSHClient.raise_stripper_error(reason, output)
-
-        if not output:
-            reason = "Did not find any output after 'exit'."
-            HPE3PARSSHClient.raise_stripper_error(reason, output)
-
-        # The next line is prompt plus setclienv command.
-        # Use this to get the prompt string.
-        prompt_pct = output[0].find('% setclienv csvtable 1')
-        if prompt_pct < 0:
             reason = "Did not find '% setclienv csvtable 1' in output."
             HPE3PARSSHClient.raise_stripper_error(reason, output)
-        prompt = output[0][0:prompt_pct + 1]
-        del output[0]
 
-        # Next find the prompt plus the command.
+        # Some systems return additional empty prompts, others return an
+        # extra \r after commands.  In both cases this prevents us from finding
+        # the output delimiters, and makes us return useless data to caller, so
+        # fix them.
+        output = [line.rstrip('\r\n') for line in output if line != prompt]
+
+        # Output starts right after the command we sent.
         # It might be broken into multiple lines, so loop and
         # append until we find the whole prompt plus command.
         command_string = ' '.join(cmd)
         if re.match('|'.join(tpd_commands), command_string):
             escp_command_string = command_string.replace('"', '\\"')
             command_string = "Tpd::rtpd " + '"' + escp_command_string + '"'
-        seek = ' '.join((prompt, command_string))
+        seek = prompt + command_string
         found = ''
         for i, line in enumerate(output):
-            found = ''.join((found, line.rstrip('\r\n')))
+            found = found + line
             if found == seek:
-                # Found the whole thing.  Use the rest as output now.
-                output = output[i + 1:]
+                # Output is right after this line, drop everything before it
+                del output[:i + 1]
                 break
         else:
             HPE3PARSSHClient._logger.debug("Command: %s" % command_string)
             reason = "Did not find match for command in output"
             HPE3PARSSHClient.raise_stripper_error(reason, output)
 
-        # Always strip the last 2
-        return output[:len(output) - 2]
+        # Output stops right before exit command is executed
+        try:
+            exit_index = output.index(prompt + 'exit')
+            del output[exit_index:]
+        except ValueError:
+            reason = "Did not find 'exit' in output."
+            HPE3PARSSHClient.raise_stripper_error(reason, output)
+
+        return output
 
     def run(self, cmd, multi_line_stripper=False):
         """Runs a CLI command over SSH, without doing any result parsing."""
