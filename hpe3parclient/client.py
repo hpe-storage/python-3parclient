@@ -267,9 +267,13 @@ class HPE3ParClient(object):
         that use SSH instead of REST HTTP.
 
         """
-        self.ssh = ssh.HPE3PARSSHClient(ip, login, password, port,
-                                        conn_timeout, privatekey,
-                                        **kwargs)
+        try:
+            self.ssh = ssh.HPE3PARSSHClient(ip, login, password, port,
+                                            conn_timeout, privatekey,
+                                            **kwargs)
+        except Exception as ex:
+            # The exception details are already logged in ssh.py
+            pass
 
     def _run(self, cmd):
         if self.ssh is None:
@@ -4284,8 +4288,7 @@ class HPE3ParClient(object):
 
     def getCPGStatData(self, name, interval='daily', history='7d'):
         """
-        Requests CPG performance data at a sampling rate (interval) for a
-        given length of time to sample (history)
+        Requests CPG performance data at a sampling rate (interval)
 
         :param name: a valid CPG name
         :type name: str
@@ -4296,48 +4299,36 @@ class HPE3ParClient(object):
         :type history: str
 
         :returns: dict
-
-        :raises: :class:`~hpe3parclient.exceptions.SrstatldException`
-            - srstatld gives invalid output
         """
+
         if interval not in ['daily', 'hourly']:
             raise exceptions.ClientException("Input interval not valid")
-        if not re.compile("(\d*\.\d+|\d+)[mhd]").match(history):
-            raise exceptions.ClientException("Input history not valid")
-        cmd = ['srstatld', '-cpg', name, '-' + interval, '-btsecs',
-               '-' + history]
-        output = self._run(cmd)
-        if not isinstance(output, list):
-            raise exceptions.SrstatldException("srstatld output not a list")
-        elif len(output) < 4:
-            raise exceptions.SrstatldException("srstatld output list too "
-                                               "short")
-        elif len(output[-1].split(',')) < 16:
-            raise exceptions.SrstatldException("srstatld output last line "
-                                               "invalid")
-        else:
-            return self._format_srstatld_output(output)
 
-    def _format_srstatld_output(self, out):
-        """
-        Formats the output of the 3PAR CLI command srstatld
-        Takes the total read/write value when possible
+        uri = 'systemreporter/vstime/cpgstatistics/' + interval
 
-        :param out: the output of srstatld
-        :type out: list
+        output = {}
+        try:
+            response, body = self.http.get(uri)
+            cpg_details = body['members'][-1]
 
-        :returns: dict
-        """
-        line = out[-1].split(',')
-        formatted = {
-            'throughput': float(line[4]),
-            'bandwidth': float(line[7]),
-            'latency': float(line[10]),
-            'io_size': float(line[13]),
-            'queue_length': float(line[14]),
-            'avg_busy_perc': float(line[15])
-        }
-        return formatted
+            output = {
+                'throughput': float(cpg_details['throughputKByteSec']),
+                'bandwidth': float(cpg_details['bwLimit']),
+                'latency': float(cpg_details['latency']),
+                'io_size': float(cpg_details['IOSizeKB']),
+                'queue_length': float(cpg_details['queueLength']),
+                'avg_busy_perc': float(cpg_details['busyPct'])
+            }
+        except Exception as ex:
+            output = {
+                'throughput': 0.0,
+                'bandwidth': 0.0,
+                'latency': 0.0,
+                'io_size': 0.0,
+                'queue_length': 0.0,
+                'avg_busy_perc': 0.0
+            }
+        return output
 
     def getSnapshotsOfVolume(self, snapcpgName, volName):
         """Gets list of snapshots of a volume.
