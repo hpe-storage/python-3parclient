@@ -4304,7 +4304,7 @@ class HPE3ParClient(object):
         if interval not in ['daily', 'hourly']:
             raise exceptions.ClientException("Input interval not valid")
 
-        uri = 'systemreporter/vstime/cpgstatistics/' + interval
+        uri = '/systemreporter/vstime/cpgstatistics/' + interval
 
         output = {}
         try:
