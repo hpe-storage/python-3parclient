@@ -76,6 +76,7 @@ class HPE3ParClient(object):
     PORT_PROTO_FCOE = 3
     PORT_PROTO_IP = 4
     PORT_PROTO_SAS = 5
+    PORT_PROTO_NVME = 6
 
     PORT_STATE_READY = 4
     PORT_STATE_SYNC = 5
@@ -209,51 +210,11 @@ class HPE3ParClient(object):
             timeout=timeout, suppress_ssl_warnings=suppress_ssl_warnings)
         api_version = None
         self.ssh = None
-        self.vlun_query_supported = False
+        self.vlun_query_supported = True
         self.primera_supported = False
-        self.compression_supported = False
+        self.compression_supported = True
 
         self.debug_rest(debug)
-
-        try:
-            api_version = self.getWsApiVersion()
-        except exceptions as ex:
-            ex_desc = ex.get_description()
-
-            if (ex_desc and ("Unable to find the server at" in ex_desc or
-                             "Only absolute URIs are allowed" in ex_desc)):
-                raise exceptions.HTTPBadRequest(ex_desc)
-            if (ex_desc and "SSL Certificate Verification Failed" in ex_desc):
-                raise exceptions.SSLCertFailed()
-            else:
-                msg = ('Error: \'%s\' - Error communicating with the 3PAR WS. '
-                       'Check proxy settings. If error persists, either the '
-                       '3PAR WS is not running or the version of the WS is '
-                       'not supported.') % ex_desc
-                raise exceptions.UnsupportedVersion(msg)
-
-        # Note the build contains major, minor, maintenance and build
-        # e.g. 30102422 is 3 01 02 422
-        # therefore all we need to compare is the build
-        if (api_version is None or
-                api_version['build'] < self.HPE3PAR_WS_MIN_BUILD_VERSION):
-            raise exceptions.UnsupportedVersion(
-                'Invalid 3PAR WS API, requires version, %s' %
-                self.HPE3PAR_WS_MIN_BUILD_VERSION_DESC)
-
-        # Check for VLUN query support.
-        if (api_version['build'] >=
-                self.HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY):
-            self.vlun_query_supported = True
-        if (api_version['build'] >=
-                self.HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSION):
-            self.primera_supported = True
-
-        current_wsapi_version = '{}.{}.{}'.format(api_version.get('major'),
-                                                  api_version.get('minor'),
-                                                  api_version.get('revision'))
-        if current_wsapi_version >= self.WSAPI_MIN_VERSION_COMPRESSION_SUPPORT:
-            self.compression_supported = True
 
     def is_primera_array(self):
         return self.primera_supported
@@ -295,6 +256,12 @@ class HPE3ParClient(object):
             self.http.set_url(host_url[0])
             # get the api version
             response, body = self.http.get('/api')
+
+            api_version = body
+            if (api_version['build'] >=
+                    self.HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSION):
+                self.primera_supported = True
+
             return body
         finally:
             # reset the url
@@ -1643,7 +1610,8 @@ class HPE3ParClient(object):
         response, body = self.http.get('/hosts/%s' % name)
         return body
 
-    def createHost(self, name, iscsiNames=None, FCWwns=None, optional=None):
+    def createHost(self, name, iscsiNames=None, FCWwns=None,
+                   nqn=None, optional=None):
         """Create a new Host entry.
 
         :param name: The name of the host
@@ -1652,6 +1620,8 @@ class HPE3ParClient(object):
         :type name: array
         :param FCWwns: Array if Fibre Channel World Wide Names
         :type name: array
+        :param nqn: String if NVMe Qualified Name
+        :type name: str
         :param optional: The optional stuff
         :type optional: dict
 
@@ -1716,6 +1686,10 @@ class HPE3ParClient(object):
         if FCWwns:
             fc = {'FCWWNs': FCWwns}
             info = self._mergeDict(info, fc)
+
+        if nqn:
+            nvme = {'NQN': nqn}
+            info = self._mergeDict(info, nvme)
 
         if optional:
             info = self._mergeDict(info, optional)
