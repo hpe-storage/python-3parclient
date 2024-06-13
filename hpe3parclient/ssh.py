@@ -55,6 +55,7 @@ class HPE3PARSSHClient(object):
     log_debug = False
     _logger = logging.getLogger(__name__)
     _logger.setLevel(logging.INFO)
+    _log_handler = None
 
     def __init__(self, ip, login, password,
                  port=22, conn_timeout=None, privatekey=None,
@@ -151,19 +152,28 @@ class HPE3PARSSHClient(object):
         if self.ssh:
             self.ssh.close()
 
-    def set_debug_flag(self, flag):
-        """
-        This turns on ssh debugging output to console
+    @classmethod
+    def set_debug_flag(cls, flag):
+        """This turns on/off log output for ssh commands.
 
-        :param flag: Set to True to enable debugging output
+        By default logs are disabled, even for error messages, enabling debug
+        mode will enable ssh logs at debug level.
+
+        :param flag: Whether we want to have logs or not
         :type flag: bool
 
         """
-        if not HPE3PARSSHClient.log_debug and flag:
-            ch = logging.StreamHandler()
-            self._logger.setLevel(logging.DEBUG)
-            self._logger.addHandler(ch)
-            HPE3PARSSHClient.log_debug = True
+        flag = bool(flag)  # In case we don't receive a bool instance
+        if flag != cls.log_debug:
+            if flag:
+                if cls._log_handler is None:
+                    cls._log_handler = logging.StreamHandler()
+                cls._logger.addHandler(cls._log_handler)
+                cls._logger.setLevel(logging.DEBUG)
+            else:
+                cls._logger.setLevel(logging.INFO)
+                cls._logger.removeHandler(cls._log_handler)
+            cls.log_debug = flag
 
     @staticmethod
     def sanitize_cert(output_list):
