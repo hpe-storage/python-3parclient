@@ -304,6 +304,8 @@ class HTTPJSONRESTClient(object):
         try:
             if self.auth_try != 1:
                 self._reauth()
+                if method == 'DELETE' and url.startswith('/credentials/'):
+                    url = '/credentials/%s' % self.session_key
                 resp, body = self._time_request(self.api_url + url, method,
                                                 **kwargs)
                 return resp, body
