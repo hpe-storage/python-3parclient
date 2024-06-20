@@ -94,4 +94,5 @@
       .. automethod:: synchronizeRemoteCopyGroup
       .. automethod:: recoverRemoteCopyGroupFromDisaster
       .. automethod:: toggleRemoteCopyConfigMirror
+      .. automethod:: createSnapshotOfRemoteCopyGroup
       .. automethod:: getVolumeSnapshots
