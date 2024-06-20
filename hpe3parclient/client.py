@@ -1329,13 +1329,20 @@ class HPE3ParClient(object):
                 'comment': "some comment",
                 'readOnly': True,           # Read Only
                 'expirationHours': 36,      # time from now to expire
-                'retentionHours': 12        # time from now to expire
+                'retentionHours': 12,       # time from now to expire
+                'addToSet': "",             # The name of the volume set to which the system
+                                            # adds your created snapshots.
+                                            # If does not exist, it will be created.
+                'syncSnapRcopy': False      # When this is set to true, synchronous snapshots are
+                                            # taken of a volume in a remote copy group.
             }
 
         :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
             - NON_EXISTENT_VOL - The volume does not exist
         :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - PERM_DENIED - Permission denied
+        :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
+            - INV_OPERATION_VV_READONLY_RCOPY - syncSnapRcopy can only be used in the creation of read-only snapshots
 
         """
         parameters = {'name': name}
@@ -1722,22 +1729,22 @@ class HPE3ParClient(object):
                 'persona': 1,                   # ID of the persona to modify
                                                 # the host's persona to.
                 'descriptors':
-                    {'location': 'earth',       # The host's location
-                     'IPAddr': '10.10.10.10',   # The host's IP address
-                     'os': 'linux',             # The operating system running
-                                                # on the host.
-                     'model': 'ex',             # The host's model
-                     'contact': 'Smith',        # The host's owner and contact
-                     'comment': 'Joes box'}     # Additional host information
-                'chapOperation': HOST_EDIT_ADD, # Add or remove
+                    {'location': 'earth',            # The host's location
+                     'IPAddr': '10.10.10.10',        # The host's IP address
+                     'os': 'linux',                  # The operating system running
+                                                     # on the host.
+                     'model': 'ex',                  # The host's model
+                     'contact': 'Smith',             # The host's owner and contact
+                     'comment': 'Joes box'}          # Additional host information
+                'chapOperation': HOST_EDIT_ADD,      # Add or remove
                 'chapOperationMode': CHAP_INITIATOR, # Initator or target
-                'chapName': 'MyChapName',       # The chap name
-                'chapSecret': 'xyz',            # The chap secret for the host
-                                                # or the target
-                'chapSecretHex': False,         # If True, the chapSecret is
-                                                # treated as Hex.
-                'chapRemoveTargetOnly': True    # If True, then remove target
-                                                # chap only
+                'chapName': 'MyChapName',            # The chap name
+                'chapSecret': 'xyz',                 # The chap secret for the host
+                                                     # or the target
+                'chapSecretHex': False,              # If True, the chapSecret is
+                                                     # treated as Hex.
+                'chapRemoveTargetOnly': True         # If True, then remove target
+                                                     # chap only
             }
 
         :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
@@ -2442,7 +2449,7 @@ class HPE3ParClient(object):
         :param comment: the comment for on the vv set
         :type comment: str
         :param setmembers: the vv to add to the set, the existence of the vv
-        will not be checked
+                           will not be checked
         :type setmembers: array
 
         :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
@@ -2625,8 +2632,14 @@ class HPE3ParClient(object):
                                             # set, next by default
                 'comment': "some comment",
                 'readOnly': True,           # Read Only
+                'match': False,             # By default, all snapshots are created read-write.
+                                            # Match the read-only or read-write setting of parent.
+                                            # Do not combine the readOnly and match options.
                 'expirationHours': 36,      # time from now to expire
-                'retentionHours': 12        # time from now to expire
+                'retentionHours': 12,       # time from now to expire
+                'addToSet': ""              # The name of the volume set to which the system
+                                            # adds your created snapshots.
+                                            # If does not exist, it will be created.
             }
 
         :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
@@ -3188,10 +3201,12 @@ class HPE3ParClient(object):
     def getRemoteCopyGroupVolumes(self, remoteCopyGroupName):
         """
         Returns information on all volumes in a Remote Copy Groups
-         :param remoteCopyGroupName: the remote copy group name
-        :type name: str
-         :returns: list of volumes in a Remote Copy Groups
-         """
+
+        :param remoteCopyGroupName: the remote copy group name
+        :type remoteCopyGroupName: str
+
+        :returns: list of volumes in a Remote Copy Groups
+        """
         response, body = self.http.get(
             '/remotecopygroups/%s/volumes' % (remoteCopyGroupName)
         )
@@ -3200,12 +3215,14 @@ class HPE3ParClient(object):
     def getRemoteCopyGroupVolume(self, remoteCopyGroupName, volumeName):
         """
         Returns information on one volume of a Remote Copy Group
-         :param remoteCopyGroupName: the remote copy group name
-        :type name: str
+
+        :param remoteCopyGroupName: the remote copy group name
+        :type remoteCopyGroupName: str
         :param volumeName: the remote copy group name
-        :type name: str
-         :returns: RemoteVolume
-         """
+        :type volumeName: str
+
+        :returns: RemoteVolume
+        """
         response, body = self.http.get(
             '/remotecopygroups/%s/volumes/%s' %
             (remoteCopyGroupName, volumeName)
@@ -3236,7 +3253,7 @@ class HPE3ParClient(object):
                                                # 1 - The remote-copy group mode
                                                #     is synchronous.
                                                # 2 - The remote-copy group mode
-                                               #     is periodic.
+                                               #     is periodic. Deprecated, use 3
                                                # 3 - The remote-copy group mode
                                                #     is periodic.
                                                # 4 - Remote-copy group mode is
@@ -3763,6 +3780,8 @@ class HPE3ParClient(object):
             - RCOPY_GROUP_SECONDARY_DOES_NOT_MATCH_PRIMARY - The remote-copy
             group is in the failover state. Both systems are in the primary
             state.
+        :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
+            - The target  has Peer Persistence configured which does not support online admission of volumes
         """
         if not useHttpPost:
             parameters = {'action': 1,
@@ -4056,25 +4075,27 @@ class HPE3ParClient(object):
         """
         Recovers a remote copy group from a disaster
 
+        The action may be any of values 6 through 11:
+        
+            * RC_ACTION_CHANGE_DIRECTION - Changes the current
+                direction of the remote-copy groups.
+            * RC_ACTION_CHANGE_TO_PRIMARY - Changes the secondary
+                groups to primary groups on the active system.
+            * RC_ACTION_MIGRATE_GROUP - Migrates the remote-copy
+                group from the primary system to the secondary system
+                without impacting I/O.
+            * RC_ACTION_CHANGE_TO_SECONDARY - Changes the primary
+                remote-copy group on the backup system to the
+                secondary remote-copy group.
+            * RC_ACTION_CHANGE_TO_NATURUAL_DIRECTION - Changes all
+                remote-copy groups to their natural direction and
+                starts them.
+            * RC_ACTION_OVERRIDE_FAIL_SAFE - Overrides the failsafe
+                state that is applied to the remote-copy group.
+
         :param name: Name of the remote copy group
         :type name: string
         :param action: Specifies the action to be taken on the specified group.
-                       The action may be any of values 6 through 11:
-                       * RC_ACTION_CHANGE_DIRECTION - Changes the current
-                       direction of the remote-copy groups.
-                       * RC_ACTION_CHANGE_TO_PRIMARY - Changes the secondary
-                       groups to primary groups on the active system.
-                       * RC_ACTION_MIGRATE_GROUP - Migrates the remote-copy
-                       group from the primary system to the secondary system
-                       without impacting I/O.
-                       * RC_ACTION_CHANGE_TO_SECONDARY - Changes the primary
-                       remote-copy group on the backup system to the
-                       secondary remote-copy group.
-                       * RC_ACTION_CHANGE_TO_NATURUAL_DIRECTION - Changes all
-                       remote-copy groups to their natural direction and
-                       starts them.
-                       * RC_ACTION_OVERRIDE_FAIL_SAFE - Overrides the failsafe
-                       state that is applied to the remote-copy group.
         :type action: int
         :param optional: dict of other optional items
         :type optional: dict
@@ -4329,6 +4350,7 @@ class HPE3ParClient(object):
 
     def getFlashCache(self):
         """Get information about flash cache on the 3Par array.
+
         :returns: list of Hosts
         """
         response, body = self.http.get('/flashcache')
@@ -4339,10 +4361,11 @@ class HPE3ParClient(object):
 
         :param sizeInGib: Specifies the node pair size of the Flash Cache on
                           the system.
-        :type: int
-        :param: mode    : Simulator: 1
+        :type sizeInGib:  int
+        :param mode:      Simulator: 1
                           Real: 2 (default)
-        :type: int
+        :type mode:       int
+
         :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
             - NO_SPACE - Not enough space is available for the operation.
         :raises: :class:`~hpe3parclient.exceptions.HTTPBadRequest`
@@ -4370,6 +4393,7 @@ class HPE3ParClient(object):
 
     def deleteFlashCache(self):
         """Deletes an existing Flash Cache
+
         :raises: :class:`~hpe3parclient.exceptions.HTTPForbidden`
             - FLASH_CACHE_IS_BEING_REMOVED - Unable to delete the
             Flash Cache, the Flash Cache is being removed.
@@ -4383,8 +4407,9 @@ class HPE3ParClient(object):
 
     def resyncPhysicalCopy(self, volume_name):
         """Resynchronizes a physical copy.
-        :param name - The name of the volume
-        :type - string
+
+        :param volume_name: The name of the volume
+        :type volume_name: string
         """
         info = {'action': self.RESYNC_PHYSICAL_COPY}
         response = self.http.put("/volumes/%s" % (volume_name), body=info)
@@ -4393,12 +4418,13 @@ class HPE3ParClient(object):
     def admitRemoteCopyLinks(
             self, targetName, source_port, target_port_wwn_or_ip):
         """Adding remote copy link from soure to target.
-        :param targetName - The name of target system
-        :type - string
-        :source_port - Source ethernet/Fibre channel port
-        :type- string
-        :target_port_wwn_or_ip- Target system's peer port WWN/IP
-        :type- string
+
+        :param targetName: The name of target system
+        :type targetName: string
+        :param source_port: Source ethernet/Fibre channel port
+        :type source_port: string
+        :param target_port_wwn_or_ip: Target system's peer port WWN/IP
+        :type target_port_wwn_or_ip: string
         """
         source_target_port_pair = source_port + ':' + target_port_wwn_or_ip
 
@@ -4411,12 +4437,13 @@ class HPE3ParClient(object):
     def dismissRemoteCopyLinks(
             self, targetName, source_port, target_port_wwn_or_ip):
         """Dismiss remote copy link from soure to target.
-        :param targetName - The name of target system
-        :type - string
-        :source_port - Source ethernet/Fibre channel port
-        :type- string
-        :target_port_wwn_or_ip- Target system's peer port WWN/IP
-        :type- string
+
+        :param targetName: The name of target system
+        :type targetName: string
+        :param source_port: Source ethernet/Fibre channel port
+        :type source_port: string
+        :param target_port_wwn_or_ip: Target system's peer port WWN/IP
+        :type target_port_wwn_or_ip: string
         """
         source_target_port_pair = source_port + ':' + target_port_wwn_or_ip
 
@@ -4428,7 +4455,6 @@ class HPE3ParClient(object):
 
     def startrCopy(self):
         """Starting remote copy service
-        :param No
         """
         cmd = ['startrcopy']
         response = self._run(cmd)
@@ -4438,8 +4464,9 @@ class HPE3ParClient(object):
 
     def rcopyServiceExists(self):
         """Checking remote copy service status.
-        :returns: True if remote copy service status is 'Started'
-        :         False if remote copy service status is 'Stopped'
+
+        :returns: `True` if remote copy service status is 'Started'
+                  `False` if remote copy service status is 'Stopped'
         """
         cmd = ['showrcopy']
         response = self._run(cmd)
@@ -4451,6 +4478,7 @@ class HPE3ParClient(object):
     def getRemoteCopyLink(self, link_name):
         """
         Querying specific remote copy link
+
         :returns: Specific remote copy link info
         """
         response, body = self.http.get('/remotecopylinks/%s' % link_name)
@@ -4458,14 +4486,16 @@ class HPE3ParClient(object):
 
     def rcopyLinkExists(self, targetName, local_port, target_system_peer_port):
         """Checking remote copy link from soure to target.
-        :param targetName - The name of target system
-        :type - string
-        :source_port - Source ethernet/Fibre channel port
-        :type- string
-        :target_port_wwn_or_ip- Target system's peer port WWN/IP
-        :type- string
-        :returns: True if remote copy link exists
-        :         False if remote copy link doesn't exist
+
+        :param targetName: The name of target system
+        :type targetName: string
+        :param local_port: Source ethernet/Fibre channel port
+        :type local_port: string
+        :param target_system_peer_port: Target system's peer port WWN/IP
+        :type target_system_peer_port: string
+
+        :returns: `True` if remote copy link exists
+                  `False` if remote copy link doesn't exist
         """
         cmd = ['showrcopy', 'links']
         response = self._run(cmd)
@@ -4481,14 +4511,15 @@ class HPE3ParClient(object):
     def admitRemoteCopyTarget(self, targetName, mode, remote_copy_group_name,
                               optional=None):
         """Adding target to remote copy group
-        :param targetName - The name of target system
-        :type - string
-        :mode - synchronization mode
-        :type - string
-        :remote_copy_group_name
-        :type - string
-        :optional
-        :type - dict
+
+        :param targetName: The name of target system
+        :type targetName: string
+        :param mode: synchronization mode
+        :type mode: string
+        :param remote_copy_group_name:
+        :type remote_copy_group_name: string
+        :param optional
+        :type optional: dict
 
         .. code-block:: python
 
@@ -4524,10 +4555,11 @@ class HPE3ParClient(object):
 
     def dismissRemoteCopyTarget(self, targetName, remote_copy_group_name):
         """Removing target from remote copy group
-        :param targetName - The name of target system
-        :type - string
-        :remote_copy_group_name
-        :type - string
+
+        :param targetName: The name of target system
+        :type targetName: string
+        :param remote_copy_group_name:
+        :type remote_copy_group_name: string
         """
         option = '-f'
         cmd = ['dismissrcopytarget', option, targetName,
@@ -4539,14 +4571,15 @@ class HPE3ParClient(object):
                 return response
         raise exceptions.SSHException(response)
 
-    def targetInRemoteCopyGroupExists(
-            self, target_name, remote_copy_group_name):
+    def targetInRemoteCopyGroupExists(self, target_name, remote_copy_group_name):
         """Determines whether target is present in remote copy group.
-         :param name: target_name
-        :type name: str
-        :remote_copy_group_name
-        :type key: str
-         :returns: bool
+
+        :param target_name: The name of target system
+        :type target_name: string
+        :param remote_copy_group_name:
+        :type remote_copy_group_name: string
+
+        :returns: bool
          """
         try:
             contents = self.getRemoteCopyGroup(remote_copy_group_name)
@@ -4563,12 +4596,14 @@ class HPE3ParClient(object):
         Determines whether all volumes syncStatus is synced or not
         when remote copy group status is started. If all volumes
         syncStatus is 'synced' then it will return true else false
-        :param remote_copy_group_name - Remote copy group name
-        :type remote_copy_group_name: str
-        :return: True: If remote copy group is started and all
-        :              volume syncStatus is 'synced' i.e. 3
-        :        False: If remote copy group is started and some
-        :              volume status is not 'synced'.
+
+        :param remote_copy_group_name: Remote copy group name
+        :type remote_copy_group_name: string
+
+        :return: `True` If remote copy group is started and all
+                  volume syncStatus is 'synced' i.e. 3
+                 `False` If remote copy group is started and some
+                  volume status is not 'synced'.
         """
         response = self.getRemoteCopyGroup(remote_copy_group_name)
         for target in response['targets']:
@@ -4613,12 +4648,13 @@ class HPE3ParClient(object):
 
     def createSchedule(self, schedule_name, task, taskfreq):
         """Create Schedule for volume snapshot.
-        :param schedule_name - The name of the schedule
-        :type - string
-        :param task - command to for which schedule is created
-        :type - string
-        :param taskfreq - frequency of schedule
-        :type - string
+
+        :param schedule_name: The name of the schedule
+        :type schedule_name: string
+        :param task: command to for which schedule is created
+        :type task: string
+        :param taskfreq: frequency of schedule
+        :type taskfreq: string
         """
         cmd = ['createsched']
         cmd.append("\"" + task + "\"")
@@ -4644,8 +4680,9 @@ class HPE3ParClient(object):
 
     def deleteSchedule(self, schedule_name):
         """Delete Schedule
-        :param schedule_name - The name of the schedule to delete
-        :type - string
+
+        :param schedule_name: The name of the schedule to delete
+        :type schedule_name: string
         """
         cmd = ['removesched', '-f', schedule_name]
         try:
@@ -4661,8 +4698,9 @@ class HPE3ParClient(object):
 
     def getSchedule(self, schedule_name):
         """Get Schedule
-        :param schedule_name - The name of the schedule to get information
-        :type - string
+
+        :param schedule_name: The name of the schedule to get information
+        :type schedule_name: string
         """
         cmd = ['showsched ', schedule_name]
         try:
@@ -4677,17 +4715,20 @@ class HPE3ParClient(object):
 
     def modifySchedule(self, name, schedule_opt):
         """Modify Schedule.
-        :param name - The name of the schedule
-        :type - string
-        :param schedule_opt -
-        :type schedule_opt - dictionary of option to be modified
+
+        :param name: The name of the schedule
+        :type name: string
+        :param schedule_opt: dictionary of option to be modified
+        :type schedule_opt: dict
+
         .. code-block:: python
+
             mod_request = {
                 'newName': 'myNewName',         # New name of the schedule
                 'taskFrequency': '0 * * * *'    # String containing cron or
                                                 # @monthly, @hourly, @daily,
                                                 # @yearly and @weekly.
-        }
+            }
         """
 
         cmd = ['setsched']
@@ -4720,8 +4761,9 @@ class HPE3ParClient(object):
 
     def suspendSchedule(self, schedule_name):
         """Suspend Schedule
-        :param schedule_name - The name of the schedule to get information
-        :type - string
+
+        :param schedule_name: The name of the schedule to get information
+        :type schedule_name: string
         """
         cmd = ['setsched', '-suspend', schedule_name]
         try:
@@ -4736,8 +4778,9 @@ class HPE3ParClient(object):
 
     def resumeSchedule(self, schedule_name):
         """Resume Schedule
-        :param schedule_name - The name of the schedule to get information
-        :type - string
+
+        :param schedule_name: The name of the schedule to get information
+        :type schedule_name: string
         """
         cmd = ['setsched', '-resume', schedule_name]
         try:
@@ -4754,12 +4797,14 @@ class HPE3ParClient(object):
             self, remote_copy_group_name):
         """
         Checks whether remote copy group status is started or not
-        :param remote_copy_group_name - Remote copy group name
-        :type remote_copy_group_name: str
-        :return: True: If remote copy group is in started
-        :              state i.e. 3
-        :        False: If remote copy group is not in started
-        :              state
+
+        :param remote_copy_group_name: Remote copy group name
+        :type remote_copy_group_name: string
+
+        :return: `True` If remote copy group is in started
+                      state i.e. 3
+                 `False` If remote copy group is not in started
+                      state
         """
         response = self.getRemoteCopyGroup(remote_copy_group_name)
         status_started_counter = 0
@@ -4776,12 +4821,14 @@ class HPE3ParClient(object):
             self, remote_copy_group_name):
         """
         Checks whether remote copy group status is stopped or not
-        :param remote_copy_group_name - Remote copy group name
-        :type remote_copy_group_name: str
-        :return: True: If remote copy group is in stopped
-        :              state i.e. 5
-        :        False: If remote copy group is not in started
-        :              state
+
+        :param remote_copy_group_name: Remote copy group name
+        :type remote_copy_group_name: string
+
+        :return: `True` If remote copy group is in stopped
+                      state i.e. 5
+                 `False` If remote copy group is not in started
+                      state
         """
         response = self.getRemoteCopyGroup(remote_copy_group_name)
         status_stopped_counter = 0
@@ -4797,9 +4844,11 @@ class HPE3ParClient(object):
     def getScheduleStatus(self, schedule_name):
         """
         Checks schedule status active/suspended and returns it.
-        :param schedule_name - Schedule name
-        :type schedule_name: str
-        :return: active/suspended
+
+        :param schedule_name: Schedule name
+        :type schedule_name: string
+
+        :return: `True` If active, `False` if suspended
         """
         result = self.getSchedule(schedule_name)
         for r in result:
@@ -4948,18 +4997,17 @@ class HPE3ParClient(object):
 
         :param name: the name of the volume
         :type name: str
-        :param name: tune_operation 1 for USR_CPG 2 for SNP_CPG
-        :type name: int
+        :param tune_operation: tune_operation 1 for USR_CPG 2 for SNP_CPG
+        :type tune_operation: int
         :param optional: dictionary of volume attributes to change
         :type optional: dict
         .. code-block:: python
 
             optional = {
-             'action': 6,                  # For tuneVolume operation
              'userCPG': 'User CPG name',   # Required if tuneOperation is 1
              'snapCPG': 'Snap CPG name',   # Required if tuneOperation is 2
-             'conversionOperation': 1,     # For TPVV 1, For FPVV 2, For TDVV
-                                           # 3, for CONVERT_TO_DECO 4
+             'conversionOperation': 1,     # For TPVV 1, For FPVV 2, For TDVV 3
+                                           # For CONVERT_TO_DECO 4 (Primera Only)
              'compression': False,         # compression is not supported for
                                            # FPVV
             }
