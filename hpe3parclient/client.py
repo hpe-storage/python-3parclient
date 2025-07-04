@@ -5073,3 +5073,28 @@ class HPE3ParClient(object):
             # it means task cannot be cancelled,
             # because it is 'done' or already 'cancelled'
             pass
+
+    def getNextLunId(self, hostname, host_type='nvme'):
+        # lun id can be 0 through 16383 (1 to 256 for NVMe hosts)
+        LIMIT = 16383
+        if host_type=='nvme':
+            LIMIT = 256
+
+        lun_id_max = 0
+        try:
+            host_vluns = self.getHostVLUNs(hostname)
+            for vlun in host_vluns:
+                lun_id_x = vlun['lun']
+                if lun_id_x > lun_id_max:
+                    lun_id_max = lun_id_x
+
+        except hpeexceptions.HTTPNotFound:
+            # ignore, no existing VLUNs were found
+            pass
+
+        lun_id_next = lun_id_max + 1
+        if lun_id_next > LIMIT:
+            msg = "Lun id exceeded limit '%d'" % LIMIT
+            raise exceptions.HTTPNotFound(error={'desc': msg})
+
+        return lun_id_next
