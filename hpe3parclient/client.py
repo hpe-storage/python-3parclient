@@ -5098,3 +5098,31 @@ class HPE3ParClient(object):
             raise exceptions.HTTPNotFound(error={'desc': msg})
 
         return lun_id_next
+
+    def getNvmePorts(self):
+        all_ports = self.getPorts()
+
+        target_ports = []
+        for port in all_ports['members']:
+            if (
+                port['mode'] == self.PORT_MODE_TARGET and
+                port['linkState'] == self.PORT_STATE_READY
+            ):
+                port_pos = port['portPos']
+                nsp = '%s:%s:%s' % (port_pos['node'], port_pos['slot'],
+                                    port_pos['cardPort'])
+                port['nsp'] = nsp
+                target_ports.append(port)
+
+        nvme_ports = []
+        for port in target_ports:
+            if port['protocol'] == self.PORT_PROTO_NVME:
+                nvme_ports.append(port)
+
+            virtual_ports = port.get('virtualPorts', None)
+            if virtual_ports:
+                for vp in virtual_ports:
+                    if vp['protocol'] == self.PORT_PROTO_NVME:
+                        nvme_ports.append(port)
+
+        return nvme_ports 
