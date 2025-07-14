@@ -5088,7 +5088,7 @@ class HPE3ParClient(object):
                 if lun_id_x > lun_id_max:
                     lun_id_max = lun_id_x
 
-        except hpeexceptions.HTTPNotFound:
+        except exceptions.HTTPNotFound:
             # ignore, no existing VLUNs were found
             pass
 
