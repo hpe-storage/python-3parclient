@@ -44,6 +44,73 @@ from hpe3parclient import showport_parser
 
 logger = logging.getLogger(__name__)
 
+# =================
+# 3PAR API VERSION CONSTANTS
+# =================
+MIN_CLIENT_VERSION = '4.2.10'
+DEDUP_API_VERSION = 30201120
+FLASH_CACHE_API_VERSION = 30201200
+COMPRESSION_API_VERSION = 30301215
+SRSTATLD_API_VERSION = 30201200
+REMOTE_COPY_API_VERSION = 30202290
+API_VERSION_2023 = 100000000
+
+# =================
+# 3PAR STATISTICAL CONSTANTS
+# =================
+# Input/output (total read/write) operations per second.
+THROUGHPUT = 'throughput'
+# Data processed (total read/write) per unit time: kilobytes per second.
+BANDWIDTH = 'bandwidth'
+# Response time (total read/write): microseconds.
+LATENCY = 'latency'
+# IO size (total read/write): kilobytes.
+IO_SIZE = 'io_size'
+# Queue length for processing IO requests
+QUEUE_LENGTH = 'queue_length'
+# Average busy percentage
+AVG_BUSY_PERC = 'avg_busy_perc'
+
+# =================
+# 3PAR VLUN TYPE CONSTANTS
+# =================
+VLUN_TYPE_EMPTY = 1
+VLUN_TYPE_PORT = 2
+VLUN_TYPE_HOST = 3
+VLUN_TYPE_MATCHED_SET = 4
+VLUN_TYPE_HOST_SET = 5
+
+# =================
+# 3PAR PROVISIONING CONSTANTS
+# =================
+THIN = 2
+DEDUP = 6
+CONVERT_TO_THIN = 1
+CONVERT_TO_FULL = 2
+CONVERT_TO_DEDUP = 3
+
+# =================
+# 3PAR FLASH CACHE CONSTANTS
+# =================
+FLASH_CACHE_ENABLED = 1
+FLASH_CACHE_DISABLED = 2
+
+# =================
+# 3PAR REPLICATION CONSTANTS
+# =================
+SYNC = 1
+PERIODIC = 2
+RC_ACTION_CHANGE_TO_PRIMARY = 7
+
+# =================
+# 3PAR LICENSE CONSTANTS
+# =================
+PRIORITY_OPT_LIC = "Priority Optimization"
+THIN_PROV_LIC = "Thin Provisioning"
+REMOTE_COPY_LIC = "Remote Copy"
+SYSTEM_REPORTER_LIC = "System Reporter"
+COMPRESSION_LIC = "Compression"
+
 
 class HPE3ParClient(object):
     """ The 3PAR REST API Client.
@@ -76,7 +143,6 @@ class HPE3ParClient(object):
     PORT_PROTO_FCOE = 3
     PORT_PROTO_IP = 4
     PORT_PROTO_SAS = 5
-    PORT_PROTO_NVME = 6
 
     PORT_STATE_READY = 4
     PORT_STATE_SYNC = 5
@@ -143,7 +209,7 @@ class HPE3ParClient(object):
     # Minimum build version needed for VLUN query support.
     HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY = 30201292
     HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY_DESC = '3.2.1 MU2'
-
+    HPE3PAR_WS_MIN_FLASH_CACHE_API_VERSION = 30201200
     WSAPI_MIN_VERSION_COMPRESSION_SUPPORT = '1.6.0'
 
     VLUN_TYPE_EMPTY = 1
@@ -201,6 +267,17 @@ class HPE3ParClient(object):
     RC_ACTION_CHANGE_TO_SECONDARY = 9
     RC_ACTION_CHANGE_TO_NATURUAL_DIRECTION = 10
     RC_ACTION_OVERRIDE_FAIL_SAFE = 11
+    valid_persona_values = ['2 - Generic-ALUA',
+                            '1 - Generic',
+                            '3 - Generic-legacy',
+                            '4 - HPUX-legacy',
+                            '5 - AIX-legacy',
+                            '6 - EGENERA',
+                            '7 - ONTAP-legacy',
+                            '8 - VMware',
+                            '9 - OpenVMS',
+                            '10 - HPUX',
+                            '11 - WindowsServer']
 
     def __init__(self, api_url, debug=False, secure=False, timeout=None,
                  suppress_ssl_warnings=False):
@@ -210,11 +287,285 @@ class HPE3ParClient(object):
             timeout=timeout, suppress_ssl_warnings=suppress_ssl_warnings)
         api_version = None
         self.ssh = None
-        self.vlun_query_supported = True
+        self.vlun_query_supported = False
         self.primera_supported = False
-        self.compression_supported = True
+        self.compression_supported = False
 
         self.debug_rest(debug)
+
+        try:
+            api_version = self.getWsApiVersion()
+        except exceptions as ex:
+            ex_desc = ex.get_description()
+
+            if (ex_desc and ("Unable to find the server at" in ex_desc or
+                             "Only absolute URIs are allowed" in ex_desc)):
+                raise exceptions.HTTPBadRequest(ex_desc)
+            if (ex_desc and "SSL Certificate Verification Failed" in ex_desc):
+                raise exceptions.SSLCertFailed()
+            else:
+                msg = ('Error: \'%s\' - Error communicating with the 3PAR WS. '
+                       'Check proxy settings. If error persists, either the '
+                       '3PAR WS is not running or the version of the WS is '
+                       'not supported.') % ex_desc
+                raise exceptions.UnsupportedVersion(msg)
+
+        # Note the build contains major, minor, maintenance and build
+        # e.g. 30102422 is 3 01 02 422
+        # therefore all we need to compare is the build
+        if (api_version is None or
+                api_version['build'] < self.HPE3PAR_WS_MIN_BUILD_VERSION):
+            raise exceptions.UnsupportedVersion(
+                'Invalid 3PAR WS API, requires version, %s' %
+                self.HPE3PAR_WS_MIN_BUILD_VERSION_DESC)
+
+        # Check for VLUN query support.
+        if (api_version['build'] >=
+                self.HPE3PAR_WS_MIN_BUILD_VERSION_VLUN_QUERY):
+            self.vlun_query_supported = True
+        if (api_version['build'] >=
+                self.HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSION):
+            self.primera_supported = True
+
+        current_wsapi_version = '{}.{}.{}'.format(api_version.get('major'),
+                                                  api_version.get('minor'),
+                                                  api_version.get('revision'))
+        if current_wsapi_version >= self.WSAPI_MIN_VERSION_COMPRESSION_SUPPORT:
+            self.compression_supported = True
+
+    
+
+    def validate_persona(self, persona_value):
+        """Validate persona value.
+
+        If the passed in persona_value is not valid, raise InvalidInput,
+        otherwise return the persona ID.
+
+        :param persona_value:
+        :raises exception.InvalidInput:
+        :returns: persona ID
+        """
+        if persona_value not in self.valid_persona_values:
+            err = (_("Must specify a valid persona %(valid)s,"
+                     "value '%(persona)s' is invalid.") %
+                   {'valid': self.valid_persona_values,
+                   'persona': persona_value})
+            LOG.error(err)
+            raise exception.InvalidInput(reason=err)
+        # persona is set by the id so remove the text and return the id
+        # i.e for persona '1 - Generic' returns 1
+        persona_id = persona_value.split(' ')
+        return persona_id[0]
+                
+    def check_replication_flags(self, options, required_flags):
+        for flag in required_flags:
+            if not options.get(flag, None):
+                msg = (_('%s is not set and is required for the replication '
+                         'device to be valid.') % flag)
+                LOG.error(msg)
+                raise exception.InvalidInput(reason=msg)
+
+    def build_nsp(self, portPos):
+        return '%s:%s:%s' % (portPos['node'],
+                             portPos['slot'],
+                             portPos['cardPort'])
+
+    def build_portPos(self, nsp):
+        split = nsp.split(":")
+        portPos = {}
+        portPos['node'] = int(split[0])
+        portPos['slot'] = int(split[1])
+        portPos['cardPort'] = int(split[2])
+        return portPos
+
+    def get_active_target_ports(self, remote_client=None):
+        if remote_client:
+            client_obj = remote_client
+            ports = remote_client.getPorts()
+        else:
+            client_obj = self
+            ports = self.getPorts()
+
+        target_ports = []
+        for port in ports['members']:
+            if (
+                port['mode'] == client_obj.PORT_MODE_TARGET and
+                port['linkState'] == client_obj.PORT_STATE_READY
+            ):
+                port['nsp'] = self.build_nsp(port['portPos'])
+                target_ports.append(port)
+
+        return target_ports
+
+    def get_active_fc_target_ports(self, remote_client=None):
+        ports = self.get_active_target_ports(remote_client)
+        if remote_client:
+            client_obj = remote_client
+        else:
+            client_obj = self
+
+        fc_ports = []
+        for port in ports:
+            if port['protocol'] == client_obj.PORT_PROTO_FC:
+                fc_ports.append(port)
+
+        return fc_ports
+
+    def get_active_iscsi_target_ports(self, remote_client=None):
+        ports = self.get_active_target_ports(remote_client)
+        if remote_client:
+            client_obj = remote_client
+        else:
+            client_obj = self
+
+        iscsi_ports = []
+        for port in ports:
+            if port['protocol'] == client_obj.PORT_PROTO_ISCSI:
+                iscsi_ports.append(port)
+
+        return iscsi_ports
+
+    def get_flash_cache_policy(self, hpe3par_keys):
+        if hpe3par_keys is not None:
+            # First check list of extra spec keys
+            val = self._get_key_value(hpe3par_keys, 'flash_cache', None)
+            wsapiVersion = api_version['build']
+            if val is not None:
+                # If requested, see if supported on back end
+                if wsapiVersion < HPE3PAR_WS_MIN_FLASH_CACHE_API_VERSION:
+                    err = (_("Flash Cache Policy requires "
+                             "WSAPI version '%(fcache_version)s' "
+                             "version '%(version)s' is installed.") %
+                           {'fcache_version': HPE3PAR_WS_MIN_FLASH_CACHE_API_VERSION,
+                            'version': wsapiVersion})
+                    LOG.error(err)
+                    raise exception.InvalidInput(reason=err)
+                else:
+                    if val.lower() == 'true':
+                        return self.client.FLASH_CACHE_ENABLED
+                    else:
+                        return self.client.FLASH_CACHE_DISABLED
+
+        return None
+
+    def _get_key_value(self, hpe3par_keys, key, default=None):
+        if hpe3par_keys is not None and key in hpe3par_keys:
+            return hpe3par_keys[key]
+        else:
+            return default
+
+    def _get_boolean_key_value(self, hpe3par_keys, key, default=False):
+        value = self._get_key_value(
+            hpe3par_keys, key, default)
+        if isinstance(value, str):
+            if value.lower() == 'true':
+                value = True
+            else:
+                value = False
+        return value
+
+    def _check_license_enabled(self, valid_licenses,
+                               license_to_check, capability):
+        """Check a license against valid licenses on the array."""
+        if valid_licenses:
+            for license in valid_licenses:
+                if license_to_check in license.get('name'):
+                    return True
+            LOG.debug("'%(capability)s' requires a '%(license)s' "
+                      "license which is not installed.",
+                      {'capability': capability,
+                       'license': license_to_check})
+        return False
+
+    def get_compression_policy(self, hpe3par_keys):
+        if hpe3par_keys is not None:
+            # here it should return true/false/None
+            val = self._get_key_value(hpe3par_keys, 'compression', None)
+            compression_support = False
+        if val is not None:
+            info = self.getStorageSystemInfo()
+            if 'licenseInfo' in info:
+                if 'licenses' in info['licenseInfo']:
+                    valid_licenses = info['licenseInfo']['licenses']
+                    compression_support = self._check_license_enabled(
+                        valid_licenses, self.COMPRESSION_LIC,
+                        "Compression")
+            # here check the wsapi version
+            if self.API_VERSION < COMPRESSION_API_VERSION:
+                err = (_("Compression Policy requires "
+                         "WSAPI version '%(compression_version)s' "
+                         "version '%(version)s' is installed.") %
+                       {'compression_version': COMPRESSION_API_VERSION,
+                        'version': self.API_VERSION})
+                LOG.error(err)
+                raise exception.InvalidInput(reason=err)
+            else:
+                if val.lower() == 'true':
+                    if not compression_support:
+                        msg = _('Compression is not supported on '
+                                'underlying hardware')
+                        LOG.error(msg)
+                        raise exception.InvalidInput(reason=msg)
+                    return True
+                else:
+                    return False
+        return None
+
+    def _get_3par_vol_comment(self, volume_name):
+        vol = self.getVolume(volume_name)
+        if 'comment' in vol:
+            return vol['comment']
+        return None   
+
+    def _get_3par_vol_comment_value(self, vol_comment, key):
+        comment_dict = dict(ast.literal_eval(vol_comment))
+        if key in comment_dict:
+            return comment_dict[key]
+        return None
+
+    def get_next_word(self, s, search_string):
+        """Return the next word.
+
+        Search 's' for 'search_string', if found return the word preceding
+        'search_string' from 's'.
+        """
+        word = re.search(search_string.strip(' ') + ' ([^ ]*)', s)
+        return word.groups()[0].strip(' ')
+
+    def is_volume_group_snap_type(self, volume_type):
+        consis_group_snap_type = False
+        if volume_type:
+            extra_specs = volume_type.get('extra_specs')
+            if 'consistent_group_snapshot_enabled' in extra_specs:
+                gsnap_val = extra_specs['consistent_group_snapshot_enabled']
+                consis_group_snap_type = (gsnap_val == "<is> True")
+        return consis_group_snap_type
+
+    def _is_volume_type_replicated(self, volume_type):
+        replicated_type = False
+        extra_specs = volume_type.get('extra_specs')
+        if extra_specs and 'replication_enabled' in extra_specs:
+            rep_val = extra_specs['replication_enabled']
+            replicated_type = (rep_val == "<is> True")
+
+        return replicated_type
+
+    def _check_replication_configuration_on_volume_types(self, volume_types):
+        for volume_type in volume_types:
+            replicated_type = self._is_volume_type_replicated(volume_type)
+            if not replicated_type:
+                msg = _("replication is not set on volume type: "
+                        "(id)%s") % {'id': volume_type.get('id')}
+                LOG.error(msg)
+                raise exception.VolumeBackendAPIException(data=msg)
+
+    def _get_remote_copy_mode_num(self, mode):
+        ret_mode = None
+        if mode == "sync":
+            ret_mode = self.SYNC
+        if mode == "periodic":
+            ret_mode = self.PERIODIC
+        return ret_mode
 
     def is_primera_array(self):
         return self.primera_supported
@@ -228,13 +579,9 @@ class HPE3ParClient(object):
         that use SSH instead of REST HTTP.
 
         """
-        try:
-            self.ssh = ssh.HPE3PARSSHClient(ip, login, password, port,
-                                            conn_timeout, privatekey,
-                                            **kwargs)
-        except Exception as ex:
-            # The exception details are already logged in ssh.py
-            pass
+        self.ssh = ssh.HPE3PARSSHClient(ip, login, password, port,
+                                        conn_timeout, privatekey,
+                                        **kwargs)
 
     def _run(self, cmd):
         if self.ssh is None:
@@ -256,12 +603,6 @@ class HPE3ParClient(object):
             self.http.set_url(host_url[0])
             # get the api version
             response, body = self.http.get('/api')
-
-            api_version = body
-            if (api_version['build'] >=
-                    self.HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSION):
-                self.primera_supported = True
-
             return body
         finally:
             # reset the url
@@ -290,7 +631,13 @@ class HPE3ParClient(object):
         :returns: None
 
         """
-        self.http.authenticate(username, password, optional)
+        try:
+            self.http.authenticate(username, password, optional)
+        except exceptions.HTTPUnauthorized as ex:
+            msg = (_("Failed to Login to storage system (%(url)s) because %(err)s") %
+                   {'url': self.api_url, 'err': ex})
+            LOG.error(msg)
+            raise exception.InvalidInput(reason=msg)
 
     def logout(self):
         """This destroys the session and logs out from the 3PAR server.
@@ -1610,8 +1957,7 @@ class HPE3ParClient(object):
         response, body = self.http.get('/hosts/%s' % name)
         return body
 
-    def createHost(self, name, iscsiNames=None, FCWwns=None,
-                   nqn=None, optional=None):
+    def createHost(self, name, iscsiNames=None, FCWwns=None, optional=None):
         """Create a new Host entry.
 
         :param name: The name of the host
@@ -1620,8 +1966,6 @@ class HPE3ParClient(object):
         :type name: array
         :param FCWwns: Array if Fibre Channel World Wide Names
         :type name: array
-        :param nqn: String if NVMe Qualified Name
-        :type name: str
         :param optional: The optional stuff
         :type optional: dict
 
@@ -1686,10 +2030,6 @@ class HPE3ParClient(object):
         if FCWwns:
             fc = {'FCWWNs': FCWwns}
             info = self._mergeDict(info, fc)
-
-        if nqn:
-            nvme = {'NQN': nqn}
-            info = self._mergeDict(info, nvme)
 
         if optional:
             info = self._mergeDict(info, optional)
@@ -2053,8 +2393,11 @@ class HPE3ParClient(object):
         :returns: list of cpgs
 
         """
-        response, body = self.http.get('/cpgs')
-        return body
+        try:
+            response, body = self.http.get('/cpgs')
+            return body
+        except Exception as e:
+            raise e
 
     def getCPG(self, name):
         """Get information about a CPG.
@@ -2067,8 +2410,26 @@ class HPE3ParClient(object):
             -  NON_EXISTENT_CPG - CPG doesn't exist
 
         """
-        response, body = self.http.get('/cpgs/%s' % name)
+        try:
+            response, body = self.http.get('/cpgs/%s' % name)
+        except exceptions.HTTPNotFound:
+            err = (_("CPG (%s) doesn't exist on array") % cpg_name)
+            LOG.error(err)
+            raise exception.InvalidInput(reason=err)
         return body
+
+    def get_domain(self, cpg_name):
+        try:
+            cpg = self.getCPG(cpg_name)
+        except exceptions.HTTPNotFound:
+            err = (_("Failed to get domain because CPG (%s) doesn't "
+                     "exist on array.") % cpg_name)
+            LOG.error(err)
+            raise exception.InvalidInput(reason=err)
+
+        if 'domain' in cpg:
+            return cpg['domain']
+        return None
 
     def getCPGAvailableSpace(self, name):
         """Get available space information about a CPG.
@@ -4262,7 +4623,8 @@ class HPE3ParClient(object):
 
     def getCPGStatData(self, name, interval='daily', history='7d'):
         """
-        Requests CPG performance data at a sampling rate (interval)
+        Requests CPG performance data at a sampling rate (interval) for a
+        given length of time to sample (history)
 
         :param name: a valid CPG name
         :type name: str
@@ -4273,36 +4635,48 @@ class HPE3ParClient(object):
         :type history: str
 
         :returns: dict
-        """
 
+        :raises: :class:`~hpe3parclient.exceptions.SrstatldException`
+            - srstatld gives invalid output
+        """
         if interval not in ['daily', 'hourly']:
             raise exceptions.ClientException("Input interval not valid")
+        if not re.compile("(\d*\.\d+|\d+)[mhd]").match(history):
+            raise exceptions.ClientException("Input history not valid")
+        cmd = ['srstatld', '-cpg', name, '-' + interval, '-btsecs',
+               '-' + history]
+        output = self._run(cmd)
+        if not isinstance(output, list):
+            raise exceptions.SrstatldException("srstatld output not a list")
+        elif len(output) < 4:
+            raise exceptions.SrstatldException("srstatld output list too "
+                                               "short")
+        elif len(output[-1].split(',')) < 16:
+            raise exceptions.SrstatldException("srstatld output last line "
+                                               "invalid")
+        else:
+            return self._format_srstatld_output(output)
 
-        uri = 'systemreporter/vstime/cpgstatistics/' + interval
+    def _format_srstatld_output(self, out):
+        """
+        Formats the output of the 3PAR CLI command srstatld
+        Takes the total read/write value when possible
 
-        output = {}
-        try:
-            response, body = self.http.get(uri)
-            cpg_details = body['members'][-1]
+        :param out: the output of srstatld
+        :type out: list
 
-            output = {
-                'throughput': float(cpg_details['throughputKByteSec']),
-                'bandwidth': float(cpg_details['bwLimit']),
-                'latency': float(cpg_details['latency']),
-                'io_size': float(cpg_details['IOSizeKB']),
-                'queue_length': float(cpg_details['queueLength']),
-                'avg_busy_perc': float(cpg_details['busyPct'])
-            }
-        except Exception as ex:
-            output = {
-                'throughput': 0.0,
-                'bandwidth': 0.0,
-                'latency': 0.0,
-                'io_size': 0.0,
-                'queue_length': 0.0,
-                'avg_busy_perc': 0.0
-            }
-        return output
+        :returns: dict
+        """
+        line = out[-1].split(',')
+        formatted = {
+            'throughput': float(line[4]),
+            'bandwidth': float(line[7]),
+            'latency': float(line[10]),
+            'io_size': float(line[13]),
+            'queue_length': float(line[14]),
+            'avg_busy_perc': float(line[15])
+        }
+        return formatted
 
     def getSnapshotsOfVolume(self, snapcpgName, volName):
         """Gets list of snapshots of a volume.
@@ -5073,3 +5447,547 @@ class HPE3ParClient(object):
             # it means task cannot be cancelled,
             # because it is 'done' or already 'cancelled'
             pass
+
+    # =================
+    # ENHANCED UTILITY FUNCTIONS MOVED FROM hpe_3par_common.py
+    # =================
+
+    @staticmethod
+    def encode_name(name):
+        """Encode a name using base64 and UUID for 3PAR compatibility.
+        
+        Converts names to a format that 3PAR accepts by:
+        - Converting to UUID bytes
+        - Base64 encoding
+        - Replacing problematic characters (+, /, =)
+        
+        Args:
+            name (str): The name to encode
+            
+        Returns:
+            str: The encoded name suitable for 3PAR
+        """
+        # Import here to avoid circular imports
+        import uuid
+        import math
+        import json
+        import time
+        from oslo_serialization import base64
+        
+        uuid_str = name.replace("-", "")
+        vol_uuid = uuid.UUID('urn:uuid:%s' % uuid_str)
+        vol_encoded = base64.encode_as_text(vol_uuid.bytes)
+
+        # 3par doesn't allow +, nor /
+        vol_encoded = vol_encoded.replace('+', '.')
+        vol_encoded = vol_encoded.replace('/', '-')
+        # strip off the == as 3par doesn't like those.
+        vol_encoded = vol_encoded.replace('=', '')
+        return vol_encoded
+
+    @classmethod
+    def get_3par_vol_name(cls, volume_id, temp_vol=False):
+        """Get converted 3PAR volume name.
+
+        Converts the openstack volume id from
+        ecffc30f-98cb-4cf5-85ee-d7309cc17cd2
+        to
+        osv-7P.DD5jLTPWF7tcwnMF80g
+
+        We convert the 128 bits of the uuid into a 24character long
+        base64 encoded string to ensure we don't exceed the maximum
+        allowed 31 character name limit on 3Par
+
+        We strip the padding '=' and replace + with .
+        and / with -
+
+        volume_id is a polymorphic parameter and can be either a string or a
+        volume (OVO or dict representation).
+        
+        Args:
+            volume_id: Volume ID string or volume object
+            temp_vol (bool): Whether this is a temporary volume
+            
+        Returns:
+            str: Formatted 3PAR volume name
+        """
+        # Import here to avoid circular imports
+        try:
+            from cinder import objects
+            # Accept OVOs (what we should only receive), dict (so we don't have to
+            # change all our unit tests), and ORM (because we some methods still
+            # pass it, such as terminate_connection).
+            if isinstance(volume_id, (objects.Volume, objects.Volume.model, dict)):
+                volume_id = volume_id.get('_name_id') or volume_id['id']
+        except ImportError:
+            # Handle case where cinder is not available
+            if hasattr(volume_id, 'get'):
+                volume_id = volume_id.get('_name_id') or volume_id.get('id', volume_id)
+        
+        volume_name = cls.encode_name(volume_id)
+        if temp_vol:
+            # is this a temporary volume
+            # this is done during migration
+            prefix = "tsv-%s"
+        else:
+            prefix = "osv-%s"
+        return prefix % volume_name
+
+    @classmethod
+    def get_3par_snap_name(cls, snapshot_id, temp_snap=False):
+        """Get converted 3PAR snapshot name.
+        
+        Args:
+            snapshot_id (str): Snapshot ID
+            temp_snap (bool): Whether this is a temporary snapshot
+            
+        Returns:
+            str: Formatted 3PAR snapshot name
+        """
+        snapshot_name = cls.encode_name(snapshot_id)
+        if temp_snap:
+            # is this a temporary snapshot
+            # this is done during cloning
+            prefix = "tss-%s"
+        else:
+            prefix = "oss-%s"
+        return prefix % snapshot_name
+
+    @classmethod
+    def get_3par_ums_name(cls, snapshot_id):
+        """Get 3PAR unmanaged snapshot name.
+        
+        Args:
+            snapshot_id (str): Snapshot ID
+            
+        Returns:
+            str: Formatted 3PAR unmanaged snapshot name
+        """
+        ums_name = cls.encode_name(snapshot_id)
+        return "ums-%s" % ums_name
+
+    @classmethod
+    def get_3par_vvs_name(cls, volume_id):
+        """Get 3PAR volume set name.
+        
+        Args:
+            volume_id (str): Volume ID
+            
+        Returns:
+            str: Formatted 3PAR volume set name
+        """
+        vvs_name = cls.encode_name(volume_id)
+        return "vvs-%s" % vvs_name
+
+    @staticmethod
+    def get_keys_by_volume_type(volume_type, hpe3par_valid_keys):
+        """Extract HPE 3PAR keys from volume type extra specs.
+        
+        Args:
+            volume_type (dict): Volume type with extra_specs
+            hpe3par_valid_keys (list): List of valid HPE 3PAR keys
+            
+        Returns:
+            dict: Filtered HPE 3PAR keys and values
+        """
+        hpe3par_keys = {}
+        specs = volume_type.get('extra_specs')
+        for key, value in specs.items():
+            if ':' in key:
+                fields = key.split(':')
+                key = fields[1]
+            if key in hpe3par_valid_keys:
+                hpe3par_keys[key] = value
+        return hpe3par_keys
+
+    def get_model_update(self, volume_host, cpg, replication=False,
+                        provider_location=None, hpe_tiramisu=None):
+        """Get model_update dict for volume operations.
+        
+        Args:
+            volume_host (str): Volume host string
+            cpg (str): Actual CPG used
+            replication (bool): Whether replication is enabled
+            provider_location (str, optional): Provider location
+            hpe_tiramisu (bool, optional): Tiramisu replication
+            
+        Returns:
+            dict: Model update or None
+        """
+        # Import here to avoid circular imports
+        from cinder.volume import volume_utils
+        
+        model_update = {}
+        host = volume_utils.extract_host(volume_host, 'backend')
+        host_and_pool = volume_utils.append_host(host, cpg)
+        if volume_host != host_and_pool:
+            # Since we selected a pool based on type, update the model.
+            model_update['host'] = host_and_pool
+        if replication:
+            model_update['replication_status'] = 'enabled'
+        if (replication or hpe_tiramisu) and provider_location:
+            model_update['provider_location'] = provider_location
+        if not model_update:
+            model_update = None
+        
+        return model_update
+
+    def get_existing_volume_ref_name(self, existing_ref, is_snapshot=False):
+        """Extract volume/snapshot name from existing reference.
+        
+        Args:
+            existing_ref (dict): Reference dictionary
+            is_snapshot (bool): Whether this is for a snapshot
+            
+        Returns:
+            str: Volume or snapshot name
+            
+        Raises:
+            InvalidInput: If source-name is not provided
+        """
+        # Import here to avoid circular imports
+        from cinder import exception
+        from cinder.i18n import _
+        
+        if 'source-name' not in existing_ref:
+            reason = _("Reference must contain source-name.")
+            raise exception.InvalidInput(reason=reason)
+        
+        ref_name = existing_ref['source-name']
+        
+        # Additional validation for snapshots vs volumes could go here
+        # For now, just return the name
+        return ref_name
+
+    def extend_volume_helper(self, volume, volume_name, growth_size_mib):
+        """Helper method to extend a volume.
+        
+        This is a simplified version that just grows the volume.
+        More complex logic with replication should be handled by the driver.
+        
+        Args:
+            volume: Volume object (not used in this helper)
+            volume_name (str): Name of the volume to extend
+            growth_size_mib (int): Growth size in MiB
+        """
+        self.growVolume(volume_name, growth_size_mib)
+        
+    def wait_for_task_completion(self, task_id):
+        """Wait for a 3PAR background task to complete or fail.
+
+        This looks for a task to get out of the 'active' state.
+        
+        Args:
+            task_id (str): Task ID to wait for
+            
+        Returns:
+            dict: Task status information
+        """
+        from oslo_service import loopingcall
+        
+        # Wait for the physical copy task to complete
+        def _wait_for_task(task_id):
+            status = self.getTask(task_id)
+            if status['status'] is not self.TASK_ACTIVE:
+                self._task_status = status
+                raise loopingcall.LoopingCallDone()
+
+        self._task_status = None
+        timer = loopingcall.FixedIntervalLoopingCall(
+            _wait_for_task, task_id)
+        timer.start(interval=1).wait()
+
+        return self._task_status
+
+    @classmethod
+    def get_3par_unm_name(cls, volume_id):
+        """Get 3PAR unmanaged volume name.
+        
+        Args:
+            volume_id (str): Volume ID
+            
+        Returns:
+            str: Formatted 3PAR unmanaged volume name
+        """
+        unm_name = cls.encode_name(volume_id)
+        return "unm-%s" % unm_name
+
+    @classmethod
+    def get_3par_rcg_name(cls, volume_id):
+        """Get 3PAR remote copy group name.
+        
+        Args:
+            volume_id (str): Volume ID
+            
+        Returns:
+            str: Formatted 3PAR RCG name (limited to 22 chars)
+        """
+        rcg_name = cls.encode_name(volume_id)
+        rcg = "rcg-%s" % rcg_name
+        return rcg[:22]
+
+    @classmethod
+    def get_3par_remote_rcg_name(cls, volume_id, provider_location):
+        """Get 3PAR remote RCG name.
+        
+        Args:
+            volume_id (str): Volume ID
+            provider_location (str): Provider location
+            
+        Returns:
+            str: Formatted 3PAR remote RCG name
+        """
+        return cls.get_3par_rcg_name(volume_id) + ".r" + str(provider_location)
+
+    @staticmethod
+    def capacity_from_size(vol_size):
+        """Convert volume size to 3PAR capacity in MiB.
+        
+        Args:
+            vol_size (int): Volume size in GB
+            
+        Returns:
+            int: Capacity in MiB
+        """
+        # Import here to avoid circular imports
+        import math
+        try:
+            from oslo_utils import units
+            # because 3PAR volume sizes are in Mebibytes.
+            if int(vol_size) == 0:
+                capacity = units.Gi  # default: 1GiB
+            else:
+                capacity = vol_size * units.Gi
+            capacity = int(math.ceil(capacity / units.Mi))
+        except ImportError:
+            # Fallback calculation without oslo_utils
+            if int(vol_size) == 0:
+                capacity = 1024  # default: 1GiB in MiB
+            else:
+                capacity = vol_size * 1024  # GB to MiB
+        return capacity
+
+    # =================
+    # ENHANCED LICENSE CHECKING METHODS
+    # =================
+
+    def check_qos_license(self, valid_licenses):
+        """Check if QoS (Priority Optimization) license is enabled.
+        
+        Args:
+            valid_licenses (list): List of valid licenses
+            
+        Returns:
+            bool: True if QoS license is enabled
+        """
+        return self._check_license_enabled(valid_licenses, PRIORITY_OPT_LIC, "QoS_support")
+
+    def check_thin_provisioning_license(self, valid_licenses):
+        """Check if Thin Provisioning license is enabled.
+        
+        Args:
+            valid_licenses (list): List of valid licenses
+            
+        Returns:
+            bool: True if Thin Provisioning license is enabled
+        """
+        return self._check_license_enabled(valid_licenses, THIN_PROV_LIC, "Thin_provisioning_support")
+
+    def check_compression_license(self, valid_licenses):
+        """Check if Compression license is enabled.
+        
+        Args:
+            valid_licenses (list): List of valid licenses
+            
+        Returns:
+            bool: True if Compression license is enabled
+        """
+        return self._check_license_enabled(valid_licenses, COMPRESSION_LIC, "Compression")
+
+    def check_priority_optimization_license(self, valid_licenses):
+        """Check if Priority Optimization license is enabled.
+        
+        Args:
+            valid_licenses (list): List of valid licenses
+            
+        Returns:
+            bool: True if Priority Optimization license is enabled
+        """
+        return self._check_license_enabled(valid_licenses, PRIORITY_OPT_LIC, "Priority_optimization")
+
+    # =================
+    # ENHANCED UTILITY FUNCTIONS
+    # =================
+
+    @staticmethod
+    def get_qos_value(qos, key, default=None):
+        """Get QoS value from dictionary with default.
+        
+        Args:
+            qos (dict): QoS dictionary
+            key (str): Key to lookup
+            default: Default value if key not found
+            
+        Returns:
+            Value from qos dict or default
+        """
+        if key in qos:
+            return qos[key]
+        else:
+            return default
+
+    @staticmethod
+    def safe_hostname(connector, configuration):
+        """Create safe hostname for 3PAR (max 31 characters).
+        
+        We have to use a safe hostname length for 3PAR host names.
+        
+        Args:
+            connector (dict): Connector info with host
+            configuration: Configuration object
+            
+        Returns:
+            str: Safe hostname truncated to 31 characters
+        """
+        hostname = connector['host']
+        unique_fqdn_network = getattr(configuration, 'unique_fqdn_network', False)
+        
+        if not unique_fqdn_network and connector.get('initiator'):
+            iqn = connector.get('initiator')
+            iqn = iqn.replace(":", "-")
+            return iqn[::-1][:31]
+        else:
+            try:
+                index = hostname.index('.')
+            except ValueError:
+                # couldn't find it
+                index = len(hostname)
+
+            # we'll just chop this off for now.
+            if index > 31:
+                index = 31
+
+            return hostname[:index]
+
+    def calculate_pool_stats(self, cpg_name, api_version, sr_support=True):
+        """Calculate comprehensive pool statistics for a CPG.
+        
+        Args:
+            cpg_name (str): CPG name
+            api_version (int): API version
+            sr_support (bool): System Reporter support
+            
+        Returns:
+            dict: Pool statistics
+        """
+        # Constants for conversion
+        const = 0.0009765625  # MiB to GB conversion
+        
+        # Get CPG information
+        cpg = self.getCPG(cpg_name)
+        
+        # Get statistical capabilities if supported
+        stat_capabilities = {
+            THROUGHPUT: None,
+            BANDWIDTH: None,
+            LATENCY: None,
+            IO_SIZE: None,
+            QUEUE_LENGTH: None,
+            AVG_BUSY_PERC: None
+        }
+        
+        if api_version >= SRSTATLD_API_VERSION and sr_support:
+            try:
+                # Try to get statistical data if available
+                stat_capabilities = self.getCPGStatData(cpg_name, 'daily', '7d')
+            except Exception:
+                # Return empty stats if not available
+                pass
+        
+        # Calculate volume counts
+        if 'numTDVVs' in cpg:
+            total_volumes = int(
+                cpg['numFPVVs'] + cpg['numTPVVs'] + cpg['numTDVVs']
+            )
+        else:
+            total_volumes = int(
+                cpg['numFPVVs'] + cpg['numTPVVs']
+            )
+        
+        # Calculate capacity
+        if 'limitMiB' not in cpg['SDGrowth']:
+            # CPG usable free space for limitless CPG
+            cpg_avail_space = self.getCPGAvailableSpace(cpg_name)
+            total_capacity = int(
+                (cpg['SDUsage']['usedMiB'] +
+                 cpg['UsrUsage']['usedMiB'] +
+                 cpg_avail_space['usableFreeMiB']) * const)
+        else:
+            total_capacity = int(cpg['SDGrowth']['limitMiB'] * const)
+
+        provisioned_capacity = int((cpg['UsrUsage']['totalMiB'] +
+                                   cpg['SAUsage']['totalMiB'] +
+                                   cpg['SDUsage']['totalMiB']) * const)
+        
+        free_capacity = total_capacity - provisioned_capacity
+        capacity_utilization = (
+            (float(total_capacity - free_capacity) /
+             float(total_capacity)) * 100) if total_capacity > 0 else 0
+
+        return {
+            'cpg_name': cpg_name,
+            'total_capacity_gb': total_capacity,
+            'free_capacity_gb': free_capacity,
+            'provisioned_capacity_gb': provisioned_capacity,
+            'total_volumes': total_volumes,
+            'capacity_utilization': capacity_utilization,
+            'statistical_capabilities': stat_capabilities,
+            'cpg_info': cpg
+        }
+
+    # Additional utility methods needed by comprehensive driver
+    def add_name_id_to_comment(self, comment, volume):
+        """Add name_id to comment dictionary."""
+        name_id = volume.get('_name_id')
+        if name_id:
+            comment['_name_id'] = name_id
+
+    def get_updated_comment(self, vol_name, **values):
+        """Get updated comment with new values."""
+        import json
+        vol = self.getVolume(vol_name)
+        comment = json.loads(vol['comment']) if vol.get('comment') else {}
+        comment.update(values)
+        return comment
+
+    def get_vlun(self, volume_name, hostname, lun_id=None, nsp=None):
+        """Find a VLUN on a 3PAR host."""
+        vluns = self.getHostVLUNs(hostname)
+        
+        found_vlun = None
+        for vlun in vluns:
+            if volume_name in vlun['volumeName']:
+                if lun_id is not None:
+                    if vlun['lun'] == lun_id:
+                        found_vlun = vlun
+                        break
+                else:
+                    found_vlun = vlun
+                    break
+        
+        return found_vlun
+
+    def get_persona_type(self, volume, hpe3par_keys=None):
+        """Get persona type for volume."""
+        # This is a simplified version - the real implementation
+        # would need access to driver configuration
+        default_persona = '2 - Generic-ALUA'
+        if hpe3par_keys:
+            persona_value = hpe3par_keys.get('persona', default_persona)
+            return self.validate_persona(persona_value)
+        return default_persona
+
+    def _get_replication_mode_from_volume_type(self, volume_type):
+        """Get replication mode from volume type."""
+        # This is a placeholder - real implementation would analyze volume type
+        return 'sync'
