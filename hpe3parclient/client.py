@@ -448,6 +448,747 @@ class HPE3ParClient(object):
 
         return None
 
+    def manage_existing_volume_utility(self, client_obj, volume, existing_ref, target_vol_name,
+                                     get_volume_callback, get_volume_type_callback,
+                                     retype_callback, log_callback):
+        """Utility for managing existing 3PAR volumes."""
+        try:
+            vol = get_volume_callback(target_vol_name)
+        except Exception:
+            err = (_("Virtual volume '%s' doesn't exist on array.") % target_vol_name)
+            return {'success': False, 'error': err}
+
+        # Check for valid persona even if we don't use it until attach time
+        if volume.get('volume_type_id', None):
+            volume_type = get_volume_type_callback(volume["volume_type_id"])
+            hpe3par_keys = self.get_keys_by_volume_type(volume_type, 
+                                                       valid_hpe3par_keys={'persona'})
+            try:
+                self.get_persona_type(volume, hpe3par_keys)
+            except Exception as ex:
+                reason = (_("Invalid persona specified, "
+                          "valid personas are: %(valid)s. "
+                          "Error: %(err)s") % 
+                        {'valid': self.valid_persona_values, 'err': str(ex)})
+                return {'success': False, 'error': reason, 'error_type': 'InvalidInput'}
+                
+            try:
+                retype_callback(volume, volume_type)
+            except Exception as ex:
+                return {'success': False, 'error': str(ex), 'error_type': 'Retype'}
+
+        # Build the new comment info for the volume
+        new_comment = {}
+        if volume.get('display_name'):
+            display_name = volume['display_name']
+            new_comment['display_name'] = display_name
+        elif 'comment' in vol:
+            display_name = self._get_3par_vol_comment_value(vol['comment'], 'display_name')
+            if display_name:
+                new_comment['display_name'] = display_name
+        else:
+            display_name = None
+
+        # Generate the new volume information based on the new ID.
+        new_vol_name = self.get_3par_vol_name(volume['id'])
+        name = 'volume-' + volume['id']
+        new_comment['volume_id'] = volume['id']
+        new_comment['name'] = name
+        self.add_name_id_to_comment(new_comment, volume)
+        if volume.get('display_description'):
+            new_comment['description'] = volume['display_description']
+        else:
+            new_comment['description'] = ""
+
+        new_vals = {'newName': new_vol_name,
+                    'comment': self.json_encode_dict(new_comment)}
+
+        # Update the existing volume with new name and comments
+        try:
+            client_obj.modifyVolume(target_vol_name, new_vals)
+        except Exception as ex:
+            return {'success': False, 'error': str(ex)}
+
+        log_callback("Virtual volume '%(ref)s' renamed to '%(new)s'.",
+                    {'ref': existing_ref.get('source-name', target_vol_name), 'new': new_vol_name})
+
+        updates = {'display_name': display_name}
+        log_callback("Virtual volume %(disp)s '%(new)s' is now being managed.",
+                    {'disp': display_name, 'new': new_vol_name})
+
+        return {'success': True, 'updates': updates}
+
+    def build_unmanage_params(self, volume, vol_name):
+        """Build parameters for unmanaging a volume."""
+        new_name = self.get_3par_unm_name(volume['id'])
+        display_name = volume.get('display_name', 'Unknown')
+        return {
+            'current_name': vol_name,
+            'new_name': new_name,
+            'display_name': display_name
+        }
+
+    def create_volume_utility(self, client_obj, volume, type_info, comments, vvs_name, qos,
+                             flash_cache, compression, consis_group_snap_type, cg_id,
+                             group, hpe_tiramisu, api_version, log_callback):
+        """Utility for creating 3PAR volumes with comprehensive parameter handling."""
+        try:
+            cpg = type_info['cpg']
+            snap_cpg = type_info['snap_cpg']
+            tpvv = type_info['tpvv']
+            tdvv = type_info['tdvv']
+            volume_type = type_info['volume_type']
+            
+            volume_name = self.get_3par_vol_name(volume['id'])
+            
+            # Encode comments as JSON
+            comment_dict = {}
+            if isinstance(comments, dict):
+                comment_dict = comments.copy()
+            self.add_name_id_to_comment(comment_dict, volume)
+            
+            # Format size in MiB
+            size = int(volume['size']) * 1024
+
+            # Additional volume options
+            optional = {'comment': self.json_encode_dict(comment_dict),
+                       'snapCPG': snap_cpg}
+            
+            if tpvv:
+                optional['tpvv'] = tpvv
+            if tdvv:
+                optional['tdvv'] = tdvv
+
+            # Handle compression if supported
+            if compression is not None and api_version >= self.COMPRESSION_API_VERSION:
+                optional['compression'] = compression
+
+            log_callback('CREATE VOLUME (%s) on CPG (%s)', volume_name, cpg)
+
+            # Create the volume
+            client_obj.createVolume(volume_name, cpg, size, optional)
+            
+            replication_flag = False
+            
+            return {
+                'success': True,
+                'volume_name': volume_name,
+                'cpg': cpg,
+                'replication_flag': replication_flag,
+                'hpe_tiramisu': hpe_tiramisu
+            }
+
+        except Exception as ex:
+            error_msg = str(ex)
+            if 'Duplicate name' in error_msg or 'already exists' in error_msg:
+                return {
+                    'success': False,
+                    'error': error_msg,
+                    'error_type': 'Duplicate'
+                }
+            elif 'Invalid' in error_msg:
+                return {
+                    'success': False,
+                    'error': error_msg,
+                    'error_type': 'Invalid'
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': error_msg,
+                    'error_type': 'CinderException'
+                }
+
+    def create_cloned_volume_utility(self, client_obj, volume, src_vref, 
+                                   get_vol_name_callback, get_volume_settings_callback,
+                                   create_volume_callback, get_model_update_callback,
+                                   log_callback):
+        """Utility for creating cloned volumes."""
+        try:
+            orig_name = get_vol_name_callback(src_vref['id'])
+            clone_name = get_vol_name_callback(volume['id'])
+            
+            log_callback('CREATE CLONED VOLUME (%s) from (%s)', clone_name, orig_name)
+            
+            # Check if source volume exists
+            try:
+                client_obj.getVolume(orig_name)
+            except Exception:
+                return {
+                    'success': False,
+                    'error': f"Source volume {orig_name} not found",
+                    'error_type': 'NotFound'
+                }
+
+            # Create volume first
+            create_result = create_volume_callback(volume)
+            
+            # Build clone comment
+            comment = {}
+            self.add_name_id_to_comment(comment, volume)
+            comment['cloned_from'] = orig_name
+            
+            optional = {'comment': self.json_encode_dict(comment)}
+            
+            # Create physical copy (clone)
+            client_obj.createSnapshot(clone_name, orig_name, optional)
+            
+            return {
+                'success': True,
+                'clone_name': clone_name,
+                'model_update': create_result
+            }
+            
+        except Exception as ex:
+            error_msg = str(ex)
+            if 'Duplicate' in error_msg:
+                return {
+                    'success': False,
+                    'error': error_msg,
+                    'error_type': 'Duplicate'
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': error_msg,
+                    'error_type': 'CinderException'
+                }
+
+    def retype_pre_checks_utility(self, volume, host, new_persona, old_cpg, new_cpg, new_snap_cpg):
+        """Utility for retype parameter validation."""
+        from cinder import exception
+        from cinder.i18n import _
+        
+        if new_persona:
+            self.validate_persona(new_persona)
+
+        if host is not None:
+            host_info = host['capabilities']['location_info'].split(':')
+            if len(host_info) >= 3:
+                host_type, host_id = host_info[0], host_info[1]
+                
+                if host_type != 'HPE3PARDriver':
+                    reason = (_("Cannot retype from HPE3PARDriver to %s.") % host_type)
+                    raise exception.InvalidHost(reason=reason)
+
+                sys_info = self.getStorageSystemInfo()
+                if host_id != sys_info['serialNumber']:
+                    reason = (_("Cannot retype from one 3PAR array to another."))
+                    raise exception.InvalidHost(reason=reason)
+
+        # Validate snap_cpg
+        if not new_snap_cpg or new_snap_cpg.isspace():
+            reason = (_("Invalid new snapCPG name for retype. new_snap_cpg='%s'.") % new_snap_cpg)
+            raise exception.InvalidInput(reason)
+
+    def retype_volume_utility(self, client_obj, volume, volume_name, new_type_name, new_type_id, host,
+                             new_persona, old_cpg, new_cpg, old_snap_cpg, new_snap_cpg,
+                             old_tpvv, new_tpvv, old_tdvv, new_tdvv,
+                             old_vvs, new_vvs, old_qos, new_qos,
+                             old_flash_cache, new_flash_cache,
+                             old_comment, new_compression,
+                             retype_pre_checks_callback, task_waiter_callback):
+        """Utility for volume retype operations."""
+        # Run pre-checks
+        retype_pre_checks_callback(volume, host, new_persona, old_cpg, new_cpg, new_snap_cpg)
+        
+        # Simplified retype logic
+        if old_cpg != new_cpg:
+            task_optional = {'userCPG': new_cpg, 'snapCPG': new_snap_cpg}
+            
+            if old_tpvv != new_tpvv:
+                if new_tpvv:
+                    task_optional['conversionOperation'] = self.CONVERT_TO_THIN
+                else:
+                    task_optional['conversionOperation'] = self.CONVERT_TO_FULL
+                    
+            if old_tdvv != new_tdvv and new_tdvv:
+                task_optional['conversionOperation'] = self.CONVERT_TO_DECO
+
+            body = client_obj.tuneVolume(volume_name, task_optional)
+            task_id = body['taskid']
+            status = task_waiter_callback(client_obj, task_id).wait_for_task()
+            if status['status'] != self.TASK_DONE:
+                raise Exception(f'Tune volume task failed: {status}')
+
+    def do_volume_replication_setup_utility(self, client_obj, volume, replication_targets, api_version,
+                                           retype=False, dist_type_id=None,
+                                           get_volume_type_callback=None, get_volume_settings_callback=None,
+                                           get_vol_name_callback=None, is_volume_in_rcg_callback=None,
+                                           destroy_replication_callback=None, log_callback=None):
+        """Utility for setting up volume replication."""
+        from cinder.volume import volume_utils
+        from cinder import exception
+        from cinder.i18n import _
+        
+        rcg_name = self.get_3par_rcg_name(volume)
+        vol_name = get_vol_name_callback(volume['id'])
+        
+        # Check if already in remote copy group
+        if is_volume_in_rcg_callback and is_volume_in_rcg_callback(volume):
+            try:
+                client_obj.startRemoteCopy(rcg_name)
+            except Exception:
+                pass
+            return True
+
+        try:
+            # Get replication settings from volume type
+            volume_type = get_volume_type_callback(volume["volume_type_id"])
+            extra_specs = volume_type.get("extra_specs", {})
+            
+            replication_mode = extra_specs.get('replication:mode', 'sync')
+            replication_mode_num = self._get_remote_copy_mode_num(replication_mode)
+            replication_sync_period = extra_specs.get('replication:sync_period', 900)
+            
+            if replication_sync_period:
+                replication_sync_period = int(replication_sync_period)
+                
+            vol_settings = get_volume_settings_callback(volume)
+            local_cpg = vol_settings['cpg']
+
+            # Build RCG targets
+            rcg_targets = []
+            for target in replication_targets:
+                if target['replication_mode'] == replication_mode_num:
+                    cpg = self.get_cpg_from_cpg_map(target['cpg_map'], local_cpg)
+                    rcg_target = {'targetName': target['backend_id'],
+                                  'mode': replication_mode_num,
+                                  'userCPG': cpg}
+                    rcg_targets.append(rcg_target)
+
+            # Create remote copy group
+            optional = {'localUserCPG': local_cpg}
+            pool = volume_utils.extract_host(volume['host'], level='pool')
+            domain = self.get_domain(pool)
+            if domain:
+                optional["domain"] = domain
+                
+            client_obj.createRemoteCopyGroup(rcg_name, rcg_targets, optional)
+            
+            # Add volume to RCG
+            rcg_vol_targets = []
+            for target in replication_targets:
+                if target['replication_mode'] == replication_mode_num:
+                    rcg_target = {'targetName': target['backend_id'],
+                                  'secVolumeName': vol_name}
+                    rcg_vol_targets.append(rcg_target)
+                    
+            client_obj.addVolumeToRemoteCopyGroup(rcg_name, vol_name,
+                                                 rcg_vol_targets,
+                                                 optional={'volumeAutoCreation': True})
+
+            # Start remote copy
+            client_obj.startRemoteCopy(rcg_name)
+            return True
+            
+        except Exception as ex:
+            if destroy_replication_callback:
+                destroy_replication_callback(volume, retype=retype)
+            raise ex
+
+    def do_volume_replication_destroy_utility(self, client_obj, volume, rcg_name, retype,
+                                             get_vol_name_callback, delete_vvset_callback, log_callback):
+        """Utility for destroying volume replication."""
+        from hpe3parclient import exceptions as hpeexceptions
+        
+        if not rcg_name:
+            rcg_name = self.get_3par_rcg_name(volume)
+        vol_name = get_vol_name_callback(volume['id'])
+
+        # Stop remote copy
+        try:
+            client_obj.stopRemoteCopy(rcg_name)
+        except Exception:
+            pass
+
+        # Remove volume from remote copy group
+        try:
+            client_obj.removeVolumeFromRemoteCopyGroup(rcg_name, vol_name, removeFromTarget=True)
+        except Exception:
+            pass
+
+        # Remove remote copy group
+        try:
+            client_obj.removeRemoteCopyGroup(rcg_name)
+        except Exception:
+            pass
+
+        # Delete volume
+        try:
+            if not retype:
+                client_obj.deleteVolume(vol_name)
+        except hpeexceptions.HTTPConflict as ex:
+            if ex.get_code() == 34:
+                delete_vvset_callback(volume)
+                client_obj.deleteVolume(vol_name)
+        except Exception:
+            pass
+
+    def stop_remote_copy_group_utility(self, client_obj, rcg_name, log_callback):
+        """Utility for stopping remote copy group."""
+        try:
+            client_obj.stopRemoteCopy(rcg_name)
+            return True
+        except Exception as ex:
+            log_callback(f"Failed to stop remote copy group {rcg_name}: {str(ex)}")
+            return False
+
+    def start_remote_copy_group_utility(self, client_obj, rcg_name, log_callback):
+        """Utility for starting remote copy group."""
+        try:
+            client_obj.startRemoteCopy(rcg_name)
+            return True
+        except Exception as ex:
+            log_callback(f"Failed to start remote copy group {rcg_name}: {str(ex)}")
+            return False
+
+    def delete_group_utility(self, client_obj, group, volumes,
+                            remove_volumes_rcg_callback, delete_volume_callback,
+                            get_vvs_name_callback, log_callback):
+        """Utility for deleting volume groups."""
+        from hpe3parclient import exceptions as hpeexceptions
+        from cinder.objects import fields
+        
+        if group.is_replicated:
+            remove_volumes_rcg_callback(group, volumes)
+            
+        try:
+            cg_name = get_vvs_name_callback(group.id)
+            client_obj.deleteVolumeSet(cg_name)
+        except hpeexceptions.HTTPNotFound:
+            log_callback(f"Virtual Volume Set '{cg_name}' doesn't exist on array.")
+        except hpeexceptions.HTTPConflict as e:
+            log_callback(f"Conflict detected in Virtual Volume Set {cg_name}: {e}")
+
+        volume_model_updates = []
+        for volume in volumes:
+            volume_update = {'id': volume.get('id')}
+            try:
+                delete_volume_callback(volume)
+                volume_update['status'] = 'deleted'
+            except Exception as ex:
+                volume_update['status'] = 'error'
+            volume_model_updates.append(volume_update)
+            
+        model_update = {'status': group.status}
+        return model_update, volume_model_updates
+
+    def update_group_utility(self, client_obj, group, add_volumes, remove_volumes,
+                            get_vvs_name_callback, get_vol_name_callback,
+                            check_rep_status_callback, stop_rcg_callback, start_rcg_callback,
+                            check_replication_matched_callback, add_vol_to_rcg_callback,
+                            remove_vol_from_rcg_callback, log_callback):
+        """Utility for updating group membership."""
+        from cinder.objects import fields
+        from cinder import exception
+        from cinder.i18n import _
+        from hpe3parclient import exceptions as hpeexceptions
+        
+        add_volume = []
+        remove_volume = []
+        vol_rep_status = fields.ReplicationStatus.ENABLED
+        volume_set_name = get_vvs_name_callback(group.id)
+
+        if group.is_replicated:
+            check_rep_status_callback(group)
+            stop_rcg_callback(group)
+
+        # Process volumes to add
+        if add_volumes:
+            for volume in add_volumes:
+                volume_name = get_vol_name_callback(volume)
+                vol_snap_enable = self.is_volume_group_snap_type(volume.get('volume_type'))
+                
+                if vol_snap_enable:
+                    check_replication_matched_callback(volume, group)
+                    if group.is_replicated:
+                        add_vol_to_rcg_callback(group, volume)
+                        update = {'id': volume.get('id'), 'replication_status': vol_rep_status}
+                        add_volume.append(update)
+                    client_obj.addVolumeToVolumeSet(volume_set_name, volume_name)
+                else:
+                    msg = (_('Volume with volume id %s is not supported') % volume['id'])
+                    raise exception.InvalidInput(reason=msg)
+
+        # Process volumes to remove
+        if remove_volumes:
+            for volume in remove_volumes:
+                volume_name = get_vol_name_callback(volume)
+                if group.is_replicated:
+                    remove_vol_from_rcg_callback(group, volume)
+                    update = {'id': volume.get('id'), 'replication_status': None}
+                    remove_volume.append(update)
+                client_obj.removeVolumeFromVolumeSet(volume_set_name, volume_name)
+
+        if group.is_replicated:
+            start_rcg_callback(group)
+
+        return None, add_volume, remove_volume
+
+    def create_group_snapshot_utility(self, client_obj, group_snapshot, snapshots,
+                                     get_snap_name_callback, log_callback):
+        """Utility for creating group snapshots."""
+        from cinder.objects import fields
+        from cinder import exception
+        from cinder.i18n import _
+        
+        cg_id = group_snapshot.group_id
+        snap_shot_name = get_snap_name_callback(group_snapshot.id)
+        copy_of_name = self.get_3par_vvs_name(cg_id)
+        
+        # Build comment
+        extra = {'volume_id': group_snapshot.id,
+                 'group_id': cg_id,
+                 'display_name': group_snapshot.name or "",
+                 'description': group_snapshot.description or ""}
+
+        optional = {'comment': self.json_encode_dict(extra)}
+
+        try:
+            client_obj.createSnapshotOfVolumeSet(snap_shot_name, copy_of_name, optional=optional)
+        except Exception as ex:
+            msg = _('There was an error creating the cgsnapshot: %s') % str(ex)
+            log_callback(msg)
+            raise exception.InvalidInput(reason=msg)
+
+        snapshot_model_updates = []
+        for snapshot in snapshots:
+            snapshot_update = {'id': snapshot['id'],
+                               'status': fields.SnapshotStatus.AVAILABLE}
+            snapshot_model_updates.append(snapshot_update)
+
+        model_update = {'status': fields.GroupSnapshotStatus.AVAILABLE}
+        return model_update, snapshot_model_updates
+
+    def delete_group_snapshot_utility(self, client_obj, group_snapshot, snapshots,
+                                     get_snap_name_callback, log_callback):
+        """Utility for deleting group snapshots."""
+        from cinder.objects import fields
+        from hpe3parclient import exceptions as hpeexceptions
+        
+        cgsnap_name = get_snap_name_callback(group_snapshot.id)
+        snapshot_model_updates = []
+        
+        for i, snapshot in enumerate(snapshots):
+            snapshot_update = {'id': snapshot['id']}
+            try:
+                snap_name = cgsnap_name + "-" + str(i)
+                client_obj.deleteVolume(snap_name)
+                snapshot_update['status'] = fields.SnapshotStatus.DELETED
+            except hpeexceptions.HTTPNotFound as ex:
+                log_callback(f"Delete Snapshot id not found. Removing from cinder: {snapshot['id']}")
+                snapshot_update['status'] = fields.SnapshotStatus.ERROR
+            except Exception as ex:
+                snapshot_update['status'] = fields.SnapshotStatus.ERROR
+            snapshot_model_updates.append(snapshot_update)
+
+        model_update = {'status': fields.GroupSnapshotStatus.DELETED}
+        return model_update, snapshot_model_updates
+
+    def manage_existing_get_size_utility(self, client_obj, target_name, 
+                                        check_reserved_callback, log_callback):
+        """Utility for getting size of existing volumes/snapshots."""
+        from hpe3parclient import exceptions as hpeexceptions
+        from cinder import exception
+        from cinder.i18n import _
+        from oslo_utils import units
+        import math
+        
+        # Check if name is reserved
+        if check_reserved_callback(target_name):
+            reason = _("Reference must be for an unmanaged volume/snapshot.")
+            raise exception.ManageExistingInvalidReference(
+                existing_ref=target_name,
+                reason=reason)
+
+        # Check if volume exists
+        try:
+            vol = client_obj.getVolume(target_name)
+        except hpeexceptions.HTTPNotFound:
+            err = (_("Volume '%s' doesn't exist on array.") % target_name)
+            log_callback(err)
+            raise exception.InvalidInput(reason=err)
+
+        return int(math.ceil(float(vol['sizeMiB']) / units.Ki))
+
+    def unmanage_snapshot_utility(self, snapshot, get_snap_name_callback, 
+                                 get_ums_name_callback, log_callback):
+        """Utility for unmanaging snapshots."""
+        from cinder import exception
+        from cinder.i18n import _
+        
+        # Check if snapshot is from failed-over volume
+        volume = snapshot['volume']
+        if volume.get('replication_status') == 'failed-over':
+            err = (_("Unmanaging of snapshots from failed-over volumes is not allowed."))
+            raise exception.SnapshotIsBusy(snapshot_name=snapshot['id'])
+
+        # Rename snapshot
+        snap_name = get_snap_name_callback(snapshot['id'])
+        new_snap_name = get_ums_name_callback(snapshot['id'])
+        self.modifyVolume(snap_name, {'newName': new_snap_name})
+
+        log_callback("Snapshot %(disp)s '%(vol)s' is no longer managed. "
+                    "Snapshot renamed to '%(new)s'.",
+                    {'disp': snapshot['display_name'],
+                     'vol': snap_name,
+                     'new': new_snap_name})
+
+    def create_volume_with_features_utility(self, client_obj, volume, perform_replica,
+                                           get_volume_settings_callback, get_vol_name_callback,
+                                           check_rep_status_callback, add_vol_to_remote_group_callback,
+                                           add_volume_to_vvs_callback, do_volume_replication_callback,
+                                           api_version, log_callback):
+        """Comprehensive utility for creating volumes with all features."""
+        from cinder import exception
+        
+        try:
+            # Build basic volume parameters
+            comments = {'volume_id': volume['id'], 'name': volume['name'], 'type': 'OpenStack'}
+            self.add_name_id_to_comment(comments, volume)
+            
+            hpe_tiramisu = False
+            if volume.get('display_name'):
+                comments['display_name'] = volume['display_name']
+
+            # Get volume type settings
+            type_info = get_volume_settings_callback(volume)
+            volume_type = type_info['volume_type']
+            vvs_name = type_info['vvs_name']
+            qos = type_info['qos']
+            flash_cache = self.get_flash_cache_policy(type_info['hpe3par_keys'])
+            compression = self.get_compression_policy(type_info['hpe3par_keys'])
+
+            consis_group_snap_type = False
+            if volume_type is not None:
+                consis_group_snap_type = self.is_volume_group_snap_type(volume_type)
+
+            cg_id = volume.get('group_id', None)
+            group = volume.get('group', None)
+
+            # Create the basic volume
+            result = self.create_volume_utility(
+                client_obj, volume, type_info, comments, vvs_name, qos,
+                flash_cache, compression, consis_group_snap_type, cg_id,
+                group, hpe_tiramisu, api_version, log_callback
+            )
+            
+            if not result['success']:
+                if result['error_type'] == 'Duplicate':
+                    raise exception.Duplicate(result['error'])
+                elif result['error_type'] == 'Invalid':
+                    raise exception.Invalid(result['error'])
+                else:
+                    raise exception.CinderException(result['error'])
+
+            volume_name = result['volume_name']
+            cpg = result['cpg']
+            replication_flag = result['replication_flag']
+            hpe_tiramisu = result['hpe_tiramisu']
+
+            # Handle group operations
+            if consis_group_snap_type and self.volume_of_hpe_tiramisu_type(volume):
+                hpe_tiramisu = True
+
+            if group is not None and hpe_tiramisu and group.is_replicated:
+                check_rep_status_callback(group)
+                add_vol_to_remote_group_callback(group, volume)
+                replication_flag = True
+
+            # Handle volume set operations
+            if qos or vvs_name or flash_cache is not None:
+                try:
+                    add_volume_to_vvs_callback(volume, volume_name, cpg, vvs_name, qos, flash_cache)
+                except exception.InvalidInput as ex:
+                    client_obj.deleteVolume(volume_name)
+                    raise exception.CinderException(str(ex))
+
+            # Handle replication
+            if perform_replica and self.volume_of_replicated_type(volume, hpe_tiramisu_check=True):
+                if do_volume_replication_callback(volume):
+                    replication_flag = True
+
+            return self.get_model_update(volume['host'], cpg,
+                                       replication=replication_flag,
+                                       provider_location=self.id,
+                                       hpe_tiramisu=hpe_tiramisu)
+
+        except (exception.Duplicate, exception.Invalid, exception.InvalidInput, exception.CinderException):
+            raise
+        except Exception as ex:
+            raise exception.CinderException(str(ex))
+
+    def delete_snapshot_with_cleanup_utility(self, client_obj, snapshot,
+                                            get_snap_name_callback, convert_to_base_callback,
+                                            log_callback):
+        """Utility for deleting snapshots with child volume cleanup."""
+        from cinder import exception
+        from cinder.i18n import _
+        from hpe3parclient import exceptions as hpeexceptions
+        
+        snap_name = get_snap_name_callback(snapshot['id'])
+        
+        try:
+            # Try to delete snapshot
+            client_obj.deleteVolume(snap_name)
+            return True
+            
+        except hpeexceptions.HTTPNotFound:
+            # Snapshot doesn't exist, consider it deleted
+            log_callback(f"Snapshot {snap_name} not found, considering it deleted")
+            return True
+            
+        except hpeexceptions.HTTPConflict as ex:
+            if ex.get_code() == 34:
+                # Snapshot has children, need to handle them
+                log_callback(f"Snapshot {snap_name} has children, processing...")
+                
+                # Get snapshot info to find children
+                try:
+                    snap_info = client_obj.getVolume(snap_name)
+                    children = snap_info.get('copyOf', [])
+                    
+                    # Handle children volumes
+                    if children:
+                        for child_name in children:
+                            try:
+                                log_callback(f"Found child volume {child_name}")
+                                
+                                # Get volume details for conversion
+                                child_vol = client_obj.getVolume(child_name)
+                                
+                                # Build volume object for conversion
+                                v2 = child_vol.copy()
+                                v2['volume_type_id'] = self._get_3par_vol_comment_value(
+                                    child_vol['comment'], 'volume_type_id')
+                                v2['id'] = self._get_3par_vol_comment_value(
+                                    child_vol['comment'], 'volume_id')
+                                v2['_name_id'] = self._get_3par_vol_comment_value(
+                                    child_vol['comment'], '_name_id')
+                                v2['host'] = '#' + child_vol['userCPG']
+                                
+                                log_callback(f'Converting to base volume type: {v2["id"]}')
+                                convert_to_base_callback(v2)
+                                
+                            except Exception as child_ex:
+                                log_callback(f"Error processing child {child_name}: {str(child_ex)}")
+                                raise exception.SnapshotIsBusy(
+                                    message=_("Snapshot has children and cannot be deleted"))
+                    
+                    # Retry deletion after handling children
+                    client_obj.deleteVolume(snap_name)
+                    return True
+                    
+                except Exception as cleanup_ex:
+                    raise exception.SnapshotIsBusy(
+                        message=_("Snapshot has children and cannot be deleted"))
+            else:
+                raise exception.SnapshotIsBusy(message=str(ex))
+                
+        except Exception as ex:
+            raise exception.CinderException(str(ex))
+
     def _get_key_value(self, hpe3par_keys, key, default=None):
         if hpe3par_keys is not None and key in hpe3par_keys:
             return hpe3par_keys[key]
