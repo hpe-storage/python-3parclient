@@ -1,4 +1,4 @@
-# (c) Copyright 2012-2016 Hewlett Packard Enterprise Development LP
+# (c) Copyright 2012-2025 Hewlett Packard Enterprise Development LP
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -203,6 +203,7 @@ class HPE3ParClient(object):
     RC_ACTION_OVERRIDE_FAIL_SAFE = 11
 
     DEFAULT_NVME_PORT = 8009
+    DEFAULT_PORT_NQN = 'nqn.2014-08.org.nvmexpress.discovery'
 
     def __init__(self, api_url, debug=False, secure=False, timeout=None,
                  suppress_ssl_warnings=False):
@@ -5143,22 +5144,26 @@ class HPE3ParClient(object):
         ret_vals = (nvme_ip_list, nvme_ports)
         return ret_vals
 
-    def create_host_cinder(self, hostname, iscsiNames=None, FCWwns=None,
-                           nqn=None, domain=None):
+    def create_host_or_use_existing(self, hostname, iscsiNames=None,
+            FCWwns=None, nqn=None, domain=None):
         try:
             host = self.getHost(hostname)
             logger.debug("host is present")
             return host
         except exceptions.HTTPNotFound:
-            logger.debug("host doesn't exist. Creating host")
+            logger.debug("host doesn't exist. Creating host with %(name)s",
+                         {'name': hostname})
             try:
                if iscsiNames:
+                    logger.debug("creating iSCSI host")
                     self.createHost(hostname, iscsiNames=iscsiNames,
                                     optional={'domain': domain})
                if FCWwns:
+                    logger.debug("creating FC host")
                     self.createHost(hostname, FCWwns=FCWwns,
                                     optional={'domain': domain})
                if nqn:
+                    logger.debug("creating nvme host")
                     self.createHost(hostname, nqn=nqn,
                                     optional={'domain': domain})
             except Exception as ex:
@@ -5170,6 +5175,10 @@ class HPE3ParClient(object):
         except Exception as ex:
             logger.error("Exception occurred: %(ex)s", {'ex': str(ex)})
             raise
+
+    def create_host_nvme(self, hostname, nqn=None, domain=None):
+        host = self.create_host_or_use_existing(hostname, nqn, domain)
+        return host
 
     def getNextLunId(self, hostname, host_type='nvme'):
         # lun id can be 0 through 16383 (1 to 256 for NVMe hosts)
@@ -5199,7 +5208,7 @@ class HPE3ParClient(object):
     def getNqn(self, portPos):
         # in dev and QA array, all ports have same nqn below:
         # 'nqn.2014-08.org.nvmexpress.discovery'
-        return 'nqn.2014-08.org.nvmexpress.discovery'
+        return self.DEFAULT_PORT_NQN
 
     def build_portPos(self, nsp):
         arr = nsp.split(":")
@@ -5297,3 +5306,38 @@ class HPE3ParClient(object):
         # outside for
         ret_vals = (portals, target_nqns)
         return ret_vals
+
+    def remove_vlun_nvme(self, vol_name_3par, hostname, host_nqn):
+        vluns = self.getVLUNs()['members']
+        print("vluns: %(luns)s", {'luns': vluns})
+
+        # When deleteing VLUNs, you simply need to remove the template VLUN
+        # and any active VLUNs will be automatically removed.  The template
+        # VLUN are marked as active: False
+
+        volume_vluns = []
+
+        for vlun in vluns:
+            if vol_name_3par in vlun['volumeName']:
+                # template VLUNs are 'active' = False
+                if not vlun['active']:
+                    volume_vluns.append(vlun)
+
+        logger.debug("volume_vluns: %(luns)s", {'luns': volume_vluns})
+        print("volume_vluns: %(luns)s", {'luns': volume_vluns})
+        if not volume_vluns:
+            logger.warning("3PAR vlun for volume %(name)s not found on host "
+                           "%(host)s", {'name': vol_name_3par, 'host': hostname})
+            print("3PAR vlun not found")
+            return
+
+        for vlun in volume_vluns:
+            logger.debug("deleting vlun: %(lun)s", {'lun': vlun})
+            print("deleting vlun: %(lun)s", {'lun': vlun})
+            if 'portPos' in vlun:
+                self.deleteVLUN(vol_name_3par, vlun['lun'],
+                                None,
+                                port=vlun['portPos'])
+            else:
+                self.deleteVLUN(vol_name_3par, vlun['lun'])
+
