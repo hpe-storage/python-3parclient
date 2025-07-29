@@ -5292,7 +5292,12 @@ class HPE3ParClient(object):
             portals.append(
                 (nvme_ip, nvme_ips[nvme_ip]['ip_port'], 'tcp')
                 )
-        target_nqns.append(self.getNqn())
+        #target_nqns.append(self.getNqn())
+        vlun = self.getVLUN(vol_name_3par)
+        nqn_of_vlun = vlun['Subsystem_NQN']
+        logger.debug("nqn_of_vlun: %(nqn)s", {'nqn': nqn_of_vlun})
+        target_nqns.append(nqn_of_vlun)
+
         ret_vals = (portals, target_nqns)
         return ret_vals
 
