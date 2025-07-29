@@ -5194,7 +5194,7 @@ class HPE3ParClient(object):
             raise
 
     def create_host_nvme(self, hostname, nqn=None, domain=None):
-        host = self.create_host_or_use_existing(hostname, nqn, domain)
+        host = self.create_host_or_use_existing(hostname, nqn=nqn, domain=domain)
         return host
 
     def getNextLunId(self, hostname, host_type='nvme'):
@@ -5222,7 +5222,7 @@ class HPE3ParClient(object):
 
         return lun_id_next
 
-    def getNqn(self, portPos):
+    def getNqn(self, portPos=None):
         # in dev and QA array, all ports have same nqn below:
         # 'nqn.2014-08.org.nvmexpress.discovery'
         return self.DEFAULT_PORT_NQN
@@ -5239,9 +5239,8 @@ class HPE3ParClient(object):
         existing_vluns = []
         try:
             host_vluns = self.getHostVLUNs(host['name'])
-
             for vlun in host_vluns:
-                if vlun['volumeName'] == vol_name:
+                if vlun['volumeName'] == vol_name_3par:
                     existing_vluns.append(vlun)
         except exceptions.HTTPNotFound:
             # ignore, no existing VLUNs were found
@@ -5251,17 +5250,14 @@ class HPE3ParClient(object):
                           'vol': vol_name_3par})
         return existing_vluns
 
-    def create_vlun_nvme(self, vol_name_3par, host, nvme_ips, ready_ports, multipath):
-
-        # Target portal ips are defined in cinder.conf.
-        target_portal_ips = list(nvme_ips.keys())
-        cinder_conf_ips = []
-        if multipath:
-            # consider all ips
-            cinder_conf_ips = target_portal_ips
-        else:
-            # consider only the first ip
-            cinder_conf_ips.append(target_portal_ips[0])
+    def create_vlun_nvme(self, vol_name_3par, host, nvme_ips):
+        """Create a VLUN for NVMe host.
+        :param vol_name_3par: The name of the volume on 3PAR.
+        :param host: The host object containing host information.
+        :param nvme_ips: The NVMe IPs to use for the VLUN.
+        :returns: A tuple containing a list of portals and target NQNs.
+        :rtype: tuple
+        """
 
         # Collect all existing VLUNs for this volume/host combination.
         existing_vluns = self.find_existing_vluns(vol_name_3par, host)
@@ -5269,55 +5265,34 @@ class HPE3ParClient(object):
         host_name = host['name']
         portals = []
         target_nqns = []
-
-        # Cycle through each ready nvme port and determine if a new
-        # VLUN should be created or an existing one used.
-        for port in ready_ports:
-            lun_id = None
-            nvme_ip = port['nodeWWN']
-            if nvme_ip in cinder_conf_ips:
-                port_nqn = ''
-
-                # check for an already existing VLUN matching the
-                # nsp for this nvme IP. If one is found, use it
-                # instead of creating a new VLUN.
-                if existing_vluns:
-                    for v in existing_vluns:
-                        portPos = self.build_portPos(
-                            nvme_ips[nvme_ip]['nsp'])
-                        if v['portPos'] == portPos:
-                            logger.debug("vlun exists")
-                            lun_id = v['lun']
-                            port_nqn = self.getNqn(postPos)
-                            break
-                else:
-                    logger.debug("creating vlun")
-                    if lun_id is None:
-                        logger.debug("lun_id is None. calling getNextLunId")
-                        lun_id = self.getNextLunId(host_name)
-                        logger.debug("lun_id_next: %(id)s", {'id': lun_id})
-                    else:
-                        logger.debug("lun_id is %(id)s", {'id': lun_id})
-
-                    portPos = self.build_portPos(nvme_ips[nvme_ip]['nsp'])
-
-                    location = self.createVLUN(vol_name_3par, lun=lun_id,
-                                               hostname=host_name,
-                                               portPos=portPos)
-                    logger.debug("location: %(loc)s", {'loc': location})
-                    port_nqn = self.getNqn(portPos)
-
-                # outside if else
-                portals.append(
-                    (nvme_ip, nvme_ips[nvme_ip]['ip_port'], 'tcp')
-                    )
-                target_nqns.append(port_nqn)
-            else:
-                logger.debug("nvme IP: '%s' was not found in "
-                             "hpe3par_nvme_ips list defined in "
-                             "cinder.conf.", nvme_ip)
-
-        # outside for
+        lun_id = None
+        # check for an already existing VLUN matching the
+        # nsp for this nvme IP. If one is found, use it
+        # instead of creating a new VLUN.
+        if existing_vluns:
+            for v in existing_vluns:
+                lun_id = v['lun']
+                logger.debug("vlun exists for host name: %(host)s" \
+                             " with lun: %(lun)s",
+                             {'host': host_name, 'lun': v['lun']})
+                break 
+        else:
+            logger.debug("creating vlun for host name: %(host)s",
+                         {'host': host_name})
+            if lun_id is None:
+                logger.debug("lun_id is None. calling getNextLunId")
+                lun_id = self.getNextLunId(host_name)
+                logger.debug("lun_id_next: %(id)s", {'id': lun_id})
+        logger.debug("lun_id is %(id)s", {'id': lun_id})
+        location = self.createVLUN(vol_name_3par, lun=lun_id,
+                                   hostname=host_name)
+        logger.debug("location: %(loc)s", {'loc': location})
+        target_portal_ips = list(nvme_ips.keys())
+        for nvme_ip in target_portal_ips:
+            portals.append(
+                (nvme_ip, nvme_ips[nvme_ip]['ip_port'], 'tcp')
+                )
+        target_nqns.append(self.getNqn())
         ret_vals = (portals, target_nqns)
         return ret_vals
 
