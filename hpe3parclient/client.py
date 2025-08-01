@@ -202,7 +202,7 @@ class HPE3ParClient(object):
     RC_ACTION_CHANGE_TO_NATURUAL_DIRECTION = 10
     RC_ACTION_OVERRIDE_FAIL_SAFE = 11
 
-    DEFAULT_NVME_PORT = 8009
+    DEFAULT_NVME_PORT = 4420
     DEFAULT_PORT_NQN = 'nqn.2014-08.org.nvmexpress.discovery'
 
     def __init__(self, api_url, debug=False, secure=False, timeout=None,
@@ -2206,7 +2206,7 @@ class HPE3ParClient(object):
         response, body = self.http.get('/vluns')
         return body
 
-    def getVLUN(self, volumeName):
+    def getVLUN(self, volumeName, allVluns=False):
         """Get information about a VLUN.
 
         :param volumeName: The volume name of the VLUN to find
@@ -2225,9 +2225,14 @@ class HPE3ParClient(object):
             response, body = self.http.get('/vluns?query=%s' %
                                            quote(query.encode("utf8")))
 
-            # Return the first VLUN found for the volume.
-            for vlun in body.get('members', []):
-                return vlun
+            if allVluns:
+                # Return all the VLUNs found for the volume.
+                vluns = body.get('members', [])
+                return vluns
+            else:
+                # Return the first VLUN found for the volume.
+                for vlun in body.get('members', []):
+                    return vlun
         else:
             vluns = self.getVLUNs()
             if vluns:
@@ -5302,32 +5307,41 @@ class HPE3ParClient(object):
         return ret_vals
 
     def remove_vlun_nvme(self, vol_name_3par, hostname, host_nqn):
-        vlunsData = self.getVLUN(vol_name_3par)
-        if 'members' not in vlunsData:
-            logger.error("No VLUN members found for volume %(name)s",
-                         {'name': vol_name_3par})
+        vlunsData = self.getVLUN(vol_name_3par, True)
+        print("vlunsData: ", vlunsData)
+        if vlunsData == []:
+            logger.error("No VLUN found for volume %(name)s on host %(host)s",
+                         {'name': vol_name_3par, 'host': hostname})
             return
-        vluns = vlunsData['members']
-        logger.debug("vluns: %(luns)s", {'luns': vluns})
 
         # When deleteing VLUNs, you simply need to remove the template VLUN
         # and any active VLUNs will be automatically removed.  The template
         # VLUN are marked as active: False
+        vluns = []
+        for vlun in vlunsData:
+            if vol_name_3par in vlun['volumeName']:
+                # template VLUNs are 'active' = False
+                if not vlun['active']:
+                    vluns.append(vlun)
+
+        print("vluns: ", vluns)
         if not vluns:
             logger.warning("3PAR vlun for volume %(name)s not found on host "
                            "%(host)s", {'name': vol_name_3par, 'host': hostname})
             return
 
         for vlun in vluns:
+            print("  -- vlun: ", vlun)
             # Check if this VLUN belongs to the specified hostname
             if vlun.get('hostname') == hostname:
                 logger.debug("deleting vlun: %(lun)s", {'lun': vlun})
+                print("deleting vlun")
                 self.deleteVLUN(vol_name_3par, vlun['lun'],
-                                hostname,
-                                port=vlun['portPos'])
+                                hostname)
+                #                port=vlun['portPos'])
             else:
-                logger.error("Skipping vlun: %(lun)s -"
-                " belongs to different host: %(vlun_host)s",
-                        {'lun': vlun['lun'],
-                          'vlun_host': vlun.get('hostname', 'Unknown')})
+                logger.debug("Skipping vlun: %(lun)s -"
+                             " belongs to different host: %(vlun_host)s",
+                             {'lun': vlun['lun'],
+                              'vlun_host': vlun.get('hostname', 'Unknown')})
 
