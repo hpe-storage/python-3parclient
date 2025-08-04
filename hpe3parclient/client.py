@@ -1613,6 +1613,35 @@ class HPE3ParClient(object):
         response, body = self.http.get('/hosts/%s' % name)
         return body
 
+    def getHostByNqn(self, nqn):
+        """Get information about a Host by its NVMe Qualified Name (NQN).
+
+        :param nqn: The NQN of the Host to find
+        :type nqn: str
+
+        :returns: host dict
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_HOST - HOST doesn't exist
+
+        """
+        body = self.getHosts()
+        if 'members' not in body:
+            return None
+
+        for host in body['members']:
+            if 'NVMETCPPaths' not in host or not host['NVMETCPPaths']:
+                continue
+            nvme_paths = host['NVMETCPPaths']
+            for path in nvme_paths:
+                path_nqn = path.get('NQN')
+                if path_nqn == nqn:
+                    return host
+
+        # If we reach here, no host with the given NQN was found
+        logger.error("Host with NQN '%s' not found.", nqn)
+        msg = "Host with NQN '%s' not found." % nqn
+        raise exceptions.HTTPNotFound(error={'desc': msg})
+
     def createHost(self, name, iscsiNames=None, FCWwns=None,
                    nqn=None, optional=None):
         """Create a new Host entry.
