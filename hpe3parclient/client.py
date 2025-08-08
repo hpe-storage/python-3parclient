@@ -1,4 +1,4 @@
-# (c) Copyright 2012-2016 Hewlett Packard Enterprise Development LP
+# (c) Copyright 2012-2025 Hewlett Packard Enterprise Development LP
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -201,6 +201,9 @@ class HPE3ParClient(object):
     RC_ACTION_CHANGE_TO_SECONDARY = 9
     RC_ACTION_CHANGE_TO_NATURUAL_DIRECTION = 10
     RC_ACTION_OVERRIDE_FAIL_SAFE = 11
+
+    DEFAULT_NVME_PORT = 4420
+    DEFAULT_PORT_NQN = 'nqn.2014-08.org.nvmexpress.discovery'
 
     def __init__(self, api_url, debug=False, secure=False, timeout=None,
                  suppress_ssl_warnings=False):
@@ -1610,6 +1613,35 @@ class HPE3ParClient(object):
         response, body = self.http.get('/hosts/%s' % name)
         return body
 
+    def getHostByNqn(self, nqn):
+        """Get information about a Host by its NVMe Qualified Name (NQN).
+
+        :param nqn: The NQN of the Host to find
+        :type nqn: str
+
+        :returns: host dict
+        :raises: :class:`~hpe3parclient.exceptions.HTTPNotFound`
+            - NON_EXISTENT_HOST - HOST doesn't exist
+
+        """
+        body = self.getHosts()
+        if 'members' not in body:
+            return None
+
+        for host in body['members']:
+            if 'NVMETCPPaths' not in host or not host['NVMETCPPaths']:
+                continue
+            nvme_paths = host['NVMETCPPaths']
+            for path in nvme_paths:
+                path_nqn = path.get('NQN')
+                if path_nqn == nqn:
+                    return host
+
+        # If we reach here, no host with the given NQN was found
+        logger.error("Host with NQN '%s' not found.", nqn)
+        msg = "Host with NQN '%s' not found." % nqn
+        raise exceptions.HTTPNotFound(error={'desc': msg})
+
     def createHost(self, name, iscsiNames=None, FCWwns=None,
                    nqn=None, optional=None):
         """Create a new Host entry.
@@ -1694,8 +1726,19 @@ class HPE3ParClient(object):
         if optional:
             info = self._mergeDict(info, optional)
 
-        response, body = self.http.post('/hosts', body=info)
-        return body
+        try:
+            response, body = self.http.post('/hosts', body=info)
+        except Exception as ex:
+            logger.error("Failed to create host: %s", str(ex))
+            raise
+        if response is not None and 'location' in response:
+            location = response['location']
+            logger.debug("Created host at: %s", location)
+            hostObj = self.getHost(name)
+            if hostObj is None:
+                msg = "Host %s was created but not found." % name
+                raise exceptions.HTTPNotFound(error={'desc': msg})
+        return hostObj
 
     def modifyHost(self, name, mod_request):
         """Modify an existing Host entry.
@@ -2192,7 +2235,7 @@ class HPE3ParClient(object):
         response, body = self.http.get('/vluns')
         return body
 
-    def getVLUN(self, volumeName):
+    def getVLUN(self, volumeName, allVluns=False):
         """Get information about a VLUN.
 
         :param volumeName: The volume name of the VLUN to find
@@ -2211,9 +2254,14 @@ class HPE3ParClient(object):
             response, body = self.http.get('/vluns?query=%s' %
                                            quote(query.encode("utf8")))
 
-            # Return the first VLUN found for the volume.
-            for vlun in body.get('members', []):
-                return vlun
+            if allVluns:
+                # Return all the VLUNs found for the volume.
+                vluns = body.get('members', [])
+                return vluns
+            else:
+                # Return the first VLUN found for the volume.
+                for vlun in body.get('members', []):
+                    return vlun
         else:
             vluns = self.getVLUNs()
             if vluns:
@@ -5073,3 +5121,256 @@ class HPE3ParClient(object):
             # it means task cannot be cancelled,
             # because it is 'done' or already 'cancelled'
             pass
+
+    def getNvmePorts(self):
+        all_ports = self.getPorts()
+
+        target_ports = []
+        for port in all_ports['members']:
+            if (
+                port['mode'] == self.PORT_MODE_TARGET and
+                port['linkState'] == self.PORT_STATE_READY
+            ):
+                port_pos = port['portPos']
+                nsp = '%s:%s:%s' % (port_pos['node'], port_pos['slot'],
+                                    port_pos['cardPort'])
+                port['nsp'] = nsp
+                target_ports.append(port)
+
+        nvme_ports = []
+        for port in target_ports:
+            if port['protocol'] == self.PORT_PROTO_NVME:
+                nvme_ports.append(port)
+
+        logger.debug("nvme_ports: %(ports)s", {'ports': nvme_ports})
+        return nvme_ports 
+
+    def get_matched_array_ips_and_ports(self, client_conf):
+        temp_nvme_ip = {}
+        nvme_ip_list = {}
+        conf_ips = client_conf['hpe3par_nvme_ips']
+
+        for ip_addr in conf_ips:
+            # "ip"(given by user in cinder conf)
+            # contains IP Address, NVMe port in <IP>:<PORT> format.
+            ip = ip_addr.split(':')
+            if len(ip) == 1:
+                # "ip" doesn't contain NVMe port, use default NVMe port.
+                temp_nvme_ip[ip_addr] = {'ip_port': self.DEFAULT_NVME_PORT}
+            elif len(ip) == 2:
+                #Valid format <IP>:<PORT>
+                temp_nvme_ip[ip[0]] = {'ip_port': ip[1]}
+            else:
+                #Invalid format such as <IP>:<PORT>:<DATA>
+                logger.warning("Invalid IP address format '%s'", ip_addr)
+
+        # get all the valid nvme ports from array
+        # when found, add the valid nvme ip and port
+        # to the nvme IP dictionary
+        nvme_ports = self.getNvmePorts()
+        if not len(nvme_ports):
+            msg = 'Unable to obtain NVMe ports from storage system.'
+            logger.error(msg)
+            raise exceptions.HTTPNotFound(
+                {'code': 'NON_EXISTENT_NVME_PORTS',
+                 'desc': msg})
+        for port in nvme_ports:
+            ip = port['nodeWWN']
+            if ip in temp_nvme_ip:
+                ip_port = temp_nvme_ip[ip]['ip_port']
+                nvme_ip_list[ip] = {'ip_port': ip_port,
+                                    'nsp': port['nsp']}
+                del temp_nvme_ip[ip]
+
+        logger.debug("After mapping IPs from cinder to storage system:"
+                      "temp_nvme_ip: %(ips)s", {'ips': temp_nvme_ip})
+        logger.debug("After mapping IPs from cinder to storage system:"
+                     "nvme_ip_list: %(ips)s", {'ips': nvme_ip_list})
+
+        # lets see if there are invalid nvme IPs left in the temp dict
+        if len(temp_nvme_ip) > 0:
+            logger.warning("Found invalid nvme IP address(s) in "
+                        "configuration option(s) hpe3par_nvme_ips '%s.'",
+                        (", ".join(temp_nvme_ip)))
+
+        if not len(nvme_ip_list):
+            msg = 'At least one valid nvme IP address must be set.'
+            logger.error(msg)
+            raise exceptions.HTTPNotFound(
+                {'code': 'NON_EXISTENT_NVME_IP',
+                 'desc': msg})
+
+        ret_vals = (nvme_ip_list, nvme_ports)
+        return ret_vals
+
+    def create_host_or_use_existing(self, hostname, iscsiNames=None,
+            FCWwns=None, nqn=None, domain=None):
+        try:
+            host = self.getHost(hostname)
+            logger.debug("Host is already present:%(name)s",
+                         {'name': hostname})
+            return host
+        except exceptions.HTTPNotFound:
+            logger.debug("Host doesn't exist. Creating host with %(name)s",
+                         {'name': hostname})
+            try:
+                host = self.createHost(hostname, iscsiNames=iscsiNames,
+                                FCWwns=FCWwns, nqn=nqn,
+                                optional={'domain': domain})
+            except Exception as ex:
+                logger.error("Exception occurred while creating host %(name)s: %(ex)s",
+                              {'name': hostname, 'ex': str(ex)})
+                raise
+            return host
+        except Exception as ex:
+            logger.error("Exception occurred while creating host %(name)s: %(ex)s",
+                          {'name': hostname, 'ex': str(ex)})
+            raise
+
+    def create_host_nvme(self, hostname, nqn=None, domain=None):
+        host = self.create_host_or_use_existing(hostname, nqn=nqn, domain=domain)
+        return host
+
+    def getNextLunId(self, hostname, host_type='nvme'):
+        # lun id can be 0 through 16383 (1 to 256 for NVMe hosts)
+        LIMIT = 16383
+        if host_type=='nvme':
+            LIMIT = 256
+
+        lun_id_max = 0
+        try:
+            host_vluns = self.getHostVLUNs(hostname)
+            for vlun in host_vluns:
+                lun_id_x = vlun['lun']
+                if lun_id_x > lun_id_max:
+                    lun_id_max = lun_id_x
+
+        except exceptions.HTTPNotFound:
+            # ignore, no existing VLUNs were found
+            pass
+
+        lun_id_next = lun_id_max + 1
+        if lun_id_next > LIMIT:
+            msg = "Lun id exceeded limit '%d'" % LIMIT
+            raise exceptions.HTTPNotFound(error={'desc': msg})
+
+        return lun_id_next
+
+    def getNqn(self, portPos=None):
+        # in dev and QA array, all ports have same nqn below:
+        # 'nqn.2014-08.org.nvmexpress.discovery'
+        return self.DEFAULT_PORT_NQN
+
+    def build_portPos(self, nsp):
+        arr = nsp.split(":")
+        portPos = {}
+        portPos['node'] = int(arr[0])
+        portPos['slot'] = int(arr[1])
+        portPos['cardPort'] = int(arr[2])
+        return portPos
+
+    def find_existing_vluns(self, vol_name_3par, host):
+        existing_vluns = []
+        try:
+            host_vluns = self.getHostVLUNs(host['name'])
+            for vlun in host_vluns:
+                if vlun['volumeName'] == vol_name_3par:
+                    existing_vluns.append(vlun)
+        except exceptions.HTTPNotFound:
+            # ignore, no existing VLUNs were found
+            logger.debug("No existing VLUNs were found for host/volume "
+                         "combination: %(host)s, %(vol)s",
+                         {'host': host['name'],
+                          'vol': vol_name_3par})
+        return existing_vluns
+
+    def create_vlun_nvme(self, vol_name_3par, host, nvme_ips):
+        """Create a VLUN for NVMe host.
+        :param vol_name_3par: The name of the volume on 3PAR.
+        :param host: The host object containing host information.
+        :param nvme_ips: The NVMe IPs to use for the VLUN.
+        :returns: A tuple containing a list of portals and target NQNs.
+        :rtype: tuple
+        """
+
+        # Collect all existing VLUNs for this volume/host combination.
+        existing_vluns = self.find_existing_vluns(vol_name_3par, host)
+        logger.debug("existing_vluns: %(ev)s", {'ev': existing_vluns})
+        host_name = host['name']
+        portals = []
+        target_nqns = []
+        lun_id = None
+        # check for an already existing VLUN matching the
+        # nsp for this nvme IP. If one is found, use it
+        # instead of creating a new VLUN.
+        if existing_vluns:
+            for v in existing_vluns:
+                lun_id = v['lun']
+                logger.debug("vlun exists for host name: %(host)s" \
+                             " with lun: %(lun)s",
+                             {'host': host_name, 'lun': v['lun']})
+                break 
+        else:
+            logger.debug("creating vlun for host name: %(host)s",
+                         {'host': host_name})
+            if lun_id is None:
+                logger.debug("lun_id is None. calling getNextLunId")
+                lun_id = self.getNextLunId(host_name)
+                logger.debug("lun_id_next: %(id)s", {'id': lun_id})
+        logger.debug("lun_id is %(id)s", {'id': lun_id})
+        location = self.createVLUN(vol_name_3par, lun=lun_id,
+                                   hostname=host_name)
+        logger.debug("location: %(loc)s", {'loc': location})
+        target_portal_ips = list(nvme_ips.keys())
+        for nvme_ip in target_portal_ips:
+            portals.append(
+                (nvme_ip, nvme_ips[nvme_ip]['ip_port'], 'tcp')
+                )
+        #target_nqns.append(self.getNqn())
+        vlun = self.getVLUN(vol_name_3par)
+        nqn_of_vlun = vlun['Subsystem_NQN']
+        logger.debug("nqn_of_vlun: %(nqn)s", {'nqn': nqn_of_vlun})
+        target_nqns.append(nqn_of_vlun)
+
+        ret_vals = (portals, target_nqns)
+        return ret_vals
+
+    def remove_vlun_nvme(self, vol_name_3par, hostname, host_nqn):
+        vlunsData = self.getVLUN(vol_name_3par, True)
+        print("vlunsData: ", vlunsData)
+        if vlunsData == []:
+            logger.error("No VLUN found for volume %(name)s on host %(host)s",
+                         {'name': vol_name_3par, 'host': hostname})
+            return
+
+        # When deleteing VLUNs, you simply need to remove the template VLUN
+        # and any active VLUNs will be automatically removed.  The template
+        # VLUN are marked as active: False
+        vluns = []
+        for vlun in vlunsData:
+            if vol_name_3par in vlun['volumeName']:
+                # template VLUNs are 'active' = False
+                if not vlun['active']:
+                    vluns.append(vlun)
+
+        print("vluns: ", vluns)
+        if not vluns:
+            logger.warning("3PAR vlun for volume %(name)s not found on host "
+                           "%(host)s", {'name': vol_name_3par, 'host': hostname})
+            return
+
+        for vlun in vluns:
+            print("  -- vlun: ", vlun)
+            # Check if this VLUN belongs to the specified hostname
+            if vlun.get('hostname') == hostname:
+                logger.debug("deleting vlun: %(lun)s", {'lun': vlun})
+                print("deleting vlun")
+                self.deleteVLUN(vol_name_3par, vlun['lun'],
+                                hostname)
+                #                port=vlun['portPos'])
+            else:
+                logger.debug("Skipping vlun: %(lun)s -"
+                             " belongs to different host: %(vlun_host)s",
+                             {'lun': vlun['lun'],
+                              'vlun_host': vlun.get('hostname', 'Unknown')})
+
