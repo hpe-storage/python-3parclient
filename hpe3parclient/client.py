@@ -4326,7 +4326,7 @@ class HPE3ParClient(object):
         if interval not in ['daily', 'hourly']:
             raise exceptions.ClientException("Input interval not valid")
 
-        uri = 'systemreporter/vstime/cpgstatistics/' + interval
+        uri = '/systemreporter/vstime/cpgstatistics/' + interval
 
         output = {}
         try:
@@ -4334,10 +4334,10 @@ class HPE3ParClient(object):
             cpg_details = body['members'][-1]
 
             output = {
-                'throughput': float(cpg_details['throughputKByteSec']),
-                'bandwidth': float(cpg_details['bwLimit']),
-                'latency': float(cpg_details['latency']),
-                'io_size': float(cpg_details['IOSizeKB']),
+                'throughput': float(cpg_details['IO']['total']),
+                'bandwidth': float(cpg_details['KBytes']['total']),
+                'latency': float(cpg_details['serviceTimeMS']['total']),
+                'io_size': float(cpg_details['IOSizeKB']['total']),
                 'queue_length': float(cpg_details['queueLength']),
                 'avg_busy_perc': float(cpg_details['busyPct'])
             }
