@@ -243,6 +243,22 @@ class HPE3ParClient(object):
 
     DEFAULT_ISCSI_PORT = 3260
 
+    MIN_CLIENT_VERSION = '4.2.10'
+    DEDUP_API_VERSION = 30201120
+    FLASH_CACHE_API_VERSION = 30201200
+    COMPRESSION_API_VERSION = 30301215
+    SRSTATLD_API_VERSION = 30201200
+    REMOTE_COPY_API_VERSION = 30202290
+    API_VERSION_2023 = 100000000
+
+
+    # License values for reported capabilities
+    PRIORITY_OPT_LIC = "Priority Optimization"
+    THIN_PROV_LIC = "Thin Provisioning"
+    REMOTE_COPY_LIC = "Remote Copy"
+    SYSTEM_REPORTER_LIC = "System Reporter"
+    COMPRESSION_LIC = "Compression"
+
 
     def __init__(self, api_url, debug=False, secure=False, timeout=None,
                  suppress_ssl_warnings=False):
@@ -5490,11 +5506,11 @@ class HPE3ParClient(object):
         return None
 
 
-    @staticmethod
+    """ @staticmethod
     def _add_name_id_to_comment(comment, volume):
         name_id = volume.get('_name_id')
         if name_id:
-            comment['_name_id'] = name_id
+            comment['_name_id'] = name_id """
 
 
 
@@ -5510,14 +5526,14 @@ class HPE3ParClient(object):
 
 
 
-    def is_volume_group_snap_type(self, volume_type):
+    """ def is_volume_group_snap_type(self, volume_type):
         consis_group_snap_type = False
         if volume_type:
             extra_specs = volume_type.get('extra_specs')
             if 'consistent_group_snapshot_enabled' in extra_specs:
                 gsnap_val = extra_specs['consistent_group_snapshot_enabled']
                 consis_group_snap_type = (gsnap_val == "<is> True")
-        return consis_group_snap_type
+        return consis_group_snap_type """
 
 
     def _is_volume_type_replicated(self, volume_type):
@@ -5541,16 +5557,6 @@ class HPE3ParClient(object):
         return self._get_3par_rcg_name_of_group(group_id) + ".r" + (
             str(provider_location))
     
-
-    def _get_hpe3par_tiramisu_value(self, volume_type):
-        hpe3par_tiramisu = False
-        hpe3par_keys = self._get_keys_by_volume_type(volume_type)
-        if hpe3par_keys.get('group_replication'):
-            hpe3par_tiramisu = (
-                hpe3par_keys['group_replication'] == "<is> True")
-
-        return hpe3par_tiramisu
-
 
     def _get_key_value(self, hpe3par_keys, key, default=None):
         if hpe3par_keys is not None and key in hpe3par_keys:
@@ -5585,19 +5591,6 @@ class HPE3ParClient(object):
             ret_mode = self.PERIODIC
         return ret_mode
     
-
-    def _get_replication_mode_from_volume_type(self, volume_type):
-        # Default replication mode is PERIODIC
-        replication_mode_num = self.PERIODIC
-        extra_specs = volume_type.get("extra_specs")
-        if extra_specs:
-            replication_mode = extra_specs.get(
-                self.EXTRA_SPEC_REP_MODE, self.DEFAULT_REP_MODE)
-
-            replication_mode_num = self._get_remote_copy_mode_num(
-                replication_mode)
-
-        return replication_mode_num
     
     def _is_replication_mode_correct(self, mode, sync_num):
         rep_flag = True
@@ -5748,7 +5741,7 @@ class HPE3ParClient(object):
         return model_update
     
 
-    def _get_replication_sync_period_from_volume_type_client(self, volume_type):
+    """ def _get_replication_sync_period_from_volume_type_client(self, volume_type):
         # Default replication sync period is 900s
         replication_sync_period = self.DEFAULT_SYNC_PERIOD
         rep_mode = self.DEFAULT_REP_MODE
@@ -5762,24 +5755,13 @@ class HPE3ParClient(object):
                                                      replication_sync_period):
                 raise exceptions.ClientException()
             
-        return replication_sync_period
+        return replication_sync_period """
     
 
     # v2 replication conversion
-    def _get_3par_rcg_name_client(self, volume, vol_name=None):
-        # if non-replicated volume is retyped or migrated to replicated vol,
-        # then rcg_name is different. Try to get that new rcg_name.
-        if volume['migration_status'] == 'success':
-            vol_details = self.getVolume(vol_name)
-            rcg_name = vol_details.get('rcopyGroup')
-            return rcg_name
-        else:
-            # by default, rcg_name is similar to volume name
-            rcg_name = self._encode_name(volume.get('_name_id')
-                                         or volume['id'])
-            rcg = "rcg-%s" % rcg_name
-            return rcg[:22]
-    
+    def _get_3par_rcg_name_client(self, vol_details):
+        rcg_name = vol_details.get('rcopyGroup')
+        return rcg_name
 
     def getStorageSystemIdName(self):
         info = self.getStorageSystemInfo()
@@ -6040,4 +6022,148 @@ class HPE3ParClient(object):
                        'chapSecret': password}
         
         return mod_request
+
+
+    def getStorageSystemVersionAndLicense(self, info):
+        systemVersion = info['systemVersion'] 
+
+        if 'licenseInfo' in info:
+            if 'licenses' in info['licenseInfo']:
+                valid_licenses = info['licenseInfo']['licenses']
+
+        return systemVersion, valid_licenses
+    
+    
+    def getRemoteCopyGroupVolumes(self, rcg_name):
+        rcg = self.getRemoteCopyGroup(rcg_name)
+
+        return rcg['volumes']
+
+
+    def modifyRemoteCopyGroupPayload(self, targets, replication_mode_num, snap_cpg, local_cpg):
+        rcg_targets = []
+
+        for target in targets:
+            if target['replication_mode'] == replication_mode_num:
+                cpg = self._get_cpg_from_cpg_map(target['cpg_map'],
+                                                 local_cpg)
+                
+                
+                rcg_target = {'targetName': target['backend_id'],
+                              'remoteUserCPG': cpg,
+                              'remoteSnapCPG': cpg}
+                rcg_targets.append(rcg_target)
+
+        optional = {'localSnapCPG': snap_cpg,
+                    'localUserCPG': local_cpg,
+                    'targets': rcg_targets}
         
+        return optional
+    
+
+    def modifyRemoteCopyGroupPayloadSyncTargets(self, targets, replication_mode_num, replication_sync_period):
+        sync_targets = []
+
+        for target in targets:
+            if target['replication_mode'] == replication_mode_num:
+                sync_target = {'targetName': target['backend_id'],
+                               'syncPeriod': replication_sync_period}
+                sync_targets.append(sync_target)
+
+        opt = {'targets': sync_targets}
+        return opt
+    
+
+    def add_vol_to_remote_copy_group_params(self, targets, replication_mode_num, vol_name):
+        rcg_targets = []
+
+        for target in targets:
+            if target['replication_mode'] == replication_mode_num:
+                rcg_target = {'targetName': target['backend_id'],
+                              'secVolumeName': vol_name}
+                rcg_targets.append(rcg_target)
+
+        optional = {'volumeAutoCreation': True}
+
+        return rcg_targets, optional
+    
+
+    def getRemoteCopyVolumesAndSyncPeriod(self, rcg, replication_sync_period):
+        if len(rcg['volumes']) and 'syncPeriod' in rcg['targets'][0]:
+            if replication_sync_period != int(rcg['targets'][0]['syncPeriod']):
+                return True
+            else:
+                return False
+        else:
+            return False
+    
+
+    def create_qos_rule(self, min_io, max_io, min_bw, max_bw, latency, priority):
+        qosRule = {}
+
+        if min_io:
+            qosRule['ioMinGoal'] = int(min_io)
+            if max_io is None:
+                qosRule['ioMaxLimit'] = int(min_io)
+        if max_io:
+            qosRule['ioMaxLimit'] = int(max_io)
+            if min_io is None:
+                qosRule['ioMinGoal'] = int(max_io)
+        if min_bw:
+            qosRule['bwMinGoalKB'] = min_bw
+            if max_bw is None:
+                qosRule['bwMaxLimitKB'] = min_bw
+        if max_bw:
+            qosRule['bwMaxLimitKB'] = max_bw
+            if min_bw is None:
+                qosRule['bwMinGoalKB'] = max_bw
+        if latency:
+            # latency could be values like 2, 5, etc or
+            # small values like 0.1, 0.02, etc.
+            # we are converting to float so that 0.1 doesn't become 0
+            latency = float(latency)
+            if latency >= 1:
+                # by default, latency in millisecs
+                qosRule['latencyGoal'] = int(latency)
+            else:
+                # latency < 1 Eg. 0.1, 0.02, etc
+                # convert latency to microsecs
+                qosRule['latencyGoaluSecs'] = int(latency * 1000)
+        if priority:
+            qosRule['priority'] = priority
+
+        return qosRule
+    
+
+    def createRemoteCopyGroupPayload(self, targets, replication_mode_num, local_cpg, snap_cpg, domain, version):
+        rcg_targets = []
+
+        for target in targets:
+            # Only add targets that match the volumes replication mode.
+            if target['replication_mode'] == replication_mode_num:
+                cpg = self._get_cpg_from_cpg_map(target['cpg_map'],
+                                                     local_cpg)
+                rcg_target = {'targetName': target['backend_id'],
+                                'mode': replication_mode_num,
+                                'userCPG': cpg}
+                if version < self.API_VERSION_2023:
+                    rcg_target['snapCPG'] = cpg
+                rcg_targets.append(rcg_target)
+
+        optional = {'localUserCPG': local_cpg}
+
+        if version < self.API_VERSION_2023:
+            optional['localSnapCPG'] = snap_cpg
+
+        if domain:
+            optional["domain"] = domain
+
+        return rcg_targets, optional
+    
+
+    def modifyRemoteCopyGroupPayloadPpParams(self):
+        pp_params = {'targets': [
+                        {'policies': {'autoFailover': True,
+                                      'pathManagement': True,
+                                      'autoRecover': True}}]}
+        return pp_params
