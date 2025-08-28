@@ -5639,20 +5639,7 @@ class HPE3ParClient(object):
         except exceptions.HTTPNotFound:
             return False
         
-
-    def _get_cpg_from_cpg_map(self, cpg_map, target_cpg):
-        ret_target_cpg = None
-        cpg_pairs = cpg_map.split(' ')
-        for cpg_pair in cpg_pairs:
-            cpgs = cpg_pair.split(':')
-            cpg = cpgs[0]
-            dest_cpg = cpgs[1]
-            if cpg == target_cpg:
-                ret_target_cpg = dest_cpg
-
-        return ret_target_cpg
     
-
     def _generate_hpe3par_cpgs(self, cpg_map):
         hpe3par_cpgs = []
         cpg_pairs = cpg_map.split(' ')
@@ -5775,20 +5762,6 @@ class HPE3ParClient(object):
         return info['build']
     
     
-    def check_replication_flags_client(self, options):
-        required_flags = ['hpe3par_api_url', 'hpe3par_username',
-                          'hpe3par_password', 'san_ip', 'san_login',
-                          'san_password', 'backend_id',
-                          'replication_mode', 'cpg_map']
-        
-        for flag in required_flags:
-            if not options.get(flag, None):
-                msg = (('%s is not set and is required for the replication '
-                         'device to be valid.') % flag)
-                logger.error(msg)
-                raise exceptions.ClientException(desc=msg)
-            
-
     def initialize_iscsi_ports_client(self, ip_addr):
         temp_iscsi_ip = {}
 
@@ -5818,47 +5791,37 @@ class HPE3ParClient(object):
     
 
 
-    def get_active_target_ports_client(self, remote_client=None):
-        if remote_client:
-            client_obj = remote_client
-            ports = client_obj.getPorts()
-        else:
-            client_obj = self
-            ports = client_obj.get_ports()
-
+    def get_active_target_ports_client(self, ports):
         target_ports = []
+
         for port in ports['members']:
             if (
-                port['mode'] == client_obj.PORT_MODE_TARGET and
-                port['linkState'] == client_obj.PORT_STATE_READY
+                port['mode'] == self.PORT_MODE_TARGET and
+                port['linkState'] == self.PORT_STATE_READY
             ):
                 port['nsp'] = self.build_nsp(port['portPos'])
                 target_ports.append(port)
 
         return target_ports
     
+    def get_active_protocol_ports(self, ports, iscsi_proto=False, fc_proto=False):
+        proto_ports = []
+        if fc_proto:
+            for port in ports:
+                if port['protocol'] == self.PORT_PROTO_FC:
+                    proto_ports.append(port)
+        elif iscsi_proto:
+            for port in ports:
+                if port['protocol'] == self.PORT_PROTO_ISCSI:
+                    proto_ports.append(port)
+
+        return proto_ports
 
     def build_nsp(self, portPos):
         return '%s:%s:%s' % (portPos['node'],
                              portPos['slot'],
                              portPos['cardPort'])
 
-
-
-    def get_active_iscsi_target_ports_client(self, remote_client=None):
-        ports = self.get_active_target_ports_client(remote_client)
-        if remote_client:
-            client_obj = remote_client
-        else:
-            client_obj = self
-
-        iscsi_ports = []
-        for port in ports:
-            if port['protocol'] == client_obj.PORT_PROTO_ISCSI:
-                iscsi_ports.append(port)
-
-        return iscsi_ports
-    
 
     def update_dicts_client(self, temp_iscsi_ip, iscsi_ip_list, iscsi_ports):
         for port in iscsi_ports:
@@ -5998,7 +5961,7 @@ class HPE3ParClient(object):
         return host_wwns
     
 
-    def create_mod_request(self, iscsi_iqn=None, wwn=None):
+    def create_modifyhost_request(self, iscsi_iqn=None, wwn=None):
         mod_request = {}
 
         if iscsi_iqn is not None:
@@ -6167,3 +6130,29 @@ class HPE3ParClient(object):
                                       'pathManagement': True,
                                       'autoRecover': True}}]}
         return pp_params
+    
+    
+    
+    def createHostOptional(self, domain, persona_id):
+        optional = {
+            'domain': domain,
+            'persona': persona_id
+            }
+
+        return optional
+    
+
+    def getPortsIqnOrWwnOrNqn(self, ports, iscsi_port=False, fc_port=False):
+        all_target_wwns = []
+        all_target_iqns = []
+
+        if fc_port:
+            for port in ports:
+                all_target_wwns.append(port['portWWN'])
+            return all_target_wwns
+    
+        if iscsi_port:
+            for port in ports:
+                all_target_iqns.append(port['portIQN'])
+            return all_target_iqns
+
