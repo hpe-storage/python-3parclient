@@ -5524,28 +5524,7 @@ class HPE3ParClient(object):
             prefix = "oss-%s"
         return prefix % snapshot_name
 
-
-
-    """ def is_volume_group_snap_type(self, volume_type):
-        consis_group_snap_type = False
-        if volume_type:
-            extra_specs = volume_type.get('extra_specs')
-            if 'consistent_group_snapshot_enabled' in extra_specs:
-                gsnap_val = extra_specs['consistent_group_snapshot_enabled']
-                consis_group_snap_type = (gsnap_val == "<is> True")
-        return consis_group_snap_type """
-
-
-    def _is_volume_type_replicated(self, volume_type):
-        replicated_type = False
-        extra_specs = volume_type.get('extra_specs')
-        if extra_specs and 'replication_enabled' in extra_specs:
-            rep_val = extra_specs['replication_enabled']
-            replicated_type = (rep_val == "<is> True")
-
-        return replicated_type
-
-    
+ 
     def _get_3par_rcg_name_of_group(self, group_id):
         rcg_name = self._encode_name(group_id)
         rcg = "rcg-%s" % rcg_name
@@ -5564,17 +5543,6 @@ class HPE3ParClient(object):
         else:
             return default
         
-
-    def _get_boolean_key_value(self, hpe3par_keys, key, default=False):
-        value = self._get_key_value(
-            hpe3par_keys, key, default)
-        if isinstance(value, str):
-            if value.lower() == 'true':
-                value = True
-            else:
-                value = False
-        return value
-    
 
     def _get_3par_vol_comment(self, volume_name):
         vol = self.getVolume(volume_name)
@@ -6003,25 +5971,20 @@ class HPE3ParClient(object):
         return rcg['volumes']
 
 
-    def modifyRemoteCopyGroupPayload(self, targets, replication_mode_num, snap_cpg, local_cpg):
-        rcg_targets = []
-
-        for target in targets:
-            if target['replication_mode'] == replication_mode_num:
-                cpg = self._get_cpg_from_cpg_map(target['cpg_map'],
-                                                 local_cpg)
-                
-                
-                rcg_target = {'targetName': target['backend_id'],
-                              'remoteUserCPG': cpg,
-                              'remoteSnapCPG': cpg}
-                rcg_targets.append(rcg_target)
-
+    def modifyRemoteCopyGroupOptional(self, rcg_targets, snap_cpg, local_cpg):
         optional = {'localSnapCPG': snap_cpg,
                     'localUserCPG': local_cpg,
                     'targets': rcg_targets}
         
         return optional
+    
+
+    def modifyRemoteCopyGroupTarget(self, targetName, cpg):
+        rcg_target = {'targetName': targetName,
+                      'remoteUserCPG': cpg,
+                      'remoteSnapCPG': cpg}
+        
+        return rcg_target
     
 
     def modifyRemoteCopyGroupPayloadSyncTargets(self, targets, replication_mode_num, replication_sync_period):
@@ -6098,41 +6061,35 @@ class HPE3ParClient(object):
         return qosRule
     
 
-    def createRemoteCopyGroupPayload(self, targets, replication_mode_num, local_cpg, snap_cpg, domain, version):
-        rcg_targets = []
+    def createRemoteCopyGroupTarget(self, apiVersion, targetName, replication_mode_num, replication_sync_period, cpg):
+        rcg_target = {'targetName': targetName,
+                        'mode': replication_mode_num,
+                        'userCPG': cpg}  
+        if apiVersion < self.API_VERSION_2023:
+            rcg_target['snapCPG'] = cpg
 
-        for target in targets:
-            # Only add targets that match the volumes replication mode.
-            if target['replication_mode'] == replication_mode_num:
-                cpg = self._get_cpg_from_cpg_map(target['cpg_map'],
-                                                     local_cpg)
-                rcg_target = {'targetName': target['backend_id'],
-                                'mode': replication_mode_num,
-                                'userCPG': cpg}
-                if version < self.API_VERSION_2023:
-                    rcg_target['snapCPG'] = cpg
-                rcg_targets.append(rcg_target)
+        sync_target = {'targetName': targetName,
+                       'syncPeriod': replication_sync_period}
 
+        return rcg_target, sync_target
+    
+    def createRemoteCopyGroupOptional(self, apiVersion, snap_cpg, local_cpg, domain):
         optional = {'localUserCPG': local_cpg}
-
-        if version < self.API_VERSION_2023:
+        if apiVersion < self.API_VERSION_2023:
             optional['localSnapCPG'] = snap_cpg
-
         if domain:
             optional["domain"] = domain
 
-        return rcg_targets, optional
-    
+        return optional
 
-    def modifyRemoteCopyGroupPayloadPpParams(self):
+    def modifyRemoteCopyGroupPpParams(self):
         pp_params = {'targets': [
                         {'policies': {'autoFailover': True,
                                       'pathManagement': True,
                                       'autoRecover': True}}]}
         return pp_params
     
-    
-    
+ 
     def createHostOptional(self, domain, persona_id):
         optional = {
             'domain': domain,
@@ -6155,4 +6112,25 @@ class HPE3ParClient(object):
             for port in ports:
                 all_target_iqns.append(port['portIQN'])
             return all_target_iqns
+        
+    
 
+    def copyVolumeOptional(self, wsapiVersion, snap_cpg=None,
+                     tpvv=True, tdvv=False, compression=None, comment=None):
+        
+        optional = {'tpvv': tpvv, 'online': True}
+
+        if snap_cpg is not None and wsapiVersion < self.API_VERSION_2023:
+            optional['snapCPG'] = snap_cpg
+
+        if wsapiVersion >= self.DEDUP_API_VERSION:
+            optional['tdvv'] = tdvv
+
+        if (compression is not None and
+                wsapiVersion >= self.COMPRESSION_API_VERSION):
+            optional['compression'] = compression
+
+        if comment:
+            optional['comment'] = comment
+
+        return optional
