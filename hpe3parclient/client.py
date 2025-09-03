@@ -5478,40 +5478,12 @@ class HPE3ParClient(object):
         return "unm-%s" % unm_name   
 
 
-    def _get_existing_volume_ref_name_client(self, existing_ref, is_snapshot):
-        """Returns the volume name of an existing reference.
-
-        Checks if an existing volume reference has a source-name or
-        source-id element. If source-name or source-id is not present an
-        error will be thrown.
-        """
-        vol_name = None
-        if 'source-name' in existing_ref:
-            vol_name = existing_ref['source-name']
-        elif 'source-id' in existing_ref:
-            if is_snapshot:
-                vol_name = self._get_3par_ums_name(existing_ref['source-id'])
-            else:
-                vol_name = self._get_3par_unm_name(existing_ref['source-id'])
-        else:
-            reason = "Reference must contain source-name or source-id."
-            raise exceptions.ClientException(reason)
-        return vol_name  
-
 
     def _get_3par_vol_comment_value(self, vol_comment, key):
         comment_dict = dict(ast.literal_eval(vol_comment))
         if key in comment_dict:
             return comment_dict[key]
         return None
-
-
-    """ @staticmethod
-    def _add_name_id_to_comment(comment, volume):
-        name_id = volume.get('_name_id')
-        if name_id:
-            comment['_name_id'] = name_id """
-
 
 
     def _get_3par_snap_name(self, snapshot_id, temp_snap=False):
@@ -5607,111 +5579,6 @@ class HPE3ParClient(object):
         except exceptions.HTTPNotFound:
             return False
         
-    
-    def _generate_hpe3par_cpgs(self, cpg_map):
-        hpe3par_cpgs = []
-        cpg_pairs = cpg_map.split(' ')
-        for cpg_pair in cpg_pairs:
-            cpgs = cpg_pair.split(':')
-            hpe3par_cpgs.append(cpgs[1])
-
-        return hpe3par_cpgs
-    
-
-    def disable_replication_client(self, group, volumes):
-        """Disable replication for a group.
-
-        :param group: the group object
-        :param volumes: the list of volumes
-        :returns: model_update, None
-        """
-
-        model_update = {}
-        if not group.is_replicated:
-            raise NotImplementedError()
-
-        if not volumes:
-            # Return if empty group
-            return model_update
-
-        try:
-            vvs_name = self._get_3par_vvs_name(group.id)
-            rcg_name = self._get_3par_rcg_name_of_group(group.id)
-
-            # Check VV and RCG exist on 3par,
-            # if RCG exist then stop RCG
-            self.getVolumeSet(vvs_name)
-            self.stopRemoteCopy(rcg_name)
-        except exceptions.HTTPNotFound as ex:
-            # The remote-copy group does not exist or
-            # set does not exist.
-            raise ex
-        except Exception as ex:
-            logger.error("Error disabling replication on group %(group)s. "
-                      "Exception received: %(e)s.",
-                      {'group': group.id, 'e': ex})
-            raise exceptions.ClientException(group_id=group.id)
-
-        return model_update
-    
-
-
-    def enable_replication_client(self, group, volumes):
-        """Enable replication for a group.
-
-        :param group: the group object
-        :param volumes: the list of volumes
-        :returns: model_update, None
-        """
-
-        model_update = {}
-        if not group.is_replicated:
-            raise NotImplementedError()
-
-        if not volumes:
-            # Return if empty group
-            return model_update
-
-        try:
-            vvs_name = self._get_3par_vvs_name(group.id)
-            rcg_name = self._get_3par_rcg_name_of_group(group.id)
-
-            # Check VV and RCG exist on 3par,
-            # if RCG exist then start RCG
-            self.getVolumeSet(vvs_name)
-            self.startRemoteCopy(rcg_name)
-        except exceptions.HTTPNotFound as ex:
-            # The remote-copy group does not exist or
-            # set does not exist.
-            raise ex
-        except exceptions.HTTPForbidden as ex:
-            # The remote-copy group has already been started.
-            raise ex
-        except Exception as ex:
-            logger.error("Error enabling replication on group %(group)s. "
-                      "Exception received: %(e)s.",
-                      {'group': group.id, 'e': ex})
-            raise exceptions.ClientException(group_id=group.id)
-
-        return model_update
-    
-
-    """ def _get_replication_sync_period_from_volume_type_client(self, volume_type):
-        # Default replication sync period is 900s
-        replication_sync_period = self.DEFAULT_SYNC_PERIOD
-        rep_mode = self.DEFAULT_REP_MODE
-        extra_specs = volume_type.get("extra_specs")
-        if extra_specs:
-            replication_sync_period = extra_specs.get(
-                self.EXTRA_SPEC_REP_SYNC_PERIOD, self.DEFAULT_SYNC_PERIOD)
-
-            replication_sync_period = int(replication_sync_period)
-            if not self._is_replication_mode_correct(rep_mode,
-                                                     replication_sync_period):
-                raise exceptions.ClientException()
-            
-        return replication_sync_period """
-    
 
     # v2 replication conversion
     def _get_3par_rcg_name_client(self, vol_details):
