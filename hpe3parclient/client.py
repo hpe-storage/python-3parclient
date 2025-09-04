@@ -5725,9 +5725,9 @@ class HPE3ParClient(object):
         return host, hostname
     
     
-    def queryHostReturnHostname(self, iscsi_iqn=None, wwns=None):
-        if iscsi_iqn is not None:
-            hosts = self.queryHost(iqns=iscsi_iqn)
+    def queryHostReturnHostname(self, iscsi_iqns=None, wwns=None):
+        if iscsi_iqns is not None:
+            hosts = self.queryHost(iqns=iscsi_iqns)
         elif wwns is not None:
             hosts = self.queryHost(wwns=wwns)
 
