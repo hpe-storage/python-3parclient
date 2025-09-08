@@ -5454,13 +5454,6 @@ class HPE3ParClient(object):
         return None
 
 
-    def _get_key_value(self, hpe3par_keys, key, default=None):
-        if hpe3par_keys is not None and key in hpe3par_keys:
-            return hpe3par_keys[key]
-        else:
-            return default
-        
-
     def _get_3par_vol_comment(self, volume_name):
         vol = self.getVolume(volume_name)
         if 'comment' in vol:
@@ -5521,17 +5514,6 @@ class HPE3ParClient(object):
         rcg_name = vol_details.get('rcopyGroup')
         return rcg_name
 
-    def getStorageSystemIdName(self):
-        info = self.getStorageSystemInfo()
-
-        return info['id'], info['name']
-    
-
-    def getWsApiVersionBuild(self):
-        info = self.getWsApiVersion()
-
-        return info['build']
-    
     
     def initialize_iscsi_ports_client(self, ip_addr):
         temp_iscsi_ip = {}
