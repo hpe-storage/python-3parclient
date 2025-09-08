@@ -33,8 +33,6 @@ import uuid
 import logging
 import ast
 
-from oslo_serialization import base64
-
 try:
     # For Python 3.0 and later
     from urllib.parse import quote
@@ -5448,36 +5446,6 @@ class HPE3ParClient(object):
                             'license': license_to_check})
                 return False
 
-    
-    @staticmethod
-    def _encode_name(name):
-        uuid_str = name.replace("-", "")
-        vol_uuid = uuid.UUID('urn:uuid:%s' % uuid_str)
-        vol_encoded = base64.encode_as_text(vol_uuid.bytes)
-
-        # 3par doesn't allow +, nor /
-        vol_encoded = vol_encoded.replace('+', '.')
-        vol_encoded = vol_encoded.replace('/', '-')
-        # strip off the == as 3par doesn't like those.
-        vol_encoded = vol_encoded.replace('=', '')
-        return vol_encoded
-
-    
-    def _get_3par_ums_name(self, snapshot_id):
-        ums_name = self._encode_name(snapshot_id)
-        return "ums-%s" % ums_name
-
-    
-    def _get_3par_vvs_name(self, volume_id):
-        vvs_name = self._encode_name(volume_id)
-        return "vvs-%s" % vvs_name
-
-    
-    def _get_3par_unm_name(self, volume_id):
-        unm_name = self._encode_name(volume_id)
-        return "unm-%s" % unm_name   
-
-
 
     def _get_3par_vol_comment_value(self, vol_comment, key):
         comment_dict = dict(ast.literal_eval(vol_comment))
@@ -5485,29 +5453,6 @@ class HPE3ParClient(object):
             return comment_dict[key]
         return None
 
-
-    def _get_3par_snap_name(self, snapshot_id, temp_snap=False):
-        snapshot_name = self._encode_name(snapshot_id)
-        if temp_snap:
-            # is this a temporary snapshot
-            # this is done during cloning
-            prefix = "tss-%s"
-        else:
-            prefix = "oss-%s"
-        return prefix % snapshot_name
-
- 
-    def _get_3par_rcg_name_of_group(self, group_id):
-        rcg_name = self._encode_name(group_id)
-        rcg = "rcg-%s" % rcg_name
-        return rcg[:22]                     
-
-
-
-    def _get_3par_remote_rcg_name_of_group(self, group_id, provider_location):
-        return self._get_3par_rcg_name_of_group(group_id) + ".r" + (
-            str(provider_location))
-    
 
     def _get_key_value(self, hpe3par_keys, key, default=None):
         if hpe3par_keys is not None and key in hpe3par_keys:
@@ -5570,15 +5515,6 @@ class HPE3ParClient(object):
                     return False
         return True
     
-
-    def _is_group_in_remote_copy_group(self, group):
-        rcg_name = self._get_3par_rcg_name_of_group(group.id)
-        try:
-            self.getRemoteCopyGroup(rcg_name)
-            return True
-        except exceptions.HTTPNotFound:
-            return False
-        
 
     # v2 replication conversion
     def _get_3par_rcg_name_client(self, vol_details):
