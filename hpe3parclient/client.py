@@ -5491,7 +5491,6 @@ class HPE3ParClient(object):
     
 
     def _are_targets_in_their_natural_direction(self, rcg):
-
         targets = rcg['targets']
         for target in targets:
             if target['roleReversed'] or (
@@ -5601,14 +5600,6 @@ class HPE3ParClient(object):
         del temp_iscsi_ip[ip]
 
 
-    def getCPGDomain(self, cpg):
-        cpg_obj = self.getCPG(cpg)
-        if 'domain' in cpg_obj:
-            return cpg_obj['domain']
-
-        return None
-    
-
     def getVolumeWithCPG(self, volume_name, allowSnap=False):
         vol = self.getVolume(volume_name)
         # Search for 'userCPG' in the get volume REST API,
@@ -5654,16 +5645,6 @@ class HPE3ParClient(object):
         else:
             return None
         
-
-    def hostNameFromHost(self, host):
-        if host and 'name' in host:
-            return host['name']
-        else:
-            return None
-
-    def volumeNameForVLun(self, vlun):
-        return vlun['volumeName']
-    
 
     def iscsi_ip_port(self, port):
         if port and 'IPAddr' in port:
