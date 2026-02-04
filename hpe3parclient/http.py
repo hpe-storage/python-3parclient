@@ -72,6 +72,8 @@ class HTTPJSONRESTClient(object):
         if suppress_ssl_warnings:
             requests.packages.urllib3.disable_warnings()
 
+        HTTPJSONRESTClient._logger.debug("Initializing Session Key in __init__:")
+
         self.session_key = None
 
         # should be http://<Server:Port>/api/v1
@@ -85,6 +87,9 @@ class HTTPJSONRESTClient(object):
     def set_url(self, api_url):
         # should be http://<Server:Port>/api/v1
         self.api_url = api_url.rstrip('/')
+
+    def get_session_key(self):
+        return self.session_key
 
     def set_debug_flag(self, flag):
         """
@@ -111,6 +116,8 @@ class HTTPJSONRESTClient(object):
 
         """
         # this prevens re-auth attempt if auth fails
+        HTTPJSONRESTClient._logger.debug("Session Key in authenticate: %s\n" %
+                                             (self.session_key))
         self.auth_try = 1
         self.session_key = None
 
@@ -136,9 +143,16 @@ class HTTPJSONRESTClient(object):
         This clears the authenticated session with the 3PAR server.
 
         """
-        # delete the session on the 3Par
-        self.delete('/credentials/%s' % self.session_key)
-        self.session_key = None
+        try:
+            # delete the session on the 3Par
+            HTTPJSONRESTClient._logger.debug("Session Key in unauthenticate: %s\n" %
+                                                (self.session_key))
+            self.delete('/credentials/%s' % self.session_key)
+            self.session_key = None
+        except Exception as ex:
+            HTTPJSONRESTClient._logger.error("Error during unauthenticate: %s\n"
+                                             % (str(ex)))
+            raise ex
 
     def get_timings(self):
         """
@@ -275,7 +289,7 @@ class HTTPJSONRESTClient(object):
                 self.delay = self.delay * self.backoff + 1
 
                 # Raise exception, we have exhausted all retries.
-                if self.tries is 0:
+                if self.tries == 0:
                     raise ex
             except requests.exceptions.HTTPError as err:
                 raise exceptions.HTTPError("HTTP Error: %s" % err)
@@ -292,8 +306,17 @@ class HTTPJSONRESTClient(object):
 
         return resp, body
 
+    def _build_full_url(self, url):
+        """Build full URL, supporting both absolute and relative URLs."""
+        if url.startswith('http://') or url.startswith('https://'):
+            return url.rstrip('/')
+        else:
+            return self.api_url + url
+
     def _time_request(self, url, method, **kwargs):
         start_time = time.time()
+        HTTPJSONRESTClient._logger.debug("url in _time_request: %s\n" %
+                                             (url))
         resp, body = self.request(url, method, **kwargs)
         self.times.append(("%s %s" % (method, url),
                            start_time, time.time()))
@@ -301,11 +324,15 @@ class HTTPJSONRESTClient(object):
 
     def _do_reauth(self, url, method, ex, **kwargs):
         # print("_do_reauth called")
+        HTTPJSONRESTClient._logger.debug("session key in _do_reauth: %s\n" %
+                                             (self.session_key))
+        HTTPJSONRESTClient._logger.debug("auth_try in _do_reauth: %s\n" %
+                                             (self.auth_try))
         try:
             if self.auth_try != 1:
                 self._reauth()
-                resp, body = self._time_request(self.api_url + url, method,
-                                                **kwargs)
+                full_url = self._build_full_url(url)
+                resp, body = self._time_request(full_url, method, **kwargs)
                 return resp, body
             else:
                 raise ex
@@ -317,8 +344,12 @@ class HTTPJSONRESTClient(object):
         # might be because the auth token expired, so try to
         # re-authenticate and try again. If it still fails, bail.
         try:
-            resp, body = self._time_request(self.api_url + url, method,
-                                            **kwargs)
+            HTTPJSONRESTClient._logger.debug("url in _cs_request: %s\n" %
+                                            (url))
+            full_url = self._build_full_url(url)
+            HTTPJSONRESTClient._logger.debug("full url in _cs_request: %s\n" %
+                                            (full_url))
+            resp, body = self._time_request(full_url, method, **kwargs)
             return resp, body
         except exceptions.HTTPUnauthorized as ex:
             # print("_CS_REQUEST HTTPUnauthorized")
