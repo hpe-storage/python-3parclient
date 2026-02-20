@@ -6,10 +6,10 @@
     :target: https://pypi.python.org/pypi/python-3parclient
     :alt: Downloads
 
-HPE Alletra 9000 and HPE Primera and HPE 3PAR REST Client
-=========================================================
-This is a Client library that can talk to the HPE Alletra 9000 and Primera and 3PAR Storage array.
-The HPE Alletra 9000 and Primera and 3PAR storage array has a REST web service interface and a 
+HPE Alletra MP, HPE Alletra 9000, HPE Primera and HPE 3PAR REST Client
+======================================================================
+This is a Client library that can talk to the HPE Alletra MP, Alletra 9000, Primera
+and 3PAR Storage array that has a REST web service interface and a
 command line interface. This client library implements a simple interface for talking
 with either interface, as needed. The python Requests library is used to communicate
 with the REST interface. The python paramiko library is used to communicate with the
@@ -27,8 +27,9 @@ The HP 3PAR Rest Client (hp3parclient) is now considered deprecated.
 Requirements
 ============
 This branch requires 3.1.3 version MU1 or later of the HPE 3PAR firmware.
-This branch requires 4.3.1 version of the HPE Primera firmware.
-This branch requires 9.3.0 version of the HPE Alletra 9000 firmware.
+This branch requires 4.3.1 version or later of the HPE Primera firmware.
+This branch requires 9.3.0 version or later of the HPE Alletra 9000 firmware.
+This branch requires 10.4.0 version or later of the HPE Alletra MP firmware.
 File Persona capabilities require HPE 3PAR firmware 3.2.1 Build 46 or later.
 
 Capabilities
