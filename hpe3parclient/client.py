@@ -1,4 +1,4 @@
-# (c) Copyright 2012-2025 Hewlett Packard Enterprise Development LP
+# (c) Copyright 2012-2025, 2026 Hewlett Packard Enterprise Development LP
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -221,6 +221,9 @@ class HPE3ParClient(object):
 
     def is_primera_array(self):
         return self.primera_supported
+    
+    def get_session_key(self):
+        return self.http.get_session_key()
 
     def setSSHOptions(self, ip, login, password, port=22,
                       conn_timeout=None, privatekey=None,
@@ -253,22 +256,17 @@ class HPE3ParClient(object):
         :returns: Version dict
 
         """
-        try:
-            # remove everything down to host:port
-            host_url = self.api_url.split('/api')
-            self.http.set_url(host_url[0])
-            # get the api version
-            response, body = self.http.get('/api')
+        # remove everything down to host:port
+        host_url = self.api_url.split('/api')
+        # Build absolute URL and call without mutating http client's base
+        response, body = self.http.get(host_url[0] + '/api')
 
-            api_version = body
-            if (api_version['build'] >=
-                    self.HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSION):
-                self.primera_supported = True
+        api_version = body
+        if (api_version['build'] >=
+                self.HPE3PAR_WS_PRIMERA_MIN_BUILD_VERSION):
+            self.primera_supported = True
 
-            return body
-        finally:
-            # reset the url
-            self.http.set_url(self.api_url)
+        return body
 
     def debug_rest(self, flag):
         """This is useful for debugging requests to 3PAR.
