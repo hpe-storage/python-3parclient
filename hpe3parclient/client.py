@@ -31,6 +31,7 @@ import re
 import time
 import uuid
 import logging
+import ast
 
 try:
     # For Python 3.0 and later
@@ -204,6 +205,58 @@ class HPE3ParClient(object):
 
     DEFAULT_NVME_PORT = 4420
     DEFAULT_PORT_NQN = 'nqn.2014-08.org.nvmexpress.discovery'
+
+    hpe3par_valid_keys = ['cpg', 'snap_cpg', 'provisioning', 'persona', 'vvs',
+                          'flash_cache', 'compression', 'group_replication',
+                          'convert_to_base']
+    
+    # Valid values for volume type extra specs
+    # The first value in the list is the default value
+    valid_prov_values = ['thin', 'full', 'dedup']
+
+    valid_persona_values = ['2 - Generic-ALUA',
+                            '1 - Generic',
+                            '3 - Generic-legacy',
+                            '4 - HPUX-legacy',
+                            '5 - AIX-legacy',
+                            '6 - EGENERA',
+                            '7 - ONTAP-legacy',
+                            '8 - VMware',
+                            '9 - OpenVMS',
+                            '10 - HPUX',
+                            '11 - WindowsServer']
+
+
+    # v2 replication constants
+    SYNC = 1
+    PERIODIC = 2
+    EXTRA_SPEC_REP_MODE = "replication:mode"
+    EXTRA_SPEC_REP_SYNC_PERIOD = "replication:sync_period"
+    RC_ACTION_CHANGE_TO_PRIMARY = 7
+    DEFAULT_REP_MODE = 'periodic'
+    DEFAULT_SYNC_PERIOD = 900
+    RC_GROUP_STARTED = 3
+    SYNC_STATUS_COMPLETED = 3
+    FAILBACK_VALUE = 'default'
+
+    DEFAULT_ISCSI_PORT = 3260
+
+    MIN_CLIENT_VERSION = '4.2.10'
+    DEDUP_API_VERSION = 30201120
+    FLASH_CACHE_API_VERSION = 30201200
+    COMPRESSION_API_VERSION = 30301215
+    SRSTATLD_API_VERSION = 30201200
+    REMOTE_COPY_API_VERSION = 30202290
+    API_VERSION_2023 = 100000000
+
+
+    # License values for reported capabilities
+    PRIORITY_OPT_LIC = "Priority Optimization"
+    THIN_PROV_LIC = "Thin Provisioning"
+    REMOTE_COPY_LIC = "Remote Copy"
+    SYSTEM_REPORTER_LIC = "System Reporter"
+    COMPRESSION_LIC = "Compression"
+
 
     def __init__(self, api_url, debug=False, secure=False, timeout=None,
                  suppress_ssl_warnings=False):
@@ -5371,4 +5424,477 @@ class HPE3ParClient(object):
                              " belongs to different host: %(vlun_host)s",
                              {'lun': vlun['lun'],
                               'vlun_host': vlun.get('hostname', 'Unknown')})
+                
 
+    
+    def _check_license_enabled(self, systemVersion, valid_licenses,
+                               license_to_check, capability):
+        """Check a license against valid licenses on the array."""
+        major_minor = systemVersion.split('.')
+        if int(major_minor[0]) == 10 and int(major_minor[1]) >= 5:
+            return True
+        else:
+            if valid_licenses:
+                for license in valid_licenses:
+                    if license_to_check in license.get('name'):
+                        return True
+                    logger.debug("'%(capability)s' requires a '%(license)s' "
+                          "license which is not installed.",
+                            {'capability': capability,
+                            'license': license_to_check})
+                return False
+
+
+    def _get_3par_vol_comment_value(self, vol_comment, key):
+        comment_dict = dict(ast.literal_eval(vol_comment))
+        if key in comment_dict:
+            return comment_dict[key]
+        return None
+
+
+    def _get_3par_vol_comment(self, volume_name):
+        vol = self.getVolume(volume_name)
+        if 'comment' in vol:
+            return vol['comment']
+        return None
+    
+
+    def _get_remote_copy_mode_num(self, mode):
+        ret_mode = None
+        if mode == "sync":
+            ret_mode = self.SYNC
+        if mode == "periodic":
+            ret_mode = self.PERIODIC
+        return ret_mode
+    
+    
+    def _is_replication_mode_correct(self, mode, sync_num):
+        rep_flag = True
+        # Make sure replication_mode is set to either sync|periodic.
+        mode = self._get_remote_copy_mode_num(mode)
+        if not mode:
+            logger.error("Extra spec replication:mode must be set and must "
+                      "be either 'sync' or 'periodic'.")
+            rep_flag = False
+        else:
+            # If replication:mode is periodic, replication_sync_period must be
+            # set between 300 - 31622400 seconds.
+            if mode == self.PERIODIC and (
+               sync_num < 300 or sync_num > 31622400):
+                logger.error("Extra spec replication:sync_period must be "
+                          "greater than 299 and less than 31622401 "
+                          "seconds.")
+                rep_flag = False
+        return rep_flag
+    
+
+    def _are_targets_in_their_natural_direction(self, rcg):
+        targets = rcg['targets']
+        for target in targets:
+            if target['roleReversed'] or (
+               target['state'] != self.RC_GROUP_STARTED):
+                return False
+
+        # Make sure all volumes are fully synced.
+        volumes = rcg['volumes']
+        for volume in volumes:
+            remote_volumes = volume['remoteVolumes']
+            for remote_volume in remote_volumes:
+                if remote_volume['syncStatus'] != (
+                   self.SYNC_STATUS_COMPLETED):
+                    return False
+        return True
+    
+
+    # v2 replication conversion
+    def _get_3par_rcg_name_client(self, vol_details):
+        rcg_name = vol_details.get('rcopyGroup')
+        return rcg_name
+
+    
+    def initialize_iscsi_ports_client(self, ip_addr):
+        temp_iscsi_ip = {}
+
+        if "." in ip_addr:
+            # v4
+            ip = ip_addr.split(':')
+            if len(ip) == 1:
+                temp_iscsi_ip[ip_addr] = (
+                    {'ip_port': self.DEFAULT_ISCSI_PORT})
+            elif len(ip) == 2:
+                temp_iscsi_ip[ip[0]] = {'ip_port': ip[1]}
+        elif ":" in ip_addr:
+            # v6
+            if "]" in ip_addr:
+                ip = ip_addr.split(']:')
+                ip_addr_v6 = ip[0]
+                ip_addr_v6 = ip_addr_v6.strip('[')
+                port_v6 = ip[1]
+                temp_iscsi_ip[ip_addr_v6] = {'ip_port': port_v6}
+            else:
+                temp_iscsi_ip[ip_addr] = (
+                    {'ip_port': self.DEFAULT_ISCSI_PORT})
+        else:
+            logger.warning("Invalid IP address format '%s'", ip_addr)
+
+        return temp_iscsi_ip
+    
+
+
+    def get_active_target_ports_client(self, ports):
+        target_ports = []
+
+        for port in ports['members']:
+            if (
+                port['mode'] == self.PORT_MODE_TARGET and
+                port['linkState'] == self.PORT_STATE_READY
+            ):
+                port['nsp'] = self.build_nsp(port['portPos'])
+                target_ports.append(port)
+
+        return target_ports
+    
+    def get_active_protocol_ports(self, ports, iscsi_proto=False, fc_proto=False):
+        proto_ports = []
+        if fc_proto:
+            for port in ports:
+                if port['protocol'] == self.PORT_PROTO_FC:
+                    proto_ports.append(port)
+        elif iscsi_proto:
+            for port in ports:
+                if port['protocol'] == self.PORT_PROTO_ISCSI:
+                    proto_ports.append(port)
+
+        return proto_ports
+
+    def build_nsp(self, portPos):
+        return '%s:%s:%s' % (portPos['node'],
+                             portPos['slot'],
+                             portPos['cardPort'])
+
+
+    def update_dicts_client(self, temp_iscsi_ip, iscsi_ip_list, iscsi_ports):
+        for port in iscsi_ports:
+            ip = port['IPAddr']
+            if ip in temp_iscsi_ip:
+                self._update_dicts(temp_iscsi_ip, iscsi_ip_list, ip, port)
+
+            if 'iSCSIVlans' in port:
+                for vip in port['iSCSIVlans']:
+                    ip = vip['IPAddr']
+                    if ip in temp_iscsi_ip:
+                        logger.debug("vlan ip: %(ip)s", {'ip': ip})
+                        self._update_dicts(temp_iscsi_ip, iscsi_ip_list,
+                                           ip, port)
+
+        return iscsi_ip_list, temp_iscsi_ip
+
+
+    def _update_dicts(self, temp_iscsi_ip, iscsi_ip_list, ip, port):
+        ip_port = temp_iscsi_ip[ip]['ip_port']
+        iscsi_ip_list[ip] = {'ip_port': ip_port,
+                             'nsp': port['nsp'],
+                             'iqn': port['iSCSIName']}
+        del temp_iscsi_ip[ip]
+
+
+    def getVolumeWithCPG(self, volume_name, allowSnap=False):
+        vol = self.getVolume(volume_name)
+        # Search for 'userCPG' in the get volume REST API,
+        # if found return userCPG , else search for snapCPG attribute
+        # when allowSnap=True. For the cases where 3PAR REST call for
+        # get volume doesn't have either userCPG or snapCPG ,
+        # take the default value of cpg from 'host' attribute from volume param
+        logger.debug("get volume response is: %s", vol)
+        if 'userCPG' in vol:
+            return vol['userCPG']
+        elif allowSnap and 'snapCPG' in vol:
+            return vol['snapCPG']
+        
+    
+    def _get_prioritized_host_on_3par_client(self, host, hosts, hostname):
+        # Check whether host with wwn/iqn of initiator present on 3par
+        if hosts and hosts['members'] and 'name' in hosts['members'][0]:
+            # Retrieving 'host' and 'hosts' from 3par using hostname
+            # and wwn/iqn respectively. Compare hostname of 'host' and 'hosts',
+            # if they do not match it means 3par has a pre-existing host
+            # with some other name.
+            if host['name'] != hosts['members'][0]['name']:
+                hostname = hosts['members'][0]['name']
+                logger.info(("Prioritize the host retrieved from wwn/iqn "
+                          "Hostname : %(hosts)s  is used instead "
+                          "of Hostname: %(host)s"),
+                         {'hosts': hostname,
+                          'host': host['name']})
+                host = self.getHost(hostname)
+                return host, hostname
+
+        return host, hostname
+    
+    
+    def queryHostReturnHostname(self, iscsi_iqns=None, wwns=None):
+        if iscsi_iqns is not None:
+            hosts = self.queryHost(iqns=iscsi_iqns)
+        elif wwns is not None:
+            hosts = self.queryHost(wwns=wwns)
+
+        if hosts and hosts['members'] and 'name' in hosts['members'][0]:
+            return hosts['members'][0]['name']
+        else:
+            return None
+        
+
+    def iscsi_ip_port(self, port):
+        if port and 'IPAddr' in port:
+            return port['IPAddr']
+        else:
+            return None
+        
+
+    def vlunPortPos(self, vlun):
+        return vlun['portPos']
+    
+
+    def create_vlun_info(self, location):
+        vlun_info = None
+        if location:
+            # The LUN id is returned as part of the location URI
+            vlun = location.split(',')
+            vlun_info = {'volume_name': vlun[0],
+                         'lun_id': int(vlun[1]),
+                         'host_name': vlun[2],
+                         }
+            if len(vlun) > 3:
+                vlun_info['nsp'] = vlun[3]
+            
+        return vlun_info
+    
+    
+    def get_vlun_info(self, vlun):
+        return vlun['volumeName'], vlun['lun'], vlun['portPos']
+    
+
+    def get_iSCSIVlans_Port(self, port):
+        return 'iSCSIVlans' in port, port['iSCSIVlans']
+    
+    def get_vlan_ip(self, vip):
+        return vip['IPAddr']
+    
+
+    def get_host_wwns(self, host):
+        host_wwns = []
+
+        if 'FCPaths' in host:
+            for path in host['FCPaths']:
+                wwn = path.get('wwn', None)
+                if wwn is not None:
+                    host_wwns.append(wwn.lower())
+
+        return host_wwns
+    
+
+    def create_modifyhost_request(self, iscsi_iqn=None, wwn=None):
+        mod_request = {}
+
+        if iscsi_iqn is not None:
+            mod_request = {'pathOperation': self.HOST_EDIT_ADD,
+                       'iSCSINames': [iscsi_iqn]}
+        elif wwn is not None:
+            mod_request = {'pathOperation': self.HOST_EDIT_ADD,
+                       'FCWWNs': wwn}
+            
+        return mod_request
+    
+
+    def host_iscsi_info(self, host):
+        return 'iSCSIPaths' not in host, len(host['iSCSIPaths']), host['initiatorChapEnabled']
+    
+
+    def create_mod_host_chap_request(self, username, password):
+        mod_request = {'chapOperation': self.HOST_EDIT_ADD,
+                       'chapOperationMode': self.CHAP_INITIATOR,
+                       'chapName': username,
+                       'chapSecret': password}
+        
+        return mod_request
+
+
+    def getStorageSystemVersionAndLicense(self, info):
+        systemVersion = info['systemVersion'] 
+
+        if 'licenseInfo' in info:
+            if 'licenses' in info['licenseInfo']:
+                valid_licenses = info['licenseInfo']['licenses']
+
+        return systemVersion, valid_licenses
+    
+    
+    def getRemoteCopyGroupVolumes(self, rcg_name):
+        rcg = self.getRemoteCopyGroup(rcg_name)
+
+        return rcg['volumes']
+
+
+    def modifyRemoteCopyGroupOptional(self, rcg_targets, snap_cpg, local_cpg):
+        optional = {'localSnapCPG': snap_cpg,
+                    'localUserCPG': local_cpg,
+                    'targets': rcg_targets}
+        
+        return optional
+    
+
+    def modifyRemoteCopyGroupTarget(self, targetName, cpg):
+        rcg_target = {'targetName': targetName,
+                      'remoteUserCPG': cpg,
+                      'remoteSnapCPG': cpg}
+        
+        return rcg_target
+    
+
+    def modifyRemoteCopyGroupPayloadSyncTargets(self, targets, replication_mode_num, replication_sync_period):
+        sync_targets = []
+
+        for target in targets:
+            if target['replication_mode'] == replication_mode_num:
+                sync_target = {'targetName': target['backend_id'],
+                               'syncPeriod': replication_sync_period}
+                sync_targets.append(sync_target)
+
+        opt = {'targets': sync_targets}
+        return opt
+    
+
+    def add_vol_to_remote_copy_group_params(self, targets, replication_mode_num, vol_name):
+        rcg_targets = []
+
+        for target in targets:
+            if target['replication_mode'] == replication_mode_num:
+                rcg_target = {'targetName': target['backend_id'],
+                              'secVolumeName': vol_name}
+                rcg_targets.append(rcg_target)
+
+        optional = {'volumeAutoCreation': True}
+
+        return rcg_targets, optional
+    
+
+    def getRemoteCopyVolumesAndSyncPeriod(self, rcg, replication_sync_period):
+        if len(rcg['volumes']) and 'syncPeriod' in rcg['targets'][0]:
+            if replication_sync_period != int(rcg['targets'][0]['syncPeriod']):
+                return True
+            else:
+                return False
+        else:
+            return False
+    
+
+    def create_qos_rule(self, min_io, max_io, min_bw, max_bw, latency, priority):
+        qosRule = {}
+
+        if min_io:
+            qosRule['ioMinGoal'] = int(min_io)
+            if max_io is None:
+                qosRule['ioMaxLimit'] = int(min_io)
+        if max_io:
+            qosRule['ioMaxLimit'] = int(max_io)
+            if min_io is None:
+                qosRule['ioMinGoal'] = int(max_io)
+        if min_bw:
+            qosRule['bwMinGoalKB'] = min_bw
+            if max_bw is None:
+                qosRule['bwMaxLimitKB'] = min_bw
+        if max_bw:
+            qosRule['bwMaxLimitKB'] = max_bw
+            if min_bw is None:
+                qosRule['bwMinGoalKB'] = max_bw
+        if latency:
+            # latency could be values like 2, 5, etc or
+            # small values like 0.1, 0.02, etc.
+            # we are converting to float so that 0.1 doesn't become 0
+            latency = float(latency)
+            if latency >= 1:
+                # by default, latency in millisecs
+                qosRule['latencyGoal'] = int(latency)
+            else:
+                # latency < 1 Eg. 0.1, 0.02, etc
+                # convert latency to microsecs
+                qosRule['latencyGoaluSecs'] = int(latency * 1000)
+        if priority:
+            qosRule['priority'] = priority
+
+        return qosRule
+    
+
+    def createRemoteCopyGroupTarget(self, apiVersion, targetName, replication_mode_num, replication_sync_period, cpg):
+        rcg_target = {'targetName': targetName,
+                        'mode': replication_mode_num,
+                        'userCPG': cpg}  
+        if apiVersion < self.API_VERSION_2023:
+            rcg_target['snapCPG'] = cpg
+
+        sync_target = {'targetName': targetName,
+                       'syncPeriod': replication_sync_period}
+
+        return rcg_target, sync_target
+    
+    def createRemoteCopyGroupOptional(self, apiVersion, snap_cpg, local_cpg, domain):
+        optional = {'localUserCPG': local_cpg}
+        if apiVersion < self.API_VERSION_2023:
+            optional['localSnapCPG'] = snap_cpg
+        if domain:
+            optional["domain"] = domain
+
+        return optional
+
+    def modifyRemoteCopyGroupPpParams(self):
+        pp_params = {'targets': [
+                        {'policies': {'autoFailover': True,
+                                      'pathManagement': True,
+                                      'autoRecover': True}}]}
+        return pp_params
+    
+ 
+    def createHostOptional(self, domain, persona_id):
+        optional = {
+            'domain': domain,
+            'persona': persona_id
+            }
+
+        return optional
+    
+
+    def getPortsIqnOrWwnOrNqn(self, ports, iscsi_port=False, fc_port=False):
+        all_target_wwns = []
+        all_target_iqns = []
+
+        if fc_port:
+            for port in ports:
+                all_target_wwns.append(port['portWWN'])
+            return all_target_wwns
+    
+        if iscsi_port:
+            for port in ports:
+                all_target_iqns.append(port['portIQN'])
+            return all_target_iqns
+        
+    
+
+    def copyVolumeOptional(self, wsapiVersion, snap_cpg=None,
+                     tpvv=True, tdvv=False, compression=None, comment=None):
+        
+        optional = {'tpvv': tpvv, 'online': True}
+
+        if snap_cpg is not None and wsapiVersion < self.API_VERSION_2023:
+            optional['snapCPG'] = snap_cpg
+
+        if wsapiVersion >= self.DEDUP_API_VERSION:
+            optional['tdvv'] = tdvv
+
+        if (compression is not None and
+                wsapiVersion >= self.COMPRESSION_API_VERSION):
+            optional['compression'] = compression
+
+        if comment:
+            optional['comment'] = comment
+
+        return optional
