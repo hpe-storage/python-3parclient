@@ -258,17 +258,17 @@ class HPE3ParFilePersonaClientMockTestCase(hpe3parbase
             'CSIM-EOS08_1611165 cli% createvfs -fpg marktestfpg -wait '
             '127.0.0.2 255.255.255.\r',
             '0 UT5_VFS_150651\r',
-            'VFS UT5_VFS_150651 already exists within FPG marktestfpg\r',
+            'VFS UT5_VFS_150651 already exists within FPG marktestfpg',
             'CSIM-EOS08_1611165 cli% exit\r',
             ''
         ]
         expected = [
-            'VFS UT5_VFS_150651 already exists within FPG marktestfpg\r']
+            'VFS UT5_VFS_150651 already exists within FPG marktestfpg']
 
         actual = ssh.HPE3PARSSHClient.strip_input_from_output(cmd, out)
         self.assertEqual(expected, actual)
 
-    def test_strip_input_from_output_no_exit(self):
+    def test_strip_input_from_output_no_stdin(self):
         cmd = [
             'createvfs',
             '-fpg',
@@ -279,10 +279,6 @@ class HPE3ParFilePersonaClientMockTestCase(hpe3parbase
             'UT5_VFS_150651'
         ]
         out = [
-            'setclienv csvtable 1',
-            'createvfs -fpg marktestfpg -wait 127.0.0.2 255.255.255.0 '
-            'UT5_VFS_150651',
-            'XXXt',  # Don't match
             'CSIM-EOS08_1611165 cli% setclienv csvtable 1\r',
             'CSIM-EOS08_1611165 cli% createvfs -fpg marktestfpg -wait '
             '127.0.0.2 255.255.255.\r',
@@ -291,9 +287,11 @@ class HPE3ParFilePersonaClientMockTestCase(hpe3parbase
             'CSIM-EOS08_1611165 cli% exit\r',
             ''
         ]
-        self.assertRaises(exceptions.SSHException,
-                          ssh.HPE3PARSSHClient.strip_input_from_output,
-                          cmd, out)
+        expected = [
+            'VFS UT5_VFS_150651 already exists within FPG marktestfpg']
+
+        actual = ssh.HPE3PARSSHClient.strip_input_from_output(cmd, out)
+        self.assertEqual(expected, actual)
 
     def test_strip_input_from_output_no_setclienv(self):
         cmd = [

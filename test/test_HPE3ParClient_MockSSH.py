@@ -210,6 +210,14 @@ class HPE3ParClientMockSSHTestCase(HPE3ParClient_base
         self.assertEqual(expected, out)
 
     def test_strip_input_from_output(self):
+        def gen_output(*args):
+            result = []
+            for arg in args:
+                if isinstance(arg, list):
+                    result.extend(arg)
+                else:
+                    result.append(arg)
+            return result
         cmd = ['foo', '-v']
         # nothing after exit
         output = ['exit']
@@ -224,30 +232,68 @@ class HPE3ParClientMockSSHTestCase(HPE3ParClient_base
                           cmd,
                           output)
         # no setclienv csv
-        output = [cmd, 'exit', 'out']
+        output = cmd + ['exit', 'out']
         self.assertRaises(exceptions.SSHException,
                           ssh.HPE3PARSSHClient.strip_input_from_output,
                           cmd,
                           output)
         # command not in output after exit
-        output = [cmd, 'exit', 'PROMPT% setclienv csvtable 1']
+        output = gen_output('setclienv csvtable 1',
+                            cmd,
+                            'exit',
+                            'PROMPT% setclienv csvtable 1')
+        self.assertRaises(exceptions.SSHException,
+                          ssh.HPE3PARSSHClient.strip_input_from_output,
+                          cmd,
+                          output)
+        # Missing exit prompt because output was cut
+        output = gen_output('setclienv csvtable 1',
+                            cmd,
+                            'exit',
+                            'PROMPT% setclienv csvtable 1',
+                            'PROMPT% foo -v',
+                            'out1',
+                            'out2')
         self.assertRaises(exceptions.SSHException,
                           ssh.HPE3PARSSHClient.strip_input_from_output,
                           cmd,
                           output)
         # success
-        output = [cmd,
-                  'setclienv csvtable 1',
-                  'exit',
-                  'PROMPT% setclienv csvtable 1',
-                  'PROMPT% foo -v',
-                  'out1',
-                  'out2',
-                  'out3',
-                  '------',
-                  'totals']
+        expected = ['out1', 'out2', 'out3', '------', 'totals']
+        output = gen_output('setclienv csvtable 1',
+                            cmd,
+                            'exit',
+                            'PROMPT% setclienv csvtable 1',
+                            'PROMPT% foo -v',
+                            'out1',
+                            'out2',
+                            'out3',
+                            '------',
+                            'totals',
+                            'PROMPT% exit')
         result = ssh.HPE3PARSSHClient.strip_input_from_output(cmd, output)
-        self.assertEqual(['out1', 'out2', 'out3'], result)
+        self.assertEqual(expected, result)
+
+        # succeed even on slow connection that's missing the stdin dump
+        output = output[4:]
+        result = ssh.HPE3PARSSHClient.strip_input_from_output(cmd, output)
+        self.assertEqual(expected, result)
+
+        # succeed with empty prompts and extra \r on commands
+        output = gen_output('setclienv csvtable 1',
+                            cmd,
+                            'exit',
+                            'PROMPT% setclienv csvtable 1\r',
+                            'PROMPT% ',
+                            'PROMPT% foo -v\r',
+                            'out1',
+                            'out2',
+                            'out3',
+                            '------',
+                            'totals',
+                            'PROMPT% exit\r')
+        result = ssh.HPE3PARSSHClient.strip_input_from_output(cmd, output)
+        self.assertEqual(expected, result)
 
     @mock.patch('hpe3parclient.client.ssh.HPE3PARSSHClient', spec=True)
     def test_verify_get_port(self, mock_ssh_client):
