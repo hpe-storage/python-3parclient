@@ -20,6 +20,7 @@
       .. automethod:: deleteVolume
       .. automethod:: modifyVolume
       .. automethod:: growVolume
+      .. automethod:: promoteVirtualCopy
       .. automethod:: copyVolume
       .. automethod:: createSnapshot
       .. automethod:: getCPGs
@@ -76,6 +77,7 @@
       .. automethod:: isOnlinePhysicalCopy
       .. automethod:: stopOnlinePhysicalCopy
       .. automethod:: stopOfflinePhysicalCopy
+      .. automethod:: resyncPhysicalCopy
       .. automethod:: getAllTasks
       .. automethod:: getTask
       .. automethod:: getPatches
@@ -87,6 +89,8 @@
       .. automethod:: createRemoteCopyGroup
       .. automethod:: removeRemoteCopyGroup
       .. automethod:: modifyRemoteCopyGroup
+      .. automethod:: getRemoteCopyGroupVolumes
+      .. automethod:: getRemoteCopyGroupVolume
       .. automethod:: addVolumeToRemoteCopyGroup
       .. automethod:: removeVolumeFromRemoteCopyGroup
       .. automethod:: startRemoteCopy
@@ -94,4 +98,28 @@
       .. automethod:: synchronizeRemoteCopyGroup
       .. automethod:: recoverRemoteCopyGroupFromDisaster
       .. automethod:: toggleRemoteCopyConfigMirror
+      .. automethod:: admitRemoteCopyLinks
+      .. automethod:: dismissRemoteCopyLinks
+      .. automethod:: startrCopy
+      .. automethod:: rcopyServiceExists
+      .. automethod:: getRemoteCopyLink
+      .. automethod:: rcopyLinkExists
+      .. automethod:: admitRemoteCopyTarget
+      .. automethod:: dismissRemoteCopyTarget
+      .. automethod:: targetInRemoteCopyGroupExists
+      .. automethod:: remoteCopyGroupStatusCheck
+      .. automethod:: remoteCopyGroupStatusStartedCheck
+      .. automethod:: remoteCopyGroupStatusStoppedCheck
       .. automethod:: getVolumeSnapshots
+      .. automethod:: getSnapshotsOfVolume
+      .. automethod:: getSchedule
+      .. automethod:: createSchedule
+      .. automethod:: modifySchedule
+      .. automethod:: suspendSchedule
+      .. automethod:: resumeSchedule
+      .. automethod:: deleteSchedule
+      .. automethod:: getScheduleStatus
+      .. automethod:: getFlashCache
+      .. automethod:: createFlashCache
+      .. automethod:: deleteFlashCache
+      .. automethod:: tuneVolume
