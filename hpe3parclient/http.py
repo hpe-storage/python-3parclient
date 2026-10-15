@@ -143,6 +143,13 @@ class HTTPJSONRESTClient(object):
         This clears the authenticated session with the 3PAR server.
 
         """
+        if not self.session_key:
+            # Login never succeeded, so there is no session on the array to
+            # delete; avoid sending DELETE /credentials/None.
+            HTTPJSONRESTClient._logger.debug(
+                "No session key, skipping unauthenticate\n")
+            return
+
         try:
             # delete the session on the 3Par
             HTTPJSONRESTClient._logger.debug("Session Key in unauthenticate: %s\n" %
@@ -226,12 +233,24 @@ class HTTPJSONRESTClient(object):
         r = None
         resp = None
         body = None
-        while r is None and self.tries > 0:
+        # Retry state is per request; mutating the instance attributes would
+        # permanently exhaust retries for every later request on this client.
+        tries = self.tries
+        delay = self.delay
+        HTTPJSONRESTClient._logger.debug(
+            "Retry state before request: method=%s url=%s tries=%s "
+            "delay=%s\n", http_method, http_url, tries, delay)
+        if tries <= 0:
+            HTTPJSONRESTClient._logger.debug(
+                "Skipping HTTP request because retry attempts are exhausted: "
+                "method=%s url=%s tries=%s. Returning resp=None, "
+                "body=None.\n", http_method, http_url, tries)
+        while r is None and tries > 0:
             try:
                 # Check to see if the request is being retried. If it is, we
                 # want to delay.
-                if self.delay:
-                    time.sleep(self.delay)
+                if delay:
+                    time.sleep(delay)
 
                 if self.timeout:
                     r = requests.request(http_method, http_url, data=payload,
@@ -285,11 +304,19 @@ class HTTPJSONRESTClient(object):
                 # If we catch an exception where we want to retry, we need to
                 # decrement the retry count prepare to try again.
                 r = None
-                self.tries -= 1
-                self.delay = self.delay * self.backoff + 1
+                tries -= 1
+                delay = delay * self.backoff + 1
+                HTTPJSONRESTClient._logger.debug(
+                    "Retryable exception during request: method=%s url=%s "
+                    "exception=%s tries_remaining=%s next_delay=%s\n",
+                    http_method, http_url, ex, tries, delay)
 
                 # Raise exception, we have exhausted all retries.
-                if self.tries == 0:
+                if tries == 0:
+                    HTTPJSONRESTClient._logger.debug(
+                        "Retry attempts exhausted for request: method=%s "
+                        "url=%s. Raising exception=%s\n",
+                        http_method, http_url, ex)
                     raise ex
             except requests.exceptions.HTTPError as err:
                 raise exceptions.HTTPError("HTTP Error: %s" % err)
@@ -303,6 +330,12 @@ class HTTPJSONRESTClient(object):
             except requests.exceptions.RequestException as err:
                 raise exceptions.RequestException(
                     "Request Exception: %s" % err)
+
+        if resp is None and body is None:
+            HTTPJSONRESTClient._logger.debug(
+                "HTTP request returning empty response: method=%s url=%s "
+                "tries=%s resp=None body=None\n",
+                http_method, http_url, tries)
 
         return resp, body
 

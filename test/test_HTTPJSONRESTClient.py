@@ -125,6 +125,50 @@ class HTTPJSONRESTClientTestCase(unittest.TestCase):
 
             # Test retry exception
             retest.side_effect = requests.exceptions.ConnectionError
-            self.assertRaises(requests.exceptions.ConnectionError,
-                              self.http.request,
-                              http_url, http_method)
+            with mock.patch('time.sleep'):
+                self.assertRaises(requests.exceptions.ConnectionError,
+                                  self.http.request,
+                                  http_url, http_method)
+
+    def test_unauthenticate_without_session_key(self):
+        self.http.session_key = None
+        with mock.patch.object(self.http, 'delete') as mock_delete:
+            self.http.unauthenticate()
+        mock_delete.assert_not_called()
+
+    def test_unauthenticate_with_session_key(self):
+        self.http.session_key = 'abc'
+        with mock.patch.object(self.http, 'delete') as mock_delete:
+            self.http.unauthenticate()
+        mock_delete.assert_called_once_with('/credentials/abc')
+        self.assertIsNone(self.http.session_key)
+
+    @mock.patch('time.sleep')
+    def test_request_retries_reset_after_exhaustion(self, mock_sleep):
+        self.http._http_log_req = mock.Mock()
+        self.http._http_log_resp = mock.Mock()
+        http_url = 'http://fake-url:0000/credentials'
+        unavailable = exceptions.HTTPServiceUnavailable()
+        ok = mock.Mock(status_code=200, text='{"key": "abc"}',
+                       url=http_url,
+                       headers=requests.structures.CaseInsensitiveDict())
+
+        with mock.patch('requests.request') as retest:
+            retest.side_effect = unavailable
+            self.assertRaises(exceptions.HTTPServiceUnavailable,
+                              self.http.request, http_url, 'POST')
+            self.assertEqual(5, retest.call_count)
+            self.assertEqual([mock.call(1), mock.call(3), mock.call(7),
+                              mock.call(15)], mock_sleep.call_args_list)
+
+            # A later request must still reach the array with a fresh budget.
+            retest.reset_mock(side_effect=True)
+            mock_sleep.reset_mock()
+            retest.return_value = ok
+            resp, body = self.http.request(http_url, 'POST')
+
+            self.assertEqual(1, retest.call_count)
+            mock_sleep.assert_not_called()
+            self.assertEqual({'key': 'abc'}, body)
+            self.assertEqual(5, self.http.tries)
+            self.assertEqual(0, self.http.delay)
