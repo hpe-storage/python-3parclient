@@ -240,11 +240,6 @@ class HTTPJSONRESTClient(object):
         HTTPJSONRESTClient._logger.debug(
             "Retry state before request: method=%s url=%s tries=%s "
             "delay=%s\n", http_method, http_url, tries, delay)
-        if tries <= 0:
-            HTTPJSONRESTClient._logger.debug(
-                "Skipping HTTP request because retry attempts are exhausted: "
-                "method=%s url=%s tries=%s. Returning resp=None, "
-                "body=None.\n", http_method, http_url, tries)
         while r is None and tries > 0:
             try:
                 # Check to see if the request is being retried. If it is, we
