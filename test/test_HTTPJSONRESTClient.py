@@ -174,11 +174,38 @@ class HTTPJSONRESTClientTestCase(unittest.TestCase):
             self.assertEqual(0, self.http.delay)
 
     def test_request_without_attempt_raises(self):
-        self.http.tries = 0
         http_url = 'http://fake-url:0000/credentials'
 
-        with mock.patch('requests.request') as request:
-            self.assertRaises(exceptions.RequestException,
-                              self.http.request, http_url, 'POST')
+        for tries in (0, -1):
+            self.http.tries = tries
+            with mock.patch('requests.request') as request:
+                with self.assertRaises(exceptions.RequestException) as error:
+                    self.http.request(http_url, 'POST')
 
-        request.assert_not_called()
+                self.assertIn('returned no response',
+                              error.exception.get_description())
+                request.assert_not_called()
+
+    def test_post_without_attempt_raises(self):
+        self.http.tries = 0
+
+        with mock.patch('requests.request') as request:
+            with self.assertRaises(exceptions.RequestException) as error:
+                self.http.post('/volumes', body={'name': 'test-volume'})
+
+            self.assertIn('returned no response',
+                          error.exception.get_description())
+            request.assert_not_called()
+
+    def test_post_with_empty_body_returns_response(self):
+        http_url = 'http://fake-url:0000/volumes'
+        response = mock.Mock(status_code=201, text='', url=http_url,
+                             headers=requests.structures.CaseInsensitiveDict())
+
+        with mock.patch('requests.request', return_value=response) as request:
+            resp, body = self.http.post('/volumes',
+                                        body={'name': 'test-volume'})
+
+        self.assertEqual(201, resp.status)
+        self.assertIsNone(body)
+        request.assert_called_once()
