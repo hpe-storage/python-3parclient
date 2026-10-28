@@ -172,3 +172,13 @@ class HTTPJSONRESTClientTestCase(unittest.TestCase):
             self.assertEqual({'key': 'abc'}, body)
             self.assertEqual(5, self.http.tries)
             self.assertEqual(0, self.http.delay)
+
+    def test_request_without_attempt_raises(self):
+        self.http.tries = 0
+        http_url = 'http://fake-url:0000/credentials'
+
+        with mock.patch('requests.request') as request:
+            self.assertRaises(exceptions.RequestException,
+                              self.http.request, http_url, 'POST')
+
+        request.assert_not_called()

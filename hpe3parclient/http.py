@@ -326,11 +326,14 @@ class HTTPJSONRESTClient(object):
                 raise exceptions.RequestException(
                     "Request Exception: %s" % err)
 
-        if resp is None and body is None:
-            HTTPJSONRESTClient._logger.debug(
-                "HTTP request returning empty response: method=%s url=%s "
-                "tries=%s resp=None body=None\n",
+        if resp is None:
+            HTTPJSONRESTClient._logger.error(
+                "HTTP request returned no response: method=%s url=%s "
+                "tries_remaining=%s",
                 http_method, http_url, tries)
+            raise exceptions.RequestException(
+                "HTTP request returned no response: %s %s" %
+                (http_method, http_url))
 
         return resp, body
 
