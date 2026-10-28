@@ -60,8 +60,8 @@ class HPE3ParClientRetryTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
             http.get,
             '/volumes')
 
-        # There should be 0 tries left after the call.
-        self.assertEqual(http.tries, 0)
+        # The per-request retry budget should not change on the client.
+        self.assertEqual(http.tries, 5)
 
     def test_retry_exhaust_all_attempts_connection_error(self):
         http = self.cl.http
@@ -81,8 +81,8 @@ class HPE3ParClientRetryTestCase(hpe3parbase.HPE3ParClientBaseTestCase):
             http.get,
             '/volumes')
 
-        # There should be 0 tries left after the call.
-        self.assertEqual(http.tries, 0)
+        # The per-request retry budget should not change on the client.
+        self.assertEqual(http.tries, 5)
 
     def test_no_retry(self):
         http = self.cl.http
